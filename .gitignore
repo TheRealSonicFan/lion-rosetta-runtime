@@ -1,0 +1,11 @@
+payload/*
+!payload/.gitkeep
+*.tar
+*.tar.gz
+*.tgz
+translate
+translated
+RosettaNonGrata
+Shims/
+dyld_shared_cache_rosetta*
+.DS_Store
