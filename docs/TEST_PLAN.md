@@ -5,6 +5,8 @@ Use a staged progression so a failure identifies the layer that is still incompa
 1. **Payload validation on 10.6.8**
    - `translate` exists.
    - collector succeeds and emits a manifest/checksum.
+   - `inspect-payload.sh` verifies every manifest entry.
+   - compare the cache identity with `docs/VALIDATED_PAYLOAD.md` when reproducing the current test baseline.
 
 2. **Lion runtime staging**
    - install the OAH directory and isolated `dyld_shared_cache_rosetta`.
@@ -13,22 +15,24 @@ Use a staged progression so a failure identifies the layer that is still incompa
 
 3. **Kernel staging**
    - patch a copy of `/mach_kernel` with `lion-rosetta-xnu`.
-   - verify that the old `RosettaNonGrata` signature is absent and `translate` is present.
+   - verify that the old `RosettaNonGrata` handler signature is absent and the `translate` handler string is present.
 
 4. **Boot-cache update and reboot**
    - use the kernel installer, which backs up the current kernel and kernelcache.
    - after reboot, confirm `sysctl kern.exec.archhandler.powerpc` reports `/usr/libexec/oah/translate`.
 
 5. **Minimal 32-bit PPC Mach-O**
-   - build the included smoke test on Snow Leopard with an era compiler that supports `-arch ppc`.
-   - run it on Lion using `run-ppc-smoketest.sh`.
+   - build the included smoke test on Snow Leopard with `build-ppc-smoketest-on-snowleopard.sh`.
+   - run it on Lion with `run-ppc-smoketest.sh`.
+   - capture `collect-lion-test-report.sh ./lion-rosetta-test-report.txt ./ppc-smoketest`.
 
 6. **Dynamic-library test**
-   - if the trivial executable works, test a PPC binary that links ordinary system libraries.
-   - record any dyld error exactly before changing caches or frameworks.
+   - if the smoke test works, test a second PPC binary that links ordinary system libraries.
+   - preserve any dyld error verbatim before modifying framework/cache state.
 
 7. **GUI application**
    - only after command-line translation is confirmed should Carbon/Cocoa applications be tested.
 
 8. **Compatibility expansion**
-   - add only the specific shim/framework/cache behavior demonstrated missing by the prior step. Avoid copying Snow Leopard `/System/Library` wholesale into Lion.
+   - add only the specific shim/framework/cache behavior demonstrated missing by the prior step.
+   - do not copy Snow Leopard `/System/Library` wholesale into Lion.

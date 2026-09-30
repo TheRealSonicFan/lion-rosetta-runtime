@@ -8,9 +8,11 @@ Use this together with `lion-rosetta-xnu`, which restores Lion's kernel architec
 
 ## Verified 10.6.8 payload
 
-A payload collected from Mac OS X 10.6.8 build 10K549 was inspected while developing these scripts. It contains `translate`, `RosettaNonGrata`, the complete `Shims` tree, `RosettaVersion.plist`, Rosetta receipts, and the Rosetta dyld shared cache/map. The inspected runtime does **not** contain a `/usr/libexec/oah/translated` executable.
+A payload collected from Mac OS X 10.6.8 build 10K549 was inspected while developing these scripts. It contains `translate`, `RosettaNonGrata`, the complete `Shims` tree, `RosettaVersion.plist`, Rosetta receipts, the Rosetta dyld shared cache/map, and the ancillary report-messages preference. The inspected runtime does **not** contain a `/usr/libexec/oah/translated` executable.
 
-The translator binary also contains an absolute reference to `/System/Library/OAH/nbb/`, but a direct audit of the validating 10.6.8 build 10K549 machine found `/System/Library/OAH` absent. The collector still preserves that tree if it exists on another source Mac. It also preserves `/Library/Preferences/com.apple.ReportMessages.domains` when present and records the package-owned file lists reported by `pkgutil`.
+The translator binary contains an absolute reference to `/System/Library/OAH/nbb/`, but a direct audit of the validating 10.6.8 build 10K549 machine found `/System/Library/OAH` absent. The collector still preserves that tree if it exists on another source Mac.
+
+The currently validated private payload and cache fingerprints are documented in `docs/VALIDATED_PAYLOAD.md`. No Apple binary data is committed there.
 
 ## 1. On the Snow Leopard 10.6.8 source system
 
@@ -45,7 +47,7 @@ Inspect it first:
 scripts/inspect-payload.sh payload/rosetta-10.6.8-runtime.tar.gz
 ```
 
-The inspector now verifies every file listed in `ROSETTA_PAYLOAD_MANIFEST.txt` before reporting the payload as valid.
+The inspector verifies every file listed in `ROSETTA_PAYLOAD_MANIFEST.txt` before reporting the payload as valid.
 
 ## 3. Install on Lion
 
@@ -55,7 +57,7 @@ Install the OAH runtime:
 sudo scripts/install-on-lion.sh payload/rosetta-10.6.8-runtime.tar.gz
 ```
 
-The installer copies the OAH runtime and the Snow Leopard **Rosetta-only PPC dyld cache**. The inspected cache identifies itself as `dyld_v1     ppc` and its map contains 183 PPC system images, including libSystem, IOKit, CoreFoundation, ApplicationServices, Foundation, AppKit, Carbon, and other frameworks that no longer have PPC slices on Lion. It does **not** replace Lion's native `dyld_shared_cache_i386` or `dyld_shared_cache_x86_64`.
+The installer copies the OAH runtime and the Snow Leopard **Rosetta-only PPC dyld cache**. The currently validated cache identifies itself as `dyld_v1     ppc` and its map contains 180 unique PPC system images. It does **not** replace Lion's native `dyld_shared_cache_i386` or `dyld_shared_cache_x86_64`.
 
 After installing the patched kernel from the companion repository and rebooting, run:
 
@@ -63,7 +65,13 @@ After installing the patched kernel from the companion repository and rebooting,
 scripts/diagnose-on-lion.sh
 ```
 
-Then test a disposable 32-bit PowerPC command-line executable before testing GUI applications.
+Then test a disposable 32-bit PowerPC command-line executable before testing GUI applications. To capture one shareable text report around the first execution attempt:
+
+```sh
+scripts/collect-lion-test-report.sh ./lion-rosetta-test-report.txt /path/to/ppc-smoketest
+```
+
+The report script records paths to candidate Rosetta crash reports but does not copy their contents automatically.
 
 ## Why the test is staged
 
@@ -73,4 +81,4 @@ Historical Lion experiments show that copying `translate` alone can reach the tr
 
 The `.gitignore` is intentionally broad. It excludes the entire `payload/` directory and common Rosetta binary/cache names to reduce the chance of accidentally publishing Apple's proprietary components.
 
-See `docs/CLOSED_SOURCE_COMPONENTS.md` for the component inventory and `docs/TEST_PLAN.md` for staged validation.
+See `docs/CLOSED_SOURCE_COMPONENTS.md`, `docs/VALIDATED_PAYLOAD.md`, and `docs/TEST_PLAN.md`.
