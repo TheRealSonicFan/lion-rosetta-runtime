@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
 [ "$#" -eq 1 ] || { echo "usage: sudo $0 rosetta-10.6.8-runtime.tar.gz" >&2; exit 64; }
 [ "$(id -u)" -eq 0 ] || { echo "error: run as root" >&2; exit 77; }
 
@@ -13,6 +15,14 @@ esac
 PAYLOAD="$1"
 [ -f "$PAYLOAD" ] || { echo "error: payload not found: $PAYLOAD" >&2; exit 66; }
 
+if [ -x "$SCRIPT_DIR/inspect-payload.sh" ]; then
+    echo "Validating payload manifest and hashes..."
+    "$SCRIPT_DIR/inspect-payload.sh" "$PAYLOAD" >/dev/null
+else
+    echo "error: inspect-payload.sh is required next to this installer" >&2
+    exit 67
+fi
+
 TMP="$(/usr/bin/mktemp -d /tmp/lion-rosetta-install.XXXXXX)"
 trap 'rm -rf "$TMP"' EXIT HUP INT TERM
 /usr/bin/tar -xzf "$PAYLOAD" -C "$TMP"
@@ -23,6 +33,8 @@ trap 'rm -rf "$TMP"' EXIT HUP INT TERM
     exit 67
 }
 
+# Verify the cache type before installing it. Snow Leopard's Rosetta cache begins
+# with the ASCII magic 'dyld_v1     ppc'. Do not accept a native x86 cache here.
 CACHE_MAGIC="$(/usr/bin/head -c 16 "$TMP/private/var/db/dyld/dyld_shared_cache_rosetta" 2>/dev/null || true)"
 case "$CACHE_MAGIC" in
     "dyld_v1     ppc"*) ;;
@@ -60,6 +72,7 @@ if [ -f "$TMP/private/var/db/RosettaVersion.plist" ]; then
     /usr/sbin/chown root:wheel /private/var/db/RosettaVersion.plist
 fi
 
+# Optional ancillary state captured by the refreshed collector.
 if [ -e "$TMP/System/Library/OAH" ]; then
     /bin/mkdir -p /System/Library
     /usr/bin/ditto --rsrc --extattr "$TMP/System/Library/OAH" /System/Library/OAH
@@ -71,6 +84,8 @@ if [ -f "$TMP/Library/Preferences/com.apple.ReportMessages.domains" ]; then
     /usr/sbin/chown root:wheel /Library/Preferences/com.apple.ReportMessages.domains
 fi
 
+# Install only the Rosetta-specific PPC cache from Snow Leopard. This does not
+# replace Lion's dyld_shared_cache_i386 or dyld_shared_cache_x86_64 files.
 /bin/mkdir -p /private/var/db/dyld
 /usr/bin/ditto --rsrc --extattr "$TMP/private/var/db/dyld/dyld_shared_cache_rosetta" /private/var/db/dyld/dyld_shared_cache_rosetta
 /usr/sbin/chown root:wheel /private/var/db/dyld/dyld_shared_cache_rosetta
@@ -81,6 +96,8 @@ if [ -f "$TMP/private/var/db/dyld/dyld_shared_cache_rosetta.map" ]; then
     /bin/chmod 0644 /private/var/db/dyld/dyld_shared_cache_rosetta.map
 fi
 
+# Do not invoke Lion's update_dyld_shared_cache after this copy. Lion no longer
+# builds a PPC/Rosetta cache and may alter cache state we are deliberately testing.
 /bin/ln -sfn "$BACKUP" /var/backups/lion-rosetta-runtime/latest
 
 echo "Installed local Snow Leopard Rosetta runtime on Lion."

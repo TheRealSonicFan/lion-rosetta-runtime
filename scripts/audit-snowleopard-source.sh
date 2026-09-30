@@ -34,6 +34,21 @@ for p in \
 done
 
 echo
+echo "== Critical file identity =="
+for f in \
+    /usr/libexec/oah/translate \
+    /private/var/db/dyld/dyld_shared_cache_rosetta \
+    /private/var/db/dyld/dyld_shared_cache_rosetta.map \
+    /Library/Preferences/com.apple.ReportMessages.domains; do
+    if [ -f "$f" ]; then
+        /usr/bin/stat -f '%N size=%z mtime_epoch=%m' "$f" 2>/dev/null || /bin/ls -ln "$f"
+        /usr/bin/shasum -a 256 "$f" 2>/dev/null || true
+    else
+        echo "missing: $f"
+    fi
+done
+
+echo
 echo "== translate dependencies =="
 /usr/bin/file /usr/libexec/oah/translate 2>&1 || true
 /usr/bin/otool -L /usr/libexec/oah/translate 2>&1 || true

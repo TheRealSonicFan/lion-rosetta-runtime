@@ -10,7 +10,7 @@ Use this together with `lion-rosetta-xnu`, which restores Lion's kernel architec
 
 A payload collected from Mac OS X 10.6.8 build 10K549 was inspected while developing these scripts. It contains `translate`, `RosettaNonGrata`, the complete `Shims` tree, `RosettaVersion.plist`, Rosetta receipts, and the Rosetta dyld shared cache/map. The inspected runtime does **not** contain a `/usr/libexec/oah/translated` executable.
 
-The translator binary also contains an absolute reference to `/System/Library/OAH/nbb/`. The collector therefore preserves `/System/Library/OAH` when it exists on the source Mac. It also preserves `/Library/Preferences/com.apple.ReportMessages.domains` when present and records the package-owned file lists reported by `pkgutil`.
+The translator binary also contains an absolute reference to `/System/Library/OAH/nbb/`, but a direct audit of the validating 10.6.8 build 10K549 machine found `/System/Library/OAH` absent. The collector still preserves that tree if it exists on another source Mac. It also preserves `/Library/Preferences/com.apple.ReportMessages.domains` when present and records the package-owned file lists reported by `pkgutil`.
 
 ## 1. On the Snow Leopard 10.6.8 source system
 
@@ -33,7 +33,7 @@ payload/rosetta-10.6.8-runtime.tar.gz
 payload/rosetta-10.6.8-runtime.tar.gz.sha256
 ```
 
-The archive preserves original paths beneath a private staging root. It includes `/usr/libexec/oah` and, when present, Rosetta metadata/receipts, `/System/Library/OAH`, the report-messages preference, and the Snow Leopard Rosetta dyld cache for analysis/fallback. It does **not** copy Snow Leopard's general `/System/Library` or `/usr/lib` contents.
+The archive preserves original paths beneath a private staging root. It includes `/usr/libexec/oah` and, when present, Rosetta metadata/receipts, `/System/Library/OAH`, the report-messages preference, and the Snow Leopard Rosetta dyld cache. It does **not** copy Snow Leopard's general `/System/Library` or `/usr/lib` contents. The collector verifies critical source/staged hashes and records the Rosetta cache size/mtime so a cache rebuild between audits is detectable.
 
 ## 2. Transfer the local payload to Lion
 
@@ -44,6 +44,8 @@ Inspect it first:
 ```sh
 scripts/inspect-payload.sh payload/rosetta-10.6.8-runtime.tar.gz
 ```
+
+The inspector now verifies every file listed in `ROSETTA_PAYLOAD_MANIFEST.txt` before reporting the payload as valid.
 
 ## 3. Install on Lion
 

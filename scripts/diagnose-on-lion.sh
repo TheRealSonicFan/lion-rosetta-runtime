@@ -24,6 +24,22 @@ for f in /usr/libexec/oah/translate /usr/libexec/oah/RosettaNonGrata; do
 done
 
 echo
+echo "== translate native dependencies on Lion =="
+for f in \
+    /System/Library/Frameworks/IOKit.framework/Versions/A/IOKit \
+    /usr/lib/libstdc++.6.dylib \
+    /usr/lib/libgcc_s.1.dylib \
+    /usr/lib/libSystem.B.dylib \
+    /usr/lib/dyld; do
+    if [ -e "$f" ]; then
+        echo "-- present: $f"
+        /usr/bin/file "$f" 2>&1 || true
+    else
+        echo "MISSING: $f"
+    fi
+done
+
+echo
 echo "== Shims =="
 if [ -d /usr/libexec/oah/Shims ]; then
     /usr/bin/find /usr/libexec/oah/Shims -type f -print 2>/dev/null || true
@@ -56,6 +72,11 @@ if [ -f /private/var/db/dyld/dyld_shared_cache_rosetta ]; then
     echo "Rosetta cache magic:"
     /usr/bin/head -c 16 /private/var/db/dyld/dyld_shared_cache_rosetta 2>/dev/null || true
     echo
+    /usr/bin/stat -f 'Rosetta cache size=%z mtime_epoch=%m' /private/var/db/dyld/dyld_shared_cache_rosetta 2>/dev/null || true
+    /usr/bin/shasum -a 256 /private/var/db/dyld/dyld_shared_cache_rosetta 2>/dev/null || true
+fi
+if [ -f /private/var/db/dyld/dyld_shared_cache_rosetta.map ]; then
+    /usr/bin/shasum -a 256 /private/var/db/dyld/dyld_shared_cache_rosetta.map 2>/dev/null || true
 fi
 
 echo

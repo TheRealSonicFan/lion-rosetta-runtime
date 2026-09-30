@@ -30,6 +30,33 @@ copy_path() {
     return 1
 }
 
+sha256_file() {
+    /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'
+}
+
+file_size() {
+    value="$(/usr/bin/stat -f %z "$1" 2>/dev/null || true)"
+    case "$value" in
+        ''|*[!0-9]*) value="$(/bin/ls -ln "$1" | /usr/bin/awk '{print $5}')" ;;
+    esac
+    echo "$value"
+}
+
+verify_staged_file() {
+    src="$1"
+    dst="$STAGE$src"
+    [ -f "$src" ] || return 0
+    [ -f "$dst" ] || { echo "error: staged copy missing: $src" >&2; exit 68; }
+    src_sum="$(sha256_file "$src")"
+    dst_sum="$(sha256_file "$dst")"
+    if [ "$src_sum" != "$dst_sum" ]; then
+        echo "error: source changed while collecting or staged copy differs: $src" >&2
+        echo "       source=$src_sum" >&2
+        echo "       staged=$dst_sum" >&2
+        exit 68
+    fi
+}
+
 # Preserve the complete OAH directory so companion binaries/Shims are not guessed one by one.
 copy_path /usr/libexec/oah
 
@@ -38,14 +65,24 @@ copy_path /private/var/db/RosettaVersion.plist || true
 copy_path /Library/Preferences/com.apple.ReportMessages.domains || true
 
 # translate contains an absolute reference to /System/Library/OAH/nbb/.  Preserve the
-# complete /System/Library/OAH tree if the source system has it; it may be empty or
-# runtime-generated on some installations.
+# complete /System/Library/OAH tree if the source system has it. On the audited 10K549
+# source used for this project the path was absent, so it is optional rather than required.
 copy_path /System/Library/OAH || true
 
 # Capture the 10.6 Rosetta shared cache. Lion no longer carries PPC slices for
 # many system frameworks, so this cache is needed for the first compatibility test.
 for f in /private/var/db/dyld/dyld_shared_cache_rosetta /private/var/db/dyld/dyld_shared_cache_rosetta.map; do
     copy_path "$f" || true
+done
+
+# Verify critical files after copying. The Rosetta cache can be rebuilt by Snow Leopard;
+# refuse an archive if a file changed while it was being collected.
+for f in \
+    /usr/libexec/oah/translate \
+    /private/var/db/dyld/dyld_shared_cache_rosetta \
+    /private/var/db/dyld/dyld_shared_cache_rosetta.map \
+    /Library/Preferences/com.apple.ReportMessages.domains; do
+    verify_staged_file "$f"
 done
 
 # Receipts are diagnostic/provenance data only.
@@ -55,7 +92,7 @@ for f in /private/var/db/receipts/*Rosetta* /private/var/db/receipts/*rosetta*; 
     fi
 done
 
-# Record package-owned paths as reported by the source installation.  This lets us
+# Record package-owned paths as reported by the source installation. This lets us
 # compare a payload against the real package receipts without redistributing files.
 PKG_LIST="$STAGE/ROSETTA_PACKAGE_FILES.txt"
 : > "$PKG_LIST"
@@ -74,12 +111,16 @@ MANIFEST="$STAGE/ROSETTA_PAYLOAD_MANIFEST.txt"
     echo "source_product_version=$PRODUCT_VERSION"
     echo "source_build=$(/usr/bin/sw_vers -buildVersion 2>/dev/null || true)"
     echo "collected_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    if [ -f /private/var/db/dyld/dyld_shared_cache_rosetta ]; then
+        echo "source_rosetta_cache_mtime_epoch=$(/usr/bin/stat -f %m /private/var/db/dyld/dyld_shared_cache_rosetta 2>/dev/null || true)"
+        echo "source_rosetta_cache_size=$(file_size /private/var/db/dyld/dyld_shared_cache_rosetta)"
+    fi
     echo
     echo "files:"
     /usr/bin/find "$STAGE" -type f ! -name ROSETTA_PAYLOAD_MANIFEST.txt -print | while read f; do
         rel="${f#$STAGE}"
-        sum="$(/usr/bin/shasum -a 256 "$f" | /usr/bin/awk '{print $1}')"
-        size="$(/usr/bin/stat -f %z "$f" 2>/dev/null || /bin/ls -ln "$f" | /usr/bin/awk '{print $5}')"
+        sum="$(sha256_file "$f")"
+        size="$(file_size "$f")"
         echo "$sum  $size  $rel"
     done | /usr/bin/sort
 } > "$MANIFEST"
