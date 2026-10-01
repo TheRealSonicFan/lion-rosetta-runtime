@@ -104,7 +104,13 @@ if [ -z "$CC_SELECTED" ]; then
 fi
 
 echo "Using PowerPC-capable compiler: $CC_SELECTED"
-"$CC_SELECTED" -arch ppc -mmacosx-version-min=10.4 "$TMP_SRC" -o "$OUT"
+if [ -n "${PPC_DYLINKER:-}" ]; then
+    echo "Using alternate PPC LC_LOAD_DYLINKER: $PPC_DYLINKER"
+    "$CC_SELECTED" -arch ppc -mmacosx-version-min=10.4 \
+        -Wl,-dylinker,"$PPC_DYLINKER" "$TMP_SRC" -o "$OUT"
+else
+    "$CC_SELECTED" -arch ppc -mmacosx-version-min=10.4 "$TMP_SRC" -o "$OUT"
+fi
 /bin/chmod +x "$OUT"
 
 /usr/bin/file "$OUT"
