@@ -3,6 +3,7 @@ set -e
 
 OUT="${1:-./lion-rosetta-test-report.txt}"
 SMOKE="${2:-}"
+OTOOL="$(command -v otool 2>/dev/null || true)"
 
 {
     echo "lion-rosetta first-test report"
@@ -11,7 +12,13 @@ SMOKE="${2:-}"
 
     echo "== System =="
     /usr/bin/sw_vers 2>&1 || true
-    /bin/uname -a 2>&1 || true
+    if [ -x /usr/bin/uname ]; then
+        /usr/bin/uname -a 2>&1 || true
+    elif [ -x /bin/uname ]; then
+        /bin/uname -a 2>&1 || true
+    else
+        uname -a 2>&1 || true
+    fi
 
     echo
     echo "== Architecture handler =="
@@ -32,7 +39,11 @@ SMOKE="${2:-}"
         if [ -f "$f" ]; then
             echo "-- $f"
             /usr/bin/file "$f" 2>&1 || true
-            /usr/bin/otool -L "$f" 2>&1 || true
+            if [ -n "$OTOOL" ]; then
+                "$OTOOL" -L "$f" 2>&1 || true
+            else
+                echo "otool: unavailable (Developer Tools not installed)"
+            fi
             /usr/bin/shasum -a 256 "$f" 2>&1 || true
         else
             echo "missing: $f"
@@ -89,7 +100,11 @@ SMOKE="${2:-}"
         echo "== PPC smoke test =="
         if [ -x "$SMOKE" ]; then
             /usr/bin/file "$SMOKE" 2>&1 || true
-            /usr/bin/otool -L "$SMOKE" 2>&1 || true
+            if [ -n "$OTOOL" ]; then
+                "$OTOOL" -L "$SMOKE" 2>&1 || true
+            else
+                echo "otool: unavailable (Developer Tools not installed)"
+            fi
             /usr/bin/shasum -a 256 "$SMOKE" 2>&1 || true
             echo "-- execution --"
             if "$SMOKE"; then rc=0; else rc=$?; fi
