@@ -27,6 +27,7 @@ Use a staged progression so a failure identifies the layer that is still incompa
    - run it on Lion with `run-lion-commpage-probe.sh`.
    - require `RESULT: PASS` before invoking a PPC executable.
    - this specifically verifies that `0xffff8020` and representative Rosetta branch/signature data are mapped and populated.
+   - validated result on the current Lion 10.7.5 phase-2 kernel: PASS; native version 12, Rosetta version 11, PPC capabilities `0x00020145`, cache line 32, expected PPC-view constants, signature data, and low/high branch-assist representatives.
 
 6. **Minimal 32-bit PPC Mach-O**
    - reuse the already validated `ppc-smoketest` binary when possible.
