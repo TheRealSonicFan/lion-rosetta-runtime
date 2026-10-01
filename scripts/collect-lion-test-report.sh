@@ -3,6 +3,7 @@ set -e
 
 OUT="${1:-./lion-rosetta-test-report.txt}"
 SMOKE="${2:-}"
+EXECUTE_SMOKE="${3:-}"
 OTOOL="$(command -v otool 2>/dev/null || true)"
 
 {
@@ -84,16 +85,34 @@ OTOOL="$(command -v otool 2>/dev/null || true)"
 
     echo
     echo "== Candidate Rosetta crash reports =="
-    found=0
+    latest_crash=""
     for dir in "$HOME/Library/Logs/DiagnosticReports" "$HOME/Library/Logs/CrashReporter" /Library/Logs/DiagnosticReports /Library/Logs/CrashReporter; do
         if [ -d "$dir" ]; then
-            for crash in "$dir"/translate*.crash "$dir"/ppc-smoketest*.crash; do
-                [ -f "$crash" ] && echo "$crash"
+            for crash in "$dir"/ppc-smoketest*.crash "$dir"/translate*.crash; do
+                [ -f "$crash" ] || continue
+                echo "$crash"
+                if [ -z "$latest_crash" ] || [ "$crash" -nt "$latest_crash" ]; then
+                    latest_crash="$crash"
+                fi
             done
-            found=1
         fi
     done
-    [ "$found" -eq 1 ] || echo "no standard crash-report directories found"
+    if [ -z "$latest_crash" ]; then
+        echo "none found"
+    else
+        echo
+        echo "== Newest Rosetta crash report =="
+        echo "path=$latest_crash"
+        /bin/cat "$latest_crash" 2>&1 || true
+    fi
+
+    echo
+    echo "== Relevant system.log tail =="
+    if [ -r /var/log/system.log ]; then
+        /usr/bin/grep -Ei 'Rosetta|translate|ppc-smoketest|shared region|dyld' /var/log/system.log 2>/dev/null | /usr/bin/tail -n 200 || true
+    else
+        echo "unreadable: /var/log/system.log"
+    fi
 
     if [ -n "$SMOKE" ]; then
         echo
@@ -106,9 +125,14 @@ OTOOL="$(command -v otool 2>/dev/null || true)"
                 echo "otool: unavailable (Developer Tools not installed)"
             fi
             /usr/bin/shasum -a 256 "$SMOKE" 2>&1 || true
-            echo "-- execution --"
-            if "$SMOKE"; then rc=0; else rc=$?; fi
-            echo "smoke_exit_status=$rc"
+
+            if [ "$EXECUTE_SMOKE" = "--execute" ]; then
+                echo "-- execution --"
+                if "$SMOKE"; then rc=0; else rc=$?; fi
+                echo "smoke_exit_status=$rc"
+            else
+                echo "execution skipped (pass --execute as third argument to rerun)"
+            fi
         else
             echo "not executable or missing: $SMOKE"
         fi
