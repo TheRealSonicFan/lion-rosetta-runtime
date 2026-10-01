@@ -1,9 +1,17 @@
 #!/bin/bash
 
 PRODUCT_VERSION="$(/usr/bin/sw_vers -productVersion 2>/dev/null || true)"
+OTOOL="$(command -v otool 2>/dev/null || true)"
+
 echo "== System =="
 /usr/bin/sw_vers 2>/dev/null || true
-/bin/uname -a
+if [ -x /usr/bin/uname ]; then
+    /usr/bin/uname -a
+elif [ -x /bin/uname ]; then
+    /bin/uname -a
+else
+    uname -a 2>&1 || true
+fi
 
 echo
 echo "== Kernel architecture handler =="
@@ -18,7 +26,11 @@ for f in /usr/libexec/oah/translate /usr/libexec/oah/RosettaNonGrata; do
         echo
         echo "-- $f"
         /usr/bin/file "$f" 2>&1 || true
-        /usr/bin/otool -L "$f" 2>&1 || true
+        if [ -n "$OTOOL" ]; then
+            "$OTOOL" -L "$f" 2>&1 || true
+        else
+            echo "otool: unavailable (Developer Tools not installed)"
+        fi
         /usr/bin/shasum -a 256 "$f" 2>&1 || true
     fi
 done
