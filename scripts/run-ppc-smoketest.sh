@@ -17,7 +17,9 @@ echo "Architecture handler:"
 /usr/sbin/sysctl kern.exec.archhandler.powerpc || true
 
 echo "Executing test..."
+set +e
 "$EXE" "$@"
 RC=$?
+set -e
 echo "exit status: $RC"
 exit $RC
