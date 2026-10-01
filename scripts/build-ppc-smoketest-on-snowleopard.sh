@@ -32,6 +32,25 @@ resolve_compiler() {
     command -v "$candidate" 2>/dev/null || return 1
 }
 
+is_ppc32_macho() {
+    file="$1"
+
+    # Prefer lipo's architecture check: it understands Mach-O architecture
+    # names directly and avoids depending on file(1)'s wording ("ppc" vs
+    # "PowerPC").
+    if [ -x /usr/bin/lipo ]; then
+        if /usr/bin/lipo -verify_arch ppc "$file" >/dev/null 2>&1; then
+            return 0
+        fi
+    fi
+
+    # Fallback for systems where lipo is unavailable.
+    desc="$(/usr/bin/file "$file" 2>/dev/null || true)"
+    echo "$desc" | /usr/bin/grep -Eiq '(^|[^[:alnum:]_])(ppc|powerpc)([^[:alnum:]_]|$)' || return 1
+    echo "$desc" | /usr/bin/grep -Eiq 'ppc64|powerpc64' && return 1
+    return 0
+}
+
 probe_compiler() {
     candidate="$1"
     compiler="$(resolve_compiler "$candidate" || true)"
@@ -39,16 +58,19 @@ probe_compiler() {
 
     /bin/rm -f "$TMP_PROBE_BIN"
     if "$compiler" -arch ppc -mmacosx-version-min=10.4 "$TMP_PROBE_SRC" -o "$TMP_PROBE_BIN" >"$TMP_LOG" 2>&1; then
-        if [ -f "$TMP_PROBE_BIN" ]; then
-            desc="$(/usr/bin/file "$TMP_PROBE_BIN" 2>/dev/null || true)"
-            echo "$desc" | /usr/bin/grep -qi 'PowerPC' && {
-                CC_SELECTED="$compiler"
-                return 0
-            }
+        if [ -f "$TMP_PROBE_BIN" ] && is_ppc32_macho "$TMP_PROBE_BIN"; then
+            CC_SELECTED="$compiler"
+            return 0
         fi
     fi
 
     echo "Rejected compiler: $compiler" >&2
+    if [ -f "$TMP_PROBE_BIN" ]; then
+        /usr/bin/file "$TMP_PROBE_BIN" >&2 || true
+        if [ -x /usr/bin/lipo ]; then
+            /usr/bin/lipo -info "$TMP_PROBE_BIN" >&2 || true
+        fi
+    fi
     /bin/cat "$TMP_LOG" >&2 || true
     return 1
 }
@@ -76,8 +98,7 @@ fi
 
 if [ -z "$CC_SELECTED" ]; then
     echo "error: no installed compiler/toolchain could build and link a 32-bit PowerPC Mach-O executable" >&2
-    echo "Xcode 4.2's llvm-gcc installation may be present without its PowerPC backend." >&2
-    echo "Use a PowerPC-capable Xcode 3.2.6 GCC toolchain and rerun with, for example:" >&2
+    echo "Use a PowerPC-capable Xcode 3.x GCC toolchain and rerun with, for example:" >&2
     echo "  CC=/path/to/gcc-4.2 $0 $OUT" >&2
     exit 69
 fi
@@ -85,6 +106,16 @@ fi
 echo "Using PowerPC-capable compiler: $CC_SELECTED"
 "$CC_SELECTED" -arch ppc -mmacosx-version-min=10.4 "$TMP_SRC" -o "$OUT"
 /bin/chmod +x "$OUT"
+
 /usr/bin/file "$OUT"
+if [ -x /usr/bin/lipo ]; then
+    /usr/bin/lipo -info "$OUT" || true
+fi
 /usr/bin/shasum -a 256 "$OUT" 2>/dev/null || true
+
+is_ppc32_macho "$OUT" || {
+    echo "error: output is not a 32-bit PowerPC Mach-O executable" >&2
+    exit 70
+}
+
 echo "Created: $OUT"
