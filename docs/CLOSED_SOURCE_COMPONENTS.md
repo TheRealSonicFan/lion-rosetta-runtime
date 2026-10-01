@@ -23,6 +23,8 @@ Although `translate` contains an absolute reference to `/System/Library/OAH/nbb/
 
 `ROSETTA_PACKAGE_FILES.txt` is generated from `pkgutil --files` for the Rosetta package receipts. On the audited source, both the base Rosetta receipt and the 10.6.8 combo-update receipt identify `/usr/libexec/oah/translate` as their payload file.
 
+A new postmortem finding identifies a separate guest-loader dependency: `translate` explicitly opens `/usr/lib/dyld` while requesting a PowerPC Mach-O slice. Lion's native dyld has no PPC slice, so a controlled compatibility experiment may require a private Snow Leopard PPC-capable dyld at an alternate path. This file is **not** part of the public runtime payload inventory, must never replace Lion's native `/usr/lib/dyld`, and must never be committed. See `PPC_DYLD_GAP.md`.
+
 The Snow Leopard Rosetta cache is mutable and can be rebuilt when the system shared cache changes. The collector hashes the source and staged cache after copying and refuses to create an archive if the file changes during collection. The manifest records cache size and modification epoch.
 
 The currently validated `dyld_shared_cache_rosetta` identifies itself as a PPC cache (`dyld_v1     ppc`) and its map contains 180 unique PPC image paths. An older cache snapshot contained three additional private symbolication/debugging frameworks; their removal is documented in `VALIDATED_PAYLOAD.md`. Because Lion removed PPC slices from many system frameworks, the runtime installer installs this isolated Rosetta cache while leaving Lion's native i386/x86_64 caches untouched.
