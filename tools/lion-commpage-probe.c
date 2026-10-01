@@ -60,25 +60,23 @@ be64(const unsigned char *p)
 static int
 read_bytes(mach_vm_address_t address, void *buffer, mach_vm_size_t size)
 {
-    mach_vm_size_t got = 0;
-    kern_return_t kr;
+    volatile const unsigned char *src;
+    unsigned char *dst;
+    mach_vm_size_t i;
 
-    kr = mach_vm_read_overwrite(mach_task_self(), address, size,
-                                (mach_vm_address_t)(uintptr_t)buffer, &got);
-    if (kr != KERN_SUCCESS) {
-        printf("FAIL: read 0x%08llx size=%llu: %s (%d)\n",
-               (unsigned long long)address,
-               (unsigned long long)size,
-               mach_error_string(kr), kr);
-        return 0;
-    }
-    if (got != size) {
-        printf("FAIL: short read 0x%08llx: got=%llu expected=%llu\n",
-               (unsigned long long)address,
-               (unsigned long long)got,
-               (unsigned long long)size);
-        return 0;
-    }
+    /*
+     * Read the commpage exactly as ordinary user code does: through the
+     * process's own mapped virtual address.  mach_vm_read_overwrite() is
+     * not a reliable probe for this shared commpage mapping on Lion/i386;
+     * it can return KERN_INVALID_ADDRESS even when mach_vm_region() reports
+     * the range as readable and normal user loads succeed.
+     */
+    src = (volatile const unsigned char *)(uintptr_t)address;
+    dst = (unsigned char *)buffer;
+
+    for (i = 0; i < size; i++)
+        dst[i] = src[i];
+
     return 1;
 }
 
