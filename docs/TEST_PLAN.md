@@ -33,6 +33,9 @@ Use a staged progression so a failure identifies the layer that is still incompa
    - reuse the already validated `ppc-smoketest` binary when possible.
    - run it on Lion with `run-ppc-smoketest.sh`.
    - capture `collect-lion-test-report.sh ./lion-rosetta-test-report.txt ./ppc-smoketest` after the attempt.
+   - if Rosetta fails while opening the guest `/usr/lib/dyld`, follow `docs/PPC_DYLD_GAP.md` before making another kernel change.
+   - the current Lion direct-launch postmortem shows exactly this condition: Rosetta requests a PPC dyld, Lion provides only x86_64/i386, and the translator misparses the fallback x86_64 slice.
+   - use a disposable PPC smoke binary with a private alternate `LC_LOAD_DYLINKER` for the controlled test; never replace Lion's native `/usr/lib/dyld`.
 
 7. **Dynamic-library expansion**
    - if the smoke test works, test additional PPC binaries that exercise ordinary system libraries.
