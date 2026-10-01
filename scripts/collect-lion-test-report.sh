@@ -86,24 +86,47 @@ OTOOL="$(command -v otool 2>/dev/null || true)"
     echo
     echo "== Candidate Rosetta crash reports =="
     latest_crash=""
+    latest_current_boot_crash=""
+    boot_epoch=""
+    if [ -x /usr/sbin/sysctl ]; then
+        boot_epoch="$(/usr/sbin/sysctl -n kern.boottime 2>/dev/null | /usr/bin/sed -E 's/.*sec = ([0-9]+).*/\\1/' || true)"
+        case "$boot_epoch" in
+            ''|*[!0-9]*) boot_epoch="" ;;
+        esac
+    fi
+    [ -n "$boot_epoch" ] && echo "boot_epoch=$boot_epoch"
+
     for dir in "$HOME/Library/Logs/DiagnosticReports" "$HOME/Library/Logs/CrashReporter" /Library/Logs/DiagnosticReports /Library/Logs/CrashReporter; do
         if [ -d "$dir" ]; then
             for crash in "$dir"/ppc-smoketest*.crash "$dir"/translate*.crash; do
                 [ -f "$crash" ] || continue
-                echo "$crash"
+                crash_epoch="$(/usr/bin/stat -f '%m' "$crash" 2>/dev/null || echo 0)"
+                echo "$crash mtime_epoch=$crash_epoch"
                 if [ -z "$latest_crash" ] || [ "$crash" -nt "$latest_crash" ]; then
                     latest_crash="$crash"
+                fi
+                if [ -n "$boot_epoch" ] && [ "$crash_epoch" -ge "$boot_epoch" ] 2>/dev/null; then
+                    if [ -z "$latest_current_boot_crash" ] || [ "$crash" -nt "$latest_current_boot_crash" ]; then
+                        latest_current_boot_crash="$crash"
+                    fi
                 fi
             done
         fi
     done
+
     if [ -z "$latest_crash" ]; then
         echo "none found"
-    else
+    elif [ -n "$boot_epoch" ] && [ -z "$latest_current_boot_crash" ]; then
         echo
-        echo "== Newest Rosetta crash report =="
-        echo "path=$latest_crash"
-        /bin/cat "$latest_crash" 2>&1 || true
+        echo "No Rosetta crash report from the current boot."
+        echo "Newest historical crash (not embedded): $latest_crash"
+    else
+        crash_to_embed="$latest_current_boot_crash"
+        [ -n "$crash_to_embed" ] || crash_to_embed="$latest_crash"
+        echo
+        echo "== Newest Rosetta crash report from current boot =="
+        echo "path=$crash_to_embed"
+        /bin/cat "$crash_to_embed" 2>&1 || true
     fi
 
     echo
