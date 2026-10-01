@@ -89,9 +89,8 @@ is_i386_macho() {
     [ -f "$file" ] || return 1
 
     if [ -x /usr/bin/lipo ]; then
-        if /usr/bin/lipo -verify_arch i386 "$file" >/dev/null 2>&1; then
-            return 0
-        fi
+        /usr/bin/lipo "$file" -verify_arch i386 >/dev/null 2>&1 && return 0
+        /usr/bin/lipo -verify_arch i386 "$file" >/dev/null 2>&1 && return 0
 
         info="$(/usr/bin/lipo -info "$file" 2>/dev/null || true)"
         echo "$info" | /usr/bin/grep -Eiq '(^|[[:space:]:])i386([[:space:]]|$)' && return 0
