@@ -34,13 +34,13 @@ Only continue if `lipo -verify_arch ppc` succeeds.
 For a disposable experiment, put a private copy of the validated Snow Leopard dyld at a path that does not replace any Lion native file. For example:
 
 ```
-/usr/libexec/oah/ppc-dyld-test
+/usr/local/libexec/rosetta-test/dyld
 ```
 
 Then, on Snow Leopard, build a new PPC smoke executable whose `LC_LOAD_DYLINKER` names that path:
 
 ```sh
-PPC_DYLINKER=/usr/libexec/oah/ppc-dyld-test \
+PPC_DYLINKER=/usr/local/libexec/rosetta-test/dyld \
   ./scripts/build-ppc-smoketest-on-snowleopard.sh ./ppc-smoketest-private-dyld
 ```
 
@@ -60,7 +60,9 @@ Run the direct-translator control first:
 echo "status=$?"
 ```
 
-If that reaches the PPC smoke-test message and exits 0, run the normal PPC exec path next:
+If that reaches the PPC smoke-test message and exits 0, the private-dyld hypothesis is confirmed for direct translator launch.
+
+The normal PPC exec path is the next layer, but only expect it to work after the XNU PowerPC subject-path correction is present in the *running* kernel. If the currently booted kernel predates that correction, preserve the successful direct-launch result and defer the normal launch until the corrected kernel has been rebuilt and installed:
 
 ```sh
 ./scripts/run-ppc-smoketest.sh ./ppc-smoketest-private-dyld
