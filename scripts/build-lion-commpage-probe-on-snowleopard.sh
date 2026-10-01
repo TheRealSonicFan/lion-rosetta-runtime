@@ -56,7 +56,7 @@ probe_compiler() {
     /bin/rm -f "$TMP_PROBE_BIN"
     : > "$TMP_LOG"
 
-    if "$compiler" -arch i386 -mmacosx-version-min=10.6         "$TMP_PROBE_SRC" -o "$TMP_PROBE_BIN" >"$TMP_LOG" 2>&1; then
+    if "$compiler" -arch i386 -mmacosx-version-min=10.6 -x c "$TMP_PROBE_SRC" -o "$TMP_PROBE_BIN" >"$TMP_LOG" 2>&1; then
         if is_i386_macho "$TMP_PROBE_BIN"; then
             CC_SELECTED="$compiler"
             return 0
