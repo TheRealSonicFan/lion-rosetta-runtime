@@ -4,7 +4,7 @@ Local extraction, validation, installation, and diagnostics for the closed-sourc
 
 **This repository intentionally contains no Apple proprietary binaries.** The scripts collect them from your own Snow Leopard installation into a local tarball ignored by Git.
 
-Use this together with `lion-rosetta-xnu`, which restores Lion's kernel architecture-handler path to `/usr/libexec/oah/translate`.
+Use this together with `lion-rosetta-xnu`. Its phase-2 source patch restores both Lion's PowerPC architecture-handler path and the Snow Leopard-compatible translated 32-bit commpage ABI required by Rosetta.
 
 ## Verified 10.6.8 payload
 
@@ -65,13 +65,26 @@ After installing the patched kernel from the companion repository and rebooting,
 scripts/diagnose-on-lion.sh
 ```
 
-Then test a disposable 32-bit PowerPC command-line executable before testing GUI applications. To capture one shareable text report around the first execution attempt:
+Before executing another PowerPC process with the phase-2 kernel, run the native i386 translated-commpage probe. Build it on Snow Leopard if the Lion system has no Developer Tools:
+
+```sh
+CC=/Developer-3.2.6/usr/bin/gcc-4.2 \
+scripts/build-lion-commpage-probe-on-snowleopard.sh ./lion-commpage-probe
+```
+
+Copy it to Lion and run:
+
+```sh
+scripts/run-lion-commpage-probe.sh ./lion-commpage-probe
+```
+
+Only after the probe reports `RESULT: PASS` should you rerun the disposable 32-bit PPC smoke test. To capture a shareable report around a PPC attempt:
 
 ```sh
 scripts/collect-lion-test-report.sh ./lion-rosetta-test-report.txt /path/to/ppc-smoketest
 ```
 
-The report script records paths to candidate Rosetta crash reports but does not copy their contents automatically.
+The report script records candidate Rosetta crash paths and embeds the newest relevant crash report when one exists. It does not rerun the PPC executable unless `--execute` is supplied as its third argument.
 
 ## Why the test is staged
 
