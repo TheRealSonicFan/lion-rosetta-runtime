@@ -27,11 +27,67 @@ resolve_compiler() {
     command -v "$candidate" 2>/dev/null || return 1
 }
 
+select_sdk() {
+    compiler="$1"
+
+    if [ -n "${SDKROOT:-}" ] && [ -d "$SDKROOT" ]; then
+        echo "$SDKROOT"
+        return 0
+    fi
+
+    case "$compiler" in
+        /Developer-3.2.6/*)
+            [ -d /Developer-3.2.6/SDKs/MacOSX10.6.sdk ] && {
+                echo /Developer-3.2.6/SDKs/MacOSX10.6.sdk
+                return 0
+            }
+            ;;
+        /Developer/*)
+            [ -d /Developer/SDKs/MacOSX10.6.sdk ] && {
+                echo /Developer/SDKs/MacOSX10.6.sdk
+                return 0
+            }
+            [ -d /Developer/SDKs/MacOSX10.7.sdk ] && {
+                echo /Developer/SDKs/MacOSX10.7.sdk
+                return 0
+            }
+            ;;
+    esac
+
+    version="$(/usr/bin/sw_vers -productVersion 2>/dev/null || true)"
+    case "$version" in
+        10.6|10.6.*)
+            [ -d /Developer-3.2.6/SDKs/MacOSX10.6.sdk ] && {
+                echo /Developer-3.2.6/SDKs/MacOSX10.6.sdk
+                return 0
+            }
+            [ -d /Developer/SDKs/MacOSX10.6.sdk ] && {
+                echo /Developer/SDKs/MacOSX10.6.sdk
+                return 0
+            }
+            ;;
+        10.7|10.7.*)
+            [ -d /Developer/SDKs/MacOSX10.7.sdk ] && {
+                echo /Developer/SDKs/MacOSX10.7.sdk
+                return 0
+            }
+            [ -d /Developer/SDKs/MacOSX10.6.sdk ] && {
+                echo /Developer/SDKs/MacOSX10.6.sdk
+                return 0
+            }
+            ;;
+    esac
+
+    # Building against the live system root is still valid when the
+    # corresponding headers/libraries are installed.
+    echo ""
+    return 0
+}
+
 is_i386_macho() {
     file="$1"
     [ -f "$file" ] || return 1
 
-    # Prefer lipo when it can positively identify the i386 slice.
     if [ -x /usr/bin/lipo ]; then
         if /usr/bin/lipo -verify_arch i386 "$file" >/dev/null 2>&1; then
             return 0
@@ -41,11 +97,24 @@ is_i386_macho() {
         echo "$info" | /usr/bin/grep -Eiq '(^|[[:space:]:])i386([[:space:]]|$)' && return 0
     fi
 
-    # file(1) wording differs somewhat across Snow Leopard and Lion.
     desc="$(/usr/bin/file "$file" 2>/dev/null || true)"
-    echo "$desc" | /usr/bin/grep -Eiq 'Mach-O.*(^|[[:space:]])i386([[:space:]]|$)' && return 0
+    echo "$desc" | /usr/bin/grep -Eiq 'Mach-O.*[[:space:]]i386([[:space:]]|$)' && return 0
 
     return 1
+}
+
+compile_probe_program() {
+    compiler="$1"
+    sdk="$2"
+
+    /bin/rm -f "$TMP_PROBE_BIN"
+    : > "$TMP_LOG"
+
+    if [ -n "$sdk" ]; then
+        "$compiler" -arch i386 -mmacosx-version-min=10.6 -isysroot "$sdk" -x c "$TMP_PROBE_SRC" -o "$TMP_PROBE_BIN" >"$TMP_LOG" 2>&1
+    else
+        "$compiler" -arch i386 -mmacosx-version-min=10.6 -x c "$TMP_PROBE_SRC" -o "$TMP_PROBE_BIN" >"$TMP_LOG" 2>&1
+    fi
 }
 
 probe_compiler() {
@@ -53,28 +122,32 @@ probe_compiler() {
     compiler="$(resolve_compiler "$candidate" || true)"
     [ -n "$compiler" ] || return 1
 
-    /bin/rm -f "$TMP_PROBE_BIN"
-    : > "$TMP_LOG"
+    sdk="$(select_sdk "$compiler")"
 
-    if "$compiler" -arch i386 -mmacosx-version-min=10.6 -x c "$TMP_PROBE_SRC" -o "$TMP_PROBE_BIN" >"$TMP_LOG" 2>&1; then
+    if compile_probe_program "$compiler" "$sdk"; then
         if is_i386_macho "$TMP_PROBE_BIN"; then
             CC_SELECTED="$compiler"
+            SDK_SELECTED="$sdk"
             return 0
         fi
     fi
 
     echo "Rejected compiler: $compiler" >&2
+    [ -n "$sdk" ] && echo "  SDK: $sdk" >&2
+
     if [ -f "$TMP_PROBE_BIN" ]; then
         /usr/bin/file "$TMP_PROBE_BIN" >&2 || true
         if [ -x /usr/bin/lipo ]; then
             /usr/bin/lipo -info "$TMP_PROBE_BIN" >&2 || true
         fi
     fi
+
     /bin/cat "$TMP_LOG" >&2 || true
     return 1
 }
 
 CC_SELECTED=""
+SDK_SELECTED=""
 
 if [ -n "${CC:-}" ]; then
     echo "Probing requested compiler: $CC" >&2
@@ -82,7 +155,7 @@ if [ -n "${CC:-}" ]; then
 fi
 
 if [ -z "$CC_SELECTED" ]; then
-    for c in         /Developer-3.2.6/usr/bin/gcc-4.2         /Developer/usr/bin/gcc-4.2         /Developer/usr/bin/llvm-gcc-4.2         /usr/bin/gcc-4.2         /usr/bin/llvm-gcc-4.2         /usr/bin/gcc         /usr/bin/cc; do
+    for c in /Developer-3.2.6/usr/bin/gcc-4.2 /Developer/usr/bin/gcc-4.2 /Developer/usr/bin/llvm-gcc-4.2 /usr/bin/gcc-4.2 /usr/bin/llvm-gcc-4.2 /usr/bin/gcc /usr/bin/cc; do
         echo "Probing compiler: $c" >&2
         if probe_compiler "$c"; then
             break
@@ -99,11 +172,19 @@ if [ -z "$CC_SELECTED" ]; then
 fi
 
 echo "Using i386-capable compiler: $CC_SELECTED"
+if [ -n "$SDK_SELECTED" ]; then
+    echo "Using SDK: $SDK_SELECTED"
+else
+    echo "Using live system headers/libraries (no explicit SDK)"
+fi
 
-# Remove any old output so a failed compile cannot be mistaken for a new probe.
 /bin/rm -f "$OUT"
 
-"$CC_SELECTED" -arch i386 -mmacosx-version-min=10.6 -Wall -Wextra     "$SRC" -o "$OUT"
+if [ -n "$SDK_SELECTED" ]; then
+    "$CC_SELECTED" -arch i386 -mmacosx-version-min=10.6 -isysroot "$SDK_SELECTED" -Wall -Wextra "$SRC" -o "$OUT"
+else
+    "$CC_SELECTED" -arch i386 -mmacosx-version-min=10.6 -Wall -Wextra "$SRC" -o "$OUT"
+fi
 
 /bin/chmod +x "$OUT"
 
