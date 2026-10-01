@@ -36,6 +36,7 @@ Use a staged progression so a failure identifies the layer that is still incompa
    - if Rosetta fails while opening the guest `/usr/lib/dyld`, follow `docs/PPC_DYLD_GAP.md` before making another kernel change.
    - the current Lion direct-launch postmortem shows exactly this condition: Rosetta requests a PPC dyld, Lion provides only x86_64/i386, and the translator misparses the fallback x86_64 slice.
    - use a disposable PPC smoke binary with a private alternate `LC_LOAD_DYLINKER` for the controlled test; never replace Lion's native `/usr/lib/dyld`.
+   - after a successful direct-translator private-dyld test, exercise normal PPC exec only when the running kernel includes the PowerPC subject-path correction documented in `lion-rosetta-xnu`.
 
 7. **Dynamic-library expansion**
    - if the smoke test works, test additional PPC binaries that exercise ordinary system libraries.
