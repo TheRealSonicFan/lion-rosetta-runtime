@@ -217,6 +217,15 @@ The normal PPC exec path is the next layer, but only expect it to work after the
 
 If either test fails, preserve the exact output and newest crash report before changing anything else.
 
+
+### Cache-bypass result: SIGSYS at retired syscall ABI
+
+The corrected cache-bypass run removed the previous cache-rejection diagnostic and reported the PPC subject as loaded, but `translate` then exited 140. The non-debugged crash report identifies `EXC_CRASH (SIGSYS)`, `EIP=0xb815ac07`, and `EAX=0x4e`.
+
+This is no longer best explained as an immediate missing-`libgcc_s.1.dylib` failure. Snow Leopard dyld 132.13 directly invokes legacy syscall 295 for `shared_region_map_np(fd, count, mappings)`. Snow Leopard XNU 1504.15.3 implements syscall 295 with that interface. Lion XNU 1699.32.7 replaces syscall 295 with `nosys` (`old shared_region_map_np`). Lion's `nosys()` sends `SIGSYS` and returns `ENOSYS`; `ENOSYS` is decimal 78, or `0x4e`, matching the crash register.
+
+Preserve `/cores/core.1090` and confirm the crash-site instruction sequence postmortem before implementing a compatibility wrapper. Do not collect or install a private `libgcc_s.1.dylib` yet.
+
 ## Production direction
 
 A successful private-dyld experiment would establish the missing runtime dependency, but it would not by itself define the final installation design. A production solution should keep Lion's native dyld untouched and redirect only translated PPC guest dyld resolution to private Rosetta-compatible material. Candidate mechanisms should be evaluated only after the private-path experiment succeeds.
