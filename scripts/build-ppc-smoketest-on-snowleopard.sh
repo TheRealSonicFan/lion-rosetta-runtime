@@ -2,6 +2,8 @@
 set -e
 
 OUT="${1:-./ppc-smoketest}"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PATCH_DYLINKER="$SCRIPT_DIR/patch-ppc-load-dylinker.py"
 TMP_SRC="$(/usr/bin/mktemp /tmp/ppc-smoketest.XXXXXX.c)"
 TMP_PROBE_SRC="$(/usr/bin/mktemp /tmp/ppc-probe.XXXXXX.c)"
 TMP_PROBE_BIN="$(/usr/bin/mktemp /tmp/ppc-probe.XXXXXX)"
@@ -83,6 +85,8 @@ fi
 
 if [ -z "$CC_SELECTED" ]; then
     for c in \
+        /Developer-3.2.6/usr/bin/gcc-4.2 \
+        /Developer-3.2.6/usr/bin/gcc-4.0 \
         /Developer/usr/bin/gcc-4.2 \
         /Developer/usr/bin/gcc-4.0 \
         /usr/bin/gcc-4.2 \
@@ -104,14 +108,23 @@ if [ -z "$CC_SELECTED" ]; then
 fi
 
 echo "Using PowerPC-capable compiler: $CC_SELECTED"
-if [ -n "${PPC_DYLINKER:-}" ]; then
-    echo "Using alternate PPC LC_LOAD_DYLINKER: $PPC_DYLINKER"
-    "$CC_SELECTED" -arch ppc -mmacosx-version-min=10.4 \
-        -Wl,-dylinker,"$PPC_DYLINKER" "$TMP_SRC" -o "$OUT"
-else
-    "$CC_SELECTED" -arch ppc -mmacosx-version-min=10.4 "$TMP_SRC" -o "$OUT"
-fi
+"$CC_SELECTED" -arch ppc -mmacosx-version-min=10.4 "$TMP_SRC" -o "$OUT"
 /bin/chmod +x "$OUT"
+
+if [ -n "${PPC_DYLINKER:-}" ]; then
+    [ -f "$PATCH_DYLINKER" ] || {
+        echo "error: missing dylinker patch helper: $PATCH_DYLINKER" >&2
+        /bin/rm -f "$OUT"
+        exit 71
+    }
+
+    echo "Patching alternate PPC LC_LOAD_DYLINKER: $PPC_DYLINKER"
+    if ! /usr/bin/python "$PATCH_DYLINKER" "$OUT" "$PPC_DYLINKER"; then
+        echo "error: failed to patch alternate LC_LOAD_DYLINKER" >&2
+        /bin/rm -f "$OUT"
+        exit 71
+    fi
+fi
 
 /usr/bin/file "$OUT"
 if [ -x /usr/bin/lipo ]; then
