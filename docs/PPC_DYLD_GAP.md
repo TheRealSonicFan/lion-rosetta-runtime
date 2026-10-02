@@ -62,47 +62,60 @@ file /usr/lib/dyld
 /usr/bin/shasum -a 256 /usr/lib/dyld
 ```
 
-For a disposable experiment, choose a private dyld pathname that does not replace any Lion native file. For example:
+For the controlled experiment, use the short private path:
 
 ```
-/usr/local/libexec/rosetta-test/dyld
+/usr/oah/dyld
 ```
 
-The pathname does **not** need to exist while the smoke executable is being linked. `PPC_DYLINKER` is passed to the linker only to encode that string in the executable's `LC_LOAD_DYLINKER` command. The dyld file must exist at that pathname before the executable is actually run.
+The short path is deliberate. The Xcode 3.2.6 linker used for the known-good PPC build is ld64-97.17. In that linker, `-dylinker` is an output-kind switch used when building dyld itself; it does **not** accept a pathname argument. The same linker emits the executable's `LC_LOAD_DYLINKER` with the literal string `/usr/lib/dyld`. Therefore the former `-Wl,-dylinker,<path>` recipe was invalid: ld treated the following pathname as an input file, which produced `ld: file not found`.
 
-On Snow Leopard, build a **new** disposable smoke executable whose test source is the same minimal PPC smoke-test source used by this script, but whose `LC_LOAD_DYLINKER` differs from the earlier `ppc-smoketest`:
+The runtime build script now keeps the proven Xcode 3.2.6 PPC compilation path and, when `PPC_DYLINKER` is set, rewrites the existing `LC_LOAD_DYLINKER` command after a normal link. The replacement must fit in the existing load-command string area; `/usr/oah/dyld` has the same 13-character length as `/usr/lib/dyld`.
+
+For the cleanest experiment, derive the private-dyld executable directly from the already validated baseline `ppc-smoketest`. This keeps every byte of the executable unchanged except the dylinker pathname field:
 
 ```sh
-PPC_DYLINKER=/usr/local/libexec/rosetta-test/dyld \
+/bin/cp -p ./ppc-smoketest ./ppc-smoketest-private-dyld
+/usr/bin/python ./scripts/patch-ppc-load-dylinker.py \
+  ./ppc-smoketest-private-dyld /usr/oah/dyld
+```
+
+If the baseline executable is unavailable and a rebuild is required, explicitly use the proven Xcode 3.2.6 compiler:
+
+```sh
+CC=/Developer-3.2.6/usr/bin/gcc-4.2 \
+PPC_DYLINKER=/usr/oah/dyld \
   ./scripts/build-ppc-smoketest-on-snowleopard.sh ./ppc-smoketest-private-dyld
 ```
 
-The existing `ppc-smoketest` is retained as the baseline artifact; `ppc-smoketest-private-dyld` is a separately compiled experimental binary, not a rename or copy of the baseline.
+The build script now probes `/Developer-3.2.6/usr/bin/gcc-4.2` before the Xcode 4.2 and system compiler paths.
 
-Verify the resulting load command before moving the binary:
+Verify the resulting load command:
 
 ```sh
 /usr/bin/otool -l ./ppc-smoketest-private-dyld | \
   /usr/bin/grep -A3 LC_LOAD_DYLINKER
 ```
 
-Before moving the experiment to Lion, validate the exact alternate-path arrangement on Snow Leopard itself. Stage the collected dyld at the same private pathname named by `LC_LOAD_DYLINKER`, verify its SHA-256, and run the direct translator control:
+It must name `/usr/oah/dyld`.
+
+Before moving the experiment to Lion, validate the same arrangement on Snow Leopard. Stage the collected dyld at that private pathname, verify its SHA-256, and run the direct translator control:
 
 ```sh
-sudo /bin/mkdir -p /usr/local/libexec/rosetta-test
+sudo /bin/mkdir -p /usr/oah
 sudo /usr/bin/ditto --rsrc --extattr \
   ./payload/snowleopard-10.6.8-dyld \
-  /usr/local/libexec/rosetta-test/dyld
-sudo /bin/chmod 755 /usr/local/libexec/rosetta-test/dyld
+  /usr/oah/dyld
+sudo /bin/chmod 755 /usr/oah/dyld
 
-/usr/bin/shasum -a 256 /usr/local/libexec/rosetta-test/dyld
+/usr/bin/shasum -a 256 /usr/oah/dyld
 /usr/libexec/oah/translate ./ppc-smoketest-private-dyld
 echo "status=$?"
 ```
 
 The staged dyld hash must remain `963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb`. A successful smoke-test message and status 0 establish that the alternate `LC_LOAD_DYLINKER` path is itself valid under stock Snow Leopard Rosetta.
 
-Only after that control passes, stage the same Snow Leopard dyld privately on Lion at the identical pathname, preserving the checksum. Do not overwrite `/usr/lib/dyld`.
+Only after that control passes, stage the same Snow Leopard dyld privately on Lion at the identical `/usr/oah/dyld` pathname, preserving the checksum. Do not overwrite `/usr/lib/dyld`.
 
 Run the direct-translator control first:
 
