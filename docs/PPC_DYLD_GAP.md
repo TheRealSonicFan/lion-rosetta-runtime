@@ -82,7 +82,23 @@ Verify the resulting load command before moving the binary:
   /usr/bin/grep -A3 LC_LOAD_DYLINKER
 ```
 
-Stage the Snow Leopard dyld privately on Lion, preserving a checksum of the source and destination. Do not overwrite `/usr/lib/dyld`.
+Before moving the experiment to Lion, validate the exact alternate-path arrangement on Snow Leopard itself. Stage the collected dyld at the same private pathname named by `LC_LOAD_DYLINKER`, verify its SHA-256, and run the direct translator control:
+
+```sh
+sudo /bin/mkdir -p /usr/local/libexec/rosetta-test
+sudo /usr/bin/ditto --rsrc --extattr \
+  ./payload/snowleopard-10.6.8-dyld \
+  /usr/local/libexec/rosetta-test/dyld
+sudo /bin/chmod 755 /usr/local/libexec/rosetta-test/dyld
+
+/usr/bin/shasum -a 256 /usr/local/libexec/rosetta-test/dyld
+/usr/libexec/oah/translate ./ppc-smoketest-private-dyld
+echo "status=$?"
+```
+
+The staged dyld hash must remain `963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb`. A successful smoke-test message and status 0 establish that the alternate `LC_LOAD_DYLINKER` path is itself valid under stock Snow Leopard Rosetta.
+
+Only after that control passes, stage the same Snow Leopard dyld privately on Lion at the identical pathname, preserving the checksum. Do not overwrite `/usr/lib/dyld`.
 
 Run the direct-translator control first:
 
