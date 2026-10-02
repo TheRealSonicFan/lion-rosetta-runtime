@@ -245,3 +245,26 @@ The next action depends only on this experiment's result:
 - If a new translator/dyld crash occurs, analyze the new non-debugged crash/core evidence before modifying XNU or runtime state.
 
 No production installation design should be inferred from this experiment alone.
+
+
+## Observed Lion result: legacy shared-region syscall boundary
+
+The corrected cache-validation-bypass run reached a new boundary. With `DYLD_SHARED_CACHE_DONT_VALIDATE=1`, guest dyld no longer emitted the stale-libSystem cache rejection and `DYLD_PRINT_LIBRARIES=1` reported the PPC subject as loaded. The direct translator then terminated with status 140. The matching non-debugged crash report identifies `EXC_CRASH (SIGSYS)`, with the crashed thread inside `translate` at `0xb815ac07` and `EAX=0x0000004e`.
+
+This result aligns exactly with a removed Snow Leopard kernel ABI. Apple dyld 132.13 implements its legacy split-segment shared-region operation as:
+
+```c
+static int _shared_region_map_np(int fd, uint32_t count,
+                                 const shared_file_mapping_np mappings[])
+{
+    return syscall(295, fd, count, mappings);
+}
+```
+
+In Snow Leopard XNU 1504.15.3, syscall 295 is `shared_region_map_np(fd, count, mappings)`. In Lion XNU 1699.32.7, syscall 295 is instead `nosys` and is annotated `old shared_region_map_np`; Lion moved shared-cache population to newer interfaces, including syscall 438 `shared_region_map_and_slide_np`.
+
+Lion's `nosys()` sends `SIGSYS` and returns `ENOSYS`. Darwin defines `ENOSYS` as decimal 78, exactly `0x4e`, matching the crash register value. Taken together, the cache-bypass result, SIGSYS exception, EAX value, dyld 132.13 source, and Snow Leopard/Lion syscall-table difference make legacy syscall 295 the leading explanation for this crash.
+
+Do not begin the private-`libgcc_s.1.dylib` experiment yet. The uncached library is no longer the earliest observed boundary once the cache-validation bypass is active.
+
+Before changing XNU, confirm the calling site from the preserved non-debugged `/cores/core.1090` with a small postmortem disassembly around `0xb815ac07`. Live GDB remains unsuitable because Rosetta uses `PT_DENY_ATTACH`.
