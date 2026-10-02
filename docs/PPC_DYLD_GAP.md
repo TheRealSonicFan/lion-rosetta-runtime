@@ -18,18 +18,32 @@ Any Snow Leopard dyld used for Rosetta investigation is proprietary runtime mate
 
 ## Controlled test
 
-First, on the Snow Leopard 10.6.8 source system, establish whether its dyld contains the required PPC slice:
+First, on the Snow Leopard 10.6.8 source system, collect and validate the dyld privately:
+
+```sh
+git pull
+./scripts/collect-snowleopard-ppc-dyld.sh
+```
+
+The collector is read-only with respect to `/usr/lib/dyld`. It requires a 32-bit `ppc` slice, records `file`, `lipo`, the PPC Mach-O header, and SHA-256 evidence, then copies the original Snow Leopard dyld unchanged into the ignored `payload/` directory. It emits:
+
+```
+payload/snowleopard-10.6.8-dyld
+payload/snowleopard-10.6.8-dyld.info.txt
+payload/snowleopard-10.6.8-dyld.sha256
+```
+
+Keep all three artifacts private. Only continue when the report says `ppc_verify=PASS` and the source/copy checksums match.
+
+For manual verification, older Apple `lipo` versions accept different `-verify_arch` argument orderings; the collector tries both. The equivalent inspection is:
 
 ```sh
 file /usr/lib/dyld
 /usr/bin/lipo -info /usr/lib/dyld
-/usr/bin/lipo -verify_arch ppc /usr/lib/dyld
-echo "ppc status=$?"
+/usr/bin/lipo /usr/lib/dyld -verify_arch ppc || /usr/bin/lipo -verify_arch ppc /usr/lib/dyld
 /usr/bin/otool -hv -arch ppc /usr/lib/dyld
 /usr/bin/shasum -a 256 /usr/lib/dyld
 ```
-
-Only continue if `lipo -verify_arch ppc` succeeds.
 
 For a disposable experiment, put a private copy of the validated Snow Leopard dyld at a path that does not replace any Lion native file. For example:
 
