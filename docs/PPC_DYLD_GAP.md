@@ -115,6 +115,20 @@ echo "status=$?"
 
 The staged dyld hash must remain `963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb`. A successful smoke-test message and status 0 establish that the alternate `LC_LOAD_DYLINKER` path is itself valid under stock Snow Leopard Rosetta.
 
+
+### Snow Leopard private-dyld positive control: PASS
+
+The controlled Snow Leopard run has now passed exactly as designed:
+
+- baseline `ppc-smoketest` SHA-256 remained `abdc2d58922b0a420e2c9a762816fecb3acf5e1d115eb29cfab444479f34217c`;
+- the copied test was patched from `/usr/lib/dyld` to `/usr/oah/dyld` inside the existing `LC_LOAD_DYLINKER` command, whose path field has 16 bytes of capacity including NUL;
+- `otool -l` confirmed the baseline still names `/usr/lib/dyld` and the experimental copy names `/usr/oah/dyld`;
+- the experimental executable SHA-256 became `b34e7c4b1ffe9750ae866c4a1e2d732e5dd90aa44c3f79d15359d58076987b0a`;
+- the staged `/usr/oah/dyld` SHA-256 matched the validated Snow Leopard dyld exactly: `963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb`;
+- direct `/usr/libexec/oah/translate ./ppc-smoketest-private-dyld` printed the expected `Rosetta PPC smoke test` message and exited with status 0.
+
+This proves that stock Snow Leopard Rosetta accepts the private-path dyld arrangement and that the post-link `LC_LOAD_DYLINKER` rewrite is behaviorally valid. It does not yet prove that Lion will succeed; the next experiment is the same private dyld and exact experimental PPC binary under Lion's direct translator.
+
 Only after that control passes, stage the same Snow Leopard dyld privately on Lion at the identical `/usr/oah/dyld` pathname, preserving the checksum. Do not overwrite `/usr/lib/dyld`.
 
 Run the direct-translator control first:
