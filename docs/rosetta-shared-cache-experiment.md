@@ -13,7 +13,7 @@ The prior Lion run established all of the following:
 - the guest dyld found the installed Rosetta shared cache but rejected it because its on-disk libSystem validation did not match Lion;
 - after rejecting the cache, guest dyld fell back to Lion's ordinary `/usr/lib/libgcc_s.1.dylib`, which has no PPC slice.
 
-The purpose of this experiment is therefore narrow: determine whether the already-installed, validated Snow Leopard Rosetta shared cache can satisfy the PPC guest-library dependencies when shared-cache file validation is disabled only for this direct translator process.
+The purpose of this experiment is therefore narrow: determine whether disabling shared-cache file validation for this direct translator process prevents the guest dyld from rejecting the already-installed Snow Leopard Rosetta cache. It is not a proof that the cache contains every guest dependency.
 
 This is a runtime-layer experiment. It does not require another XNU change.
 
@@ -102,7 +102,7 @@ Required map SHA-256:
 66e8940757eb909ffb1920ac1510134afafbd5d2d649a9cc7d750753333153f9
 ```
 
-The guarded runner also requires the cache map to contain at least these guest images before it starts the translator:
+The guarded runner audits membership for these guest image paths:
 
 ```
 /usr/lib/libgcc_s.1.dylib
@@ -110,7 +110,7 @@ The guarded runner also requires the cache map to contain at least these guest i
 /usr/lib/system/libmathCommon.A.dylib
 ```
 
-A failure of any identity or map check is a preflight failure. Do not bypass the check manually.
+Membership is diagnostic rather than an identity check. The exact cache and map SHA-256 values above define the validated baseline. The first cache-bypass preflight on Lion confirmed that this exact validated map does **not** list `/usr/lib/libgcc_s.1.dylib`. That is not cache corruption; it means the cache alone cannot provide that particular guest dependency.
 
 ## Exact procedure
 
@@ -153,7 +153,7 @@ The runner will:
 5. record the Lion native `/usr/lib/dyld` hash;
 6. stage or reuse only the validated private `/usr/oah/dyld`;
 7. verify the Rosetta cache and map hashes;
-8. verify the cache map contains the three required guest-library paths;
+8. audit whether the cache map contains the three guest-library paths above, without treating absence as an identity failure;
 9. create a fresh diagnostic marker;
 10. launch the direct translator with process-local `DYLD_SHARED_CACHE_DONT_VALIDATE=1` and `DYLD_PRINT_LIBRARIES=1`;
 11. capture stdout/stderr and the exit status;
@@ -198,13 +198,15 @@ Stop after recording the pass. Do not immediately run the normal PPC exec path. 
 
 ### Preflight failure
 
-If the runner stops before the translator because an executable, dyld, cache, map, or load-command identity does not match, do not work around the check. Preserve the experiment report and resolve the identity mismatch first.
+If the runner stops before the translator because an executable, dyld, cache, map hash, or load-command identity does not match, do not work around the check. Preserve the experiment report and resolve the identity mismatch first.
+
+The earlier run that stopped on `ERROR: validated Rosetta cache map does not list /usr/lib/libgcc_s.1.dylib` exposed a test-script assumption, not an artifact mismatch: the cache and map hashes matched the validated baseline exactly. Because the old runner stopped before launching `translate`, it is expected that only `lion-private-dyld-cache-bypass-experiment.log` exists from that run; no raw direct-translator log could have been created.
 
 ### Cache still rejected or the same library remains missing
 
-If the output still says that the shared cache is being ignored, or still falls back to Lion's non-PPC `/usr/lib/libgcc_s.1.dylib`, preserve both logs and any new diagnostic artifacts. Do not copy a Snow Leopard library into Lion's `/usr/lib`.
+If the output still says that the shared cache is being ignored, preserve both logs and any new diagnostic artifacts. That means the validation-bypass variable alone is insufficient or is not reaching the relevant guest-dyld path.
 
-That result would mean the validation-bypass variable alone is insufficient or is not reaching the relevant guest-dyld path, and the next investigation must distinguish those cases before changing the runtime layout.
+If the cache-rejection message disappears but guest dyld still reports `Library not loaded: /usr/lib/libgcc_s.1.dylib`, that is a distinct and expected boundary: the validated Rosetta cache map does not contain that image. Preserve both logs. Do not copy a Snow Leopard library into Lion's `/usr/lib`; the next experiment must use an isolated private-library path.
 
 ### Different missing image or different dyld failure
 
