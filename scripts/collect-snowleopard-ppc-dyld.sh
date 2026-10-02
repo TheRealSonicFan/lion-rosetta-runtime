@@ -17,19 +17,38 @@ esac
 [ -f "$SRC" ] || { echo "error: missing $SRC" >&2; exit 66; }
 [ -x /usr/bin/lipo ] || { echo "error: /usr/bin/lipo is required" >&2; exit 69; }
 
-has_ppc_arch() {
+detect_ppc_arch() {
     file="$1"
 
-    # Older Apple lipo releases differ in accepted -verify_arch ordering.
-    /usr/bin/lipo "$file" -verify_arch ppc >/dev/null 2>&1 && return 0
-    /usr/bin/lipo -verify_arch ppc "$file" >/dev/null 2>&1 && return 0
+    # The validated Snow Leopard 10.6.8 dyld uses the G4-specific ppc7400
+    # subtype. The Lion Rosetta core independently shows a requested PowerPC
+    # CPU subtype of 0x0a (10), which is CPU_SUBTYPE_POWERPC_7400.
+    #
+    # Older Apple lipo releases also differ in accepted -verify_arch ordering,
+    # so try both forms before falling back to parsing lipo -info.
+    for arch in ppc7400 ppc; do
+        if /usr/bin/lipo "$file" -verify_arch "$arch" >/dev/null 2>&1 || \
+           /usr/bin/lipo -verify_arch "$arch" "$file" >/dev/null 2>&1; then
+            echo "$arch"
+            return 0
+        fi
+    done
 
     info="$(/usr/bin/lipo -info "$file" 2>/dev/null || true)"
-    echo "$info" | /usr/bin/grep -Eiq '(^|[[:space:]:])ppc([[:space:]]|$)'
+    if echo "$info" | /usr/bin/grep -Eiq '(^|[[:space:]:])ppc7400([[:space:]]|$)'; then
+        echo "ppc7400"
+        return 0
+    fi
+    if echo "$info" | /usr/bin/grep -Eiq '(^|[[:space:]:])ppc([[:space:]]|$)'; then
+        echo "ppc"
+        return 0
+    fi
+    return 1
 }
 
-if ! has_ppc_arch "$SRC"; then
-    echo "error: Snow Leopard $SRC has no 32-bit ppc slice" >&2
+PPC_ARCH="$(detect_ppc_arch "$SRC" || true)"
+if [ -z "$PPC_ARCH" ]; then
+    echo "error: Snow Leopard $SRC has no supported 32-bit PowerPC dyld slice" >&2
     /usr/bin/file "$SRC" >&2 || true
     /usr/bin/lipo -info "$SRC" >&2 || true
     exit 67
@@ -52,14 +71,11 @@ fi
     echo
     echo "== lipo =="
     /usr/bin/lipo -info "$SRC" 2>&1 || true
-    if /usr/bin/lipo "$SRC" -verify_arch ppc >/dev/null 2>&1 ||        /usr/bin/lipo -verify_arch ppc "$SRC" >/dev/null 2>&1; then
-        echo "ppc_verify=PASS"
-    else
-        echo "ppc_verify=FAIL"
-    fi
+    echo "selected_ppc_arch=$PPC_ARCH"
+    echo "ppc_verify=PASS"
     echo
     echo "== PPC Mach-O header =="
-    /usr/bin/otool -hv -arch ppc "$SRC" 2>&1 || true
+    /usr/bin/otool -hv -arch "$PPC_ARCH" "$SRC" 2>&1 || true
     echo
     echo "== SHA-256 =="
     /usr/bin/shasum -a 256 "$SRC" 2>&1 || true
@@ -76,14 +92,15 @@ if [ "$SRC_SUM" != "$OUT_SUM" ]; then
     exit 68
 fi
 
-has_ppc_arch "$OUT" || {
-    echo "error: copied dyld no longer verifies as 32-bit ppc-capable" >&2
+COPIED_PPC_ARCH="$(detect_ppc_arch "$OUT" || true)"
+[ -n "$COPIED_PPC_ARCH" ] || {
+    echo "error: copied dyld no longer verifies as 32-bit PowerPC-capable" >&2
     exit 68
 }
 
 /usr/bin/shasum -a 256 "$OUT" > "$SUM"
 
-echo "Validated Snow Leopard PPC-capable dyld."
+echo "Validated Snow Leopard PPC-capable dyld ($PPC_ARCH)."
 echo "Private binary: $OUT"
 echo "Audit report:   $INFO"
 echo "Checksum:       $SUM"
