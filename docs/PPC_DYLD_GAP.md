@@ -188,7 +188,7 @@ The direct translator exited 133, and the shell identified the terminating signa
 
 Do not copy a Snow Leopard `libgcc_s.1.dylib` over Lion's system file. Before collecting individual guest libraries, test whether the already-installed, validated Snow Leopard Rosetta cache can satisfy this dependency when its on-disk inode/modification-time validation is disabled for this one process. The validated Snow Leopard dyld binary contains support for `DYLD_SHARED_CACHE_DONT_VALIDATE`, and Apple's dyld-132.13 documentation defines that variable specifically to allow a process to use shared-cache dylibs even when the corresponding files on disk no longer match.
 
-The runner now has a separate, non-destructive cache-validation-bypass mode. It uses different report filenames, verifies the exact validated Rosetta cache and map hashes, requires the cache map to contain `/usr/lib/libgcc_s.1.dylib`, `/usr/lib/libSystem.B.dylib`, and `/usr/lib/system/libmathCommon.A.dylib`, and then sets `DYLD_SHARED_CACHE_DONT_VALIDATE=1` plus `DYLD_PRINT_LIBRARIES=1` only for the direct translator process:
+The runner now has a separate, non-destructive cache-validation-bypass mode. The authoritative step-by-step procedure for this experiment is `docs/rosetta-shared-cache-experiment.md`; follow that document rather than improvising additional dyld environment variables or library copies. It uses different report filenames, verifies the exact validated Rosetta cache and map hashes, requires the cache map to contain `/usr/lib/libgcc_s.1.dylib`, `/usr/lib/libSystem.B.dylib`, and `/usr/lib/system/libmathCommon.A.dylib`, and then sets `DYLD_SHARED_CACHE_DONT_VALIDATE=1` plus `DYLD_PRINT_LIBRARIES=1` only for the direct translator process:
 
 ```sh
 git pull
