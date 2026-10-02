@@ -17,7 +17,7 @@ esac
 REPORT="${3:-$DEFAULT_REPORT}"
 REPORT_DIR="$(/usr/bin/dirname "$REPORT")"
 RAW_LOG="$REPORT_DIR/$DEFAULT_RAW_LOG"
-MARKER="/tmp/lion-private-dyld-marker.$"
+MARKER=""
 PRIVATE_DIR="/usr/oah"
 PRIVATE_DYLD="$PRIVATE_DIR/dyld"
 TRANSLATOR="/usr/libexec/oah/translate"
@@ -209,7 +209,7 @@ if ulimit -c unlimited 2>/dev/null; then
 else
     log "core_dump_limit could not be raised; continuing with the normal crash reporter"
 fi
-/usr/bin/touch "$MARKER" || die 73 "could not create diagnostic marker $MARKER"
+MARKER="$(/usr/bin/mktemp /tmp/lion-private-dyld-marker.XXXXXX)" || die 73 "could not create diagnostic marker"
 
 log ""
 log "== DIRECT TRANSLATOR TEST =="
