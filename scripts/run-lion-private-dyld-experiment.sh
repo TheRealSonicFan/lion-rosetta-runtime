@@ -170,7 +170,7 @@ if ulimit -c unlimited 2>/dev/null; then
 else
     log "core_dump_limit could not be raised; continuing with the normal crash reporter"
 fi
-/bin/touch "$MARKER" || die 73 "could not create diagnostic marker $MARKER"
+/usr/bin/touch "$MARKER" || die 73 "could not create diagnostic marker $MARKER"
 
 log ""
 log "== DIRECT TRANSLATOR TEST =="
