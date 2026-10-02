@@ -6,17 +6,29 @@ ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 EXE="${1:-$ROOT/payload/ppc-smoketest-private-dyld}"
 DYLD_SRC="${2:-$ROOT/payload/snowleopard-10.6.8-dyld}"
-REPORT="${3:-$ROOT/payload/lion-private-dyld-experiment.log}"
+CACHE_BYPASS="${ROSETTA_CACHE_BYPASS_VALIDATION:-0}"
+case "$CACHE_BYPASS" in
+    0) DEFAULT_REPORT="$ROOT/payload/lion-private-dyld-experiment.log"
+       DEFAULT_RAW_LOG="lion-private-dyld-direct.raw.log" ;;
+    1) DEFAULT_REPORT="$ROOT/payload/lion-private-dyld-cache-bypass-experiment.log"
+       DEFAULT_RAW_LOG="lion-private-dyld-cache-bypass-direct.raw.log" ;;
+    *) echo "error: ROSETTA_CACHE_BYPASS_VALIDATION must be 0 or 1" >&2; exit 64 ;;
+esac
+REPORT="${3:-$DEFAULT_REPORT}"
 REPORT_DIR="$(/usr/bin/dirname "$REPORT")"
-RAW_LOG="$REPORT_DIR/lion-private-dyld-direct.raw.log"
-MARKER="/tmp/lion-private-dyld-marker.$$"
+RAW_LOG="$REPORT_DIR/$DEFAULT_RAW_LOG"
+MARKER="/tmp/lion-private-dyld-marker.$"
 PRIVATE_DIR="/usr/oah"
 PRIVATE_DYLD="$PRIVATE_DIR/dyld"
 TRANSLATOR="/usr/libexec/oah/translate"
 SYSTEM_DYLD="/usr/lib/dyld"
+ROSETTA_CACHE="/private/var/db/dyld/dyld_shared_cache_rosetta"
+ROSETTA_CACHE_MAP="/private/var/db/dyld/dyld_shared_cache_rosetta.map"
 
 EXPECTED_EXE_SHA="b34e7c4b1ffe9750ae866c4a1e2d732e5dd90aa44c3f79d15359d58076987b0a"
 EXPECTED_DYLD_SHA="963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb"
+EXPECTED_CACHE_SHA="2968123ebb467633929398c692cfa68e8a13925ead683c5b1a04581c0aee6911"
+EXPECTED_CACHE_MAP_SHA="66e8940757eb909ffb1920ac1510134afafbd5d2d649a9cc7d750753333153f9"
 
 /bin/mkdir -p "$REPORT_DIR" || exit 73
 : > "$REPORT" || exit 73
@@ -63,6 +75,7 @@ PRODUCT_VERSION="$(/usr/bin/sw_vers -productVersion 2>/dev/null || true)"
 BUILD_VERSION="$(/usr/bin/sw_vers -buildVersion 2>/dev/null || true)"
 log "product_version=$PRODUCT_VERSION"
 log "build_version=$BUILD_VERSION"
+log "rosetta_cache_bypass_validation=$CACHE_BYPASS"
 [ "$PRODUCT_VERSION" = "10.7.5" ] || die 65 "this experiment requires the Lion 10.7.5 target (found $PRODUCT_VERSION)"
 
 if command -v git >/dev/null 2>&1 && [ -d "$ROOT/.git" ]; then
@@ -159,6 +172,32 @@ log "== Translator/kernel context =="
 run_log /usr/sbin/sysctl kern.exec.archhandler.powerpc || true
 run_log /usr/bin/file "$TRANSLATOR" || true
 
+if [ "$CACHE_BYPASS" = "1" ]; then
+    log ""
+    log "== Rosetta shared-cache bypass preflight =="
+    [ -f "$ROSETTA_CACHE" ] || die 66 "missing Rosetta shared cache: $ROSETTA_CACHE"
+    [ -f "$ROSETTA_CACHE_MAP" ] || die 66 "missing Rosetta shared cache map: $ROSETTA_CACHE_MAP"
+
+    CACHE_SHA="$(sha256 "$ROSETTA_CACHE")"
+    CACHE_MAP_SHA="$(sha256 "$ROSETTA_CACHE_MAP")"
+    log "rosetta_cache_sha256=$CACHE_SHA"
+    log "rosetta_cache_map_sha256=$CACHE_MAP_SHA"
+    [ "$CACHE_SHA" = "$EXPECTED_CACHE_SHA" ] || die 68 "Rosetta shared-cache hash mismatch; expected $EXPECTED_CACHE_SHA"
+    [ "$CACHE_MAP_SHA" = "$EXPECTED_CACHE_MAP_SHA" ] || die 68 "Rosetta shared-cache map hash mismatch; expected $EXPECTED_CACHE_MAP_SHA"
+
+    for image in \
+        /usr/lib/libgcc_s.1.dylib \
+        /usr/lib/libSystem.B.dylib \
+        /usr/lib/system/libmathCommon.A.dylib; do
+        MATCH="$(/usr/bin/grep -F "$image" "$ROSETTA_CACHE_MAP" 2>/dev/null || true)"
+        [ -n "$MATCH" ] || die 68 "validated Rosetta cache map does not list $image"
+        echo "$MATCH" | /usr/bin/tee -a "$REPORT"
+    done
+
+    log "Guest dyld will receive DYLD_SHARED_CACHE_DONT_VALIDATE=1."
+    log "This is process-local; no dyld cache or Lion /usr/lib file is modified."
+fi
+
 log ""
 log "== Core/crash capture preparation =="
 run_log /bin/df -h / || true
@@ -174,9 +213,16 @@ fi
 
 log ""
 log "== DIRECT TRANSLATOR TEST =="
-log "+ $TRANSLATOR $EXE"
-"$TRANSLATOR" "$EXE" > "$RAW_LOG" 2>&1
-RC=$?
+if [ "$CACHE_BYPASS" = "1" ]; then
+    log "+ DYLD_SHARED_CACHE_DONT_VALIDATE=1 DYLD_PRINT_LIBRARIES=1 $TRANSLATOR $EXE"
+    DYLD_SHARED_CACHE_DONT_VALIDATE=1 DYLD_PRINT_LIBRARIES=1 \
+        "$TRANSLATOR" "$EXE" > "$RAW_LOG" 2>&1
+    RC=$?
+else
+    log "+ $TRANSLATOR $EXE"
+    "$TRANSLATOR" "$EXE" > "$RAW_LOG" 2>&1
+    RC=$?
+fi
 /bin/cat "$RAW_LOG" | /usr/bin/tee -a "$REPORT"
 log "direct_translate_status=$RC"
 
@@ -216,7 +262,11 @@ log "lion_system_dyld_sha256_after=$SYSTEM_DYLD_AFTER"
 log ""
 if [ "$RC" -eq 0 ] && /usr/bin/grep -Fq 'Rosetta PPC smoke test: pid=' "$RAW_LOG"; then
     log "RESULT: PASS"
-    log "The private-dyld direct translator experiment succeeded on Lion."
+    if [ "$CACHE_BYPASS" = "1" ]; then
+        log "The private-dyld experiment succeeded with Rosetta cache validation bypassed process-locally."
+    else
+        log "The private-dyld direct translator experiment succeeded on Lion."
+    fi
     log "Do not run the normal PPC exec path yet; preserve this report and raw log first."
     log "report=$REPORT"
     log "raw_log=$RAW_LOG"
