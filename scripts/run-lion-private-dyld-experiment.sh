@@ -35,7 +35,7 @@ die() {
     code="$1"
     shift
     log "ERROR: $*"
-    log "Experiment aborted before the direct translator test."
+    log "Experiment stopped; preserve the report before changing anything."
     exit "$code"
 }
 
