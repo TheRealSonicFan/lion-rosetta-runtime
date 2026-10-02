@@ -38,6 +38,7 @@ Use a staged progression so a failure identifies the layer that is still incompa
    - use a disposable PPC smoke binary with a private alternate `LC_LOAD_DYLINKER` for the controlled test; never replace Lion's native `/usr/lib/dyld`.
    - the first Lion private-dyld run has now passed the former parser boundary: guest dyld reaches library resolution, rejects the Snow Leopard Rosetta cache because Lion's on-disk libSystem does not match it, then reports that Lion's `/usr/lib/libgcc_s.1.dylib` has no PPC slice.
    - before copying any additional Snow Leopard libraries, rerun the guarded direct test with `ROSETTA_CACHE_BYPASS_VALIDATION=1`; this validates the exact installed Rosetta cache/map and sets `DYLD_SHARED_CACHE_DONT_VALIDATE=1` only for the test process.
+   - follow `docs/rosetta-shared-cache-experiment.md` for the exact preflight, command, output files, stop conditions, and result interpretation.
    - do not add `DYLD_SHARED_REGION=private`, rebuild caches, or modify Lion's `/usr/lib` in that experiment; isolate the cache-validation question first.
    - after a successful direct-translator private-dyld/cache test, exercise normal PPC exec only when the running kernel includes the PowerPC subject-path correction documented in `lion-rosetta-xnu`.
 
