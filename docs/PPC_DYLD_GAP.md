@@ -37,6 +37,21 @@ payload/snowleopard-10.6.8-dyld.sha256
 
 Keep all three artifacts private. On the current Snow Leopard control, the report should say `selected_ppc_arch=ppc7400` and `ppc_verify=PASS`, and the source/copy checksums must match.
 
+### Validated Snow Leopard control artifact
+
+The collected 10.6.8 control has now been independently rechecked from the private binary plus its audit/checksum sidecars:
+
+- source system: Mac OS X 10.6.8 build `10K549`;
+- full fat dyld size: `1054960` bytes;
+- SHA-256: `963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb`;
+- fat architectures: x86_64, i386, and `ppc7400`;
+- PowerPC slice: CPU type `0x12`, subtype `0x0a`, fat offset `0x000b0000`, size `334064` bytes;
+- PowerPC Mach-O header: `MH_MAGIC`, `MH_DYLINKER`, 9 load commands, `sizeofcmds=0x600`, flags `0x85`;
+- the first PowerPC load command begins at the 32-bit header boundary `+0x1c` and is `LC_SEGMENT` with `cmdsize=0x258`.
+
+That final point directly matches the parser behavior seen in the Lion core: when Rosetta receives this `ppc7400` slice, its hard-coded 32-bit `+0x1c` load-command cursor lands on a valid `LC_SEGMENT`, instead of the reserved word of Lion's x86_64 `MH_MAGIC_64` slice.
+
+
 For manual verification, older Apple `lipo` versions accept different `-verify_arch` argument orderings; the collector tries both. The equivalent inspection for the observed control is:
 
 ```sh
