@@ -170,6 +170,41 @@ echo "status=$?"
 
 If that reaches the PPC smoke-test message and exits 0, the private-dyld hypothesis is confirmed for direct translator launch.
 
+### Lion private-dyld result: guest dyld reached, Rosetta cache rejected
+
+The first guarded Lion run did not reproduce the earlier `0xc918a01c` parser crash. The exact experimental executable and private Snow Leopard dyld passed all identity checks, Lion's native `/usr/lib/dyld` hash remained unchanged, and the private PPC dyld reached ordinary guest-library resolution.
+
+The new failure is explicit:
+
+```
+dyld: shared cached file was build against a different libSystem.dylib, ignoring cache
+dyld: Library not loaded: /usr/lib/libgcc_s.1.dylib
+  Referenced from: .../ppc-smoketest-private-dyld
+  Reason: no suitable image found.  Did find:
+    /usr/lib/libgcc_s.1.dylib: no matching architecture in universal wrapper
+```
+
+The direct translator exited 133, and the shell identified the terminating signal as `Trace/BPT trap: 5`. This is a different failure class from the former SIGSEGV: the private PPC dyld is now running far enough to reject the installed Rosetta shared cache as stale against Lion's on-disk libSystem and then fall back to Lion's ordinary `/usr/lib/libgcc_s.1.dylib`, which has no PPC slice.
+
+Do not copy a Snow Leopard `libgcc_s.1.dylib` over Lion's system file. Before collecting individual guest libraries, test whether the already-installed, validated Snow Leopard Rosetta cache can satisfy this dependency when its on-disk inode/modification-time validation is disabled for this one process. The validated Snow Leopard dyld binary contains support for `DYLD_SHARED_CACHE_DONT_VALIDATE`, and Apple's dyld-132.13 documentation defines that variable specifically to allow a process to use shared-cache dylibs even when the corresponding files on disk no longer match.
+
+The runner now has a separate, non-destructive cache-validation-bypass mode. It uses different report filenames, verifies the exact validated Rosetta cache and map hashes, requires the cache map to contain `/usr/lib/libgcc_s.1.dylib`, `/usr/lib/libSystem.B.dylib`, and `/usr/lib/system/libmathCommon.A.dylib`, and then sets `DYLD_SHARED_CACHE_DONT_VALIDATE=1` plus `DYLD_PRINT_LIBRARIES=1` only for the direct translator process:
+
+```sh
+git pull
+ROSETTA_CACHE_BYPASS_VALIDATION=1 \
+  ./scripts/run-lion-private-dyld-experiment.sh
+```
+
+This writes:
+
+```
+payload/lion-private-dyld-cache-bypass-experiment.log
+payload/lion-private-dyld-cache-bypass-direct.raw.log
+```
+
+Do not set `DYLD_SHARED_REGION=private` yet and do not rebuild the Rosetta cache for this step. The cache was already found by the guest dyld; the first question is whether bypassing only the stale-file validation is sufficient. If the cache-bypass run still reports a missing PPC image, preserve the exact output and newly generated crash/core diagnostics before collecting any additional Snow Leopard system library.
+
 The normal PPC exec path is the next layer, but only expect it to work after the XNU PowerPC subject-path correction is present in the *running* kernel. If the currently booted kernel predates that correction, preserve the successful direct-launch result and defer the normal launch until the corrected kernel has been rebuilt and installed:
 
 ```sh
