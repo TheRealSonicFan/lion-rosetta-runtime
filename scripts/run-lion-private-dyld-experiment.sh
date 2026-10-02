@@ -185,14 +185,21 @@ if [ "$CACHE_BYPASS" = "1" ]; then
     [ "$CACHE_SHA" = "$EXPECTED_CACHE_SHA" ] || die 68 "Rosetta shared-cache hash mismatch; expected $EXPECTED_CACHE_SHA"
     [ "$CACHE_MAP_SHA" = "$EXPECTED_CACHE_MAP_SHA" ] || die 68 "Rosetta shared-cache map hash mismatch; expected $EXPECTED_CACHE_MAP_SHA"
 
+    log "== Rosetta shared-cache map membership audit =="
     for image in \
         /usr/lib/libgcc_s.1.dylib \
         /usr/lib/libSystem.B.dylib \
         /usr/lib/system/libmathCommon.A.dylib; do
         MATCH="$(/usr/bin/grep -F "$image" "$ROSETTA_CACHE_MAP" 2>/dev/null || true)"
-        [ -n "$MATCH" ] || die 68 "validated Rosetta cache map does not list $image"
-        echo "$MATCH" | /usr/bin/tee -a "$REPORT"
+        if [ -n "$MATCH" ]; then
+            log "cache_map_contains=YES $image"
+            echo "$MATCH" | /usr/bin/tee -a "$REPORT"
+        else
+            log "cache_map_contains=NO $image"
+        fi
     done
+    log "Cache-map membership is diagnostic, not an identity check; the exact cache/map SHA-256 values above define the validated baseline."
+    log "The validated map is known not to contain /usr/lib/libgcc_s.1.dylib, so a successful validation bypass may still stop later on that uncached guest dependency."
 
     log "Guest dyld will receive DYLD_SHARED_CACHE_DONT_VALIDATE=1."
     log "This is process-local; no dyld cache or Lion /usr/lib file is modified."
@@ -274,6 +281,18 @@ if [ "$RC" -eq 0 ] && /usr/bin/grep -Fq 'Rosetta PPC smoke test: pid=' "$RAW_LOG
 fi
 
 log "RESULT: FAIL"
+if [ "$CACHE_BYPASS" = "1" ]; then
+    if /usr/bin/grep -Fq 'ignoring cache' "$RAW_LOG"; then
+        log "cache_validation_result=REJECTED_OR_BYPASS_INEFFECTIVE"
+        log "The guest dyld still reported that it ignored the shared cache."
+    else
+        log "cache_validation_result=NO_CACHE_REJECTION_MESSAGE_OBSERVED"
+        if /usr/bin/grep -Fq 'Library not loaded: /usr/lib/libgcc_s.1.dylib' "$RAW_LOG"; then
+            log "next_guest_boundary=UNCACHED_LIBGCC_S_1"
+            log "The exact validated cache map does not contain /usr/lib/libgcc_s.1.dylib; preserve this result for the private-library follow-up."
+        fi
+    fi
+fi
 if [ "$RC" -eq 0 ]; then
     log "translate exited 0 but the expected PPC smoke-test message was absent."
 else
