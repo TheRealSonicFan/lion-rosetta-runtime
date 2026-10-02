@@ -62,18 +62,22 @@ file /usr/lib/dyld
 /usr/bin/shasum -a 256 /usr/lib/dyld
 ```
 
-For a disposable experiment, put a private copy of the validated Snow Leopard dyld at a path that does not replace any Lion native file. For example:
+For a disposable experiment, choose a private dyld pathname that does not replace any Lion native file. For example:
 
 ```
 /usr/local/libexec/rosetta-test/dyld
 ```
 
-Then, on Snow Leopard, build a new PPC smoke executable whose `LC_LOAD_DYLINKER` names that path:
+The pathname does **not** need to exist while the smoke executable is being linked. `PPC_DYLINKER` is passed to the linker only to encode that string in the executable's `LC_LOAD_DYLINKER` command. The dyld file must exist at that pathname before the executable is actually run.
+
+On Snow Leopard, build a **new** disposable smoke executable whose test source is the same minimal PPC smoke-test source used by this script, but whose `LC_LOAD_DYLINKER` differs from the earlier `ppc-smoketest`:
 
 ```sh
 PPC_DYLINKER=/usr/local/libexec/rosetta-test/dyld \
   ./scripts/build-ppc-smoketest-on-snowleopard.sh ./ppc-smoketest-private-dyld
 ```
+
+The existing `ppc-smoketest` is retained as the baseline artifact; `ppc-smoketest-private-dyld` is a separately compiled experimental binary, not a rename or copy of the baseline.
 
 Verify the resulting load command before moving the binary:
 
