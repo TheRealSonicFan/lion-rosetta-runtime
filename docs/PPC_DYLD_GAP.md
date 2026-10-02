@@ -129,12 +129,42 @@ The controlled Snow Leopard run has now passed exactly as designed:
 
 This proves that stock Snow Leopard Rosetta accepts the private-path dyld arrangement and that the post-link `LC_LOAD_DYLINKER` rewrite is behaviorally valid. It does not yet prove that Lion will succeed; the next experiment is the same private dyld and exact experimental PPC binary under Lion's direct translator.
 
-Only after that control passes, stage the same Snow Leopard dyld privately on Lion at the identical `/usr/oah/dyld` pathname, preserving the checksum. Do not overwrite `/usr/lib/dyld`.
+Only after that control passes, transfer the exact experimental executable and the exact validated Snow Leopard dyld to the Lion runtime checkout. The guarded runner expects these default private input paths:
 
-Run the direct-translator control first:
+```
+payload/ppc-smoketest-private-dyld
+payload/snowleopard-10.6.8-dyld
+```
+
+Their required SHA-256 values are respectively:
+
+```
+b34e7c4b1ffe9750ae866c4a1e2d732e5dd90aa44c3f79d15359d58076987b0a
+963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb
+```
+
+On Lion 10.7.5, pull the current runtime repository and run:
 
 ```sh
-/usr/libexec/oah/translate ./ppc-smoketest-private-dyld
+git pull
+./scripts/run-lion-private-dyld-experiment.sh
+```
+
+The runner verifies the OS version, both input hashes, the PPC architecture, and the private `LC_LOAD_DYLINKER`; refuses unexpected or symlinked `/usr/oah` state; records Lion's native `/usr/lib/dyld` hash before and after staging; stages the validated Snow Leopard dyld only as `/usr/oah/dyld`; performs the direct-translator test; records the exit status; identifies any new crash reports or core files created after the test marker; and verifies both dyld hashes again afterward.
+
+It writes:
+
+```
+payload/lion-private-dyld-experiment.log
+payload/lion-private-dyld-direct.raw.log
+```
+
+Do not run the normal PPC exec path in this step. If the guarded runner fails, preserve both logs and every newly listed crash/core artifact before changing the runtime, kernel, or private dyld.
+
+The direct translator operation performed by the runner is equivalent to:
+
+```sh
+/usr/libexec/oah/translate ./payload/ppc-smoketest-private-dyld
 echo "status=$?"
 ```
 
