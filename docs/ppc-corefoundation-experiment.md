@@ -312,3 +312,35 @@ This experiment does not:
 - define the final production installation.
 
 It is the first controlled compatibility-expansion test after the minimal normal PPC exec path was proven.
+
+
+## Observed result: PASS
+
+The PPC CoreFoundation experiment has now passed completely on both the Snow Leopard 10.6.8 control system and Lion 10.7.5.
+
+Validated experimental executable SHA-256:
+
+```text
+47c8ee924e7dcd940832457c25caf3a4c6c8e9fcf907929f58794ae1851da841
+```
+
+The Snow Leopard control loaded CoreFoundation plus its dependent PPC runtime libraries, printed the expected CoreFoundation marker, and exited 0.
+
+On Lion, the exact same executable and private dyld were used. The guarded normal PPC run loaded:
+
+```text
+/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation
+/usr/lib/libSystem.B.dylib
+/usr/lib/libauto.dylib
+/usr/lib/libicucore.A.dylib
+/usr/lib/libobjc.A.dylib
+/usr/lib/libz.1.dylib
+/usr/lib/libstdc++.6.dylib
+/usr/lib/system/libmathCommon.A.dylib
+```
+
+The probe created and converted a CoreFoundation string, created a CFArray, validated the results, printed the expected marker, and exited 0. No new crash/core diagnostic was produced. The private dyld, Lion native dyld, kernel, and Rosetta cache hashes remained unchanged.
+
+This closes the command-line CoreFoundation layer for the controlled environment.
+
+The next layer is the first controlled PPC GUI/window-event-loop test. Follow `docs/ppc-carbon-gui-experiment.md`.
