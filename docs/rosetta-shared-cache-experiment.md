@@ -267,4 +267,4 @@ Lion's `nosys()` sends `SIGSYS` and returns `ENOSYS`. Darwin defines `ENOSYS` as
 
 Do not begin the private-`libgcc_s.1.dylib` experiment yet. The uncached library is no longer the earliest observed boundary once the cache-validation bypass is active.
 
-Before changing XNU, confirm the calling site from the preserved non-debugged `/cores/core.1090`. The authoritative read-only procedure is `docs/postmortem-collector-experiment.md`, using `scripts/collect-lion-shared-region-sigsys-core.sh` to capture runtime-decrypted code around `0xb815ac07`. Live GDB remains unsuitable because Rosetta uses `PT_DENY_ATTACH`.
+The preserved non-debugged `/cores/core.1090` has now confirmed the calling site and arguments. The next phase is the companion XNU experiment documented at `lion-rosetta-xnu/docs/xnu-syscall-295-experiment.md`. That runbook restores only syscall 295, requires native commpage and routing probes after reboot, and permits this guarded cache-bypass runtime test to be rerun only after both probes pass. Live GDB remains unsuitable because Rosetta uses `PT_DENY_ATTACH`.
