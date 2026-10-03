@@ -98,4 +98,4 @@ Historical Lion experiments show that copying `translate` alone can reach the tr
 
 The `.gitignore` is intentionally broad. It excludes the entire `payload/` directory and common Rosetta binary/cache names to reduce the chance of accidentally publishing Apple's proprietary components.
 
-See `docs/CLOSED_SOURCE_COMPONENTS.md`, `docs/VALIDATED_PAYLOAD.md`, `docs/PPC_DYLD_GAP.md`, `docs/rosetta-shared-cache-experiment.md`, `docs/shared-region-sigsys-postmortem.md`, and `docs/TEST_PLAN.md`.
+See `docs/CLOSED_SOURCE_COMPONENTS.md`, `docs/VALIDATED_PAYLOAD.md`, `docs/PPC_DYLD_GAP.md`, `docs/rosetta-shared-cache-experiment.md`, `docs/postmortem-collector-experiment.md`, and `docs/TEST_PLAN.md`.
