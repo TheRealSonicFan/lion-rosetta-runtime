@@ -41,7 +41,7 @@ Use a staged progression so a failure identifies the layer that is still incompa
    - source comparison points to removed syscall 295 (`shared_region_map_np`) as the leading boundary: Snow Leopard dyld calls it directly, Snow Leopard XNU implements it, and Lion routes 295 to `nosys`.
    - the read-only postmortem collector has now confirmed the legacy shared-region call: runtime code executes `int $0x80`, returns `ENOSYS` with carry set, and the caller passes syscall 295 with `fd=4`, `mappingCount=3`, and mappings spanning exactly the validated Rosetta shared-cache file.
    - do not collect or install a private `libgcc_s.1.dylib` yet. The confirmed syscall-295 boundary precedes that unresolved library question under the active cache-validation bypass.
-   - the next phase is to prepare and review a minimal syscall-295 compatibility design in `lion-rosetta-xnu` before generating any kernel patch.
+   - the syscall-295 design review is now complete in the companion XNU repository at `docs/shared-region-map-np-compatibility-design.md`; implementation has not started. The reviewed design restores only the old three-argument front-end and reuses Lion's existing shared-region helpers.
    - after the shared-region ABI is restored and direct translation succeeds, exercise normal PPC exec only when the running kernel includes the PowerPC subject-path correction documented in `lion-rosetta-xnu`.
 
 7. **Dynamic-library expansion**
