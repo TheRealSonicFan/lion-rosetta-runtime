@@ -45,7 +45,9 @@ Use a staged progression so a failure identifies the layer that is still incompa
    - the syscall-295 SIGSYS/ENOSYS boundary is therefore closed. Do not add guest libraries or make another XNU change before testing the next layer.
    - the normal PPC exec activation experiment has now passed: the validated private-dyld subject launched through the kernel architecture handler, loaded the Rosetta runtime libraries, printed the smoke-test marker, exited 0, and generated no diagnostic.
    - the kernel activation/subject-path layer is therefore closed for the minimal command-line subject.
-   - the next controlled compatibility-expansion step is a PPC CoreFoundation command-line probe. Follow `docs/ppc-corefoundation-experiment.md`; keep the same private dyld and process-local cache-validation bypass so only the framework layer changes.
+   - the PPC CoreFoundation experiment has now passed on both Snow Leopard and Lion. The exact PPC subject loaded CoreFoundation plus libauto, libicucore, libobjc, libz, libstdc++, libSystem, and libmathCommon, validated CFString/CFArray behavior, exited 0, and generated no diagnostic.
+   - command-line CoreFoundation compatibility is therefore closed for the controlled environment.
+   - the next controlled layer is the first PPC GUI/window-event-loop test using Carbon. Follow `docs/ppc-carbon-gui-experiment.md`; retain the same kernel, private dyld, Rosetta cache, and process-local cache-validation bypass so the new variable is the GUI/application-services layer.
 
 7. **Dynamic-library expansion**
    - only if the validated Rosetta cache still cannot satisfy the guest dependency should individual Snow Leopard PPC libraries be collected for a new private-path experiment.
