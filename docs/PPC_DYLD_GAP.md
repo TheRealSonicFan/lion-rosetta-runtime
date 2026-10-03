@@ -229,3 +229,31 @@ The postmortem collector has now confirmed this boundary. Runtime-decrypted code
 ## Production direction
 
 A successful private-dyld experiment would establish the missing runtime dependency, but it would not by itself define the final installation design. A production solution should keep Lion's native dyld untouched and redirect only translated PPC guest dyld resolution to private Rosetta-compatible material. Candidate mechanisms should be evaluated only after the private-path experiment succeeds.
+
+
+### Syscall-295 compatibility result: direct translation PASS
+
+The syscall-295 XNU compatibility experiment has now passed end to end on Lion 10.7.5.
+
+Validated boot kernel SHA-256:
+
+```text
+fe68467b60b3bd7edfab61b2d6c8af7f988de5206c4b7b624151dc9f1a1061d3
+```
+
+After reboot, the translated-commpage regression probe still passed and the native i386 syscall-295 routing probe returned `EBADF` without `SIGSYS`.
+
+The guarded direct cache-bypass control then loaded:
+
+```text
+ppc-smoketest-private-dyld
+/usr/libexec/oah/Shims/Interposers.dylib
+/usr/lib/libSystem.B.dylib
+/usr/lib/system/libmathCommon.A.dylib
+```
+
+It printed the expected `Rosetta PPC smoke test` message and exited 0. No new crash/core diagnostic was detected. Lion's native `/usr/lib/dyld` and private `/usr/oah/dyld` hashes remained unchanged.
+
+This closes the direct-translator dyld/shared-region compatibility boundary for the minimal PPC subject under the private-dyld plus cache-validation-bypass arrangement.
+
+The next controlled layer is **normal PowerPC exec activation**, not another library or kernel modification. Follow `docs/lion-normal-ppc-exec-experiment.md`. The normal-exec runner executes the PPC Mach-O itself rather than manually launching `translate`, so it specifically tests the kernel architecture-handler and PowerPC subject-path correction together with the now-validated runtime stack.
