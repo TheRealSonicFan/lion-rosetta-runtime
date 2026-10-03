@@ -268,3 +268,12 @@ Lion's `nosys()` sends `SIGSYS` and returns `ENOSYS`. Darwin defines `ENOSYS` as
 Do not begin the private-`libgcc_s.1.dylib` experiment yet. The uncached library is no longer the earliest observed boundary once the cache-validation bypass is active.
 
 The preserved non-debugged `/cores/core.1090` has now confirmed the calling site and arguments. The next phase is the companion XNU experiment documented at `lion-rosetta-xnu/docs/xnu-syscall-295-experiment.md`. That runbook restores only syscall 295, requires native commpage and routing probes after reboot, and permits this guarded cache-bypass runtime test to be rerun only after both probes pass. Live GDB remains unsuitable because Rosetta uses `PT_DENY_ATTACH`.
+
+
+## Final result after syscall-295 compatibility
+
+After installing the validated syscall-295 compatibility kernel, this guarded cache-validation-bypass control passed completely.
+
+The direct translator loaded the PPC subject, Rosetta Interposers, PPC libSystem, and libmathCommon, printed the expected smoke-test message, and exited 0. No new diagnostic was generated.
+
+The cache-validation experiment is therefore complete. The next layer is not another cache change: it is the normal PPC exec experiment documented in `docs/lion-normal-ppc-exec-experiment.md`.
