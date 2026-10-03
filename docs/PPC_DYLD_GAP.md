@@ -257,3 +257,12 @@ It printed the expected `Rosetta PPC smoke test` message and exited 0. No new cr
 This closes the direct-translator dyld/shared-region compatibility boundary for the minimal PPC subject under the private-dyld plus cache-validation-bypass arrangement.
 
 The next controlled layer is **normal PowerPC exec activation**, not another library or kernel modification. Follow `docs/lion-normal-ppc-exec-experiment.md`. The normal-exec runner executes the PPC Mach-O itself rather than manually launching `translate`, so it specifically tests the kernel architecture-handler and PowerPC subject-path correction together with the now-validated runtime stack.
+
+
+### Normal PowerPC exec result: PASS
+
+The normal kernel PowerPC activation test has now passed on the same validated syscall-295 kernel/runtime stack.
+
+The PPC subject was executed normally rather than by manually launching `translate`. It loaded the Rosetta Interposers shim, PPC libSystem, and libmathCommon, printed the expected smoke-test marker, exited 0, and produced no new crash/core diagnostic.
+
+This closes the kernel architecture-handler/subject-path layer for the minimal command-line subject. The next experiment changes only the guest dependency surface by linking CoreFoundation. See `docs/ppc-corefoundation-experiment.md`.
