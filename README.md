@@ -80,7 +80,7 @@ scripts/run-lion-commpage-probe.sh ./lion-commpage-probe
 
 The phase-2 commpage probe has now been validated on Lion 10.7.5: it reports the expected 19-page mapping, native commpage version 12, Rosetta compatibility version 11, readable/populated data at `0xffff8020`, correct PPC-view constants, signature data, and representative branch-assist entries, ending with `RESULT: PASS`.
 
-Only after the probe reports `RESULT: PASS` should you rerun the disposable 32-bit PPC smoke test. Postmortem analysis of the current Lion direct-launch failure identified a separate guest-loader gap: Rosetta requests a PowerPC `/usr/lib/dyld`, while Lion's native dyld contains only x86_64/i386. Do not replace Lion's native dyld; use the isolated experiment in `docs/PPC_DYLD_GAP.md`.
+Only after the probe reports `RESULT: PASS` should you proceed through the staged runtime tests. The private-dyld work has now moved beyond the missing-PPC-dyld parser crash and the subsequent stale-cache rejection; the current confirmed boundary is Lion's retired syscall 295 `shared_region_map_np`. The companion `lion-rosetta-xnu` repository now contains the experiment-only restoration procedure in `docs/xnu-syscall-295-experiment.md`. Do not replace Lion's native dyld or add Snow Leopard system libraries before that XNU experiment is reviewed.
 
 To capture a shareable report around a PPC attempt:
 
