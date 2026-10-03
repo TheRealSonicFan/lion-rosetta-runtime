@@ -1,5 +1,7 @@
 # Rosetta SIGSYS shared-region postmortem
 
+> Operational procedure: use `docs/postmortem-collector-experiment.md`. This document remains the technical background and decision record.
+
 ## Purpose
 
 The cache-validation-bypass experiment moved Rosetta past the stale Snow Leopard shared-cache rejection. The direct translator reported the PPC subject as loaded and then terminated with status 140. The matching Lion crash report records:
