@@ -259,3 +259,25 @@ This experiment does not:
 - establish complete Rosetta compatibility.
 
 It answers one question only: does a normal PPC `execve` now reach and successfully execute the validated PPC smoke subject on the fully prepared Lion kernel/runtime stack?
+
+
+## Observed result: PASS
+
+The normal PowerPC exec experiment has now passed completely on Lion 10.7.5.
+
+The guarded runner verified the expected syscall-295 experiment kernel hash, PowerPC architecture handler, translator identity, PPC executable identity, private Snow Leopard dyld, Rosetta cache/map, and native Lion dyld before launch.
+
+The normal PPC exec then loaded:
+
+```text
+ppc-smoketest-private-dyld
+/usr/libexec/oah/Shims/Interposers.dylib
+/usr/lib/libSystem.B.dylib
+/usr/lib/system/libmathCommon.A.dylib
+```
+
+It printed the expected `Rosetta PPC smoke test` message and exited 0. No new crash/core diagnostic was detected, and the private dyld, Lion native dyld, and kernel hashes remained unchanged.
+
+This validates the normal Lion PowerPC activation path and the subject-path correction together with the already validated translated commpage and syscall-295 compatibility work.
+
+The next compatibility-expansion layer is a normal PPC command-line executable that links CoreFoundation. Follow `docs/ppc-corefoundation-experiment.md`.
