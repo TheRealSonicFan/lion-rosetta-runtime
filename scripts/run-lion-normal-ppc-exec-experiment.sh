@@ -81,6 +81,7 @@ log "translator_sha256=$TRANSLATOR_SHA"
 [ "$TRANSLATOR_SHA" = "$EXPECTED_TRANSLATOR_SHA" ] || die 68 "translator hash mismatch"
 
 [ -f "$EXE" ] || die 66 "missing PPC executable: $EXE"
+[ -x "$EXE" ] || die 66 "PPC executable is not executable: $EXE"
 run_desc="$(/usr/bin/file "$EXE" 2>&1)"
 log "$run_desc"
 if [ -x /usr/bin/lipo ]; then
@@ -98,6 +99,7 @@ if [ -x /usr/bin/otool ]; then
 fi
 
 [ -f "$PRIVATE_DYLD" ] || die 66 "missing staged private dyld: $PRIVATE_DYLD"
+[ -f "$SYSTEM_DYLD" ] || die 66 "missing Lion system dyld: $SYSTEM_DYLD"
 [ ! -L "$PRIVATE_DYLD" ] || die 69 "$PRIVATE_DYLD is a symbolic link"
 PRIVATE_BEFORE="$(sha256 "$PRIVATE_DYLD")"
 log "private_dyld_sha256_before=$PRIVATE_BEFORE"
