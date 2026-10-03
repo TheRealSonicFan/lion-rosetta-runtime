@@ -43,7 +43,9 @@ Use a staged progression so a failure identifies the layer that is still incompa
    - do not collect or install a private `libgcc_s.1.dylib` yet. The confirmed syscall-295 boundary precedes that unresolved library question under the active cache-validation bypass.
    - the syscall-295 compatibility experiment has now passed completely: both kernel architectures built, the installed kernel hash matched the candidate, the commpage regression probe passed, the native syscall-295 probe returned EBADF with no SIGSYS, and the guarded direct Rosetta private-dyld/cache-bypass control printed the PPC smoke-test message and exited 0.
    - the syscall-295 SIGSYS/ENOSYS boundary is therefore closed. Do not add guest libraries or make another XNU change before testing the next layer.
-   - the next controlled step is normal PPC exec activation on the same validated kernel/runtime stack. Follow `docs/lion-normal-ppc-exec-experiment.md`; it executes the validated private-dyld PPC subject normally through the kernel while retaining the same process-local cache-validation bypass that passed in the direct control.
+   - the normal PPC exec activation experiment has now passed: the validated private-dyld subject launched through the kernel architecture handler, loaded the Rosetta runtime libraries, printed the smoke-test marker, exited 0, and generated no diagnostic.
+   - the kernel activation/subject-path layer is therefore closed for the minimal command-line subject.
+   - the next controlled compatibility-expansion step is a PPC CoreFoundation command-line probe. Follow `docs/ppc-corefoundation-experiment.md`; keep the same private dyld and process-local cache-validation bypass so only the framework layer changes.
 
 7. **Dynamic-library expansion**
    - only if the validated Rosetta cache still cannot satisfy the guest dependency should individual Snow Leopard PPC libraries be collected for a new private-path experiment.
