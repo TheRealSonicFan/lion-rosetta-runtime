@@ -217,4 +217,4 @@ The final mapping ends at file offset `0x0c78e000`, exactly 209,248,256 bytes, w
 
 Therefore the experiment satisfies all confirmation criteria: Lion's retired syscall 295 `shared_region_map_np` ABI is the immediate cause of the cache-bypass SIGSYS/ENOSYS boundary.
 
-No XNU patch was applied by this experiment. The source-design pass is now complete in the companion `lion-rosetta-xnu` repository at `docs/shared-region-map-np-compatibility-design.md`. That design restores only the old syscall-295 three-argument front-end and routes it through Lion's existing shared-region mapping helpers. Implementation is intentionally deferred until the next phase is explicitly started.
+No XNU patch was applied by this postmortem experiment. The next phase has now been explicitly prepared in the companion `lion-rosetta-xnu` repository. Follow `docs/xnu-syscall-295-experiment.md`, which supplies the separate experiment-only patch, source validator, native routing probe, kernel build/install gates, and the exact point at which this guarded runtime test may be rerun.
