@@ -266,3 +266,14 @@ The normal kernel PowerPC activation test has now passed on the same validated s
 The PPC subject was executed normally rather than by manually launching `translate`. It loaded the Rosetta Interposers shim, PPC libSystem, and libmathCommon, printed the expected smoke-test marker, exited 0, and produced no new crash/core diagnostic.
 
 This closes the kernel architecture-handler/subject-path layer for the minimal command-line subject. The next experiment changes only the guest dependency surface by linking CoreFoundation. See `docs/ppc-corefoundation-experiment.md`.
+
+
+### PPC CoreFoundation result: PASS
+
+The controlled PPC CoreFoundation command-line experiment has now passed on Lion 10.7.5 using the same validated kernel/private-dyld/cache arrangement.
+
+The exact Snow Leopard-positive-control executable loaded CoreFoundation and its dependent runtime libraries, validated CFString and CFArray operations, printed the expected marker, exited 0, and produced no diagnostic. All guarded integrity hashes remained unchanged.
+
+This demonstrates that the working Rosetta path extends beyond the minimal libSystem smoke subject into CoreFoundation and its dependent library set.
+
+The next controlled layer is the first PPC GUI/window-event-loop test using Carbon. See `docs/ppc-carbon-gui-experiment.md`.
