@@ -39,9 +39,9 @@ Use a staged progression so a failure identifies the layer that is still incompa
    - the first Lion private-dyld run has now passed the former parser boundary: guest dyld reaches library resolution, rejects the Snow Leopard Rosetta cache because Lion's on-disk libSystem does not match it, then reports that Lion's `/usr/lib/libgcc_s.1.dylib` has no PPC slice.
    - the corrected cache-bypass run has now completed: the stale-cache rejection disappeared, the PPC subject was reported as loaded, and `translate` then terminated with `EXC_CRASH (SIGSYS)`, status 140, `EIP=0xb815ac07`, and `EAX=0x4e`.
    - source comparison points to removed syscall 295 (`shared_region_map_np`) as the leading boundary: Snow Leopard dyld calls it directly, Snow Leopard XNU implements it, and Lion routes 295 to `nosys`.
-   - before changing XNU, follow `docs/postmortem-collector-experiment.md` and use the prepared read-only postmortem collector against the preserved `/cores/core.1090`; do not rerun Rosetta for this step.
-   - do not collect or install a private `libgcc_s.1.dylib` yet. The SIGSYS boundary precedes that unresolved library question under the active cache-validation bypass.
-   - only after the postmortem confirms the legacy shared-region call should a minimal syscall-295 compatibility design be prepared in `lion-rosetta-xnu`.
+   - the read-only postmortem collector has now confirmed the legacy shared-region call: runtime code executes `int $0x80`, returns `ENOSYS` with carry set, and the caller passes syscall 295 with `fd=4`, `mappingCount=3`, and mappings spanning exactly the validated Rosetta shared-cache file.
+   - do not collect or install a private `libgcc_s.1.dylib` yet. The confirmed syscall-295 boundary precedes that unresolved library question under the active cache-validation bypass.
+   - the next phase is to prepare and review a minimal syscall-295 compatibility design in `lion-rosetta-xnu` before generating any kernel patch.
    - after the shared-region ABI is restored and direct translation succeeds, exercise normal PPC exec only when the running kernel includes the PowerPC subject-path correction documented in `lion-rosetta-xnu`.
 
 7. **Dynamic-library expansion**
