@@ -129,7 +129,7 @@ fi
 MARKER="$(/usr/bin/mktemp /tmp/lion-ppc-corefoundation-marker.XXXXXX)" || die 73 "could not create diagnostic marker"
 
 log ""
-log "== NORMAL PPC COREF0UNDATION TEST =="
+log "== NORMAL PPC COREFOUNDATION TEST =="
 log "+ DYLD_SHARED_CACHE_DONT_VALIDATE=1 DYLD_PRINT_LIBRARIES=1 $EXE"
 DYLD_SHARED_CACHE_DONT_VALIDATE=1 DYLD_PRINT_LIBRARIES=1     "$EXE" > "$RAW_LOG" 2>&1
 RC=$?
