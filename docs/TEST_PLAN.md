@@ -37,12 +37,12 @@ Use a staged progression so a failure identifies the layer that is still incompa
    - the current Lion direct-launch postmortem shows exactly this condition: Rosetta requests a PPC dyld, Lion provides only x86_64/i386, and the translator misparses the fallback x86_64 slice.
    - use a disposable PPC smoke binary with a private alternate `LC_LOAD_DYLINKER` for the controlled test; never replace Lion's native `/usr/lib/dyld`.
    - the first Lion private-dyld run has now passed the former parser boundary: guest dyld reaches library resolution, rejects the Snow Leopard Rosetta cache because Lion's on-disk libSystem does not match it, then reports that Lion's `/usr/lib/libgcc_s.1.dylib` has no PPC slice.
-   - the first cache-bypass preflight confirmed that the exact validated cache/map hashes are present but the map does not list `/usr/lib/libgcc_s.1.dylib`; that absence is a real cache-content fact, not an artifact mismatch.
-   - rerun the corrected guarded direct test with `ROSETTA_CACHE_BYPASS_VALIDATION=1`; cache-map membership is now logged diagnostically rather than treated as a preflight identity requirement.
-   - the purpose of this rerun is to determine whether `DYLD_SHARED_CACHE_DONT_VALIDATE=1` suppresses the guest dyld's cache-rejection path. If it does and the next failure remains uncached `libgcc_s.1.dylib`, proceed to a separate private-library experiment rather than modifying Lion's `/usr/lib`.
-   - follow `docs/rosetta-shared-cache-experiment.md` for the exact preflight, command, output files, stop conditions, and result interpretation.
-   - do not add `DYLD_SHARED_REGION=private`, rebuild caches, or modify Lion's `/usr/lib` in that experiment; isolate the cache-validation question first.
-   - after a successful direct-translator private-dyld/cache test, exercise normal PPC exec only when the running kernel includes the PowerPC subject-path correction documented in `lion-rosetta-xnu`.
+   - the corrected cache-bypass run has now completed: the stale-cache rejection disappeared, the PPC subject was reported as loaded, and `translate` then terminated with `EXC_CRASH (SIGSYS)`, status 140, `EIP=0xb815ac07`, and `EAX=0x4e`.
+   - source comparison points to removed syscall 295 (`shared_region_map_np`) as the leading boundary: Snow Leopard dyld calls it directly, Snow Leopard XNU implements it, and Lion routes 295 to `nosys`.
+   - before changing XNU, follow `docs/shared-region-sigsys-postmortem.md` and use the prepared read-only postmortem collector against the preserved `/cores/core.1090`; do not rerun Rosetta for this step.
+   - do not collect or install a private `libgcc_s.1.dylib` yet. The SIGSYS boundary precedes that unresolved library question under the active cache-validation bypass.
+   - only after the postmortem confirms the legacy shared-region call should a minimal syscall-295 compatibility design be prepared in `lion-rosetta-xnu`.
+   - after the shared-region ABI is restored and direct translation succeeds, exercise normal PPC exec only when the running kernel includes the PowerPC subject-path correction documented in `lion-rosetta-xnu`.
 
 7. **Dynamic-library expansion**
    - only if the validated Rosetta cache still cannot satisfy the guest dependency should individual Snow Leopard PPC libraries be collected for a new private-path experiment.
