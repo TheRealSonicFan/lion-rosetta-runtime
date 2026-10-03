@@ -224,7 +224,7 @@ The corrected cache-bypass run removed the previous cache-rejection diagnostic a
 
 This is no longer best explained as an immediate missing-`libgcc_s.1.dylib` failure. Snow Leopard dyld 132.13 directly invokes legacy syscall 295 for `shared_region_map_np(fd, count, mappings)`. Snow Leopard XNU 1504.15.3 implements syscall 295 with that interface. Lion XNU 1699.32.7 replaces syscall 295 with `nosys` (`old shared_region_map_np`). Lion's `nosys()` sends `SIGSYS` and returns `ENOSYS`; `ENOSYS` is decimal 78, or `0x4e`, matching the crash register.
 
-Preserve `/cores/core.1090` and confirm the crash-site instruction sequence postmortem before implementing a compatibility wrapper. Do not collect or install a private `libgcc_s.1.dylib` yet.
+Preserve `/cores/core.1090` and confirm the crash-site instruction sequence postmortem before implementing a compatibility wrapper. The authoritative read-only procedure is `docs/shared-region-sigsys-postmortem.md`, using `scripts/collect-lion-shared-region-sigsys-core.sh`. Do not collect or install a private `libgcc_s.1.dylib` yet.
 
 ## Production direction
 
