@@ -80,7 +80,7 @@ scripts/run-lion-commpage-probe.sh ./lion-commpage-probe
 
 The phase-2 commpage probe has now been validated on Lion 10.7.5: it reports the expected 19-page mapping, native commpage version 12, Rosetta compatibility version 11, readable/populated data at `0xffff8020`, correct PPC-view constants, signature data, and representative branch-assist entries, ending with `RESULT: PASS`.
 
-Only after the probe reports `RESULT: PASS` should you proceed through the staged runtime tests. The private-dyld work has now moved beyond the missing-PPC-dyld parser crash and the subsequent stale-cache rejection; the current confirmed boundary is Lion's retired syscall 295 `shared_region_map_np`. The companion `lion-rosetta-xnu` repository now contains the experiment-only restoration procedure in `docs/xnu-syscall-295-experiment.md`. Do not replace Lion's native dyld or add Snow Leopard system libraries before that XNU experiment is reviewed.
+Only after the probe reports `RESULT: PASS` should you proceed through the staged runtime tests. The syscall-295 compatibility experiment has now passed, and the guarded direct private-dyld/cache-bypass Rosetta smoke test exits 0. The next untested layer is normal PowerPC exec activation. Follow `docs/lion-normal-ppc-exec-experiment.md`; do not replace Lion's native dyld, add Snow Leopard system libraries, or broaden the XNU patch before that result is reviewed.
 
 To capture a shareable report around a PPC attempt:
 
@@ -98,4 +98,4 @@ Historical Lion experiments show that copying `translate` alone can reach the tr
 
 The `.gitignore` is intentionally broad. It excludes the entire `payload/` directory and common Rosetta binary/cache names to reduce the chance of accidentally publishing Apple's proprietary components.
 
-See `docs/CLOSED_SOURCE_COMPONENTS.md`, `docs/VALIDATED_PAYLOAD.md`, `docs/PPC_DYLD_GAP.md`, `docs/rosetta-shared-cache-experiment.md`, `docs/postmortem-collector-experiment.md`, and `docs/TEST_PLAN.md`.
+See `docs/CLOSED_SOURCE_COMPONENTS.md`, `docs/VALIDATED_PAYLOAD.md`, `docs/PPC_DYLD_GAP.md`, `docs/rosetta-shared-cache-experiment.md`, `docs/postmortem-collector-experiment.md`, `docs/lion-normal-ppc-exec-experiment.md`, and `docs/TEST_PLAN.md`.
