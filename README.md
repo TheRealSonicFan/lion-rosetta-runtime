@@ -80,7 +80,7 @@ scripts/run-lion-commpage-probe.sh ./lion-commpage-probe
 
 The phase-2 commpage probe has now been validated on Lion 10.7.5: it reports the expected 19-page mapping, native commpage version 12, Rosetta compatibility version 11, readable/populated data at `0xffff8020`, correct PPC-view constants, signature data, and representative branch-assist entries, ending with `RESULT: PASS`.
 
-Only after the probe reports `RESULT: PASS` should you proceed through the staged runtime tests. The syscall-295 compatibility experiment, guarded direct Rosetta control, and normal PowerPC exec control have now all passed. The next controlled layer is command-line CoreFoundation compatibility. Follow `docs/ppc-corefoundation-experiment.md`; do not replace Lion's native dyld, add Snow Leopard system libraries, remove the cache-validation bypass, or broaden the XNU patch during that experiment.
+Only after the probe reports `RESULT: PASS` should you proceed through the staged runtime tests. The syscall-295 compatibility experiment, guarded direct Rosetta control, normal PowerPC exec control, and command-line CoreFoundation experiment have now all passed. The next controlled layer is the first PPC GUI/window-event-loop test using Carbon. Follow `docs/ppc-carbon-gui-experiment.md`; do not replace Lion's native dyld, add Snow Leopard system libraries/frameworks, remove the cache-validation bypass, or broaden the XNU patch during that experiment.
 
 To capture a shareable report around a PPC attempt:
 
@@ -98,4 +98,4 @@ Historical Lion experiments show that copying `translate` alone can reach the tr
 
 The `.gitignore` is intentionally broad. It excludes the entire `payload/` directory and common Rosetta binary/cache names to reduce the chance of accidentally publishing Apple's proprietary components.
 
-See `docs/CLOSED_SOURCE_COMPONENTS.md`, `docs/VALIDATED_PAYLOAD.md`, `docs/PPC_DYLD_GAP.md`, `docs/rosetta-shared-cache-experiment.md`, `docs/postmortem-collector-experiment.md`, `docs/lion-normal-ppc-exec-experiment.md`, `docs/ppc-corefoundation-experiment.md`, and `docs/TEST_PLAN.md`.
+See `docs/CLOSED_SOURCE_COMPONENTS.md`, `docs/VALIDATED_PAYLOAD.md`, `docs/PPC_DYLD_GAP.md`, `docs/rosetta-shared-cache-experiment.md`, `docs/postmortem-collector-experiment.md`, `docs/lion-normal-ppc-exec-experiment.md`, `docs/ppc-corefoundation-experiment.md`, `docs/ppc-carbon-gui-experiment.md`, and `docs/TEST_PLAN.md`.
