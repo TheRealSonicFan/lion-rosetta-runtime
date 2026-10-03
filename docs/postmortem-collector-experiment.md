@@ -181,3 +181,40 @@ This experiment does not:
 - prove that every later Rosetta dependency is satisfied.
 
 It is a read-only evidence-collection step only.
+
+
+## Observed result: PASS
+
+The postmortem collector completed successfully against the preserved non-debugged `/cores/core.1090`. All three GDB operations returned status 0, the extracted runtime window is exactly 256 bytes, and its SHA-256 is:
+
+```text
+e884a4964e83de18569bc67beb1461c1169d62717f99683fc1ba62dda585ad37
+```
+
+The runtime-decrypted code confirms the syscall boundary mechanically.
+
+At `0xb815ac05` the translator executes `int $0x80`; the crash EIP `0xb815ac07` is the immediately following `setb %cl`, which records the carry flag from the Unix syscall return. The preserved state is `EAX=0x4e` and EFLAGS `0x247`, so the syscall returned `ENOSYS` with carry set.
+
+The caller at `0xb81794ed` invokes this three-argument syscall wrapper after placing `0x127` (decimal 295) in the wrapper's syscall-number slot. Reconstructing the wrapper frame gives the actual syscall arguments:
+
+```text
+syscall number = 295
+fd             = 4
+mappingCount   = 3
+mappings       = 0xb7fff7b0
+```
+
+The three 32-bit `shared_file_mapping_np` records at that pointer decode as:
+
+```text
+address      size        file offset  max/init protection
+0x90000000   0x0918a000  0x00000000   5 / 5
+0xa0000000   0x00ea0000  0x0918a000   3 / 3
+0x9918a000   0x02764000  0x0a02a000   1 / 1
+```
+
+The final mapping ends at file offset `0x0c78e000`, exactly 209,248,256 bytes, which is the validated Snow Leopard Rosetta shared-cache size. This ties the failing syscall directly to mapping the validated Rosetta shared cache, not merely to an arbitrary syscall 295 invocation.
+
+Therefore the experiment satisfies all confirmation criteria: Lion's retired syscall 295 `shared_region_map_np` ABI is the immediate cause of the cache-bypass SIGSYS/ENOSYS boundary.
+
+No XNU patch was applied by this experiment. The next phase is source design for a minimal compatibility restoration of syscall 295.
