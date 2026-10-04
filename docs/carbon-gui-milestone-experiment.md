@@ -329,3 +329,27 @@ Also state whether the milestone window was visually observed on Snow Leopard an
 ## Non-goals
 
 This experiment does not repair the Carbon failure. It only identifies the first guest-side stage that precedes the deliberate self-SIGABRT.
+
+
+## Observed Lion result: GetCurrentProcess boundary
+
+The milestone experiment completed its Snow Leopard positive control successfully. The exact executable SHA-256 was:
+
+```text
+a1aea9b492df8185c237acd4414c9be08a562e956c83e4ab43a07387af31b3dd
+```
+
+On Snow Leopard, the probe reached every milestone through `M27_SUCCESS`, displayed the Carbon window, and exited 0.
+
+On Lion, all kernel/runtime preflights and hashes remained at the validated values. The process reached:
+
+```text
+CARBON_MILESTONE:M00_MAIN_ENTER
+CARBON_MILESTONE:M01_BEFORE_GetCurrentProcess
+```
+
+and then terminated with SIGABRT/status 134. `M02_AFTER_GetCurrentProcess` was never reached, and no window appeared.
+
+The new crash report repeats the previously decoded guest self-SIGABRT pattern at Rosetta's host syscall wrapper. Therefore the immediate observed Carbon boundary is now `GetCurrentProcess`, not pre-main framework initialization.
+
+This result does not justify another XNU change. The next controlled variable is launch context: package a near-identical milestone executable as a real application bundle and launch it through LaunchServices. Follow `docs/carbon-launchservices-experiment.md`.
