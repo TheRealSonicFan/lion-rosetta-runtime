@@ -185,3 +185,32 @@ This postmortem step does not:
 - test a real-world PPC application.
 
 It is a read-only localization step.
+
+
+## Observed postmortem result: guest syscall 37 self-SIGABRT
+
+The read-only collector completed successfully against the preserved non-debugged `/cores/core.1311`. All three GDB collection passes returned status 0.
+
+The extracted runtime-decrypted binary windows were internally consistent with their SHA-256 sidecars:
+
+```text
+wrapper: e884a4964e83de18569bc67beb1461c1169d62717f99683fc1ba62dda585ad37
+caller:  90cacec6dbac8900998e078ca03a2e96746e506e747deb55b0eaffc3e37a4341
+frame2:  0178da0e4cbe240bf4ae41d3dc357222bf5e328ff0864acfc3c9f1d2ce8eb00b
+```
+
+The host syscall sequence is now resolved mechanically:
+
+1. The Rosetta wrapper around `0xb815abe8` moves its final argument into `EAX` and executes `int $0x80`.
+2. The direct caller at `0xb8179f8e` places `0x25` in that syscall-number slot.
+3. `0x25` is decimal 37. Both Snow Leopard and Lion XNU define syscall 37 as `kill(int pid, int signum, int posix)`.
+4. The wrapper arguments in the preserved frame are PID `0x51f` (1311), signal `6` (SIGABRT), and posix flag `1`.
+5. At the crash EIP, `EAX=0` and the carry flag is clear, so the host `kill()` syscall itself succeeded.
+
+Therefore Rosetta is not aborting because Lion rejected another host syscall. It is faithfully executing a **guest-requested self-SIGABRT**.
+
+This closes the immediate host-kernel syscall question. The remaining problem is guest-side localization: the current core does not identify which PPC framework initializer or which early Process Manager/Carbon API path decided to call `kill(self, SIGABRT)`.
+
+The next controlled step is therefore the milestone-instrumented Carbon experiment in `docs/carbon-gui-milestone-experiment.md`. It prints unbuffered markers at `main()` entry and immediately before/after every early Carbon/Process Manager call while keeping all kernel/runtime conditions unchanged.
+
+Do not create another XNU patch, copy frameworks, or alter the Rosetta cache before that milestone result is reviewed.
