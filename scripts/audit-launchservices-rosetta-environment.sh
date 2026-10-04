@@ -62,7 +62,7 @@ section() {
 
     section "Rosetta receipts and metadata candidates"
     /usr/sbin/pkgutil --pkgs 2>/dev/null | /usr/bin/grep -Ei 'rosetta|oah' || true
-    /usr/bin/find /var/db/receipts /Library/Receipts -maxdepth 2 -iname '*rosetta*' -print 2>/dev/null || true
+    /usr/bin/find /var/db/receipts /Library/Receipts -iname '*rosetta*' -print 2>/dev/null || true
 
     section "LaunchServices framework identity"
     if [ -f "$LS_BINARY" ]; then
@@ -95,7 +95,7 @@ section() {
 
     section "LaunchServices support files"
     if [ -d "$LS_FRAMEWORK" ]; then
-        /usr/bin/find "$LS_FRAMEWORK" -maxdepth 4 -type f -print 2>/dev/null | /usr/bin/sort
+        /usr/bin/find "$LS_FRAMEWORK" -type f -print 2>/dev/null | /usr/bin/sort
     fi
 
     section "LaunchServices helper identities"
