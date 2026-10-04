@@ -40,6 +40,12 @@ def write_file(path, data, mode):
     os.chmod(path, mode)
 
 
+def bytearray_to_bytes(buf):
+    if sys.version_info[0] < 3:
+        return buffer(buf)[:]
+    return bytes(buf)
+
+
 def parse_i386_range(data):
     if len(data) < 8:
         raise ValueError("file too small")
@@ -164,7 +170,7 @@ def main():
     pos = original_hits[0]
     out = bytearray(data)
     out[pos:pos + len(ORIGINAL)] = bytearray(PATCHED)
-    out = bytes(out)
+    out = bytearray_to_bytes(out)
 
     if len(out) != len(data):
         print("error: output size changed", file=sys.stderr)
