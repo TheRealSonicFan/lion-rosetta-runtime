@@ -181,3 +181,26 @@ This audit does not:
 - repair the later shell-launch `GetCurrentProcess` boundary.
 
 It is a read-only static localization of the earlier LaunchServices PPC availability gate.
+
+
+## Observed result and analyzer correction
+
+The first-pass static audit completed successfully on Snow Leopard 10.6.8 and Lion 10.7.5.
+
+The valid conclusions are:
+
+- Snow Leopard LaunchServices' i386 slice contains the real `-10665` error path immediately after a call to `_LSAppMeetsRosettaRequirement`. The code initializes the error to `kLSNoRosettaEnvironmentErr` and continues only when the Rosetta requirement check returns its accepting result.
+- Lion LaunchServices also contains a real `-10665` operand site, but the corresponding code no longer calls `_LSAppMeetsRosettaRequirement`. Instead it computes either `-10665` or a neighboring LaunchServices error from an internal bit test.
+- the first audit confirms that the helper executables `coreservicesd`, `lsregister`, and `open` are not the owners of the `-10665` constant.
+- the first environment audit independently showed that Lion records the same PPC app with `unsupported-format`.
+
+However, the first analyzer had two reporting defects that prevent a safe compatibility design from being made yet:
+
+1. the target-symbol list used the wrong leading-underscore spelling for several Mach-O symbols, so the report marked functions such as `__LSBundleCopyArchitecturesValidOnCurrentSystem` and `__LSAppMeetsRosettaRequirement` as absent even when `nm` listed them;
+2. its broad textual `d657` matcher produced false-positive contexts whenever an instruction address happened to end in those digits.
+
+Those defects do not invalidate the real operand sites above, but they do prevent a precise identification of the Lion enclosing function and tested flag.
+
+The authoritative next step is therefore the corrected, read-only second pass in `docs/launchservices-ppc-gate-callsite-audit.md`, implemented by `scripts/audit-launchservices-ppc-gate-callsite.py`.
+
+Do not install Snow Leopard receipts or patch LaunchServices before that callsite report is reviewed.
