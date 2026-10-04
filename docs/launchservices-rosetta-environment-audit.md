@@ -162,3 +162,36 @@ This audit does not:
 - test another PPC GUI application.
 
 It is a read-only differential audit of the LaunchServices Rosetta availability gate.
+
+
+## Observed differential result
+
+The Snow Leopard/Lion read-only audit found a clear LaunchServices implementation difference while confirming that the core Rosetta runtime state is otherwise aligned.
+
+Shared state:
+
+- both systems report `kern.exec.archhandler.powerpc: /usr/libexec/oah/translate`;
+- `translate`, `RosettaNonGrata`, and `RosettaVersion.plist` have the same validated identities;
+- the same PPC bundle definition is registered, including the same `LSArchitecturePriority` and `LSEnvironment` values.
+
+Important differences:
+
+1. **Rosetta receipts**
+   - Snow Leopard has `com.apple.pkg.Rosetta` and `com.apple.pkg.update.rosetta.10.6.8.combo` receipts.
+   - Lion currently has no Rosetta receipt entries.
+
+2. **LaunchServices binary composition**
+   - Snow Leopard LaunchServices contains x86_64, i386, and ppc7400 slices.
+   - Lion LaunchServices contains only x86_64 and i386 slices.
+
+3. **Explicit Rosetta logic**
+   - Snow Leopard LaunchServices contains `/usr/libexec/oah/translate`, `App required Rosetta`, `RosettaRequirements`, `_LSAppMeetsRosettaRequirement`, and `exceptionalRosettaRequirements`.
+   - those explicit Rosetta/OAH strings and symbols are absent from Lion LaunchServices.
+
+4. **Registered application classification**
+   - Snow Leopard records the test app as a PPC application without `unsupported-format`.
+   - Lion records the same PPC app with the additional `unsupported-format` item flag.
+
+The receipts difference is real but is not yet sufficient justification to install Snow Leopard receipts on Lion. The stronger evidence is that Lion's LaunchServices implementation itself no longer contains the Snow Leopard Rosetta-specific decision machinery and classifies the registered PPC executable as unsupported.
+
+The next step is therefore a targeted read-only static audit of the i386 LaunchServices/CarbonCore/CoreServices decision code, documented in `docs/launchservices-ppc-gate-static-audit.md`. That audit searches for the `-10665` return path and disassembles the architecture-validity functions on both systems before any metadata or framework modification is attempted.
