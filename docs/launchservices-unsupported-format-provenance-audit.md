@@ -155,7 +155,7 @@ If the flag originates through opaque database packing or indirect dispatch, the
 
 The corrected callsite audit already proves that **receipts are not consulted at launch time** in Lion's `-10665` path. Installing Snow Leopard Rosetta receipts would therefore be premature unless this provenance audit finds a registration-time provider that explicitly consumes them.
 
-The current preferred direction is to restore the minimum Snow Leopard-equivalent PPC registration classification, not to transplant Snow Leopard LaunchServices wholesale.
+The provenance result changes that interpretation: the launch-time unsupported-format flag is computed dynamically by _LSBundleDataGetUnsupportedFormatFlag from the bundle-data architecture bits and current CPU policy. No dedicated unsupported-format setter was identified. The current preferred direction is therefore to restore the minimum Snow Leopard-equivalent PPC compatibility decision in that helper, not to transplant Snow Leopard LaunchServices wholesale.
 
 ## Non-goals
 
@@ -171,3 +171,31 @@ This audit does not:
 - address the later shell-launch `GetCurrentProcess` boundary.
 
 It is the final provenance step before a controlled LaunchServices compatibility experiment can be designed.
+
+## Observed provenance result: Lion removed the Intel-to-PPC fallback
+
+The provenance audit completed successfully on Snow Leopard 10.6.8 and Lion 10.7.5.
+
+The decisive comparison is _LSBundleDataGetUnsupportedFormatFlag.
+
+### Snow Leopard
+
+Snow Leopard calls _LSGetPhysicalCPUType. On Intel/x86_64 hosts it first checks the native Intel architecture flags. If those are absent, it falls back to a second mask test that accepts a PPC-only bundle when the PPC architecture bit 0x02000000 is present and the relevant exclusion bits are clear.
+
+This is the Rosetta-era compatibility path.
+
+### Lion
+
+Lion's corresponding helper calls _LSGetCPUType. Its x86_64-host branch tests only the native Intel mask 0x14000000; if that mask is absent, the common path returns 0x00400000, the unsupported-format flag. The Snow Leopard PPC fallback is gone.
+
+For the validated PPC-only Carbon application, this explains both the unsupported-format ppc classification shown by LaunchServices and the later _LSLaunch conversion of that result into kLSNoRosettaEnvironmentErr (-10665).
+
+The audit also found no dedicated unsupported-format setter symbol. The helper computes the flag from bundle data and CPU policy, so the earlier wording that treated it as a purely persisted database bit was incomplete.
+
+_LSBundleCopyArchitecturesValidOnCurrentSystem exists on both systems and retains closely corresponding architecture-filtering logic. The immediately demonstrated Snow-Leopard-to-Lion regression is therefore the removed PPC fallback inside _LSBundleDataGetUnsupportedFormatFlag.
+
+This is sufficient to justify a controlled compatibility experiment, but not an on-disk framework patch.
+
+The next experiment is documented in docs/private-launchservices-ppc-compat-experiment.md. It creates a private copy of Lion's i386 LaunchServices, applies a one-byte test-only change that admits the PPC architecture bit at this exact x86_64-host gate, proves that /usr/bin/open loaded the private framework, and then performs one guarded launch of the already validated PPC application.
+
+Do not modify the installed LaunchServices framework or database.
