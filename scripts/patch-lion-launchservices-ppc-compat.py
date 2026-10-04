@@ -178,11 +178,13 @@ def main():
         return 70
 
     changed = diffs[0]
+    old_byte = ord(data[changed:changed + 1])
+    new_byte = ord(out[changed:changed + 1])
     print("changed_file_offset=0x%x" % changed)
-    print("old_byte=0x%02x" % data[changed])
-    print("new_byte=0x%02x" % out[changed])
+    print("old_byte=0x%02x" % old_byte)
+    print("new_byte=0x%02x" % new_byte)
 
-    if changed != pos + 12 or data[changed] != b"\x14"[0] or out[changed] != b"\x16"[0]:
+    if changed != pos + 12 or old_byte != 0x14 or new_byte != 0x16:
         print("error: unexpected patch delta", file=sys.stderr)
         return 70
 
