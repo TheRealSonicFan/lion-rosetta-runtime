@@ -171,6 +171,16 @@ log "+ /usr/bin/open -n -W $APP"
 OPEN_RC=$?
 log "open_status=$OPEN_RC"
 
+LS_RESULT="UNKNOWN"
+if /usr/bin/grep -Fq 'error -10665' "$OPEN_LOG"; then
+    LS_RESULT="NO_ROSETTA_ENVIRONMENT"
+elif [ "$OPEN_RC" -eq 0 ]; then
+    LS_RESULT="OPEN_ACCEPTED"
+else
+    LS_RESULT="OTHER_LAUNCH_FAILURE"
+fi
+log "launchservices_result=$LS_RESULT"
+
 /bin/sleep 2
 
 if [ -f "$MILESTONE_LOG" ]; then
@@ -245,9 +255,13 @@ if [ -f "$MILESTONE_COPY" ] &&
     exit 0
 fi
 
-if [ "$FURTHEST" = "M01_BEFORE_GetCurrentProcess" ]; then
+if [ "$LS_RESULT" = "NO_ROSETTA_ENVIRONMENT" ]; then
+    log "RESULT: LAUNCHSERVICES_NO_ROSETTA_ENVIRONMENT"
+    log "LaunchServices returned -10665 (kLSNoRosettaEnvironmentErr) before the PPC executable was started."
+    log "No milestone log is expected in this result class because main() was never entered."
+elif [ "$FURTHEST" = "M01_BEFORE_GetCurrentProcess" ]; then
     log "RESULT: SAME_GETCURRENTPROCESS_BOUNDARY"
-    log "LaunchServices registration did not move the immediate GetCurrentProcess boundary."
+    log "LaunchServices accepted the app, but registration did not move the immediate GetCurrentProcess boundary."
 elif [ "$FURTHEST" = "NONE" ]; then
     log "RESULT: PRE_MAIN_OR_LAUNCH_FAILURE"
 else
