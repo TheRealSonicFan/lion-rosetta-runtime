@@ -349,3 +349,14 @@ This experiment does not:
 - define the final production installation.
 
 It isolates the first GUI/window-event-loop layer after command-line CoreFoundation compatibility has been proven.
+
+
+## Observed Lion result: SIGABRT before window marker
+
+The Snow Leopard positive control passed with the exact experimental executable: the Carbon window became visible, the event loop timer fired, and the program exited 0.
+
+The Lion run did not reproduce that result. The exact executable and all guarded kernel/runtime identities passed preflight, and dyld loaded the Carbon/ApplicationServices dependency graph, but neither Carbon program marker was printed and no window appeared. The process exited 134 and generated a crash report plus `/cores/core.1311`.
+
+The non-debugged crash report records `EXC_CRASH (SIGABRT)` at Rosetta host EIP `0xb815ac07`. Its register state includes `EAX=0`, carry clear, `EDI=0x51f` (the process PID 1311), and `ESI=6` (SIGABRT). This pattern suggests deliberate self-signal delivery through Rosetta's syscall path, but the crash report alone is not enough to prove the syscall number or identify the guest-side abort source.
+
+Do not copy frameworks, modify XNU, or rerun the Carbon subject yet. The authoritative next step is the read-only preserved-core procedure in `docs/carbon-gui-sigabrt-postmortem.md`, using `scripts/collect-lion-carbon-sigabrt-core.sh`.
