@@ -195,3 +195,10 @@ Important differences:
 The receipts difference is real but is not yet sufficient justification to install Snow Leopard receipts on Lion. The stronger evidence is that Lion's LaunchServices implementation itself no longer contains the Snow Leopard Rosetta-specific decision machinery and classifies the registered PPC executable as unsupported.
 
 The next step is therefore a targeted read-only static audit of the i386 LaunchServices/CarbonCore/CoreServices decision code, documented in `docs/launchservices-ppc-gate-static-audit.md`. That audit searches for the `-10665` return path and disassembles the architecture-validity functions on both systems before any metadata or framework modification is attempted.
+
+
+### Callsite follow-up
+
+The corrected LaunchServices callsite audit has now shown that Lion's `kLSNoRosettaEnvironmentErr` is returned only after `_LSBundleDataGetUnsupportedFormatFlag` reports the application as unsupported. Snow Leopard instead uses its explicit `_LSAppMeetsRosettaRequirement` gate.
+
+The next read-only step is to trace the registration-time provenance of Lion's unsupported-format flag. See `docs/launchservices-unsupported-format-provenance-audit.md`.
