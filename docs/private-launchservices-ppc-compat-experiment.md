@@ -50,6 +50,37 @@ git rev-parse HEAD
 
 No kernel rebuild is part of this experiment.
 
+
+## Patcher correction after first Phase B attempt
+
+The first Phase B attempt on the validated Lion system reported:
+
+```text
+input_sha256=ffdc7bd8fb0cb5f7ceabc9c88978e991e71fbfe7390a8345ce545397b1ab24b5
+i386_sha256=e690d40ac70973ad7e7945f93c4a2e85ede5422474c885377bd2552ae3eaa735
+original_signature_count=0
+patched_signature_count=0
+RESULT: NOT_PATCHABLE
+```
+
+That result was a patcher implementation defect, not a system-binary mismatch. Both the full LaunchServices hash and the i386-slice hash exactly matched the provenance-audit baseline, and the same validated i386 disassembly already established the target instruction at virtual address 0x00030441.
+
+The original patcher searched for one long byte string spanning several neighboring branch instructions. That search has been removed.
+
+The corrected patcher now:
+
+1. requires the exact validated full-file and i386-slice SHA-256 values;
+2. parses the fat Mach-O and the i386 slice load commands;
+3. maps the audited virtual addresses to file offsets through LC_SEGMENT;
+4. verifies the cmp/jne bytes at 0x0003043a;
+5. verifies the exact TEST instruction bytes at 0x00030441 are `f7 c3 00 00 00 14`;
+6. changes only the final immediate byte at virtual address 0x00030446 from `0x14` to `0x16` in a private output copy;
+7. verifies that exactly one byte changed and that replacing it with `0x14` reconstructs the exact validated system SHA-256.
+
+This is more precise than scanning for a compound signature and directly ties the patch to the audited Lion 10.7.5 instruction address.
+
+Do not use an older checkout of the patcher for this experiment.
+
 ## Phase B - verify the exact system LaunchServices baseline
 
 From the runtime checkout:
@@ -69,7 +100,17 @@ Required system LaunchServices SHA-256:
 ffdc7bd8fb0cb5f7ceabc9c88978e991e71fbfe7390a8345ce545397b1ab24b5
 ```
 
-The patcher check must end with RESULT: PATCHABLE. Stop if the hash or signature differs.
+The corrected patcher check must end with:
+
+```text
+cmp_branch_bytes=3d07000001751d
+test_bytes=f7c300000014
+RESULT: PATCHABLE
+```
+
+The reported full-file SHA-256 must remain `ffdc7bd8fb0cb5f7ceabc9c88978e991e71fbfe7390a8345ce545397b1ab24b5`, and the i386-slice SHA-256 must remain `e690d40ac70973ad7e7945f93c4a2e85ede5422474c885377bd2552ae3eaa735`.
+
+Stop if either hash or either audited instruction-byte check differs.
 
 ## Phase C - create the private patched framework
 
