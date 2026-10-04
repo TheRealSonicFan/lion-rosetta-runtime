@@ -214,3 +214,10 @@ This closes the immediate host-kernel syscall question. The remaining problem is
 The next controlled step is therefore the milestone-instrumented Carbon experiment in `docs/carbon-gui-milestone-experiment.md`. It prints unbuffered markers at `main()` entry and immediately before/after every early Carbon/Process Manager call while keeping all kernel/runtime conditions unchanged.
 
 Do not create another XNU patch, copy frameworks, or alter the Rosetta cache before that milestone result is reviewed.
+
+
+### Milestone follow-up
+
+The subsequent milestone-instrumented Carbon probe has now narrowed the guest-side source further. On Lion it reaches `main()` and writes `M01_BEFORE_GetCurrentProcess`, then deliberately self-SIGABRTs before `M02_AFTER_GetCurrentProcess`. The exact Snow Leopard control reaches all milestones and displays the window.
+
+Therefore the next experiment is no longer another preserved-core pass. It tests whether a LaunchServices-registered application bundle supplies the missing Carbon Process Manager launch context. See `docs/carbon-launchservices-experiment.md`.
