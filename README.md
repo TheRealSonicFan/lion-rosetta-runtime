@@ -80,7 +80,7 @@ scripts/run-lion-commpage-probe.sh ./lion-commpage-probe
 
 The phase-2 commpage probe has now been validated on Lion 10.7.5: it reports the expected 19-page mapping, native commpage version 12, Rosetta compatibility version 11, readable/populated data at `0xffff8020`, correct PPC-view constants, signature data, and representative branch-assist entries, ending with `RESULT: PASS`.
 
-Only after the probe reports `RESULT: PASS` should you proceed through the staged runtime tests. The syscall-295 compatibility experiment, guarded direct Rosetta control, normal PowerPC exec control, and command-line CoreFoundation experiment have passed. The first Carbon GUI control passed on Snow Leopard but aborts on Lion before a window marker, with a preserved non-debugged core. Do not add frameworks or modify XNU yet; follow `docs/carbon-gui-sigabrt-postmortem.md` for the current read-only localization step.
+Only after the probe reports `RESULT: PASS` should you proceed through the staged runtime tests. The syscall-295 compatibility experiment, guarded direct Rosetta control, normal PowerPC exec control, and command-line CoreFoundation experiment have passed. The first Carbon GUI control passed on Snow Leopard but aborts on Lion before a window marker. Postmortem analysis now confirms that the translated guest requests syscall 37 `kill(self, SIGABRT, 1)` and the host syscall succeeds, so no new XNU syscall fix is indicated. The next controlled step is `docs/carbon-gui-milestone-experiment.md`, which localizes the guest-side abort using unbuffered before/after markers.
 
 To capture a shareable report around a PPC attempt:
 
