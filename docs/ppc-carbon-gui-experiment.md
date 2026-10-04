@@ -360,3 +360,12 @@ The Lion run did not reproduce that result. The exact executable and all guarded
 The non-debugged crash report records `EXC_CRASH (SIGABRT)` at Rosetta host EIP `0xb815ac07`. Its register state includes `EAX=0`, carry clear, `EDI=0x51f` (the process PID 1311), and `ESI=6` (SIGABRT). This pattern suggests deliberate self-signal delivery through Rosetta's syscall path, but the crash report alone is not enough to prove the syscall number or identify the guest-side abort source.
 
 Do not copy frameworks, modify XNU, or rerun the Carbon subject yet. The authoritative next step is the read-only preserved-core procedure in `docs/carbon-gui-sigabrt-postmortem.md`, using `scripts/collect-lion-carbon-sigabrt-core.sh`.
+
+
+### Preserved-core follow-up
+
+The preserved `/cores/core.1311` has now been analyzed postmortem. Rosetta's direct caller supplies Unix syscall `0x25` (37), and the preserved arguments are `kill(1311, SIGABRT, 1)`. The syscall returns success before the process dies from SIGABRT.
+
+This means the failure is guest-requested, not a second missing Lion syscall ABI.
+
+The core does not resolve whether the guest abort occurs before `main()` or inside one of the early Carbon/Process Manager calls. The next experiment is therefore `docs/carbon-gui-milestone-experiment.md`.
