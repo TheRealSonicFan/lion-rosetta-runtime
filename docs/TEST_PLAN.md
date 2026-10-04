@@ -53,7 +53,9 @@ Use a staged progression so a failure identifies the layer that is still incompa
    - this rules out pre-main framework initialization and makes `GetCurrentProcess`/Carbon Process Manager initialization the immediate observed boundary.
    - the LaunchServices bundle control passed on Snow Leopard, but Lion refuses the identical PPC app before execution with `LSOpenURLsWithRole` error `-10665` (`kLSNoRosettaEnvironmentErr`). No milestone file is expected because `main()` is never entered.
    - this is now an earlier LaunchServices Rosetta-availability gate, so the experiment cannot yet test whether registration changes `GetCurrentProcess`.
-   - do not rebuild the LaunchServices database, transplant CoreServices, or change XNU. Follow `docs/launchservices-rosetta-environment-audit.md` for a read-only Snow Leopard/Lion differential audit.
+   - the Snow Leopard/Lion LaunchServices environment audit is complete. Runtime metadata matches, but Snow Leopard has Rosetta receipts and explicit Rosetta/OAH LaunchServices logic while Lion does not; Lion also records the same PPC app as `unsupported-format`.
+   - the receipts difference is not yet proven causal. Do not install Snow Leopard receipts on Lion.
+   - follow `docs/launchservices-ppc-gate-static-audit.md` for a read-only i386 static comparison of the `-10665`/architecture-validity decision path before any LaunchServices or metadata modification.
 
 7. **Dynamic-library expansion**
    - only if the validated Rosetta cache still cannot satisfy the guest dependency should individual Snow Leopard PPC libraries be collected for a new private-path experiment.
