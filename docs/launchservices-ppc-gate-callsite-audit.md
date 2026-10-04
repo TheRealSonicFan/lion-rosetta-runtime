@@ -174,3 +174,34 @@ This audit does not:
 - repair the later shell-launch `GetCurrentProcess` boundary.
 
 It is the final read-only localization step before deciding whether a controlled LaunchServices compatibility modification is justified.
+
+
+## Observed result: launch rejection is the unsupported-format flag
+
+The corrected callsite audit resolved the exact `-10665` owner on both systems.
+
+### Snow Leopard 10.6.8
+
+The sole `-10665` operand is inside `_LSLaunch`. The launch path calls `_LSAppMeetsRosettaRequirement`, writes `kLSNoRosettaEnvironmentErr` as the pending result, and continues only when the Rosetta requirement check returns the accepting value.
+
+This is a true dynamic Rosetta-requirement gate.
+
+### Lion 10.7.5
+
+The sole `-10665` operand is also inside `_LSLaunch`, but `_LSAppMeetsRosettaRequirement` is absent.
+
+Lion instead calls:
+
+```text
+_LSBundleDataGetUnsupportedFormatFlag
+```
+
+If that returns zero, launch proceeds past the gate. If it returns nonzero, Lion reads an additional bit from the bundle-data record and selects between `-10665` and a neighboring LaunchServices format error.
+
+This directly ties the observed `kLSNoRosettaEnvironmentErr` to the persisted `unsupported-format` classification already seen in Lion's registration record for the PPC app.
+
+The result therefore changes the engineering target: do not patch the broad `_LSLaunch` error branch first. Determine where Lion sets the unsupported-format bit for PPC during bundle registration and whether that classification can be restored narrowly.
+
+The authoritative next step is `docs/launchservices-unsupported-format-provenance-audit.md`, implemented by `scripts/audit-launchservices-unsupported-format-provenance.py`.
+
+Do not install Rosetta receipts, edit the LaunchServices database, or patch the system framework before that provenance is known.
