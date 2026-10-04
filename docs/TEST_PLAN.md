@@ -60,6 +60,7 @@ Use a staged progression so a failure identifies the layer that is still incompa
    - the unsupported-format provenance audit is complete. `_LSBundleDataGetUnsupportedFormatFlag` computes the flag from bundle architecture bits and current CPU policy; no dedicated unsupported-format setter was identified.
    - Snow Leopard contains an Intel-host fallback that accepts the PPC architecture bit for Rosetta, while Lion's x86_64-host path tests only native Intel bits and returns unsupported-format for the PPC-only bundle.
    - this is sufficient for a controlled private-framework hypothesis test. Follow `docs/private-launchservices-ppc-compat-experiment.md`; do not modify the installed LaunchServices framework/database, install receipts, or change XNU.
+   - the initial Phase B `NOT_PATCHABLE` result was a patcher-signature bug: the system and i386 hashes matched the validated baseline. The corrected patcher now maps the audited Mach-O virtual address through `LC_SEGMENT` and verifies the exact target instruction bytes before changing one byte in a private copy.
 
 7. **Dynamic-library expansion**
    - only if the validated Rosetta cache still cannot satisfy the guest dependency should individual Snow Leopard PPC libraries be collected for a new private-path experiment.
