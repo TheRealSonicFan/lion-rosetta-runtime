@@ -48,8 +48,9 @@ Use a staged progression so a failure identifies the layer that is still incompa
    - the PPC CoreFoundation experiment has now passed on both Snow Leopard and Lion. The exact PPC subject loaded CoreFoundation plus libauto, libicucore, libobjc, libz, libstdc++, libSystem, and libmathCommon, validated CFString/CFArray behavior, exited 0, and generated no diagnostic.
    - command-line CoreFoundation compatibility is therefore closed for the controlled environment.
    - the first Carbon GUI experiment passed on Snow Leopard but failed on Lion before either program marker or window creation: the exact PPC subject loaded the Carbon/ApplicationServices dependency graph and then terminated with SIGABRT/status 134, producing `/cores/core.1311`.
-   - the crash report points at Rosetta's host syscall-wrapper area and has register values consistent with a deliberate self-SIGABRT, but the guest-side source is not yet established.
-   - do not add frameworks or make another XNU change. Follow `docs/carbon-gui-sigabrt-postmortem.md` to analyze the preserved core read-only before another Carbon run.
+   - the preserved-core postmortem has now confirmed that Rosetta executes syscall 37 `kill(pid, signum, posix)` with PID 1311, SIGABRT, and posix flag 1; the host syscall returns success. The abort is therefore guest-requested rather than another missing Lion syscall ABI.
+   - the preserved core does not identify whether the guest abort occurs before `main()` or inside an early Carbon/Process Manager call.
+   - do not add frameworks or make another XNU change. Follow `docs/carbon-gui-milestone-experiment.md` for the next controlled localization step.
 
 7. **Dynamic-library expansion**
    - only if the validated Rosetta cache still cannot satisfy the guest dependency should individual Snow Leopard PPC libraries be collected for a new private-path experiment.
