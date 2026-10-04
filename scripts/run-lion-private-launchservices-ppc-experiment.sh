@@ -104,7 +104,11 @@ log "system_launchservices_sha256_before=$SYSTEM_LS_BEFORE"
 [ -f "$PATCHER" ] || die 66 "missing private LaunchServices patch verifier"
 
 PRIVATE_LS_BEFORE="$(sha256 "$PRIVATE_BINARY")"
+EXPECTED_PRIVATE_LS_SHA="$(/usr/bin/awk -F= '/^private_launchservices_sha256=/ {print $2}' "$PRIVATE_MANIFEST" | /usr/bin/head -1)"
+[ -n "$EXPECTED_PRIVATE_LS_SHA" ] || die 68 "could not read private LaunchServices hash from manifest"
 log "private_launchservices_sha256_before=$PRIVATE_LS_BEFORE"
+log "expected_private_launchservices_sha256=$EXPECTED_PRIVATE_LS_SHA"
+[ "$PRIVATE_LS_BEFORE" = "$EXPECTED_PRIVATE_LS_SHA" ] || die 68 "private LaunchServices hash does not match its manifest"
 /usr/bin/python "$PATCHER" --check "$PRIVATE_BINARY" >> "$REPORT" 2>&1 ||     die 68 "private LaunchServices patch verification failed"
 /usr/bin/python "$PATCHER" --check "$PRIVATE_BINARY" 2>/dev/null |     /usr/bin/grep -Fq 'RESULT: ALREADY_PATCHED' ||     die 68 "private LaunchServices is not in the expected patched state"
 
