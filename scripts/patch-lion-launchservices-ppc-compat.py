@@ -117,7 +117,7 @@ def main():
     print("input_size=%d" % len(data))
     print("input_sha256=%s" % full_sha)
 
-    if full_sha != EXPECTED_FULL_SHA256:
+    if (not check_only) and full_sha != EXPECTED_FULL_SHA256:
         print("error: input is not the validated Lion 10.7.5 LaunchServices binary", file=sys.stderr)
         print("expected_sha256=%s" % EXPECTED_FULL_SHA256, file=sys.stderr)
         return 68
@@ -140,6 +140,9 @@ def main():
 
     if check_only:
         if len(original_hits) == 1 and len(patched_hits) == 0:
+            if full_sha != EXPECTED_FULL_SHA256:
+                print("RESULT: ORIGINAL_SIGNATURE_BUT_UNEXPECTED_FILE_HASH")
+                return 68
             print("RESULT: PATCHABLE")
             print("signature_file_offset=0x%x" % original_hits[0])
             return 0
