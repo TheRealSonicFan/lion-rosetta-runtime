@@ -55,7 +55,8 @@ Use a staged progression so a failure identifies the layer that is still incompa
    - this is now an earlier LaunchServices Rosetta-availability gate, so the experiment cannot yet test whether registration changes `GetCurrentProcess`.
    - the Snow Leopard/Lion LaunchServices environment audit is complete. Runtime metadata matches, but Snow Leopard has Rosetta receipts and explicit Rosetta/OAH LaunchServices logic while Lion does not; Lion also records the same PPC app as `unsupported-format`.
    - the receipts difference is not yet proven causal. Do not install Snow Leopard receipts on Lion.
-   - follow `docs/launchservices-ppc-gate-static-audit.md` for a read-only i386 static comparison of the `-10665`/architecture-validity decision path before any LaunchServices or metadata modification.
+   - the first static audit confirms a real Snow Leopard `-10665` path through `_LSAppMeetsRosettaRequirement` and a structurally different Lion `-10665` path, but the analyzer's symbol spelling and broad text matcher prevented precise Lion callsite attribution.
+   - do not install receipts or patch LaunchServices yet. Follow `docs/launchservices-ppc-gate-callsite-audit.md` for the corrected read-only callsite/symbol analysis.
 
 7. **Dynamic-library expansion**
    - only if the validated Rosetta cache still cannot satisfy the guest dependency should individual Snow Leopard PPC libraries be collected for a new private-path experiment.
