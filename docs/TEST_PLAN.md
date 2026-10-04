@@ -57,8 +57,9 @@ Use a staged progression so a failure identifies the layer that is still incompa
    - the receipts difference is not yet proven causal. Do not install Snow Leopard receipts on Lion.
    - the first static audit confirms a real Snow Leopard `-10665` path through `_LSAppMeetsRosettaRequirement` and a structurally different Lion `-10665` path, but the analyzer's symbol spelling and broad text matcher prevented precise Lion callsite attribution.
    - the corrected callsite audit is complete: Snow Leopard's `_LSLaunch` uses `_LSAppMeetsRosettaRequirement`, while Lion's `_LSLaunch` calls `_LSBundleDataGetUnsupportedFormatFlag` and returns `-10665` from that persisted classification.
-   - the launch-time gate is therefore localized, but the registration-time origin of `unsupported-format` is not yet proven.
-   - do not install receipts, edit the LaunchServices database, or patch `_LSLaunch`. Follow `docs/launchservices-unsupported-format-provenance-audit.md` to trace where Lion sets the PPC unsupported-format state.
+   - the unsupported-format provenance audit is complete. `_LSBundleDataGetUnsupportedFormatFlag` computes the flag from bundle architecture bits and current CPU policy; no dedicated unsupported-format setter was identified.
+   - Snow Leopard contains an Intel-host fallback that accepts the PPC architecture bit for Rosetta, while Lion's x86_64-host path tests only native Intel bits and returns unsupported-format for the PPC-only bundle.
+   - this is sufficient for a controlled private-framework hypothesis test. Follow `docs/private-launchservices-ppc-compat-experiment.md`; do not modify the installed LaunchServices framework/database, install receipts, or change XNU.
 
 7. **Dynamic-library expansion**
    - only if the validated Rosetta cache still cannot satisfy the guest dependency should individual Snow Leopard PPC libraries be collected for a new private-path experiment.
