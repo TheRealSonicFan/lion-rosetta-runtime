@@ -49,8 +49,9 @@ Use a staged progression so a failure identifies the layer that is still incompa
    - command-line CoreFoundation compatibility is therefore closed for the controlled environment.
    - the first Carbon GUI experiment passed on Snow Leopard but failed on Lion before either program marker or window creation: the exact PPC subject loaded the Carbon/ApplicationServices dependency graph and then terminated with SIGABRT/status 134, producing `/cores/core.1311`.
    - the preserved-core postmortem has now confirmed that Rosetta executes syscall 37 `kill(pid, signum, posix)` with PID 1311, SIGABRT, and posix flag 1; the host syscall returns success. The abort is therefore guest-requested rather than another missing Lion syscall ABI.
-   - the preserved core does not identify whether the guest abort occurs before `main()` or inside an early Carbon/Process Manager call.
-   - do not add frameworks or make another XNU change. Follow `docs/carbon-gui-milestone-experiment.md` for the next controlled localization step.
+   - the milestone experiment has now localized the guest abort precisely: Lion reaches `M00_MAIN_ENTER` and `M01_BEFORE_GetCurrentProcess`, then self-SIGABRTs before `M02_AFTER_GetCurrentProcess`. Snow Leopard reaches all milestones through `M27_SUCCESS` with the exact control binary.
+   - this rules out pre-main framework initialization and makes `GetCurrentProcess`/Carbon Process Manager initialization the immediate observed boundary.
+   - do not add frameworks or make another XNU change. Follow `docs/carbon-launchservices-experiment.md` to test whether proper LaunchServices application registration changes the `GetCurrentProcess` result while preserving all validated Rosetta runtime conditions.
 
 7. **Dynamic-library expansion**
    - only if the validated Rosetta cache still cannot satisfy the guest dependency should individual Snow Leopard PPC libraries be collected for a new private-path experiment.
