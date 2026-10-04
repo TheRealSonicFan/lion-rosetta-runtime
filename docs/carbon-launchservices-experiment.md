@@ -352,9 +352,13 @@ Do not copy frameworks or patch XNU based on that result alone.
 
 If `M02_AFTER_GetCurrentProcess` is reached but a later marker fails, the LaunchServices launch context fixed the immediate Process Manager boundary and the new furthest marker becomes the next measured compatibility boundary.
 
+### LAUNCHSERVICES_NO_ROSETTA_ENVIRONMENT
+
+If `open` reports error `-10665`, the runner classifies the result as `LAUNCHSERVICES_NO_ROSETTA_ENVIRONMENT`. The app was rejected before execution, so no milestone log is expected. Do not treat the missing milestone file as a collector/copy failure.
+
 ### PRE_MAIN_OR_LAUNCH_FAILURE
 
-If no `M00_MAIN_ENTER` appears, preserve the open log and new diagnostics. Verify the LaunchServices environment/bundle launch path before drawing a Carbon conclusion.
+If no `M00_MAIN_ENTER` appears for some other launch error, preserve the open log and any diagnostics. Verify the LaunchServices environment/bundle launch path before drawing a Carbon conclusion.
 
 ## What to return for review
 
@@ -375,3 +379,34 @@ This experiment does not:
 - launch a real-world PPC application.
 
 It isolates whether LaunchServices application registration is the missing condition at the first Carbon Process Manager call.
+
+
+## Observed Lion result: kLSNoRosettaEnvironmentErr
+
+The Snow Leopard LaunchServices control passed completely. The exact application bundle launched through `open -n -W`, the required `LSEnvironment` values were visible in `main()`, all milestones through `M27_SUCCESS` were written, the Carbon window was observed, and the control ended with `RESULT: PASS`.
+
+The Snow Leopard and Lion bundle manifests match for both the executable SHA-256 and Info.plist SHA-256.
+
+On Lion, `lsregister -f` completed, but `open -n -W` returned:
+
+```text
+LSOpenURLsWithRole() failed with error -10665
+```
+
+before the PPC executable was started. No GUI appeared, no milestone file was created, and no crash/core diagnostic was generated.
+
+Result code `-10665` is `kLSNoRosettaEnvironmentErr`: LaunchServices determined that the PowerPC application required a Rosetta environment that it considered unavailable.
+
+Therefore the missing milestone file is **not** evidence that the milestone-copy logic failed. The application never entered `main()`, so the fixed `/tmp` milestone file could not be created.
+
+The original runner's generic `PRE_MAIN_OR_LAUNCH_FAILURE` classification was too coarse. The runner has been corrected to classify this exact condition as:
+
+```text
+RESULT: LAUNCHSERVICES_NO_ROSETTA_ENVIRONMENT
+```
+
+and explicitly state that no milestone log is expected.
+
+This result prevents the experiment from answering whether LaunchServices registration would fix the later `GetCurrentProcess` boundary, because Lion LaunchServices refuses the PPC application at an earlier policy/capability gate.
+
+Do not retry the PPC app, rebuild the LaunchServices database, copy Snow Leopard CoreServices, or modify XNU. The authoritative next step is the read-only differential audit in `docs/launchservices-rosetta-environment-audit.md`.
