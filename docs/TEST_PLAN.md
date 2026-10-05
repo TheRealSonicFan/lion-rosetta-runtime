@@ -84,16 +84,14 @@ The private LaunchServices compatibility experiment has cleared Lion's PPC admis
 - `GetProcessPID({0,kCurrentProcess},...)`;
 - `GetProcessForPID(getpid(), &psn)`.
 
-The Process Manager/HIServices provenance audit, corrected RegisterApplication callsite audit, and LaunchServices registration-protocol audit are now complete.
+The Process Manager/HIServices provenance audit, corrected RegisterApplication callsite audit, LaunchServices registration-protocol audit, and process-local no-ASN discriminator are complete.
 
-The protocol audit resolves the no-ASN control precisely. Snow Leopard PPC HIServices `__RegisterApplication` reads the uppercase environment variable `LSDONOTABORTIFNOASN`; its local abort-control byte defaults to 1 and is replaced by `atoi()` of the environment value. Setting `LSDONOTABORTIFNOASN=0` therefore suppresses only the later fatal no-ASN branch.
+The no-ASN discriminator is decisive for the later HIServices abort hypothesis. The exact PPC subject sees `LSDONOTABORTIFNOASN=0` on both systems. Snow Leopard returns `noErr` and a nonzero PSN. Lion reaches the marker immediately before `GetProcessForPID` and still self-SIGABRTs before the call returns. The latest crash again matches the already decoded Rosetta guest-requested self-abort family, the syscall-295 preflight remains healthy, and all protected hashes remain unchanged.
 
-The same audit shows that Snow Leopard PPC and Lion i386 `_LSDoRegisterApplication` use the same registration message ID `0x4652` and the same 32-bit send/receive sizes `0x44` / `0x48`. The x86_64 variant is wider, but the active coreservicesd slice was not directly identified because the old `ps` implementation has no `arch` output column. This does not justify a protocol adapter by itself.
+Therefore the observed Lion crash occurs upstream of the HIServices no-ASN abort controlled by `LSDONOTABORTIFNOASN`.
 
-An earlier independent abort still exists in Snow Leopard PPC LaunchServices: `getProcessDispatchTable()` calls `SetupCoreApplicationServicesCommunicationPort()` and aborts if the dispatch table remains unavailable.
+The leading remaining boundary is LaunchServices process-dispatch initialization. The static PPC client path calls `SetupCoreApplicationServicesCommunicationPort()` from `getProcessDispatchTable()` and aborts if the process dispatch table remains null. The setup path uses session discovery, `scCreateSystemServiceVersion`, `_LSDoInitializeProcessesServices`, version negotiation, a CoreServices Mach port, reconnect setup, and dispatch-table state.
 
-The authoritative next step is the single process-local discriminator documented in `docs/process-manager-noasn-discriminator-experiment.md`. Its test bundle contains `LSEnvironment.LSDONOTABORTIFNOASN=0`; the PPC subject verifies that value, calls `GetProcessForPID` once, records status and PSN, and exits immediately. It does not perform foreground conversion, activation, window creation, or an event loop.
+The authoritative next step is the read-only differential audit in `docs/process-manager-process-dispatch-audit.md`, implemented by `scripts/audit-process-manager-process-dispatch.py`. Run it once on Snow Leopard and once on Lion and return only the two reports. It expands static coverage to the complete InitializeProcessesServices family and the relevant service/session metadata.
 
-If Lion still aborts before `GetProcessForPID` returns, focus next on the earlier LaunchServices process-dispatch/setup channel. If the call returns, the returned OSStatus/PSN becomes the next localization target.
-
-Do not set the variable globally, use `launchctl setenv`, patch HIServices/LaunchServices, restart coreservicesd, transplant frameworks/daemons, or change XNU before this one discriminator is reviewed. No additional XNU change is indicated.
+Do not rerun the PPC app, set another environment override, use `SCDontUseServer`, patch LaunchServices/HIServices, restart coreservicesd, transplant frameworks/daemons, or change XNU before that audit is reviewed. No additional XNU change is indicated.
