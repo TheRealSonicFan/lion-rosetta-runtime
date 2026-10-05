@@ -84,14 +84,16 @@ The private LaunchServices compatibility experiment has cleared Lion's PPC admis
 - `GetProcessPID({0,kCurrentProcess},...)`;
 - `GetProcessForPID(getpid(), &psn)`.
 
-The Process Manager/HIServices provenance audit and corrected RegisterApplication callsite audit are complete. Both corrected version-2 reports pass and contain the intended static windows.
+The Process Manager/HIServices provenance audit, corrected RegisterApplication callsite audit, and LaunchServices registration-protocol audit are now complete.
 
-Snow Leopard PPC HIServices `__RegisterApplication` now shows the concrete registration sequence: LaunchServices application check-in, PID-to-ASN/application-information fallback when needed, ASN/PSN extraction, WindowServer connection, CPS registration, and finally a fatal no-ASN check if the cached PSN remains unusable. Its abort-control flag is initialized from `getenv()`/`atoi()`, but the current report does not map the PC-relative string operand to the exact environment literal.
+The protocol audit resolves the no-ASN control precisely. Snow Leopard PPC HIServices `__RegisterApplication` reads the uppercase environment variable `LSDONOTABORTIFNOASN`; its local abort-control byte defaults to 1 and is replaced by `atoi()` of the environment value. Setting `LSDONOTABORTIFNOASN=0` therefore suppresses only the later fatal no-ASN branch.
 
-The same static evidence also exposes an earlier independent abort possibility in Snow Leopard PPC LaunchServices: `getProcessDispatchTable()` attempts `SetupCoreApplicationServicesCommunicationPort()` and aborts if the process dispatch table is still unavailable. Therefore the observed Lion SIGABRT cannot yet be assigned uniquely to the later HIServices no-ASN branch.
+The same audit shows that Snow Leopard PPC and Lion i386 `_LSDoRegisterApplication` use the same registration message ID `0x4652` and the same 32-bit send/receive sizes `0x44` / `0x48`. The x86_64 variant is wider, but the active coreservicesd slice was not directly identified because the old `ps` implementation has no `arch` output column. This does not justify a protocol adapter by itself.
 
-The registration protocol itself also evolved. Snow Leopard PPC `_LSDoRegisterApplication` and the Snow Leopard/Lion native `_XRegisterApplication`/`_LSServerRegisterApplication` paths retain the same message family but differ in request/reply layout and validator logic. That is evidence for a possible translated-client/native-server compatibility boundary, not yet proof of rejection.
+An earlier independent abort still exists in Snow Leopard PPC LaunchServices: `getProcessDispatchTable()` calls `SetupCoreApplicationServicesCommunicationPort()` and aborts if the dispatch table remains unavailable.
 
-The authoritative next step is `docs/process-manager-launchservices-registration-protocol-audit.md`. It remains read-only and maps the no-ASN cstring, records active CoreServices service architecture/state, and compares the Snow Leopard PPC registration request against Snow Leopard and Lion native server validation.
+The authoritative next step is the single process-local discriminator documented in `docs/process-manager-noasn-discriminator-experiment.md`. Its test bundle contains `LSEnvironment.LSDONOTABORTIFNOASN=0`; the PPC subject verifies that value, calls `GetProcessForPID` once, records status and PSN, and exits immediately. It does not perform foreground conversion, activation, window creation, or an event loop.
 
-Do not set `LSDoNotAbortIfNoASN` or `LSDONOTABORTIFNOASN`, patch HIServices/LaunchServices, restart coreservicesd, transplant Snow Leopard frameworks/daemons, or change XNU before that protocol audit is reviewed. No additional XNU change is indicated.
+If Lion still aborts before `GetProcessForPID` returns, focus next on the earlier LaunchServices process-dispatch/setup channel. If the call returns, the returned OSStatus/PSN becomes the next localization target.
+
+Do not set the variable globally, use `launchctl setenv`, patch HIServices/LaunchServices, restart coreservicesd, transplant frameworks/daemons, or change XNU before this one discriminator is reviewed. No additional XNU change is indicated.
