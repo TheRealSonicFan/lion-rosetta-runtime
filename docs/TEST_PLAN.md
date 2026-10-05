@@ -78,8 +78,16 @@ Use a staged progression so a failure identifies the layer that is still incompa
 
 ## Current Process Manager boundary
 
-The private LaunchServices compatibility experiment has cleared Lion's PPC admission gate. The subsequent Process Manager alternate-path probe passed completely on Snow Leopard but aborts on Lion inside its first Process Manager operation: `GetProcessPID({0,kCurrentProcess},...)`. The crash uses the same Rosetta guest-requested SIGABRT wrapper already seen for `GetCurrentProcess`.
+The private LaunchServices compatibility experiment has cleared Lion's PPC admission gate. Three independent Process Manager identity routes have now been isolated with Snow Leopard-positive controls:
 
-Because `GetProcessForPID` was never reached, the next step is not a HIServices patch yet. Follow `docs/process-manager-getprocessforpid-first-experiment.md`, which begins with `GetProcessForPID(getpid(), &psn)`, never calls `GetCurrentProcess` or `GetProcessPID`, and uses any returned PSN directly for foreground/window operations.
+- `GetCurrentProcess()`;
+- `GetProcessPID({0,kCurrentProcess},...)`;
+- `GetProcessForPID(getpid(), &psn)`.
 
-No XNU change is indicated by the current result.
+The GetProcessForPID-first control completes successfully on Snow Leopard, but on Lion the exact PPC executable reaches `M01_BEFORE_GetProcessForPID` and self-SIGABRTs before the call returns. The new crash again matches the already decoded Rosetta guest-requested abort wrapper, while the syscall-295 preflight and protected hashes remain valid.
+
+This rules out another API permutation as the useful next step. Multiple Process Manager identity entry points now point to a shared translated-PPC registration/backend requirement.
+
+Follow `docs/process-manager-hiservices-audit.md`. Its read-only analyzer first establishes Rosetta-cache versus on-disk image provenance, then compares HIServices/ApplicationServices/CarbonCore/AE, Rosetta ApplicationServices/Interposers shims, Process Manager/CPS/PSN/ASN symbols and targeted code windows, and relevant helper state on Snow Leopard and Lion.
+
+Do not patch HIServices, broaden the private LaunchServices modification, transplant Snow Leopard frameworks, or change XNU before that audit is reviewed. No additional XNU change is indicated by the current result.
