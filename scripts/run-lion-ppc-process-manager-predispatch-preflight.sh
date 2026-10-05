@@ -102,7 +102,7 @@ echo "$OTOOL_OUT" | /usr/bin/tee -a "$REPORT"
 echo "$OTOOL_OUT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || die 68 "LC_LOAD_DYLINKER is not /usr/oah/dyld"
 
 /usr/bin/otool -L "$EXE" 2>&1 | /usr/bin/tee -a "$REPORT"
-/usr/bin/otool -L "$EXE" | /usr/bin/grep -Fq '/CarbonCore.framework/Versions/A/CarbonCore' || die 68 "CarbonCore dependency is absent"
+/usr/bin/otool -L "$EXE" | /usr/bin/grep -Fq '/CoreServices.framework/Versions/A/CoreServices' || die 68 "CoreServices umbrella dependency is absent"
 /usr/bin/otool -L "$EXE" | /usr/bin/grep -Fq '/Security.framework/Versions/A/Security' || die 68 "Security dependency is absent"
 
 [ -f "$PRIVATE_DYLD" ] || die 66 "missing private dyld"
