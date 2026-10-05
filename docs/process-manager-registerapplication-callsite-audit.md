@@ -132,7 +132,10 @@ Require:
 ```text
 Created: ./process-manager-registerapplication-v2-snowleopard.txt
 No PowerPC application was launched and no system file was modified.
+RESULT: PASS
 ```
+
+If `RESULT: FAIL` appears, stop and return that report rather than proceeding to behavioral testing.
 
 Preserve the report unchanged.
 
