@@ -78,16 +78,16 @@ Use a staged progression so a failure identifies the layer that is still incompa
 
 ## Current Process Manager boundary
 
-The private LaunchServices compatibility experiment has cleared Lion's PPC admission gate. Three independent Process Manager identity routes have now been isolated with Snow Leopard-positive controls:
+The private LaunchServices compatibility experiment has cleared Lion's PPC admission gate. Three independent Process Manager identity routes remain Snow Leopard-positive but self-SIGABRT on Lion before returning:
 
 - `GetCurrentProcess()`;
 - `GetProcessPID({0,kCurrentProcess},...)`;
 - `GetProcessForPID(getpid(), &psn)`.
 
-The GetProcessForPID-first control completes successfully on Snow Leopard, but on Lion the exact PPC executable reaches `M01_BEFORE_GetProcessForPID` and self-SIGABRTs before the call returns. The new crash again matches the already decoded Rosetta guest-requested abort wrapper, while the syscall-295 preflight and protected hashes remain valid.
+The first Process Manager/HIServices differential audit is complete. Both systems use the exact validated Rosetta cache/map, and HIServices/ApplicationServices/CarbonCore/AE are all present in that cache. Lion's installed HIServices has no PPC slice, while the Rosetta ApplicationServices shim and `Interposers.dylib` are byte-identical to Snow Leopard in both i386 and ppc7400 slices.
 
-This rules out another API permutation as the useful next step. Multiple Process Manager identity entry points now point to a shared translated-PPC registration/backend requirement.
+Snow Leopard's PPC HIServices implementation shows that all three failing entry points perform the same lazy initialization call to `__RegisterApplication` before their normal identity work. The same framework contains explicit no-ASN abort diagnostics and the `LSDoNotAbortIfNoASN`/`LSDONOTABORTIFNOASN` names. Both systems have `coreservicesd`, WindowServer, and the `com.apple.pbs` job, so simple helper absence is not the current explanation.
 
-Follow `docs/process-manager-hiservices-audit.md`. Its read-only analyzer first establishes Rosetta-cache versus on-disk image provenance, then compares HIServices/ApplicationServices/CarbonCore/AE, Rosetta ApplicationServices/Interposers shims, Process Manager/CPS/PSN/ASN symbols and targeted code windows, and relevant helper state on Snow Leopard and Lion.
+The next authoritative step is `docs/process-manager-registerapplication-callsite-audit.md`. It remains read-only and targets `__RegisterApplication`, its direct callers, LaunchServices ASN helpers, and coreservicesd registration/session code. Do not set the no-abort variable yet: the exact control flow must first show whether suppressing the abort would return a defined error or continue with invalid Process Manager state.
 
-Do not patch HIServices, broaden the private LaunchServices modification, transplant Snow Leopard frameworks, or change XNU before that audit is reviewed. No additional XNU change is indicated by the current result.
+Do not patch HIServices, broaden the private LaunchServices modification, transplant Snow Leopard frameworks/daemons, or change XNU before that callsite audit is reviewed. No additional XNU change is indicated.
