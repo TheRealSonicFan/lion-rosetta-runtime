@@ -80,14 +80,16 @@ Use a staged progression so a failure identifies the layer that is still incompa
 
 The private LaunchServices compatibility experiment has cleared Lion's PPC admission gate. Three independent Process Manager identity routes remain Snow Leopard-positive but self-SIGABRT on Lion before returning.
 
-The investigation has now localized an earlier prerequisite failure below LaunchServices Process Manager initialization.
+The earlier prerequisite failure has now been localized to CarbonCore/CoreServices system-service acquisition.
 
-The guarded PPC pre-dispatch probe uses the exact same PPC executable on Snow Leopard and Lion. Snow Leopard returns a nonzero `LaunchApplicationServices` service port from `scCreateSystemServiceVersion("LaunchApplicationServices", 0x00010000, NULL)`, then `SessionGetInfo` returns `noErr` with a nonzero session ID.
+The guarded PPC pre-dispatch probe uses the exact same PPC executable on Snow Leopard and Lion. Snow Leopard obtains a nonzero `LaunchApplicationServices` service port and then a valid Security session. Lion returns normally from `scCreateSystemServiceVersion("LaunchApplicationServices", 0x00010000, NULL)` with a zero port and never reaches `SessionGetInfo`.
 
-Lion reaches the same CarbonCore call and returns normally, but the service port is exactly zero. The probe exits with `RESULT: SYSTEMSERVICE_ZERO_PORT`. `SessionGetInfo` is never reached. No new crash/core is generated, syscall 295 remains healthy, and protected hashes are unchanged.
+The follow-on CarbonCore internals audit is complete. Snow Leopard PPC and Lion i386 both use the same broad client architecture: `SCClientSession::checkinWithServer` gates server use through `SCDontUseServer`, gets a check-in name, performs `bootstrap_look_up2`, calls `__scclient_ServerCheckin`, and constructs a client session only after successful check-in. `SCSession::findOrCreateService` then searches cached services and otherwise dispatches to `SCClientSession::createService`, which calls `__scsclient_FindService` and rejects RPC/status failures.
 
-Therefore the immediate boundary is now CarbonCore/CoreServices system-service acquisition, before Security session lookup, LaunchServices `_LSDoInitializeProcessesServices`, or Process Manager identity APIs.
+The client-session object layout differs between releases, but those private offsets do not establish a wire incompatibility by themselves.
 
-The authoritative next step is the read-only differential audit in `docs/process-manager-systemservice-client-internals-audit.md`, implemented by `scripts/audit-process-manager-systemservice-client-internals.py`. It expands static coverage around `SCSession::findOrCreateService`, `SCClientSession`, session-status initialization, coreservicesd check-in/service negotiation, reconnect handling, and related bootstrap/Mach-port helpers.
+The remaining ambiguity is now precise: Lion may fail while establishing a usable CoreServices client session/check-in state, or it may check in successfully and then fail the `FindService("LaunchApplicationServices", 0x00010000,...)` transaction.
 
-Do not rerun the PPC pre-dispatch probe, call `SessionGetInfo`, use `SCDontUseServer`, perform a custom bootstrap lookup, patch CarbonCore/Security/LaunchServices, restart CoreServices/security services, use live instrumentation, or change XNU before that audit is reviewed. No additional XNU change is indicated.
+The authoritative next step is the read-only differential audit in `docs/process-manager-systemservice-rpc-protocol-audit.md`, implemented by `scripts/audit-process-manager-systemservice-rpc-protocol.py`. It expands the actual `ServerCheckin` and `FindService` RPC stubs, check-in-name helper, Lion `getStatus/connectToCoreServicesD` path, message IDs/sizes, output fields, and service-version semantics.
+
+Do not rerun the PPC pre-dispatch probe, use `SCDontUseServer`, perform a custom bootstrap lookup, patch CarbonCore/Security/LaunchServices, restart CoreServices/security services, use live instrumentation, or change XNU before that RPC audit is reviewed. No additional XNU change is indicated.
