@@ -193,3 +193,66 @@ This audit does not:
 - rerun the failing PPC application.
 
 It is the read-only differential step required before any compatibility design.
+
+
+## Observed result
+
+The Snow Leopard and Lion reports resolve the first-stage differential sufficiently to narrow the next audit.
+
+### Rosetta-cache provenance
+
+Both systems report the exact validated Rosetta cache and map identities:
+
+```text
+dyld_shared_cache_rosetta
+2968123ebb467633929398c692cfa68e8a13925ead683c5b1a04581c0aee6911
+
+dyld_shared_cache_rosetta.map
+66e8940757eb909ffb1920ac1510134afafbd5d2d649a9cc7d750753333153f9
+```
+
+The map contains HIServices, ApplicationServices, CarbonCore, and AE on both systems.
+
+Lion's installed HIServices contains x86_64/i386 but no PPC slice, while the translated PPC Process Manager calls execute successfully far enough to enter the exported Process Manager entry points. Together with the matching Rosetta cache/map, this makes the restored Snow Leopard PPC cache image the relevant guest-side HIServices provenance rather than Lion's on-disk i386 implementation.
+
+### Rosetta shims are not the differential
+
+The Rosetta ApplicationServices shim has the same full-file, i386-slice, and ppc7400-slice hashes on Snow Leopard and Lion. Rosetta `Interposers.dylib` likewise matches exactly in both slices.
+
+The filtered shim/interposer symbol sets do not own the Process Manager identity APIs. The Process Manager entry points are in HIServices.
+
+### Shared lazy-registration path
+
+Snow Leopard's PPC HIServices implementation shows that all three already-failing entry points share the same initialization action:
+
+- `GetCurrentProcess` calls `__RegisterApplication` before returning the cached PSN;
+- `GetProcessPID` calls `__RegisterApplication` before ASN/application-information lookup;
+- `GetProcessForPID` calls `__RegisterApplication` before PID-to-ASN lookup.
+
+This is the first concrete common subroutine shared by all three Lion aborts.
+
+### ASN/backend evidence
+
+Both Snow Leopard and Lion HIServices contain the names:
+
+```text
+LSDONOTABORTIFNOASN
+LSDoNotAbortIfNoASN
+```
+
+and explicit fatal diagnostics for failing to obtain an application ASN from CoreServices/coreservicesd. Lion's wording is more explicit that an application requiring an ASN aborts when coreservicesd cannot provide one.
+
+Both systems also have `coreservicesd`, WindowServer, and a `com.apple.pbs` launchd job. Therefore the current evidence does not support a simple missing-helper explanation.
+
+### Decision
+
+Do not patch HIServices, set the no-abort variable, or modify XNU yet.
+
+The next step is the narrower read-only callsite audit in:
+
+```text
+docs/process-manager-registerapplication-callsite-audit.md
+scripts/audit-process-manager-registerapplication.py
+```
+
+That audit targets `__RegisterApplication`, the exact no-ASN branch, LaunchServices ASN helpers, and coreservicesd-facing registration code before any behavioral experiment is attempted.
