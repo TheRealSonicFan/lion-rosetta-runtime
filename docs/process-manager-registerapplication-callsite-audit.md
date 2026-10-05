@@ -26,7 +26,11 @@ scripts/audit-process-manager-registerapplication.py
 docs/process-manager-registerapplication-callsite-audit.md
 ```
 
-The analyzer is read-only and Python-2-compatible. It inspects:
+The analyzer is read-only and Python-2-compatible. The first execution exposed a reporting defect: escaped parser expressions caused every intended disassembly selection to end with `selected_symbol_windows=0`, even though the preceding `nm` inventory clearly contained targets such as `__RegisterApplication`. That first run is preserved as useful symbol/string inventory, but it did **not** complete the intended callsite localization.
+
+Current `main` contains analyzer version 2. It replaces the fragile regex-based address parser, validates that code windows were actually selected, adds the x86_64 LaunchServices slice needed for the native `coreservicesd` side, and records Rosetta-cache membership for both HIServices and LaunchServices. A run is valid only when the report ends with `RESULT: PASS`.
+
+The corrected analyzer inspects:
 
 ### HIServices
 
@@ -120,13 +124,13 @@ On the validated Snow Leopard 10.6.8 machine:
 cd /path/to/lion-rosetta-runtime
 
 /usr/bin/python ./scripts/audit-process-manager-registerapplication.py \
-  ./process-manager-registerapplication-snowleopard.txt
+  ./process-manager-registerapplication-v2-snowleopard.txt
 ```
 
 Require:
 
 ```text
-Created: ./process-manager-registerapplication-snowleopard.txt
+Created: ./process-manager-registerapplication-v2-snowleopard.txt
 No PowerPC application was launched and no system file was modified.
 ```
 
@@ -140,10 +144,10 @@ On Lion 10.7.5:
 cd /path/to/lion-rosetta-runtime
 
 /usr/bin/python ./scripts/audit-process-manager-registerapplication.py \
-  ./payload/process-manager-registerapplication-lion.txt
+  ./payload/process-manager-registerapplication-v2-lion.txt
 ```
 
-Require the same read-only completion message.
+Require the same read-only completion message **and `RESULT: PASS`**. If `RESULT: FAIL` appears, stop and return that report without rerunning the PPC application.
 
 Do not retry the PPC application after the audit.
 
@@ -152,8 +156,8 @@ Do not retry the PPC application after the audit.
 Return:
 
 ```text
-process-manager-registerapplication-snowleopard.txt
-process-manager-registerapplication-lion.txt
+process-manager-registerapplication-v2-snowleopard.txt
+process-manager-registerapplication-v2-lion.txt
 ```
 
 Keep the previous reports available:
@@ -164,6 +168,18 @@ process-manager-hiservices-lion.txt
 ```
 
 No Apple binary should be uploaded at this stage.
+
+## Result of the first execution
+
+The first reports confirmed several useful facts but failed their intended code-window objective:
+
+- Lion HIServices contains `__RegisterApplication`, `GetProcessForPID`, and `GetProcessPID`, yet the report ended that slice with `selected_symbol_windows=0`;
+- Snow Leopard likewise exposed the relevant HIServices and LaunchServices symbols, including the PPC variants, but every analyzed slice still reported zero selected windows;
+- this is a tooling defect, not evidence that those functions lack disassembly or that the call path is absent.
+
+The defect was traced to over-escaped parser expressions in analyzer version 1. Therefore do **not** infer the no-ASN branch, CPS registration order, or safe behavior of `LSDoNotAbortIfNoASN` from the first reports.
+
+The authoritative next action is simply to rerun this same read-only audit with analyzer version 2 and return the two v2 reports above. No PPC process should be launched during this rerun.
 
 ## What will be decided next
 
