@@ -104,4 +104,6 @@ The authoritative next step is the guarded command-line PPC preflight in `docs/p
 
 Run the Snow Leopard positive control first, repeat the native Lion commpage/syscall-295 safety gates, then run the Lion PPC preflight exactly once.
 
+The first Phase B build attempt did not test PPC behavior: Snow Leopard `ld` rejected direct linkage to the CarbonCore subframework and required the CoreServices umbrella. The builder and both dependency validators have been corrected to link/require `CoreServices.framework` plus Security. Pull current `main` and repeat Phase B from the beginning.
+
 Do not run another Process Manager GUI test, call `_LSDoInitializeProcessesServices` directly, use `SCDontUseServer`, patch CarbonCore/Security/LaunchServices, restart CoreServices/security services, use live instrumentation, or change XNU before that result is reviewed. No additional XNU change is indicated.
