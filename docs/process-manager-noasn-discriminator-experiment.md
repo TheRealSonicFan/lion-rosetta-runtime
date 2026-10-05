@@ -307,3 +307,35 @@ This experiment does not:
 - modify Rosetta or XNU.
 
 It is a single discriminator for the two remaining user-space abort locations.
+
+
+## Observed result — override visible, abort remains upstream
+
+The completed Snow Leopard/Lion discriminator resolves this decision gate.
+
+On Snow Leopard 10.6.8, the exact PPC/ppc7400 subject sees `LSDONOTABORTIFNOASN=0`, `GetProcessForPID` returns `noErr`, a nonzero PSN is returned, and the control reaches `M06_NOERR_NONZERO_PSN` with `RESULT: PASS`.
+
+On Lion 10.7.5, the same executable and the same bundle environment reach `main()`. The PPC subject records its own PID, confirms that `LSDONOTABORTIFNOASN=0` is visible through `getenv()`, and reaches `M02_BEFORE_GetProcessForPID`. It never reaches the after-return milestone. The runner reports:
+
+```text
+RESULT: ABORT_BEFORE_GETPROCESSFORPID_RETURN
+```
+
+The latest crash is again `EXC_CRASH (SIGABRT)` at Rosetta host PC `0xb815ac07`. Its x86 register state again matches the already decoded guest-requested `kill(self, SIGABRT, 1)` wrapper family: the subject PID is the PID argument, signal 6 is present, the posix flag is 1, and the host return is successful.
+
+The native syscall-295 preflight still passes, the private LaunchServices admission copy is confirmed loaded, and the protected kernel/LaunchServices/dyld/cache/executable hashes remain unchanged.
+
+This rules out the later HIServices no-ASN abort controlled by `LSDONOTABORTIFNOASN` as the fatal branch observed in this experiment. It does not yet prove which earlier LaunchServices branch aborts.
+
+The leading remaining candidate is the process-dispatch initialization path in LaunchServices, where `getProcessDispatchTable()` calls `SetupCoreApplicationServicesCommunicationPort()` and aborts if the dispatch table remains null.
+
+Do not repeat the PPC discriminator and do not try another environment override.
+
+The authoritative next stage is the read-only differential audit in:
+
+```text
+docs/process-manager-process-dispatch-audit.md
+scripts/audit-process-manager-process-dispatch.py
+```
+
+That audit compares the Snow Leopard PPC and Lion native process-services setup, including the InitializeProcessesServices client/server family, session lookup, service/version negotiation, port creation, and dispatch-table installation before any compatibility layer is designed.
