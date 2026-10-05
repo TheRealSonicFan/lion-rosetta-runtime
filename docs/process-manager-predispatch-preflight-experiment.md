@@ -120,8 +120,18 @@ Require:
 
 - 32-bit PPC;
 - `LC_LOAD_DYLINKER=/usr/oah/dyld`;
-- CarbonCore dependency;
+- CoreServices umbrella dependency;
 - Security dependency.
+
+On Snow Leopard, do not link the CarbonCore subframework binary directly. The system linker requires clients to link the `CoreServices.framework` umbrella; CarbonCore's exported implementation is reached through that umbrella/re-export relationship.
+
+## Phase B harness correction
+
+The first attempted Phase B build failed before producing a PPC executable. The compiler itself was present and was invoked successfully; the failure came from the build harness passing the CarbonCore subframework binary directly to the linker. Snow Leopard's linker rejects that form and requires clients to link the CoreServices umbrella framework instead.
+
+The corrected builder now links with the CoreServices umbrella plus Security, while retaining the explicit `scCreateSystemServiceVersion` declaration in the probe source. The build validator and both Snow Leopard/Lion runners now require the CoreServices umbrella dependency rather than a direct CarbonCore load command. The Lion runtime provenance check still verifies that CarbonCore and Security are present in the validated Rosetta shared-cache map, because those are the actual implementation images used by the translated PPC process.
+
+This was a build-harness defect only. No PPC pre-dispatch behavior was exercised by the failed attempt, so none of the experiment's runtime conclusions or decision gates change.
 
 ## Phase C — Snow Leopard positive control
 
