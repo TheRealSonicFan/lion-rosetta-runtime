@@ -230,3 +230,45 @@ This audit does not:
 - modify Rosetta or XNU.
 
 It is a read-only differential audit of the exact CarbonCore client/session machinery now proven to be the immediate failing layer.
+
+
+## Observed result — broad client architecture matches; RPC contract still unexpanded
+
+Both requested internals reports completed with `RESULT: PASS`.
+
+The audit narrows the zero-port result but does not yet justify another live PPC run.
+
+### Shared client architecture
+
+Snow Leopard PPC and Lion i386 both follow the same broad CarbonCore pattern:
+
+- `scCreateSystemServiceVersion` accepts only usable CoreServices connection states before proceeding;
+- `SCClientSession::checkinWithServer` honors `SCDontUseServer`, obtains a check-in name, performs `bootstrap_look_up2`, calls `__scclient_ServerCheckin`, and constructs an `SCClientSession` only after successful check-in;
+- `SCSession::findOrCreateService` searches cached services and otherwise dispatches through the session's virtual service-creation method;
+- `SCClientSession::createService` calls `__scsclient_FindService` and returns null if the transport call fails or its returned status is nonzero.
+
+The framework-internal client-session layout changed, as expected for different releases: the Snow Leopard PPC path allocates `0xb4` bytes and stores its remote port at offset `0xb0`; Lion i386 allocates `0x9c` bytes and uses offset `0x98`. These are internal object-layout differences and are not evidence of an IPC incompatibility by themselves.
+
+### Remaining ambiguity
+
+Lion factors connection establishment through `getStatus()` and `connectToCoreServicesD()`; if the resulting state is not usable, `scCreateSystemServiceVersion` returns zero before entering `SCSession::findOrCreateService`.
+
+If connection state is usable, the same exported API can still return zero when the subsequent service lookup produces no service object.
+
+The completed analyzer selected the client/session methods but did not select the actual `ServerCheckin` and `FindService` RPC stubs, `getCheckinName`, or Lion's complete `connectToCoreServicesD` state transition for side-by-side protocol analysis.
+
+Therefore the audit does not yet distinguish:
+
+1. client check-in/session establishment failure; from
+2. successful check-in followed by `FindService("LaunchApplicationServices", 0x00010000,...)` failure.
+
+Do not rerun the PPC pre-dispatch probe yet.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-systemservice-rpc-protocol-audit.md
+scripts/audit-process-manager-systemservice-rpc-protocol.py
+```
+
+That audit is read-only and expands the exact check-in and service-lookup RPC request/reply paths before any lower-level live discriminator is prepared.
