@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SRC="$ROOT/tests/ppc-process-manager-predispatch-preflight.c"
 PATCH_DYLINKER="$SCRIPT_DIR/patch-ppc-load-dylinker.py"
-CARBONCORE="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/CarbonCore.framework/Versions/A/CarbonCore"
+CORESERVICES="/System/Library/Frameworks/CoreServices.framework/Versions/A/CoreServices"
 INFO="$OUT.info.txt"
 SHA="$OUT.sha256"
 TMP_PROBE_SRC="$(/usr/bin/mktemp /tmp/ppc-predispatch-probe.XXXXXX.c)"
@@ -16,7 +16,7 @@ trap 'rm -f "$TMP_PROBE_SRC" "$TMP_PROBE_BIN" "$TMP_LOG"' EXIT HUP INT TERM
 
 [ -f "$SRC" ] || { echo "error: missing source: $SRC" >&2; exit 66; }
 [ -f "$PATCH_DYLINKER" ] || { echo "error: missing dylinker patch helper: $PATCH_DYLINKER" >&2; exit 66; }
-[ -f "$CARBONCORE" ] || { echo "error: missing CarbonCore: $CARBONCORE" >&2; exit 66; }
+[ -f "$CORESERVICES" ] || { echo "error: missing CoreServices umbrella framework binary: $CORESERVICES" >&2; exit 66; }
 
 cat > "$TMP_PROBE_SRC" <<'SRC'
 #include <Security/AuthSession.h>
@@ -59,7 +59,7 @@ probe_compiler() {
     [ -n "$compiler" ] || return 1
 
     /bin/rm -f "$TMP_PROBE_BIN"
-    if "$compiler" -arch ppc -mmacosx-version-min=10.5         "$TMP_PROBE_SRC" "$CARBONCORE" -framework Security         -o "$TMP_PROBE_BIN" >"$TMP_LOG" 2>&1; then
+    if "$compiler" -arch ppc -mmacosx-version-min=10.5         "$TMP_PROBE_SRC" -framework CoreServices -framework Security         -o "$TMP_PROBE_BIN" >"$TMP_LOG" 2>&1; then
         if [ -f "$TMP_PROBE_BIN" ] && is_ppc32_macho "$TMP_PROBE_BIN"; then
             CC_SELECTED="$compiler"
             return 0
@@ -92,7 +92,7 @@ fi
 }
 
 echo "Using PowerPC-capable compiler: $CC_SELECTED"
-"$CC_SELECTED" -arch ppc -mmacosx-version-min=10.5     "$SRC" "$CARBONCORE" -framework Security -o "$OUT"
+"$CC_SELECTED" -arch ppc -mmacosx-version-min=10.5     "$SRC" -framework CoreServices -framework Security -o "$OUT"
 /bin/chmod +x "$OUT"
 
 echo "Patching alternate PPC LC_LOAD_DYLINKER: /usr/oah/dyld"
@@ -132,8 +132,8 @@ echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || {
     exit 71
 }
 
-/usr/bin/otool -L "$OUT" | /usr/bin/grep -Fq '/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/CarbonCore.framework/Versions/A/CarbonCore' || {
-    echo "error: output does not link CarbonCore" >&2
+/usr/bin/otool -L "$OUT" | /usr/bin/grep -Fq '/System/Library/Frameworks/CoreServices.framework/Versions/A/CoreServices' || {
+    echo "error: output does not link the CoreServices umbrella framework" >&2
     exit 72
 }
 
