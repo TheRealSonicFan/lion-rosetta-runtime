@@ -102,3 +102,6 @@ See `docs/CLOSED_SOURCE_COMPONENTS.md`, `docs/VALIDATED_PAYLOAD.md`, `docs/PPC_D
 
 
 The initial `NOT_PATCHABLE` result from the private LaunchServices experiment was a patcher-signature defect, not a system-baseline mismatch: the full LaunchServices and i386-slice hashes matched the validated Lion 10.7.5 values. The corrected patcher now targets the audited i386 instruction by Mach-O virtual address and verifies its exact bytes before modifying one byte in a private copy. Continue with `docs/private-launchservices-ppc-compat-experiment.md` after pulling current `main`.
+
+
+The Process Manager alternate-path experiment has now passed on Snow Leopard and failed on Lion before pseudo-PSN `GetProcessPID` returned, reproducing the same guest-requested SIGABRT family as `GetCurrentProcess`. Because `GetProcessForPID` was never reached, the next controlled test is `docs/process-manager-getprocessforpid-first-experiment.md`. It begins with PID-to-PSN lookup, omits both current-process APIs, and leaves the validated kernel and private LaunchServices proof setup unchanged.
