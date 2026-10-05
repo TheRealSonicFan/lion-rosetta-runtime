@@ -74,3 +74,12 @@ Use a staged progression so a failure identifies the layer that is still incompa
 9. **Compatibility expansion**
    - add only the specific shim/framework/cache behavior demonstrated missing by the prior step.
    - do not copy Snow Leopard `/System/Library` wholesale into Lion.
+
+
+## Current Process Manager boundary
+
+The private LaunchServices compatibility experiment has cleared Lion's PPC admission gate. The subsequent Process Manager alternate-path probe passed completely on Snow Leopard but aborts on Lion inside its first Process Manager operation: `GetProcessPID({0,kCurrentProcess},...)`. The crash uses the same Rosetta guest-requested SIGABRT wrapper already seen for `GetCurrentProcess`.
+
+Because `GetProcessForPID` was never reached, the next step is not a HIServices patch yet. Follow `docs/process-manager-getprocessforpid-first-experiment.md`, which begins with `GetProcessForPID(getpid(), &psn)`, never calls `GetCurrentProcess` or `GetProcessPID`, and uses any returned PSN directly for foreground/window operations.
+
+No XNU change is indicated by the current result.
