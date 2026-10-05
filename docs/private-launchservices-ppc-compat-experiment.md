@@ -240,3 +240,35 @@ If -10665 disappears but no milestone is generated, preserve the open log and di
 ## Non-goals
 
 This experiment does not modify system LaunchServices, define final Finder integration, install receipts, change XNU, or fix the later GetCurrentProcess problem. It is a controlled proof of the LaunchServices PPC policy hypothesis.
+
+## Observed result: LaunchServices gate cleared; GetCurrentProcess remains
+
+The guarded private-LaunchServices experiment has now produced the intended differential result.
+
+The private framework payload was verified as a one-byte i386 change only:
+
+- installed system LaunchServices SHA-256 remained `ffdc7bd8fb0cb5f7ceabc9c88978e991e71fbfe7390a8345ce545397b1ab24b5`;
+- private LaunchServices SHA-256 was `d3d4040c98ff55377043f31de6f7ae996b98f0eaa6046a6ca15e7fdfcc2822fd`;
+- the audited TEST instruction changed only from `f7 c3 00 00 00 14` to `f7 c3 00 00 00 16`;
+- replacing that one byte reconstructs the exact validated system hash.
+
+The i386 `open` preflight explicitly loaded the private patched LaunchServices framework.
+
+With that verified private framework, Lion no longer returned `kLSNoRosettaEnvironmentErr (-10665)`:
+
+- `open_status=0`;
+- the PPC application was spawned under `launchd`;
+- its bundle identifier was preserved;
+- the application appeared in the Dock;
+- the milestone file was created;
+- the program reached `M00_MAIN_ENTER` and `M01_BEFORE_GetCurrentProcess`.
+
+The application then reproduced the independent Process Manager boundary: `GetCurrentProcess` never returned and the translated guest deliberately self-SIGABRTed. The new crash report again records the Rosetta host syscall wrapper with `EAX=0`, PID 4179 in the PID argument, signal 6, and posix flag 1.
+
+This experiment therefore **confirms the LaunchServices PPC policy hypothesis**. The one-byte mask broadening is only a diagnostic proof and is not yet the final LaunchServices production patch.
+
+The fact that a standard Mac OS X crash-report window appeared for this launch is consistent with the application now being accepted and launched as a normal LaunchServices GUI application; it does not indicate a new crash mechanism. The underlying exception remains the same guest-requested SIGABRT at the `GetCurrentProcess` boundary.
+
+The next experiment moves away from LaunchServices and tests whether translated PPC can obtain a usable Process Manager identity without calling `GetCurrentProcess`. Follow `docs/process-manager-alternate-path-experiment.md`.
+
+Do not modify the installed LaunchServices framework, HIServices, Rosetta, or XNU.
