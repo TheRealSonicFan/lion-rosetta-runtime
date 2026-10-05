@@ -78,32 +78,16 @@ Use a staged progression so a failure identifies the layer that is still incompa
 
 ## Current Process Manager boundary
 
-The private LaunchServices compatibility experiment has cleared Lion's PPC admission gate. Three independent Process Manager identity routes remain Snow Leopard-positive but self-SIGABRT on Lion before returning:
+The private LaunchServices compatibility experiment has cleared Lion's PPC admission gate. Three independent Process Manager identity routes remain Snow Leopard-positive but self-SIGABRT on Lion before returning.
 
-- `GetCurrentProcess()`;
-- `GetProcessPID({0,kCurrentProcess},...)`;
-- `GetProcessForPID(getpid(), &psn)`.
+The investigation has now localized an earlier prerequisite failure below LaunchServices Process Manager initialization.
 
-The HIServices provenance audit, corrected RegisterApplication audit, registration-protocol audit, no-ASN discriminator, LaunchServices process-dispatch audit, and system-service transport audit are complete.
+The guarded PPC pre-dispatch probe uses the exact same PPC executable on Snow Leopard and Lion. Snow Leopard returns a nonzero `LaunchApplicationServices` service port from `scCreateSystemServiceVersion("LaunchApplicationServices", 0x00010000, NULL)`, then `SessionGetInfo` returns `noErr` with a nonzero session ID.
 
-The process-dispatch audit found no obvious 32-bit InitializeProcessesServices wire mismatch. The system-service transport audit then identified the next material divergence one layer lower.
+Lion reaches the same CarbonCore call and returns normally, but the service port is exactly zero. The probe exits with `RESULT: SYSTEMSERVICE_ZERO_PORT`. `SessionGetInfo` is never reached. No new crash/core is generated, syscall 295 remains healthy, and protected hashes are unchanged.
 
-Snow Leopard PPC `SessionGetInfo` still uses the legacy SecurityServer client path through `ModuleNexus<AuthClient>` and `SecurityServer::ClientSession::getSessionInfo`. Lion i386 `SessionGetInfo` instead uses `CommonCriteria::AuditInfo::get` and reads the audit-session state locally.
+Therefore the immediate boundary is now CarbonCore/CoreServices system-service acquisition, before Security session lookup, LaunchServices `_LSDoInitializeProcessesServices`, or Process Manager identity APIs.
 
-This matters because translated PPC on Lion uses the restored Snow Leopard PPC Security image from the validated Rosetta shared cache. A legacy Snow Leopard Security session client is therefore being exercised against Lion's native host security/session environment.
+The authoritative next step is the read-only differential audit in `docs/process-manager-systemservice-client-internals-audit.md`, implemented by `scripts/audit-process-manager-systemservice-client-internals.py`. It expands static coverage around `SCSession::findOrCreateService`, `SCClientSession`, session-status initialization, coreservicesd check-in/service negotiation, reconnect handling, and related bootstrap/Mach-port helpers.
 
-CarbonCore's top-level `scCreateSystemServiceVersion` remains semantically similar across the audited PPC/i386 paths and still reaches `SCSession::findOrCreateService`, but that cross-version service acquisition also has not yet been behaviorally tested.
-
-The authoritative next step is the guarded command-line PPC preflight in `docs/process-manager-predispatch-preflight-experiment.md`. It mirrors the real setup order without calling Process Manager:
-
-1. `scCreateSystemServiceVersion("LaunchApplicationServices", 0x00010000, NULL)`;
-2. require a nonzero service port;
-3. `SessionGetInfo(callerSecuritySession,...)`;
-4. require `noErr` and a nonzero session ID;
-5. exit.
-
-Run the Snow Leopard positive control first, repeat the native Lion commpage/syscall-295 safety gates, then run the Lion PPC preflight exactly once.
-
-The first Phase B build attempt did not test PPC behavior: Snow Leopard `ld` rejected direct linkage to the CarbonCore subframework and required the CoreServices umbrella. The builder and both dependency validators have been corrected to link/require `CoreServices.framework` plus Security. Pull current `main` and repeat Phase B from the beginning.
-
-Do not run another Process Manager GUI test, call `_LSDoInitializeProcessesServices` directly, use `SCDontUseServer`, patch CarbonCore/Security/LaunchServices, restart CoreServices/security services, use live instrumentation, or change XNU before that result is reviewed. No additional XNU change is indicated.
+Do not rerun the PPC pre-dispatch probe, call `SessionGetInfo`, use `SCDontUseServer`, perform a custom bootstrap lookup, patch CarbonCore/Security/LaunchServices, restart CoreServices/security services, use live instrumentation, or change XNU before that audit is reviewed. No additional XNU change is indicated.
