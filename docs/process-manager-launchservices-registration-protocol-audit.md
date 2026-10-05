@@ -228,3 +228,49 @@ This audit does not:
 - launch the PPC application.
 
 It is the final read-only protocol-localization step before choosing between a transport compatibility experiment and a guarded no-ASN behavior test.
+
+
+## Observed result — exact no-ASN control resolved
+
+Both requested protocol reports completed with `RESULT: PASS`.
+
+The audit resolves two key points.
+
+### The controlling environment literal is exact
+
+In the Snow Leopard PPC HIServices `__RegisterApplication` window, the first `getenv()` argument resolves to cstring address `0x542d0`, which is `LSDONOTABORTIFNOASN`.
+
+The function defaults the local abort-control byte to 1 and replaces it with `atoi(getenv(...))` when the variable is present. The later fatal no-ASN branch executes only when that byte is nonzero.
+
+Therefore `LSDONOTABORTIFNOASN=0` is the exact process-local discriminator. The mixed-case `LSDoNotAbortIfNoASN` cstring is present but is not the operand of this abort-control `getenv()` sequence.
+
+Lion i386 HIServices maps the corresponding operand to the same uppercase literal.
+
+### The 32-bit client registration message is not an obvious schema mismatch
+
+Snow Leopard PPC `_LSDoRegisterApplication` sends message ID `0x4652` with a `0x44` send size and `0x48` receive size.
+
+Lion i386 `_LSDoRegisterApplication` uses the same message ID and the same `0x44` / `0x48` sizes. The x86_64 client/server variant uses the wider layout.
+
+The audit's best-effort `ps` architecture column was unavailable on both releases, so the active coreservicesd slice was not directly identified. That does not justify a protocol adapter: the translated PPC client wire form already matches Lion's native i386 client wire form.
+
+### Decision
+
+The next step is not a coreservicesd replacement, protocol adapter, or XNU change.
+
+The remaining two abort candidates can now be separated safely with a single process-local behavior test. Current `main` provides:
+
+```text
+docs/process-manager-noasn-discriminator-experiment.md
+tests/ppc-process-manager-noasn-discriminator.c
+scripts/build-ppc-process-manager-noasn-discriminator-on-snowleopard.sh
+scripts/prepare-ppc-process-manager-noasn-bundle.sh
+scripts/run-snowleopard-ppc-process-manager-noasn-control.sh
+scripts/run-lion-ppc-process-manager-noasn-discriminator.sh
+```
+
+The new subject sets the exact override only through its bundle `LSEnvironment`, verifies that it sees `LSDONOTABORTIFNOASN=0`, calls `GetProcessForPID` once, records status/PSN, and exits immediately.
+
+If Lion still aborts before the call returns, the evidence favors the earlier LaunchServices process-dispatch/setup abort. If the call returns, the previous abort was at or after the no-ASN gate and the exact returned status/PSN becomes the next boundary.
+
+Do not use `launchctl setenv`, do not make the override global, and do not proceed to foreground/window APIs in this discriminator.
