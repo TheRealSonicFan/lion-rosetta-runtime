@@ -320,3 +320,33 @@ The already proven LaunchServices path unexpectedly regressed. Do not infer a Pr
 ## Non-goals
 
 This experiment does not patch HIServices, Rosetta, LaunchServices, or XNU. It does not call `GetCurrentProcess` or `GetProcessPID`. It is a single functional test of the remaining documented PID-to-PSN route.
+
+
+## Observed result — Lion GetProcessForPID boundary
+
+The completed control/experiment pair now resolves this decision gate.
+
+On Snow Leopard 10.6.8, the exact PPC/ppc7400 executable returns successfully from `GetProcessForPID(getpid(), &psn)`, obtains a usable PSN, completes `TransformProcessType`, `SetFrontProcess`, window creation, the timer callback, and the event loop, and reaches `M15_SUCCESS`.
+
+On Lion 10.7.5, the same executable reaches `main()`, records its PID, and reaches `M01_BEFORE_GetProcessForPID`, but never reaches `M02_AFTER_GetProcessForPID`. The runner reports:
+
+```text
+RESULT: GETPROCESSFORPID_BOUNDARY
+```
+
+The new crash is again `EXC_CRASH (SIGABRT)` at Rosetta host PC `0xb815ac07`. Its x86 register state contains EDI equal to the subject PID 5900, ESI 6 (SIGABRT), EDX 1 (posix flag), EAX 0, and carry clear, matching the already decoded guest-requested self-abort wrapper rather than another missing host syscall.
+
+The native syscall-295 preflight still passes, and the runner's protected kernel/LaunchServices/dyld/cache/executable hashes remain unchanged after the launch.
+
+Combined with the earlier `GetCurrentProcess` and pseudo-PSN `GetProcessPID` boundaries, this establishes that the failure is not limited to one legacy current-process API. Multiple Process Manager identity entry points converge on a missing or incompatible translated-PPC registration/backend condition.
+
+Do not try another API permutation and do not patch XNU or HIServices from the abort alone.
+
+The authoritative next stage is the read-only differential audit in:
+
+```text
+docs/process-manager-hiservices-audit.md
+scripts/audit-process-manager-hiservices.py
+```
+
+That audit begins with image provenance because the translated guest may resolve canonical HIServices/ApplicationServices paths from the restored Rosetta shared cache rather than Lion's on-disk framework. It then compares Process Manager/CPS/PSN/ASN symbols, dependencies, targeted code windows, Rosetta shims/interposers, and relevant helper state on Snow Leopard and Lion.
