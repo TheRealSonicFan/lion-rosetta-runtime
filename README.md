@@ -117,3 +117,6 @@ The Process Manager system-service transport audit is now complete. CarbonCore's
 
 
 The first Process Manager pre-dispatch Phase B build attempt exposed a harness-only linker error: Snow Leopard forbids direct client linkage to the CarbonCore subframework and requires the CoreServices umbrella. The current builder now links `-framework CoreServices -framework Security`, and the Snow Leopard/Lion validators expect the CoreServices umbrella load command while retaining CarbonCore/Security Rosetta-cache provenance checks. No PPC runtime behavior was exercised by the failed build; repeat Phase B after pulling current `main`.
+
+
+The guarded Process Manager pre-dispatch probe has now localized the immediate Lion failure to CoreServices system-service acquisition. The exact PPC executable succeeds on Snow Leopard, but on Lion `scCreateSystemServiceVersion("LaunchApplicationServices", 0x00010000, NULL)` returns normally with a zero port before `SessionGetInfo` is reached. No crash occurs, syscall 295 remains validated, and protected hashes remain unchanged. The next step is the read-only `docs/process-manager-systemservice-client-internals-audit.md`, which compares CarbonCore's internal `SCSession::findOrCreateService` / `SCClientSession` machinery and coreservicesd check-in/service negotiation before any further live probe.
