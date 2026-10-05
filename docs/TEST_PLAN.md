@@ -84,14 +84,16 @@ The private LaunchServices compatibility experiment has cleared Lion's PPC admis
 - `GetProcessPID({0,kCurrentProcess},...)`;
 - `GetProcessForPID(getpid(), &psn)`.
 
-The Process Manager/HIServices provenance audit, corrected RegisterApplication callsite audit, LaunchServices registration-protocol audit, and process-local no-ASN discriminator are complete.
+The HIServices provenance audit, corrected RegisterApplication audit, registration-protocol audit, no-ASN discriminator, and LaunchServices process-dispatch audit are complete.
 
-The no-ASN discriminator is decisive for the later HIServices abort hypothesis. The exact PPC subject sees `LSDONOTABORTIFNOASN=0` on both systems. Snow Leopard returns `noErr` and a nonzero PSN. Lion reaches the marker immediately before `GetProcessForPID` and still self-SIGABRTs before the call returns. The latest crash again matches the already decoded Rosetta guest-requested self-abort family, the syscall-295 preflight remains healthy, and all protected hashes remain unchanged.
+The no-ASN discriminator established that Lion's observed abort occurs upstream of the later HIServices no-ASN branch controlled by `LSDONOTABORTIFNOASN`.
 
-Therefore the observed Lion crash occurs upstream of the HIServices no-ASN abort controlled by `LSDONOTABORTIFNOASN`.
+The process-dispatch audit now shows that the Snow Leopard PPC and Lion i386 LaunchServices InitializeProcessesServices clients use the same message ID `0x4650`, request size `0x2c`, receive size `0x50`, and expected reply ID `0x46b4`. Both setup paths perform security-session discovery, `scCreateSystemServiceVersion("LaunchApplicationServices", 0x00010000, 0)`, `_LSDoInitializeProcessesServices`, returned status checks, `CFMachPortCreateWithPort`, reconnect setup, and process-dispatch-table installation. Both server-side paths also perform session resolution and audit-token handling.
 
-The leading remaining boundary is LaunchServices process-dispatch initialization. The static PPC client path calls `SetupCoreApplicationServicesCommunicationPort()` from `getProcessDispatchTable()` and aborts if the process dispatch table remains null. The setup path uses session discovery, `scCreateSystemServiceVersion`, `_LSDoInitializeProcessesServices`, version negotiation, a CoreServices Mach port, reconnect setup, and dispatch-table state.
+Both systems have an active `coreservicesd` and `com.apple.pbs`; the `com.apple.coreservicesd` LaunchDaemon plist is byte-identical and declares the same Mach service. Snow Leopard's daemon still contains a ppc7400 slice while Lion's does not, but that difference alone does not prove a failure because the translated PPC client uses the process-services IPC transport.
 
-The authoritative next step is the read-only differential audit in `docs/process-manager-process-dispatch-audit.md`, implemented by `scripts/audit-process-manager-process-dispatch.py`. Run it once on Snow Leopard and once on Lion and return only the two reports. It expands static coverage to the complete InitializeProcessesServices family and the relevant service/session metadata.
+No obvious LaunchServices-level 32-bit InitializeProcessesServices wire mismatch was found. The remaining static gap is below LaunchServices: the imported CarbonCore `scCreateSystemServiceVersion` / `scAddReconnectProc` transport and Security `SessionGetInfo` implementation were not disassembled by the completed audit.
 
-Do not rerun the PPC app, set another environment override, use `SCDontUseServer`, patch LaunchServices/HIServices, restart coreservicesd, transplant frameworks/daemons, or change XNU before that audit is reviewed. No additional XNU change is indicated.
+The authoritative next step is therefore the read-only differential audit in `docs/process-manager-systemservice-transport-audit.md`, implemented by `scripts/audit-process-manager-systemservice-transport.py`. Run it once on Snow Leopard and once on Lion and return the two generated reports.
+
+Do not rerun the PPC app, call `scCreateSystemServiceVersion` from custom code, use `SCDontUseServer`, perform a custom bootstrap lookup, patch frameworks, restart CoreServices components, use live instrumentation, or change XNU before that audit is reviewed. No additional XNU change is indicated.
