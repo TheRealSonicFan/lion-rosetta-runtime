@@ -370,3 +370,35 @@ This experiment does not:
 - define the production GUI-launch design.
 
 It is a functional localization experiment for the Process Manager boundary.
+
+
+## Observed Lion result: pseudo-PSN GetProcessPID aborts before return
+
+The experiment completed its Snow Leopard positive control successfully. The exact PPC control reached every milestone through `M19_SUCCESS`: pseudo-PSN `GetProcessPID`, `GetProcessForPID`, PID round-trip validation, foreground transformation, window creation, and the event loop all succeeded.
+
+On Lion, the validated private LaunchServices compatibility path again admitted and spawned the PPC application, but the subject reached only:
+
+```text
+PM_ALT_MILESTONE:M00_MAIN_ENTER
+PM_ALT_PID:SELF=5106
+PM_ALT_PSN:PSEUDO=0x00000000:0x00000002
+PM_ALT_MILESTONE:M01_BEFORE_GetProcessPID_PSEUDO
+```
+
+No `M02_AFTER_GetProcessPID_PSEUDO` marker was written. The corresponding crash report is `EXC_CRASH (SIGABRT)`.
+
+The crashed Rosetta host state again matches the previously decoded guest self-abort wrapper:
+
+- EIP `0xb815ac07`;
+- EAX `0`, indicating the host `kill` call returned successfully;
+- EDI `0x13f2` = PID 5106;
+- ESI `6` = SIGABRT;
+- EDX `1` = the posix flag.
+
+Therefore the pseudo-PSN `GetProcessPID({0,kCurrentProcess},...)` route reaches the same deliberate guest abort family as `GetCurrentProcess`.
+
+This result does **not** establish that `GetProcessForPID` is broken: the subject never reached that call. The next controlled experiment starts with `GetProcessForPID(getpid(), &psn)`, omits both `GetCurrentProcess` and `GetProcessPID`, and uses any returned PSN directly for the later Carbon operations.
+
+Follow `docs/process-manager-getprocessforpid-first-experiment.md`.
+
+Do not modify HIServices, Rosetta, system LaunchServices, or XNU.
