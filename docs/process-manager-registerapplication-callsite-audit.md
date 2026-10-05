@@ -226,3 +226,47 @@ This audit does not:
 - launch the PPC application.
 
 It is the narrow read-only step needed before any compatibility experiment is justified.
+
+
+## Corrected version-2 result
+
+Both corrected reports end with `RESULT: PASS` and contain the intended disassembly windows.
+
+The result narrows the boundary further but does **not** yet justify setting the no-ASN environment switch.
+
+### Guest-side registration sequence
+
+Snow Leopard PPC HIServices `__RegisterApplication` calls `_LSApplicationCheckIn`. If that does not supply usable process information, it falls back through `_LSASNCreateWithPid` and application-information lookup. When an ASN is available it extracts the PSN, establishes the default WindowServer connection, and calls `_CPSRegisterWithServer`.
+
+After those steps it tests the cached PSN low half. If that value is still zero and the local abort-control flag is enabled, it emits the no-ASN fatal diagnostic and calls `abort()`. The function can skip that abort when the flag is disabled.
+
+### Abort-control string is not yet mapped
+
+The abort-control flag is initialized from a `getenv()`/`atoi()` sequence at the start of `__RegisterApplication`. The framework contains both `LSDoNotAbortIfNoASN` and `LSDONOTABORTIFNOASN`, but the version-2 report does not map the PC-relative cstring used by that exact `getenv()` call.
+
+Do not guess the variable/value pair from the symbol spelling.
+
+### Earlier LaunchServices abort remains possible
+
+The corrected LaunchServices windows reveal a second relevant abort path. `getProcessDispatchTable()` invokes `SetupCoreApplicationServicesCommunicationPort()` when the process dispatch table is absent and calls `abort()` if the table is still unavailable. `getProcessesServerPort()` uses the same setup path.
+
+Therefore the observed translated-PPC SIGABRT cannot yet be assigned uniquely to the later HIServices no-ASN branch.
+
+### Registration protocol evolved
+
+The Snow Leopard PPC `_LSDoRegisterApplication` client and the Snow Leopard/Lion native `_XRegisterApplication` and `_LSServerRegisterApplication` paths use the same registration message family, but their request/reply layout and validator logic differ across releases.
+
+This is a concrete reason to compare the registration transport before attempting an abort bypass. It is not yet proof that Lion rejects the Snow Leopard PPC request.
+
+### Decision
+
+The next authoritative step is:
+
+```text
+docs/process-manager-launchservices-registration-protocol-audit.md
+scripts/audit-process-manager-registration-protocol.py
+```
+
+That audit remains read-only. It maps the abort-control cstring, records the active CoreServices service architecture/state, and compares the Snow Leopard PPC registration request with Snow Leopard and Lion native server-side validation.
+
+Do not set a no-ASN environment variable, patch HIServices/LaunchServices, restart coreservicesd, or change XNU before that protocol audit is reviewed.
