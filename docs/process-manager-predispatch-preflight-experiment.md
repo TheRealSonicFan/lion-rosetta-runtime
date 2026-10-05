@@ -104,7 +104,7 @@ On the validated Snow Leopard 10.6.8 machine:
 cd /path/to/lion-rosetta-runtime
 
 CC=/Developer-3.2.6/usr/bin/gcc-4.2 \
-  ./scripts/build-ppc-process-manager-predispatch-preflight-on-snowleopard.sh \
+  /bin/bash ./scripts/build-ppc-process-manager-predispatch-preflight-on-snowleopard.sh \
   ./ppc-process-manager-predispatch-private-dyld
 ```
 
@@ -128,7 +128,7 @@ Require:
 Run:
 
 ```sh
-./scripts/run-snowleopard-ppc-process-manager-predispatch-preflight-control.sh \
+/bin/bash ./scripts/run-snowleopard-ppc-process-manager-predispatch-preflight-control.sh \
   ./ppc-process-manager-predispatch-private-dyld \
   ./ppc-process-manager-predispatch-private-dyld.sha256 \
   ./ppc-process-manager-predispatch-snowleopard-control.log
