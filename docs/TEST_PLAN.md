@@ -84,16 +84,24 @@ The private LaunchServices compatibility experiment has cleared Lion's PPC admis
 - `GetProcessPID({0,kCurrentProcess},...)`;
 - `GetProcessForPID(getpid(), &psn)`.
 
-The HIServices provenance audit, corrected RegisterApplication audit, registration-protocol audit, no-ASN discriminator, and LaunchServices process-dispatch audit are complete.
+The HIServices provenance audit, corrected RegisterApplication audit, registration-protocol audit, no-ASN discriminator, LaunchServices process-dispatch audit, and system-service transport audit are complete.
 
-The no-ASN discriminator established that Lion's observed abort occurs upstream of the later HIServices no-ASN branch controlled by `LSDONOTABORTIFNOASN`.
+The process-dispatch audit found no obvious 32-bit InitializeProcessesServices wire mismatch. The system-service transport audit then identified the next material divergence one layer lower.
 
-The process-dispatch audit now shows that the Snow Leopard PPC and Lion i386 LaunchServices InitializeProcessesServices clients use the same message ID `0x4650`, request size `0x2c`, receive size `0x50`, and expected reply ID `0x46b4`. Both setup paths perform security-session discovery, `scCreateSystemServiceVersion("LaunchApplicationServices", 0x00010000, 0)`, `_LSDoInitializeProcessesServices`, returned status checks, `CFMachPortCreateWithPort`, reconnect setup, and process-dispatch-table installation. Both server-side paths also perform session resolution and audit-token handling.
+Snow Leopard PPC `SessionGetInfo` still uses the legacy SecurityServer client path through `ModuleNexus<AuthClient>` and `SecurityServer::ClientSession::getSessionInfo`. Lion i386 `SessionGetInfo` instead uses `CommonCriteria::AuditInfo::get` and reads the audit-session state locally.
 
-Both systems have an active `coreservicesd` and `com.apple.pbs`; the `com.apple.coreservicesd` LaunchDaemon plist is byte-identical and declares the same Mach service. Snow Leopard's daemon still contains a ppc7400 slice while Lion's does not, but that difference alone does not prove a failure because the translated PPC client uses the process-services IPC transport.
+This matters because translated PPC on Lion uses the restored Snow Leopard PPC Security image from the validated Rosetta shared cache. A legacy Snow Leopard Security session client is therefore being exercised against Lion's native host security/session environment.
 
-No obvious LaunchServices-level 32-bit InitializeProcessesServices wire mismatch was found. The remaining static gap is below LaunchServices: the imported CarbonCore `scCreateSystemServiceVersion` / `scAddReconnectProc` transport and Security `SessionGetInfo` implementation were not disassembled by the completed audit.
+CarbonCore's top-level `scCreateSystemServiceVersion` remains semantically similar across the audited PPC/i386 paths and still reaches `SCSession::findOrCreateService`, but that cross-version service acquisition also has not yet been behaviorally tested.
 
-The authoritative next step is therefore the read-only differential audit in `docs/process-manager-systemservice-transport-audit.md`, implemented by `scripts/audit-process-manager-systemservice-transport.py`. Run it once on Snow Leopard and once on Lion and return the two generated reports.
+The authoritative next step is the guarded command-line PPC preflight in `docs/process-manager-predispatch-preflight-experiment.md`. It mirrors the real setup order without calling Process Manager:
 
-Do not rerun the PPC app, call `scCreateSystemServiceVersion` from custom code, use `SCDontUseServer`, perform a custom bootstrap lookup, patch frameworks, restart CoreServices components, use live instrumentation, or change XNU before that audit is reviewed. No additional XNU change is indicated.
+1. `scCreateSystemServiceVersion("LaunchApplicationServices", 0x00010000, NULL)`;
+2. require a nonzero service port;
+3. `SessionGetInfo(callerSecuritySession,...)`;
+4. require `noErr` and a nonzero session ID;
+5. exit.
+
+Run the Snow Leopard positive control first, repeat the native Lion commpage/syscall-295 safety gates, then run the Lion PPC preflight exactly once.
+
+Do not run another Process Manager GUI test, call `_LSDoInitializeProcessesServices` directly, use `SCDontUseServer`, patch CarbonCore/Security/LaunchServices, restart CoreServices/security services, use live instrumentation, or change XNU before that result is reviewed. No additional XNU change is indicated.
