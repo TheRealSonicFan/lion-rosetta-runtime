@@ -80,16 +80,19 @@ Use a staged progression so a failure identifies the layer that is still incompa
 
 The private LaunchServices compatibility experiment has cleared Lion's PPC admission gate. Three independent Process Manager identity routes remain Snow Leopard-positive but self-SIGABRT on Lion before returning.
 
-The earlier prerequisite failure has now been localized to CarbonCore/CoreServices system-service acquisition.
+The earlier prerequisite failure has been localized to CarbonCore/CoreServices system-service acquisition.
 
-The guarded PPC pre-dispatch probe uses the exact same PPC executable on Snow Leopard and Lion. Snow Leopard obtains a nonzero `LaunchApplicationServices` service port and then a valid Security session. Lion returns normally from `scCreateSystemServiceVersion("LaunchApplicationServices", 0x00010000, NULL)` with a zero port and never reaches `SessionGetInfo`.
+The guarded PPC pre-dispatch probe uses the exact same PPC executable on Snow Leopard and Lion. Snow Leopard obtains a nonzero `LaunchApplicationServices` service port and a valid Security session. Lion returns normally from `scCreateSystemServiceVersion("LaunchApplicationServices", 0x00010000, ...)` with a zero port and never reaches `SessionGetInfo`.
 
-The follow-on CarbonCore internals audit is complete. Snow Leopard PPC and Lion i386 both use the same broad client architecture: `SCClientSession::checkinWithServer` gates server use through `SCDontUseServer`, gets a check-in name, performs `bootstrap_look_up2`, calls `__scclient_ServerCheckin`, and constructs a client session only after successful check-in. `SCSession::findOrCreateService` then searches cached services and otherwise dispatches to `SCClientSession::createService`, which calls `__scsclient_FindService` and rejects RPC/status failures.
+The CarbonCore client-internals and RPC protocol audits are now complete. Snow Leopard PPC and Lion i386 share the same broad client architecture through bootstrap lookup, `ServerCheckin`, `SCSession::findOrCreateService`, and client `FindService`.
 
-The client-session object layout differs between releases, but those private offsets do not establish a wire incompatibility by themselves.
+The remaining static RPC difference is deliberate compatibility plumbing rather than an identified mismatch. Snow Leopard PPC uses the older complex `ServerCheckin` request (ID `0x2710`, send `0x28`, receive `0x3c`, reply `0x2774`); Lion's server wrapper retains handling for that descriptor-bearing legacy form. `FindService` matches directly across the audited clients (ID `0x2723`, send `0x12c`, receive `0x30`, reply `0x2787`).
 
-The remaining ambiguity is now precise: Lion may fail while establishing a usable CoreServices client session/check-in state, or it may check in successfully and then fail the `FindService("LaunchApplicationServices", 0x00010000,...)` transaction.
+The remaining live ambiguity is therefore precise:
 
-The authoritative next step is the read-only differential audit in `docs/process-manager-systemservice-rpc-protocol-audit.md`, implemented by `scripts/audit-process-manager-systemservice-rpc-protocol.py`. It expands the actual `ServerCheckin` and `FindService` RPC stubs, check-in-name helper, Lion `getStatus/connectToCoreServicesD` path, message IDs/sizes, output fields, and service-version semantics.
+1. the guest PPC CarbonCore does not establish a usable coreservicesd client/check-in session; or
+2. check-in succeeds, but `FindService("LaunchApplicationServices", 0x00010000,...)` fails or returns an unusable service result.
 
-Do not rerun the PPC pre-dispatch probe, use `SCDontUseServer`, perform a custom bootstrap lookup, patch CarbonCore/Security/LaunchServices, restart CoreServices/security services, use live instrumentation, or change XNU before that RPC audit is reviewed. No additional XNU change is indicated.
+The authoritative next step is the guarded one-shot experiment in `docs/process-manager-systemservice-stage-discriminator-experiment.md`. It repeats the known service-acquisition call and, only after that call returns, reads the existing CarbonCore server-checkin port and process options through dynamically resolved exported helpers from the same guest PPC CarbonCore image.
+
+Do not rerun the earlier pre-dispatch probe, call `SessionGetInfo`, perform a custom bootstrap lookup, call `ServerCheckin` or `FindService` directly, use `SCDontUseServer`, patch frameworks/daemons, restart services, use live instrumentation, or change XNU before that result is reviewed. No additional XNU change is indicated.
