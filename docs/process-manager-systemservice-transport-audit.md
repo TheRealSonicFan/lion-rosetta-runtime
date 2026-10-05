@@ -222,3 +222,37 @@ This audit does not:
 - modify Rosetta or XNU.
 
 It is a read-only differential audit of the system-service and security-session transport beneath LaunchServices process-dispatch initialization.
+
+
+## Observed result — Security session implementation diverges materially
+
+The Snow Leopard and Lion system-service transport audits both completed with `RESULT: PASS`.
+
+The reports preserve the expected Rosetta provenance: the validated Rosetta cache/map identities match, and both CarbonCore and Security are members of the restored Rosetta cache.
+
+CarbonCore's top-level system-service API remains semantically recognizable on both sides. Snow Leopard PPC and Lion i386 both export `scCreateSystemServiceVersion`, both serialize access around shared CoreServices session state, both call `SCSession::findOrCreateService`, and both expose the same `com.apple.CoreServices.coreservicesd` service name. `scAddReconnectProc` is also a simple process-local reconnect callback registration on both.
+
+The important difference is Security:
+
+- Snow Leopard PPC `SessionGetInfo` obtains the Security client object through `ModuleNexus<AuthClient>` and calls `SecurityServer::ClientSession::getSessionInfo`;
+- Lion i386 `SessionGetInfo` no longer uses that client/server path for the ordinary query. It calls `CommonCriteria::AuditInfo::get` and reads the session information from the local audit-session representation.
+
+This is a material semantic change, not merely an instruction-layout difference.
+
+For the translated PPC process on Lion, the restored Snow Leopard PPC Security image is the relevant guest implementation. Therefore a legacy Snow Leopard SecurityServer/session client is being exercised in a Lion host environment where the native Lion client no longer follows that path.
+
+Static analysis alone cannot determine whether that legacy call succeeds on Lion.
+
+The authoritative next stage is the guarded command-line PPC preflight in:
+
+```text
+docs/process-manager-predispatch-preflight-experiment.md
+tests/ppc-process-manager-predispatch-preflight.c
+scripts/build-ppc-process-manager-predispatch-preflight-on-snowleopard.sh
+scripts/run-snowleopard-ppc-process-manager-predispatch-preflight-control.sh
+scripts/run-lion-ppc-process-manager-predispatch-preflight.sh
+```
+
+The probe mirrors the actual pre-dispatch order: acquire the `LaunchApplicationServices` CoreServices system-service port, then query `SessionGetInfo(callerSecuritySession,...)`, then exit. It does not call Process Manager or `_LSDoInitializeProcessesServices`.
+
+Do not rerun the Process Manager GUI app and do not patch Security, CarbonCore, LaunchServices, or XNU before this preflight is reviewed.
