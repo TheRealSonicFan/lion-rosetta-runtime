@@ -226,3 +226,26 @@ This audit does not:
 - modify Rosetta or XNU.
 
 It is the final read-only RPC-contract comparison before any lower-level live discriminator is considered.
+
+
+## Observed result — RPC contracts are compatible enough to require a live state discriminator
+
+Both requested RPC protocol reports completed with `RESULT: PASS`.
+
+The static comparison does not establish a generic PPC-versus-Lion CoreServices wire incompatibility.
+
+Snow Leopard PPC `ServerCheckin` uses the older complex request form with request ID `0x2710`, send size `0x28`, receive size `0x3c`, and expected reply ID `0x2774`. Lion's native i386 client uses the newer simple `0x18` request, but Lion's `__XServerCheckin` server wrapper explicitly retains handling for the descriptor-bearing legacy form before dispatching to `__scserver_ServerCheckin`.
+
+The `FindService` client contract aligns directly: Snow Leopard PPC and Lion i386 both use request ID `0x2723`, send size `0x12c`, receive size `0x30`, and expected reply ID `0x2787`.
+
+The remaining ambiguity is behavioral rather than structural: the translated PPC CarbonCore may be failing to establish a usable coreservicesd client/check-in session, or check-in may succeed and the later `FindService("LaunchApplicationServices", 0x00010000,...)` transaction may fail.
+
+The authoritative next step is the guarded one-shot experiment in:
+
+```text
+docs/process-manager-systemservice-stage-discriminator-experiment.md
+```
+
+It repeats the already proven `scCreateSystemServiceVersion` call and, only after that call returns, reads the existing CarbonCore server-checkin port and process options through dynamically resolved exported helpers from the same guest PPC CarbonCore image.
+
+Do not perform a raw-address call, direct `ServerCheckin`, direct `FindService`, custom bootstrap lookup, or framework patch before that result is reviewed.
