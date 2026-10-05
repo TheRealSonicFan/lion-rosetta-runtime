@@ -322,3 +322,33 @@ This experiment does not:
 - modify Rosetta or XNU.
 
 It is a single behavioral discriminator for the two prerequisites immediately below the already localized LaunchServices process-dispatch boundary.
+
+
+## Observed result — CoreServices service acquisition returns a null port on Lion
+
+The completed Snow Leopard/Lion pre-dispatch experiment resolves the next decision gate.
+
+The exact PPC executable passes on Snow Leopard: `scCreateSystemServiceVersion("LaunchApplicationServices", 0x00010000, NULL)` returns a nonzero port, `SessionGetInfo` returns `noErr`, and the control reaches `PREDISPATCH_PRIMITIVES_PASS`.
+
+On Lion, the same hashed PPC executable reaches `main()` and the marker before `scCreateSystemServiceVersion`. The CarbonCore call returns normally, but the returned `LaunchApplicationServices` port is exactly zero. The probe therefore exits with:
+
+```text
+RESULT: SYSTEMSERVICE_ZERO_PORT
+```
+
+`SessionGetInfo` is never reached. No new crash/core is generated, the syscall-295 native preflight still passes, and all protected kernel/runtime hashes remain unchanged.
+
+This moves the immediate failure boundary below LaunchServices Process Manager initialization and before Security session lookup.
+
+The leading target is now CarbonCore's internal service-client path, particularly `SCSession::findOrCreateService`, session-status initialization, and the `SCClientSession` check-in/service negotiation with coreservicesd.
+
+Do not repeat the PPC preflight yet.
+
+The authoritative next stage is the read-only differential audit in:
+
+```text
+docs/process-manager-systemservice-client-internals-audit.md
+scripts/audit-process-manager-systemservice-client-internals.py
+```
+
+That audit expands static coverage around the internal CarbonCore client/session machinery before any bootstrap lookup, state bypass, or live instrumentation is attempted.
