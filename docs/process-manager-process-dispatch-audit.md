@@ -230,3 +230,32 @@ This audit does not:
 - modify Rosetta or XNU.
 
 It is a read-only differential audit of the process-dispatch initialization path.
+
+
+## Observed result — LaunchServices wire path is aligned; lower transport remains unresolved
+
+The Snow Leopard and Lion audits both completed with `RESULT: PASS`.
+
+The reports materially narrow the remaining boundary:
+
+- both systems have an active `coreservicesd` and `com.apple.pbs`;
+- the `com.apple.coreservicesd` LaunchDaemon plist has the same SHA-256 on both systems and declares the same `com.apple.CoreServices.coreservicesd` Mach service;
+- Snow Leopard's `coreservicesd` is universal with x86_64, i386, and ppc7400 slices, while Lion's has x86_64 and i386 only;
+- the Snow Leopard PPC and Lion i386 LaunchServices clients use the same InitializeProcessesServices message ID `0x4650`, request size `0x2c`, receive size `0x50`, and reply ID `0x46b4`;
+- both setup paths use `GetOurLSSessionIDInit`, `scCreateSystemServiceVersion("LaunchApplicationServices", 0x00010000, 0)`, `_LSDoInitializeProcessesServices`, returned process-services status/version state, `CFMachPortCreateWithPort`, and dispatch-table installation;
+- both server-side InitializeProcessesServices implementations perform session resolution and audit-token handling.
+
+No obvious LaunchServices-level 32-bit wire incompatibility was found.
+
+However, the audit intentionally treated `scCreateSystemServiceVersion`, `scAddReconnectProc`, and `SessionGetInfo` only as imports. Their CarbonCore/Security implementations remain the next unresolved static layer.
+
+Do not move directly to GDB, DTrace, `SCDontUseServer`, or another failing Process Manager call yet.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-systemservice-transport-audit.md
+scripts/audit-process-manager-systemservice-transport.py
+```
+
+That audit is read-only and compares the CarbonCore system-service transport and Security session path used below LaunchServices process-dispatch initialization.
