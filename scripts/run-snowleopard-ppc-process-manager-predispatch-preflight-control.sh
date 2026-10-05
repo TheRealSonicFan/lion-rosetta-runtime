@@ -50,7 +50,7 @@ echo "$OT" | /usr/bin/tee -a "$LOG"
 echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || fail "LC_LOAD_DYLINKER is not /usr/oah/dyld"
 
 /usr/bin/otool -L "$EXE" | /usr/bin/tee -a "$LOG"
-/usr/bin/otool -L "$EXE" | /usr/bin/grep -Fq '/CarbonCore.framework/Versions/A/CarbonCore' || fail "CarbonCore dependency is absent"
+/usr/bin/otool -L "$EXE" | /usr/bin/grep -Fq '/CoreServices.framework/Versions/A/CoreServices' || fail "CoreServices umbrella dependency is absent"
 /usr/bin/otool -L "$EXE" | /usr/bin/grep -Fq '/Security.framework/Versions/A/Security' || fail "Security dependency is absent"
 
 echo "== Snow Leopard PPC pre-dispatch positive control ==" | /usr/bin/tee -a "$LOG"
