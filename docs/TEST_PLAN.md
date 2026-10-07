@@ -78,41 +78,39 @@ Use a staged progression so a failure identifies the layer that is still incompa
 
 ## Current Process Manager boundary
 
-The private LaunchServices compatibility experiment has cleared Lion's PPC admission gate. The remaining Process Manager identity failures are now known to sit above two repaired CoreServices transport mismatches.
+The two CoreServices compatibility defects below LaunchServices are now closed in the real translated PPC CarbonCore path.
 
-The two confirmed user-space mismatches are:
+The process-local `dual-bootstrap-servercheckin-v3` layer succeeds through:
 
-- coreservicesd bootstrap lookup: Snow Leopard PPC uses the legacy `0xac` request while Lion requires the UUID-expanded `0xbc` form;
-- CoreServices `ServerCheckin`: Snow Leopard PPC uses a complex `0x28` request with one port descriptor while Lion requires a simple `0x18` request.
+- Lion-format coreservicesd bootstrap lookup;
+- Lion-format ServerCheckin;
+- unmodified Snow Leopard PPC CarbonCore `FindService("LaunchApplicationServices")`.
 
-Both standalone protocol adapters pass.
+The pre-dispatch compatibility experiment has now advanced beyond CarbonCore and exposed the next concrete boundary.
 
-The corrected `dual-bootstrap-servercheckin-v3` process-local interposer now also passes inside the real PPC CarbonCore path on Lion:
+On Lion, after the above CoreServices sequence returns a nonzero `LaunchApplicationServices` port, the untouched Snow Leopard PPC Security call returns normally with:
 
-- adapted bootstrap lookup -> nonzero privileged coreservicesd port;
-- adapted ServerCheckin -> expected `0x34` reply, nonzero session port, options `0x03000000`;
-- CarbonCore check-in state -> nonzero;
-- `scCreateSystemServiceVersion("LaunchApplicationServices", 0x00010000,...)` -> nonzero;
-- process options -> `0x00000000`;
-- no crash/core;
-- protected hashes unchanged;
-- native syscall 295 -> EBADF/no-SIGSYS PASS;
-- final result -> `CORESERVICES_COMPAT_SYSTEMSERVICE_PASS`.
+```text
+SessionGetInfo(callerSecuritySession, ...) = 1
+session ID = 0
+attributes = 0
+RESULT: SESSIONGETINFO_ERROR
+```
 
-This closes the CarbonCore system-service client boundary and proves that the existing Snow Leopard PPC `FindService("LaunchApplicationServices")` request works against Lion without another adapter.
+The exact Snow Leopard control returns status 0 with a nonzero session ID and nonzero attributes.
 
-The active unresolved pre-dispatch primitive is now Security `SessionGetInfo`.
+No crash/core diagnostic was produced, all protected identities remained unchanged, and the syscall-295 probe remains a clean EBADF/no-SIGSYS PASS.
 
-Static analysis already showed a material implementation split: Snow Leopard PPC uses the legacy `SecurityServer::ClientSession::getSessionInfo` path while Lion native i386 uses `CommonCriteria::AuditInfo::get`. The original Lion pre-dispatch probe never reached this call because CoreServices service acquisition returned zero first.
+Historical Security source aligns strongly with this result: the legacy client routes `SessionGetInfo` through `SecurityServer::ClientSession::getSessionInfo` and the old `ucsp` session RPC, while later source leaves that routine slot as a skipped former `getSessionInfo` entry because session information moved to the kernel; the native later client uses `CommonCriteria::AuditInfo`. The legacy error bridge can collapse a Mach transport exception to status `1` (`CSSM_ERRCODE_INTERNAL_ERROR`).
+
+The exact underlying Mach/MIG code has not yet been observed. Do not claim `MIG_BAD_ID` from source correlation alone.
 
 The authoritative next step is:
 
 ```text
-docs/process-manager-predispatch-compat-integration-experiment.md
+docs/process-manager-security-session-protocol-audit.md
 ```
 
-That stage reuses the original PPC pre-dispatch subject under the proven v3 CoreServices adapter. It requires the nonzero `LaunchApplicationServices` port and then calls untouched `SessionGetInfo(callerSecuritySession,...)`, stopping immediately afterward.
+That stage is read-only. It compares shipped Snow Leopard/Lion Security and securityd binaries around the legacy session client/server protocol and the native Lion AuditInfo path. It does not launch PPC code, call a SecuritySession API, send a Mach message, patch Security, call LaunchServices process-services initialization, or call Process Manager.
 
-If `SessionGetInfo` succeeds with a nonzero session ID, the next boundary moves to LaunchServices `_LSDoInitializeProcessesServices`. If it aborts, returns an error, or returns no usable session, the Security session path becomes the next localization target.
-
-Do not call Process Manager, do not call `_LSDoInitializeProcessesServices` yet, do not patch Security, do not broaden the CoreServices interposer, and do not change XNU.
+No additional XNU change is indicated.
