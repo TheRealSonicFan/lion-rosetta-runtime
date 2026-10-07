@@ -16,6 +16,7 @@ extern kern_return_t bootstrap_look_up2(mach_port_t bp,
                                          uint64_t flags);
 extern mach_port_t mig_get_reply_port(void);
 
+#define COMPAT_BUILD_ID "interpose-replacee-v2"
 #define COMPAT_MODE_ENV "ROSETTA_BOOTSTRAP_COMPAT_MODE"
 #define COMPAT_MODE_PASSTHROUGH "passthrough"
 #define COMPAT_MODE_LION_ADAPTER "lion-adapter"
@@ -372,6 +373,9 @@ rosetta_bootstrap_look_up2(mach_port_t bp,
     ++gExactCallCount;
     mode = getenv(COMPAT_MODE_ENV);
 
+    fprintf(stderr,
+            "PM_BOOTSTRAP_COMPAT_BUILD_ID:%s\n",
+            COMPAT_BUILD_ID);
     fprintf(stderr,
             "PM_BOOTSTRAP_COMPAT_EXACT_CALL:index=%u mode=%s\n",
             gExactCallCount, mode ? mode : "(unset)");
