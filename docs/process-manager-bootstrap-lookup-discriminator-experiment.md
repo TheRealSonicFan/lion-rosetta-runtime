@@ -380,3 +380,52 @@ This experiment does not:
 - modify Rosetta or XNU.
 
 It is a one-shot discriminator of the bootstrap half of the already localized `bootstrap_look_up2 -> ServerCheckin` boundary.
+
+
+## Observed result — Lion rejects the legacy PPC bootstrap lookup with MIG_BAD_ARGUMENTS
+
+The completed discriminator resolves the next live boundary.
+
+The exact PPC subject has SHA-256:
+
+```text
+6c1e9728fd3f30889217bb5bd5e55778cbcdc0a652e8739143d5512e068e2dbc
+```
+
+On Snow Leopard 10.6.8, the control reports a nonzero `bootstrap_port`, clean environment, `kr=0`, a nonzero returned service port, and `RESULT: PASS`.
+
+On Lion 10.7.5, the exact same subject reports:
+
+```text
+bootstrap_port=nonzero
+CORESERVICESD_SERVICE_NAME=UNSET
+SCDontUseServer=UNSET
+service=com.apple.CoreServices.coreservicesd
+target_pid=0
+flags=0x8
+kr=-304 / 0xfffffed0
+servicePort=0
+RESULT: BOOTSTRAP_LOOKUP_ERROR
+```
+
+No crash/core was generated, and all protected hashes remained unchanged.
+
+Darwin Mach/MIG defines `-304` as `MIG_BAD_ARGUMENTS`. This is not an ordinary unknown-service result.
+
+Public Apple launchd sources for the exact baselines expose a concrete schema change beneath the stable `bootstrap_look_up2` API:
+
+- Snow Leopard 10.6.8 / launchd-329.3.3 `vproc_mig_look_up2` carries target PID followed directly by 64-bit flags.
+- Lion 10.7.5 / launchd-392.39 inserts an `instanceid : uuid_t` field between target PID and flags; Lion's `bootstrap_look_up2` internally routes through `bootstrap_look_up3` to supply that field.
+
+The live `MIG_BAD_ARGUMENTS` result is directly consistent with Lion's generated MIG server rejecting the older Snow Leopard PPC request layout.
+
+Before any protocol adapter is attempted, the shipped binaries must confirm the source-level schema evolution and exact request/reply sizes.
+
+The authoritative next stage is therefore the read-only:
+
+```text
+docs/process-manager-bootstrap-protocol-audit.md
+scripts/audit-process-manager-bootstrap-protocol.py
+```
+
+Do not rerun the bootstrap probe, call `ServerCheckin`, or patch libSystem/launchd before that binary audit is reviewed.
