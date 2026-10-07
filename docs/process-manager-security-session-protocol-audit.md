@@ -30,9 +30,9 @@ Historical Apple OSS source provides a strong explanation that must now be check
 
 1. The legacy Security implementation routes `SessionGetInfo` through `SecurityServer::ClientSession::getSessionInfo`.
 2. That client path sends the generated `ucsp_client_getSessionInfo` RPC.
-3. The historical `ucsp` subsystem begins at message ID 1000; `getSessionInfo` is routine ordinal 65, therefore request ID 1065 (`0x429`).
-4. In the later SecurityServer protocol source, the same ordinal is retained only as:
-   `skip; // was getSessionInfo -- now kept by the kernel`.
+3. The shipped Snow Leopard PPC client stub proves that `ucsp_client_getSessionInfo` uses request ID 1064 (`0x428`) with a `0x24` send and `0x74` receive. This is zero-based table index 64, i.e. the 65th routine slot; the earlier `1000 + 65 = 1065` arithmetic was an audit-document error.
+4. Historical later SecurityServer source retains that 65th routine slot only as:
+   `skip; // was getSessionInfo -- now kept by the kernel`. The source slot numbering is context; the shipped request ID is authoritative.
 5. Native later `SessionGetInfo` no longer talks to securityd and instead uses the local/kernel-backed `CommonCriteria::AuditInfo` path.
 6. The historical Security error bridge maps an otherwise unhandled `MachPlusPlus::Error` to the bare common error code `CSSM_ERRCODE_INTERNAL_ERROR`, whose value is `1`.
 
@@ -220,3 +220,29 @@ SessionGetInfo -> returns 1, no session
 The immediate failure is therefore the Snow Leopard PPC Security session-information path, not CarbonCore, LaunchServices Process Manager initialization, or XNU.
 
 No additional XNU change is indicated.
+
+
+## Observed result
+
+The completed Snow Leopard and Lion audits pass and narrow the boundary further.
+
+The shipped Snow Leopard PPC Security image proves:
+
+- `SessionGetInfo` enters `SecurityServer::ClientSession::getSessionInfo`;
+- first use activates the legacy SecurityServer client before the session query;
+- visible first-use client requests include `setup=0x3e8`, `setupNew=0x3e9`, `setupThread=0x3ea`, and `verifyPrivileged2=0x441`;
+- `ucsp_client_getSessionInfo` uses request ID `0x428` (1064), sends `0x24` bytes, and receives up to `0x74` bytes.
+
+The shipped Lion i386 Security image instead implements `SessionGetInfo` through `CommonCriteria::AuditInfo`. Lion securityd still exposes the legacy ucsp dispatcher and visible server handlers for setup, setupThread, and verifyPrivileged2, but the audit finds no visible `getSessionInfo` server body and no visible `setupNew` server body.
+
+This is enough to reject the old `0x429` request-ID arithmetic, but not enough to identify the live failing substep. The first `SessionGetInfo` call can fail during SecurityServer lookup/verification/setup before request `0x428` is sent. A missing server symbol also does not by itself prove how the shipped dispatcher responds.
+
+Therefore the next step is the process-local, pass-through discriminator in:
+
+```text
+docs/process-manager-security-session-rpc-discriminator-experiment.md
+```
+
+It performs one Snow Leopard positive control and one guarded Lion `SessionGetInfo` attempt while recording, but never rewriting, the SecurityServer bootstrap lookup and legacy ucsp Mach transactions. The purpose is to expose the first failing request and its Mach/MIG result before any Security compatibility adapter is designed.
+
+The completed version-1 audit reports remain valid evidence; rerunning them solely to obtain the corrected correlation footer is not required.
