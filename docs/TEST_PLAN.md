@@ -80,31 +80,22 @@ Use a staged progression so a failure identifies the layer that is still incompa
 
 The private LaunchServices compatibility experiment has cleared Lion's PPC admission gate. Three independent Process Manager identity routes remain Snow Leopard-positive but self-SIGABRT on Lion before returning.
 
-The prerequisite failure is now localized below LaunchServices to the launchd/bootstrap protocol used by the restored Snow Leopard PPC libSystem before CarbonCore can establish a coreservicesd client session.
+The active prerequisite failure is now localized to two successive user-space MIG schema changes below LaunchServices.
 
-The guarded CarbonCore stage discriminator first showed that Lion returns a zero `LaunchApplicationServices` service port, a zero CarbonCore server-checkin port, and process options `0x00000002`.
+The first is the launchd bootstrap lookup. Snow Leopard PPC sends the legacy `vproc_mig_look_up2` request at size `0xac`; Lion inserts a 16-byte instance UUID and expects `0xbc`. The standalone Lion-format PPC adapter passes, and the process-local bootstrap integration experiment now proves that the same adaptation works inside CarbonCore's real call path: the interposer returns a nonzero coreservicesd service port on Lion.
 
-The exact PPC bootstrap discriminator then showed that the process has a valid bootstrap port but Lion returns `MIG_BAD_ARGUMENTS (-304)` for the Snow Leopard PPC `bootstrap_look_up2("com.apple.CoreServices.coreservicesd", target_pid=0, flags=0x8)` request.
+The completed integration run then stops one layer later. Unmodified PPC CarbonCore returns a zero server-checkin port, a zero `LaunchApplicationServices` port, process options `0x00000002`, no crash/core, and `RESULT: BOOTSTRAP_COMPAT_SERVERCHECKIN_FAILURE`.
 
-The corrected binary audit established the exact schema mismatch:
+Re-reading the previously collected ServerCheckin stubs corrects an earlier static conclusion:
 
-- Snow Leopard PPC request: ID `0x194`, send `0xac`, receive `0x6c`, reply ID `0x1f8`, target PID at `0xa0`, flags at `0xa4`.
-- Lion request: the same IDs/receive size, but a 16-byte instance UUID begins at `0xa4`, flags move to `0xb4`, and the send size becomes `0xbc`.
+- Snow Leopard PPC `__scclient_ServerCheckin` sends a **complex** request, ID `0x2710`, size `0x28`, receive size `0x3c`, with one port descriptor.
+- Lion native i386 `__scclient_ServerCheckin` sends a **simple** request, the same ID `0x2710`, size `0x18`, receive size `0x3c`, with no request descriptor.
+- Lion i386 `__XServerCheckin` rejects requests whose complex bit is set and only accepts the simple `0x18` form before calling `__scserver_ServerCheckin`.
 
-The guarded standalone protocol-adapter proof has now passed. The validated PPC subject constructed exactly the Lion UUID-expanded request, `mach_msg` returned success, and Lion returned the expected complex reply with descriptor count 1 and a nonzero coreservicesd service port. No crash occurred and all protected hashes remained unchanged.
+Therefore the earlier claim that Lion retained compatibility for Snow Leopard PPC's complex ServerCheckin form is superseded.
 
-Therefore the bootstrap wire-format defect itself is experimentally closed: supplying the missing 16-byte Lion instance field is sufficient for a translated PPC task to resolve coreservicesd.
+The authoritative next step is `docs/process-manager-servercheckin-protocol-adapter-experiment.md`.
 
-The next question is integration, not another protocol guess. The authoritative next step is `docs/process-manager-bootstrap-integration-experiment.md`.
+That experiment uses a standalone PPC subject. On Snow Leopard it proves the recovered legacy complex ServerCheckin request. On Lion it first performs the already-proven UUID-expanded bootstrap lookup, then sends exactly one native Lion simple ServerCheckin request and records the raw reply/session port. It does not call `FindService`, CarbonCore service acquisition, Security, LaunchServices process services, or Process Manager.
 
-That experiment uses a private PPC `__DATA,__interpose` dylib loaded only into the dedicated test process. The replacement intercepts only the exact coreservicesd `bootstrap_look_up2` call with target PID 0 and flags `0x8`; Lion mode permits one adapted request only. All non-target calls pass through to the original Snow Leopard PPC implementation. The corrected service port is then returned to unmodified PPC CarbonCore, which continues its own normal `ServerCheckin -> FindService` path.
-
-The same stage executable is used to read CarbonCore's resulting server-checkin port and requested service port. Possible outcomes distinguish live `ServerCheckin` failure, later `FindService` failure, or complete CoreServices service acquisition.
-
-Do not call `ServerCheckin` or `FindService` directly, do not use `DYLD_FORCE_FLAT_NAMESPACE`, do not install the interposer system-wide, do not patch libSystem/liblaunch/launchd/CarbonCore, do not call Security or Process Manager, and do not change XNU. No additional XNU change is indicated.
-
-The first Snow Leopard integration control exposed a harness-only pass-through resolver defect before any Lion run: the interposer successfully loaded and intercepted the exact call, but `dlsym(RTLD_NEXT, "bootstrap_look_up2")` did not yield a usable pre-interposed address, causing `PM_BOOTSTRAP_COMPAT_ORIGINAL_UNAVAILABLE` and control exit status 20. The corrected interposer now obtains the original function address directly from its own `__interpose` tuple's `replacee` field, which is the exact address dyld used when installing the replacement. Rebuild Phase B and rerun Snow Leopard Phase C; do not proceed to Lion until the revised control passes.
-
-The second submitted Snow Leopard integration control was still built from the pre-fix interposer: its SHA-256 remained `7c2e202c4fc80a33954902ccf59d66c11859e38ce59632f3184a9c71875e225b`, its build report still imported `_dlsym`, and the runtime log again emitted `PM_BOOTSTRAP_COMPAT_ORIGINAL_UNAVAILABLE`. This does not test the corrected `interpose_replacee` resolver. The integration builder/runners now enforce build identity `interpose-replacee-v2`, reject `_dlsym`, and record the runtime Git HEAD. Repeat Phase A before Phase B/C; Lion remains blocked until the revised Snow Leopard control passes.
-
-The third Snow Leopard integration submission reached the corrected tuple-based resolver build, but the preflight rejected it before execution because the build-ID check searched the binary for a runtime-formatted concatenation that did not exist as one literal string. The submitted interposer had the new SHA-256 `0d4a34b0df4e8bab07645a434c5f35f81bb788d7c18bbb9b2d8130df139ccb15`, no `_dlsym` import, and `compat_build_id=interpose-replacee-v2`; therefore this was a provenance-gate false negative, not a resolver failure. Build identity is now `interpose-replacee-v3` and is embedded as one compile-time literal; builder and runners validate that literal, record the interposer source SHA-256, and handle non-git checkouts explicitly. Repeat Phase A/B/C and keep Lion blocked until the Snow Leopard control actually executes and passes.
+Do not rerun the bootstrap integration stage, do not add a `mach_msg` interposer yet, do not patch CarbonCore/launchd/coreservicesd, and do not change XNU. No additional XNU change is indicated.
