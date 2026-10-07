@@ -115,15 +115,17 @@ The Security bootstrap compatibility integration has now reached the retired ses
 
 This directly proves that Lion no longer implements the legacy `getSessionInfo=0x428` routine. The next compatibility design must follow Lion's native semantics rather than revive the retired securityd RPC. Lion's native `SessionGetInfo(callerSecuritySession,...)` calls `getaudit_addr(..., 0x30)` and returns the words at offsets `0x24` and `0x28` as session ID and attributes.
 
+The AuditInfo oracle has now passed completely. Native Lion i386 `SessionGetInfo(callerSecuritySession,...)` matches the typed audit-session data returned by `getaudit_addr(..., 0x30)`, and translated PPC can call `getaudit_addr` directly with the same audit session ID. The first raw 32-bit word of `ai_flags` differs across i386/PPC because `ai_flags` is a 64-bit field and the two architectures have opposite endianness.
+
 The authoritative next step is:
 
 ```text
-docs/process-manager-security-session-auditinfo-oracle-experiment.md
+docs/process-manager-security-session-auditinfo-api-adapter-experiment.md
 ```
 
-That stage validates the `SessionGetInfo <-> getaudit_addr` field mapping on Snow Leopard and native Lion i386, then performs a translated-PPC `getaudit_addr`-only call on Lion. It intentionally does not interpose `SessionGetInfo` yet. If the oracle passes, the following stage can implement a narrow process-local `callerSecuritySession` adapter using Lion's kernel-backed AuditInfo semantics.
+That stage tests exactly one process-local `SessionGetInfo` interpose tuple. Snow Leopard must pass through unchanged. Lion adapts only `callerSecuritySession` by using typed `auditinfo_addr_t.ai_asid` and the low 32 bits of typed 64-bit `ai_flags`; it does not call the retired SecurityServer session RPC.
 
-Do not patch Security/securityd or make another XNU change before the AuditInfo oracle is reviewed.
+Do not patch Security/securityd or make another XNU change before that API adapter proof is reviewed.
 
 No additional XNU change is indicated.
 
