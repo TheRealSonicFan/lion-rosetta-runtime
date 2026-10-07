@@ -8,8 +8,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PREDISPATCH_BUILDER="$SCRIPT_DIR/build-ppc-process-manager-predispatch-preflight-on-snowleopard.sh"
 INTERPOSER_BUILDER="$SCRIPT_DIR/build-ppc-process-manager-coreservices-compat-interposer-on-snowleopard.sh"
 
-[ -x "$PREDISPATCH_BUILDER" ] || { echo "error: missing pre-dispatch builder: $PREDISPATCH_BUILDER" >&2; exit 66; }
-[ -x "$INTERPOSER_BUILDER" ] || { echo "error: missing interposer builder: $INTERPOSER_BUILDER" >&2; exit 66; }
+[ -f "$PREDISPATCH_BUILDER" ] || { echo "error: missing pre-dispatch builder: $PREDISPATCH_BUILDER" >&2; exit 66; }
+[ -f "$INTERPOSER_BUILDER" ] || { echo "error: missing interposer builder: $INTERPOSER_BUILDER" >&2; exit 66; }
 
 echo "Building PPC pre-dispatch subject..."
 CC="${CC:-}" /bin/bash "$PREDISPATCH_BUILDER" "$PREDISPATCH_OUT"
