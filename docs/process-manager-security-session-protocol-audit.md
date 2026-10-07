@@ -73,7 +73,7 @@ It records:
 
 - OS/build and PowerPC architecture-handler state;
 - validated Rosetta cache/map identity and Security membership;
-- securityd launchd state;
+- securityd launchd state and known LaunchDaemon/Mach-service metadata;
 - full Security framework and securityd identities;
 - i386, x86_64, and PPC slices where present;
 - symbols/imports and disassembly windows around:
