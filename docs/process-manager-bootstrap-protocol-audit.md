@@ -308,3 +308,55 @@ This audit does not:
 - modify Rosetta or XNU.
 
 It is the final read-only binary confirmation before a narrowly scoped bootstrap protocol adapter is considered.
+
+
+## Observed result — shipped binaries confirm the UUID-expanded Lion request
+
+The corrected Lion analyzer completed with `RESULT: PASS`.
+
+The binary comparison now confirms the source-level protocol evolution.
+
+### Snow Leopard PPC
+
+The explicit PPC `_vproc_mig_look_up2` client body uses:
+
+- request ID `0x194`;
+- send size `0xac`;
+- receive size `0x6c`;
+- expected reply ID `0x1f8`;
+- service-name field at request offset `0x20`;
+- target PID at request offset `0xa0`;
+- 64-bit flags beginning at request offset `0xa4`.
+
+There is no intervening UUID field.
+
+### Lion i386
+
+Lion strips the private generated symbol name, but analyzer version 2 identifies the unique repeated non-stub callee of `bootstrap_look_up3` as the MIG lookup body at `0x7967`.
+
+That body uses:
+
+- request ID `0x194`;
+- send size `0xbc`;
+- receive size `0x6c`;
+- expected reply ID `0x1f8`;
+- service-name field at request offset `0x20`;
+- target PID at request offset `0xa0`;
+- a copied 16-byte field beginning at request offset `0xa4`;
+- 64-bit flags beginning at request offset `0xb4`.
+
+The send-size delta is exactly `0x10`, matching the inserted 16-byte `instanceid : uuid_t` field in launchd-392.39.
+
+The earlier Lion live result of `MIG_BAD_ARGUMENTS` is therefore explained by a concrete request-layout mismatch: the restored Snow Leopard PPC client sends a `0xac` legacy request where Lion's generated server expects the UUID-expanded `0xbc` form.
+
+The static bootstrap protocol boundary is now closed.
+
+The authoritative next stage is the guarded, one-transaction experiment in:
+
+```text
+docs/process-manager-bootstrap-protocol-adapter-experiment.md
+```
+
+That experiment constructs exactly one Lion-format PPC lookup request in a private test process and stops before CoreServices `ServerCheckin`.
+
+Do not rerun the legacy lookup discriminator, patch libSystem/launchd, or proceed to `ServerCheckin` before the adapter result is reviewed.
