@@ -101,7 +101,7 @@ The exact Snow Leopard control returns status 0 with a nonzero session ID and no
 
 No crash/core diagnostic was produced, all protected identities remained unchanged, and the syscall-295 probe remains a clean EBADF/no-SIGSYS PASS.
 
-Historical Security source aligns strongly with this result: the legacy client routes `SessionGetInfo` through `SecurityServer::ClientSession::getSessionInfo` and the old `ucsp` session RPC, while later source leaves that routine slot as a skipped former `getSessionInfo` entry because session information moved to the kernel; the native later client uses `CommonCriteria::AuditInfo`. The legacy error bridge can collapse a Mach transport exception to status `1` (`CSSM_ERRCODE_INTERNAL_ERROR`).
+Historical Security source aligns strongly with this result: the legacy client routes `SessionGetInfo` through `SecurityServer::ClientSession`, whose first-use path performs SecurityServer lookup/verification/setup before the old `ucsp` session RPC; later source leaves the `getSessionInfo` routine slot as a skipped former entry because session information moved to the kernel, and the native later client uses `CommonCriteria::AuditInfo`. The legacy error bridge can collapse a Mach transport exception to status `1` (`CSSM_ERRCODE_INTERNAL_ERROR`). The removed `getSessionInfo` RPC is the leading candidate, but the exact failing first-use substep is not yet proven.
 
 The exact underlying Mach/MIG code has not yet been observed. Do not claim `MIG_BAD_ID` from source correlation alone.
 
