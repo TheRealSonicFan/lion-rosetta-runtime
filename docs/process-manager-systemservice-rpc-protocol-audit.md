@@ -228,17 +228,17 @@ This audit does not:
 It is the final read-only RPC-contract comparison before any lower-level live discriminator is considered.
 
 
-## Observed result — RPC contracts are compatible enough to require a live state discriminator
+## Observed result — initial interpretation later corrected
 
 Both requested RPC protocol reports completed with `RESULT: PASS`.
 
-The static comparison does not establish a generic PPC-versus-Lion CoreServices wire incompatibility.
+The initial static comparison was incomplete: `FindService` aligns, but the later re-read below establishes a concrete `ServerCheckin` wire incompatibility.
 
-Snow Leopard PPC `ServerCheckin` uses the older complex request form with request ID `0x2710`, send size `0x28`, receive size `0x3c`, and expected reply ID `0x2774`. Lion's native i386 client uses the newer simple `0x18` request, but Lion's `__XServerCheckin` server wrapper explicitly retains handling for the descriptor-bearing legacy form before dispatching to `__scserver_ServerCheckin`.
+Snow Leopard PPC `ServerCheckin` uses the older complex request form with request ID `0x2710`, send size `0x28`, receive size `0x3c`, and expected reply ID `0x2774`. Lion's native i386 client uses the newer simple `0x18` request. The later re-read documented below shows Lion's `__XServerCheckin` rejects the complex form rather than retaining compatibility for it.
 
 The `FindService` client contract aligns directly: Snow Leopard PPC and Lion i386 both use request ID `0x2723`, send size `0x12c`, receive size `0x30`, and expected reply ID `0x2787`.
 
-The remaining ambiguity is behavioral rather than structural: the translated PPC CarbonCore may be failing to establish a usable coreservicesd client/check-in session, or check-in may succeed and the later `FindService("LaunchApplicationServices", 0x00010000,...)` transaction may fail.
+At the time of this audit the remaining ambiguity was treated as behavioral; that interpretation is superseded by the correction below, which identifies the `ServerCheckin` request-shape mismatch directly.
 
 The authoritative next step is the guarded one-shot experiment in:
 
