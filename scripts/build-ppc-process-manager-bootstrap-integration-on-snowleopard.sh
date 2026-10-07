@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 STAGE_BUILDER="$SCRIPT_DIR/build-ppc-process-manager-systemservice-stage-on-snowleopard.sh"
 INTERPOSER_SRC="$ROOT/tests/ppc-process-manager-bootstrap-compat-interposer.c"
-EXPECTED_COMPAT_BUILD_ID="interpose-replacee-v2"
+EXPECTED_COMPAT_BUILD_ID="interpose-replacee-v3"
 INFO="$INTERPOSER_OUT.info.txt"
 SHA="$INTERPOSER_OUT.sha256"
 TMP_DYLIB="$(/usr/bin/mktemp /tmp/ppc-bootstrap-compat.XXXXXX.dylib)"
@@ -97,12 +97,15 @@ is_ppc32_macho "$INTERPOSER_OUT" || {
 }
 
 RUNTIME_GIT_HEAD="$(cd "$ROOT" 2>/dev/null && /usr/bin/git rev-parse HEAD 2>/dev/null || true)"
+[ -n "$RUNTIME_GIT_HEAD" ] || RUNTIME_GIT_HEAD="UNAVAILABLE_NON_GIT_CHECKOUT"
+INTERPOSER_SOURCE_SHA="$(/usr/bin/shasum -a 256 "$INTERPOSER_SRC" | /usr/bin/awk '{print $1}')"
 
 {
     echo "== PPC Process Manager bootstrap compatibility interposer build =="
     echo "compiler=$CC_SELECTED"
     echo "source=$INTERPOSER_SRC"
     echo "runtime_git_head=$RUNTIME_GIT_HEAD"
+    echo "interposer_source_sha256=$INTERPOSER_SOURCE_SHA"
     echo "compat_build_id=$EXPECTED_COMPAT_BUILD_ID"
     echo
     echo "== file =="
