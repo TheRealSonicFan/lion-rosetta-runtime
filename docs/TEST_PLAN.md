@@ -103,14 +103,18 @@ No crash/core diagnostic was produced, all protected identities remained unchang
 
 The read-only Security session protocol audit has now passed on Snow Leopard and Lion. The shipped Snow Leopard PPC client proves that `ucsp_client_getSessionInfo` uses request ID `0x428` (1064), with a `0x24` send and `0x74` receive; this corrects the earlier source-only `0x429` arithmetic. The same first public call activates the legacy SecurityServer client first, with visible request IDs `setup=0x3e8`, `setupNew=0x3e9`, `setupThread=0x3ea`, and `verifyPrivileged2=0x441`. Lion's native Security client instead uses `CommonCriteria::AuditInfo`; Lion securityd retains visible setup/setupThread/verifyPrivileged2 handlers but no visible `getSessionInfo` or `setupNew` server body.
 
-Static evidence still cannot prove which first-use transaction fails in the live translated process. Do not claim `MIG_BAD_ID` merely from missing symbols.
+The Security-only RPC discriminator has now resolved the first-use ambiguity dynamically. The Snow Leopard control obtains a nonzero `com.apple.SecurityServer` port and then successfully executes `verifyPrivileged2 (0x441)`, `setup (0x3e8)`, and `getSessionInfo (0x428)`. On Lion, the same translated PPC client stops earlier: `bootstrap_look_up("com.apple.SecurityServer")` returns `-304` / `MIG_BAD_ARGUMENTS` with a zero service port, after which `SessionGetInfo` collapses the failure to status `1`. No Security ucsp request is sent on Lion in this run.
+
+This supersedes the removed-`getSessionInfo` RPC as the immediate live boundary. That RPC may still become a later compatibility issue, but it has not yet been reached.
+
+The earlier bootstrap protocol audit and standalone adapter proof are directly relevant: Snow Leopard PPC uses the legacy `0xac` `vproc_mig_look_up2` request, while Lion expects the UUID-expanded `0xbc` request, and Lion has already accepted that corrected request shape for the earlier coreservicesd proof. The remaining unproven case is the ordinary `bootstrap_look_up` semantics used by Security: service `com.apple.SecurityServer`, target PID 0, zero instance UUID, flags 0.
 
 The authoritative next step is:
 
 ```text
-docs/process-manager-security-session-rpc-discriminator-experiment.md
+docs/process-manager-securityserver-bootstrap-protocol-adapter-experiment.md
 ```
 
-That stage uses a Security-only PPC subject and a two-tuple, process-local pass-through tracer to record the SecurityServer bootstrap lookup and legacy ucsp Mach transactions without modifying them. Run one Snow Leopard positive control and one guarded Lion attempt, then stop for review. The decisive question is whether failure occurs during SecurityServer lookup, `verifyPrivileged2`, setup/setupNew, setupThread, or the binary-proven `getSessionInfo=0x428` request.
+That stage performs one Snow Leopard `bootstrap_look_up` positive control and one guarded Lion transaction using the already-binary-confirmed `0xbc` request shape for `com.apple.SecurityServer`, then stops without calling Security. Do not integrate a Security bootstrap interposer or resume `SessionGetInfo` until this standalone result is reviewed.
 
 No additional XNU change is indicated.
