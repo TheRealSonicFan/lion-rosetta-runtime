@@ -38,7 +38,9 @@ Historical Apple OSS source provides a strong explanation that must now be check
 
 That makes a removed legacy SecurityServer session RPC the leading explanation for the live Lion status `1`.
 
-However, the live experiment did **not** expose the underlying Mach/MIG return code. In particular, `MIG_BAD_ID` is plausible for a skipped server slot but is **not yet proven**. Do not record `MIG_BAD_ID` as the observed failure unless later binary or live evidence establishes it.
+There is one important alternative inside the same legacy Security boundary: the first `SessionGetInfo` call also forces `ClientSession` first-use activation. That path locates `com.apple.SecurityServer`, performs privileged-server verification, and executes the legacy client setup handshake before `ucsp_client_getSessionInfo` itself. Status `1` therefore proves a Security Mach-transport failure, but does not yet prove which first-use RPC failed.
+
+The live experiment did **not** expose the underlying Mach/MIG return code. In particular, `MIG_BAD_ID` is plausible for the skipped `getSessionInfo` slot but is **not yet proven**. Do not record `MIG_BAD_ID` as the observed failure unless later binary or live evidence establishes it.
 
 ## Why a binary audit comes before an adapter
 
@@ -47,6 +49,7 @@ The source correlation is strong but spans historical open-source releases rathe
 Before constructing any compatibility path, establish from the shipped Snow Leopard and Lion images:
 
 - the exact Snow Leopard PPC `SessionGetInfo` call chain;
+- the legacy first-use `ClientSession` chain, including SecurityServer lookup, `verifyPrivileged2`, setup/setupThread, and `getSessionInfo` where visible;
 - whether the generated legacy `getSessionInfo` client body is visible and what request/reply shape it emits;
 - the exact Lion i386 native `SessionGetInfo` path;
 - whether Lion securityd retains any visible server body for the legacy session RPC;
@@ -77,7 +80,8 @@ It records:
   - `SessionGetInfo`;
   - legacy `ClientSession::getSessionInfo`;
   - generated `ucsp_client_getSessionInfo` when visible;
-  - `ClientSession::activate` / connection setup;
+  - generated `verifyPrivileged2`, setup, and setupThread client/server bodies when visible;
+  - `ClientSession::activate` / first-use connection setup;
   - native `CommonCriteria::AuditInfo`;
   - relevant securityd `ucsp`/session server symbols when visible;
 - Mach/MIG/bootstrap/audit imports;
@@ -181,7 +185,7 @@ No Apple framework, daemon, Rosetta cache, or other proprietary binary should be
 
 ### A. Shipped binaries support the removed-legacy-session-RPC explanation
 
-If the Snow Leopard PPC Security image confirms the legacy SecurityServer client path and Lion's native Security image confirms the AuditInfo path, with the installed securityd evidence consistent with the old session RPC no longer being serviced, the Security compatibility defect is localized.
+If the Snow Leopard PPC Security image confirms the legacy SecurityServer first-use/client path and Lion's native Security image confirms the AuditInfo path, review the shipped evidence to distinguish connection/setup compatibility from the later `getSessionInfo` slot. If connection/setup remains compatible while the old session RPC is no longer serviced, the removed-session-RPC defect is localized.
 
 Only then prepare a separate, narrowly scoped proof of the correct Lion-side session-information mechanism for a translated PPC process.
 
