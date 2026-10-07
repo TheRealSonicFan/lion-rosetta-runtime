@@ -29,7 +29,7 @@ The Snow Leopard PPC client sends the legacy complex `ServerCheckin` form:
 
 Lion's native i386 client uses the newer simple `0x18` request with the same request ID, receive size, and reply ID.
 
-That difference is not by itself an incompatibility: Lion's i386 `__XServerCheckin` server wrapper explicitly contains handling for both the simple form and the descriptor-bearing legacy form before calling `__scserver_ServerCheckin`.
+That earlier interpretation is superseded by the later integration re-read: Lion's i386 `__XServerCheckin` rejects complex requests and accepts only the simple `0x18` form before calling `__scserver_ServerCheckin`. Snow Leopard PPC's descriptor-bearing `0x28` request is therefore a real ServerCheckin protocol mismatch.
 
 ### FindService
 
@@ -331,7 +331,7 @@ Any abort/crash before or during the helper reads is unexpected. Preserve all di
 
 Static comparison no longer supports a generic "old PPC RPC format versus new Lion RPC format" explanation.
 
-The Snow Leopard PPC `ServerCheckin` request is older and complex, but Lion's server wrapper explicitly retains a compatible legacy handling path. The `FindService` wire constants match directly.
+The Snow Leopard PPC `ServerCheckin` request is older and complex, and later live/static evidence shows Lion rejects that form in favor of its simple `0x18` request. The `FindService` wire constants still match directly.
 
 The remaining problem is therefore runtime state/transaction behavior, not another XNU ABI and not yet Security or Process Manager.
 
