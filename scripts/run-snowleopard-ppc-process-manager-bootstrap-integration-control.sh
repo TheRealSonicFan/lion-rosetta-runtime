@@ -9,6 +9,7 @@ LOG="${5:-./ppc-process-manager-bootstrap-integration-snowleopard-control.log}"
 
 PRIVATE_DYLD="/usr/oah/dyld"
 EXPECTED_DYLD_SHA="963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb"
+EXPECTED_COMPAT_BUILD_ID="interpose-replacee-v2"
 
 fail() {
     echo "error: $*" | /usr/bin/tee -a "$LOG" >&2
@@ -77,6 +78,11 @@ echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || fail "stage LC_LOAD_DYLI
 
 /usr/bin/otool -l "$INTERPOSER" | /usr/bin/grep -A10 -B2 '__interpose' | /usr/bin/tee -a "$LOG" || fail "interposer section missing"
 
+if /usr/bin/nm -m "$INTERPOSER" | /usr/bin/grep -Fq '_dlsym'; then
+    fail "stale interposer detected: _dlsym import is present"
+fi
+/usr/bin/strings "$INTERPOSER" | /usr/bin/grep -Fq "PM_BOOTSTRAP_COMPAT_BUILD_ID:$EXPECTED_COMPAT_BUILD_ID" ||     fail "corrected interposer build marker is missing"
+
 INTERPOSER_ABS="$(abspath "$INTERPOSER")"
 [ -n "$INTERPOSER_ABS" ] || fail "could not resolve interposer absolute path"
 echo "interposer_absolute_path=$INTERPOSER_ABS" | /usr/bin/tee -a "$LOG"
@@ -88,6 +94,7 @@ echo "control_status=$RC" | /usr/bin/tee -a "$LOG"
 
 if [ "$RC" -eq 0 ] &&
    /usr/bin/grep -Fq "dyld: loaded: $INTERPOSER_ABS" "$LOG" &&
+   /usr/bin/grep -Fq "PM_BOOTSTRAP_COMPAT_BUILD_ID:$EXPECTED_COMPAT_BUILD_ID" "$LOG" &&
    /usr/bin/grep -Fq 'PM_BOOTSTRAP_COMPAT_EXACT_CALL:index=1 mode=passthrough' "$LOG" &&
    /usr/bin/grep -Fq 'PM_BOOTSTRAP_COMPAT_ORIGINAL_RESOLUTION:source=interpose_replacee ' "$LOG" &&
    ! /usr/bin/grep -Fq 'PM_BOOTSTRAP_COMPAT_ORIGINAL_UNAVAILABLE:' "$LOG" &&
