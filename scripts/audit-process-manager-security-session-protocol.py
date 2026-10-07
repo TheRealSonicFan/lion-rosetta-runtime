@@ -9,7 +9,7 @@ import sys
 import tempfile
 
 DEFAULT_REPORT = "./process-manager-security-session-protocol.txt"
-ANALYZER_VERSION = "1"
+ANALYZER_VERSION = "2"
 
 SECURITY = "/System/Library/Frameworks/Security.framework/Versions/A/Security"
 SECURITYD = "/usr/sbin/securityd"
@@ -445,12 +445,14 @@ def main():
             line(fp)
             line(fp, "== Protocol-source correlation to verify against binaries ==")
             line(fp, "legacy_ucsp_subsystem_base=1000")
-            line(fp, "legacy_getSessionInfo_ordinal=65")
-            line(fp, "legacy_getSessionInfo_request_id=1065")
-            line(fp, "legacy_getSessionInfo_request_id_hex=0x00000429")
-            line(fp, "lion_source_slot_65=skip")
+            line(fp, "shipped_getSessionInfo_table_index_zero_based=64")
+            line(fp, "shipped_getSessionInfo_slot_one_based=65")
+            line(fp, "shipped_getSessionInfo_request_id=1064")
+            line(fp, "shipped_getSessionInfo_request_id_hex=0x00000428")
+            line(fp, "historical_source_slot_one_based_65=skip")
             line(fp, "status_1_symbolic=CSSM_ERRCODE_INTERNAL_ERROR")
-            line(fp, "source_correlation_is_context_not_binary_proof=YES")
+            line(fp, "request_id_0x428_is_shipped_binary_proof=YES")
+            line(fp, "historical_source_slot_is_context_not_request_id_arithmetic=YES")
 
             line(fp)
             line(fp, "== Audit validation ==")
