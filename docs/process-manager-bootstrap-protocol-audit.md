@@ -95,6 +95,34 @@ Therefore a Snow Leopard PPC client can remain source/API-compatible at the `boo
 
 The live `MIG_BAD_ARGUMENTS` result is directly consistent with that source-level schema change, but the shipped binary layouts must still be compared before a process-local adapter is designed.
 
+## Phase C analyzer correction
+
+The first Lion Phase C run ended in:
+
+```text
+validation_issue=i386 bootstrap client target missing: vproc_mig_look_up2
+RESULT: FAIL
+```
+
+That failure is an analyzer validation defect, not evidence against the bootstrap protocol hypothesis.
+
+The Lion report already proves that the installed i386 `liblaunch.dylib` contains both exported `bootstrap_look_up3` and `bootstrap_look_up2`. Inside `bootstrap_look_up3`, the same unnamed non-stub direct callee is invoked twice: once for the initial lookup and again after the per-user-context fallback. On the supplied Lion binary that target is `0x7967`. The surrounding control flow compares the first return value with `0x44b` before the per-user fallback, exactly matching the `VPROC_ERR_TRY_PER_USER` structure of Apple's Lion `bootstrap_look_up3` source.
+
+Lion strips the private generated `vproc_mig_look_up2` symbol name from this client binary. Requiring the private symbol name to survive in `nm` was therefore incorrect.
+
+Analyzer version 2 now:
+
+- still uses the named `vproc_mig_look_up2` symbol when it exists;
+- on stripped Lion liblaunch, locates `bootstrap_look_up3`;
+- finds its unique repeated, non-stub direct callee outside the caller body;
+- records that address as the inferred `vproc_mig_look_up2` body;
+- emits a synthetic disassembly window beginning at that inferred target;
+- accepts the Lion client when `bootstrap_look_up2`, `bootstrap_look_up3`, and either a named or uniquely inferred MIG lookup body are present.
+
+This inference is intentionally narrow. It is not a generic symbol guess and is only used when the private MIG symbol is absent but the exported `bootstrap_look_up3` call structure provides one unique repeated non-stub callee.
+
+The Snow Leopard report is unaffected: its PPC `vproc_mig_look_up2` symbol is present explicitly and Phase B already passed.
+
 ## Prepared tooling
 
 Current runtime `main` provides:
@@ -104,7 +132,7 @@ scripts/audit-process-manager-bootstrap-protocol.py
 docs/process-manager-bootstrap-protocol-audit.md
 ```
 
-The analyzer is Python-2-compatible and read-only.
+The analyzer is Python-2-compatible, read-only, and currently reports `analyzer_version=2`.
 
 It inspects:
 
@@ -206,7 +234,19 @@ No PowerPC application was launched and no system file was modified.
 RESULT: PASS
 ```
 
+The corrected Lion report must also show:
+
+```text
+analyzer_version=2
+-- stripped MIG lookup inference --
+inferred_vproc_mig_look_up2=0x...
+inference_basis=repeated non-stub direct callee from bootstrap_look_up3
+repeated_call_count=2
+```
+
 If `RESULT: FAIL` appears, stop. Do not compensate by rerunning the PPC bootstrap probe.
+
+Because the previously returned Snow Leopard report already passed and contains an explicit PPC `vproc_mig_look_up2` window, it does not need to be rerun solely for this analyzer correction. After pulling current `main`, rerun Phase C on Lion and return the corrected Lion report while keeping the Snow Leopard PASS report available.
 
 ## Phase D — stop and return evidence
 
