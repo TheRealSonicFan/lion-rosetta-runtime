@@ -387,3 +387,48 @@ This experiment does not:
 - modify Rosetta or XNU.
 
 It is a one-transaction proof of the binary-confirmed bootstrap protocol adapter.
+
+
+## Observed result — Lion accepts the corrected PPC bootstrap transaction
+
+The completed experiment ended with:
+
+```text
+RESULT: BOOTSTRAP_PROTOCOL_ADAPTER_PASS
+```
+
+The exact PPC subject SHA-256 was:
+
+```text
+41a9fc6583259af9eab0fdff56ea578ca9fa22fc1f0fcb155cea8e0cb8ae763c
+```
+
+Snow Leopard positive control passed with the ordinary legacy PPC `bootstrap_look_up2` returning a nonzero coreservicesd service port.
+
+On Lion 10.7.5, the prepared PPC subject constructed the binary-confirmed UUID-expanded request:
+
+- request ID `0x194`;
+- send size `0xbc`;
+- receive size `0x6c`;
+- service-name offset `0x20`;
+- target-PID offset `0xa0`;
+- zero 16-byte instance UUID at `0xa4`;
+- flags at `0xb4`, value `0x8`.
+
+`mach_msg` returned success. The reply was the expected complex `0x28`-byte message with reply ID `0x1f8`, descriptor count 1, and a nonzero coreservicesd service port.
+
+No crash/core diagnostic was generated. The validated kernel, private dyld, native Lion dyld, Rosetta cache, and PPC subject hashes were unchanged. The native syscall-295 safety gate also remained a clean PASS.
+
+This directly validates the request-layout diagnosis: adding the missing Lion UUID field is sufficient for the translated PPC task to resolve coreservicesd successfully.
+
+The standalone bootstrap compatibility proof is therefore closed.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-bootstrap-integration-experiment.md
+```
+
+That experiment introduces a private PPC `__DATA,__interpose` dylib only in the dedicated test process. It adapts only the exact coreservicesd `bootstrap_look_up2` call and then allows unmodified Snow Leopard PPC CarbonCore to continue into its normal `ServerCheckin -> FindService` path.
+
+Do not call `ServerCheckin` or `FindService` directly and do not install the interposer system-wide.
