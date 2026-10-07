@@ -25,6 +25,7 @@ EXPECTED_DYLD_SHA="963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df
 EXPECTED_TRANSLATOR_SHA="4b65c39c7832ed647d15c7a6dbdbb579c9261dac33a1708ebcb2dcbbd166de18"
 EXPECTED_CACHE_SHA="2968123ebb467633929398c692cfa68e8a13925ead683c5b1a04581c0aee6911"
 EXPECTED_CACHE_MAP_SHA="66e8940757eb909ffb1920ac1510134afafbd5d2d649a9cc7d750753333153f9"
+EXPECTED_COMPAT_BUILD_ID="interpose-replacee-v2"
 EXPECTED_KERNEL_SHA="${ROSETTA_EXPECTED_KERNEL_SHA256:-}"
 
 mkdir -p "$REPORT_DIR" || exit 73
@@ -137,6 +138,11 @@ echo "$OTOOL_OUT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || die 68 "stage LC_
 
 /usr/bin/otool -l "$INTERPOSER" | /usr/bin/grep -A10 -B2 '__interpose' | /usr/bin/tee -a "$REPORT" || die 68 "interposer section missing"
 
+if /usr/bin/nm -m "$INTERPOSER" | /usr/bin/grep -Fq '_dlsym'; then
+    die 68 "stale interposer detected: _dlsym import is present"
+fi
+/usr/bin/strings "$INTERPOSER" | /usr/bin/grep -Fq "PM_BOOTSTRAP_COMPAT_BUILD_ID:$EXPECTED_COMPAT_BUILD_ID" ||     die 68 "corrected interposer build marker is missing"
+
 INTERPOSER_ABS="$(abspath "$INTERPOSER")"
 [ -n "$INTERPOSER_ABS" ] || die 68 "could not resolve interposer absolute path"
 log "interposer_absolute_path=$INTERPOSER_ABS"
@@ -229,6 +235,11 @@ log "interposer_sha256_after=$INTERPOSER_AFTER"
 log ""
 if ! /usr/bin/grep -Fq "dyld: loaded: $INTERPOSER_ABS" "$RAW_LOG"; then
     log "RESULT: BOOTSTRAP_COMPAT_INTERPOSER_NOT_LOADED"
+    exit 1
+fi
+
+if ! /usr/bin/grep -Fq "PM_BOOTSTRAP_COMPAT_BUILD_ID:$EXPECTED_COMPAT_BUILD_ID" "$RAW_LOG"; then
+    log "RESULT: BOOTSTRAP_COMPAT_STALE_INTERPOSER"
     exit 1
 fi
 
