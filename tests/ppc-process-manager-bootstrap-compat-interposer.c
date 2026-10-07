@@ -50,6 +50,13 @@ static bootstrap_lookup2_fn gOriginalLookup = NULL;
 static unsigned int gExactCallCount = 0;
 static unsigned int gAdaptedCallCount = 0;
 
+static kern_return_t
+rosetta_bootstrap_look_up2(mach_port_t bp,
+                           const char *service_name,
+                           mach_port_t *service_port,
+                           pid_t target_pid,
+                           uint64_t flags);
+
 static void
 put_u32(unsigned char *p, uint32_t value)
 {
@@ -91,7 +98,7 @@ call_original(mach_port_t bp,
     bootstrap_lookup2_fn fn = original_lookup();
     kern_return_t kr;
 
-    if (fn == NULL || fn == (bootstrap_lookup2_fn)&bootstrap_look_up2) {
+    if (fn == NULL || fn == (bootstrap_lookup2_fn)&rosetta_bootstrap_look_up2) {
         if (service_port != NULL)
             *service_port = MACH_PORT_NULL;
         fprintf(stderr,
