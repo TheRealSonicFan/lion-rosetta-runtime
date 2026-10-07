@@ -589,3 +589,20 @@ docs/process-manager-servercheckin-protocol-adapter-experiment.md
 It first proves the exact native Lion simple ServerCheckin request in a standalone PPC subject after the already-proven adapted bootstrap lookup. It does not modify the existing integration interposer and does not call `FindService`.
 
 Do not rerun the bootstrap integration experiment before the standalone ServerCheckin result is reviewed.
+
+
+## Follow-up — standalone ServerCheckin proof passed
+
+The subsequent standalone ServerCheckin protocol adapter experiment completed successfully.
+
+After the already-proven Lion-format bootstrap lookup returned a nonzero coreservicesd port, the translated PPC subject sent Lion's native simple `0x18` ServerCheckin request and received the expected complex `0x34` reply with a nonzero session port. The Snow Leopard legacy `0x28` control also passed.
+
+Therefore the `BOOTSTRAP_COMPAT_SERVERCHECKIN_FAILURE` result from this experiment is now explained by a second confirmed request-shape mismatch rather than by an unknown server-state failure.
+
+The next stage is no longer another standalone RPC probe. It is the guarded dual integration in:
+
+```text
+docs/process-manager-coreservices-compat-integration-experiment.md
+```
+
+That stage combines only the two proven adaptations and observes whether unmodified PPC CarbonCore completes its existing `FindService("LaunchApplicationServices")` path.
