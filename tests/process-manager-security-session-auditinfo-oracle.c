@@ -87,7 +87,7 @@ run_audit_only(void)
 }
 
 static int
-run_session_audit(void)
+run_session_audit(int require_attribute_match)
 {
     SecuritySessionId sid = noSecuritySession;
     SessionAttributeBits attrs = 0;
@@ -120,12 +120,21 @@ run_session_audit(void)
         fprintf(stderr, "PM_SECURITY_AUDITINFO_RESULT:SESSION_ERROR\n");
         return 22;
     }
-    if ((uint32_t)sid != asid || (uint32_t)attrs != flags) {
-        fprintf(stderr, "PM_SECURITY_AUDITINFO_RESULT:MAPPING_MISMATCH\n");
+    if ((uint32_t)sid != asid) {
+        fprintf(stderr, "PM_SECURITY_AUDITINFO_RESULT:SESSION_ID_MAPPING_MISMATCH\n");
         return 23;
     }
 
-    fprintf(stderr, "PM_SECURITY_AUDITINFO_RESULT:SESSION_AUDIT_MATCH\n");
+    if (require_attribute_match && (uint32_t)attrs != flags) {
+        fprintf(stderr, "PM_SECURITY_AUDITINFO_RESULT:ATTRIBUTE_MAPPING_MISMATCH\n");
+        return 23;
+    }
+
+    fprintf(stderr,
+            "PM_SECURITY_AUDITINFO_RESULT:%s\n",
+            require_attribute_match ?
+                "SESSION_AUDIT_MATCH" :
+                "SESSION_ID_AUDIT_MATCH");
     fflush(stderr);
     return 0;
 }
@@ -144,8 +153,10 @@ main(int argc, char **argv)
 
     if (strcmp(argv[1], "audit-only") == 0)
         return run_audit_only();
+    if (strcmp(argv[1], "session-id-audit") == 0)
+        return run_session_audit(0);
     if (strcmp(argv[1], "session-audit") == 0)
-        return run_session_audit();
+        return run_session_audit(1);
 
     fprintf(stderr, "PM_SECURITY_AUDITINFO_RESULT:UNKNOWN_MODE\n");
     return 25;
