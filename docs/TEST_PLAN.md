@@ -101,16 +101,16 @@ The exact Snow Leopard control returns status 0 with a nonzero session ID and no
 
 No crash/core diagnostic was produced, all protected identities remained unchanged, and the syscall-295 probe remains a clean EBADF/no-SIGSYS PASS.
 
-Historical Security source aligns strongly with this result: the legacy client routes `SessionGetInfo` through `SecurityServer::ClientSession`, whose first-use path performs SecurityServer lookup/verification/setup before the old `ucsp` session RPC; later source leaves the `getSessionInfo` routine slot as a skipped former entry because session information moved to the kernel, and the native later client uses `CommonCriteria::AuditInfo`. The legacy error bridge can collapse a Mach transport exception to status `1` (`CSSM_ERRCODE_INTERNAL_ERROR`). The removed `getSessionInfo` RPC is the leading candidate, but the exact failing first-use substep is not yet proven.
+The read-only Security session protocol audit has now passed on Snow Leopard and Lion. The shipped Snow Leopard PPC client proves that `ucsp_client_getSessionInfo` uses request ID `0x428` (1064), with a `0x24` send and `0x74` receive; this corrects the earlier source-only `0x429` arithmetic. The same first public call activates the legacy SecurityServer client first, with visible request IDs `setup=0x3e8`, `setupNew=0x3e9`, `setupThread=0x3ea`, and `verifyPrivileged2=0x441`. Lion's native Security client instead uses `CommonCriteria::AuditInfo`; Lion securityd retains visible setup/setupThread/verifyPrivileged2 handlers but no visible `getSessionInfo` or `setupNew` server body.
 
-The exact underlying Mach/MIG code has not yet been observed. Do not claim `MIG_BAD_ID` from source correlation alone.
+Static evidence still cannot prove which first-use transaction fails in the live translated process. Do not claim `MIG_BAD_ID` merely from missing symbols.
 
 The authoritative next step is:
 
 ```text
-docs/process-manager-security-session-protocol-audit.md
+docs/process-manager-security-session-rpc-discriminator-experiment.md
 ```
 
-That stage is read-only. It compares shipped Snow Leopard/Lion Security and securityd binaries around the legacy session client/server protocol and the native Lion AuditInfo path. It does not launch PPC code, call a SecuritySession API, send a Mach message, patch Security, call LaunchServices process-services initialization, or call Process Manager.
+That stage uses a Security-only PPC subject and a two-tuple, process-local pass-through tracer to record the SecurityServer bootstrap lookup and legacy ucsp Mach transactions without modifying them. Run one Snow Leopard positive control and one guarded Lion attempt, then stop for review. The decisive question is whether failure occurs during SecurityServer lookup, `verifyPrivileged2`, setup/setupNew, setupThread, or the binary-proven `getSessionInfo=0x428` request.
 
 No additional XNU change is indicated.
