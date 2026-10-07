@@ -352,3 +352,22 @@ scripts/audit-process-manager-systemservice-client-internals.py
 ```
 
 That audit expands static coverage around the internal CarbonCore client/session machinery before any bootstrap lookup, state bypass, or live instrumentation is attempted.
+
+
+## Follow-up — CoreServices blocker is now closed
+
+The original Lion pre-dispatch run stopped at `SYSTEMSERVICE_ZERO_PORT`, so `SessionGetInfo` was never reached.
+
+Subsequent bootstrap, ServerCheckin, and dual CoreServices integration work has now closed that blocker. With the process-local `dual-bootstrap-servercheckin-v3` compatibility layer present, unmodified Snow Leopard PPC CarbonCore successfully establishes its check-in state and returns a nonzero `LaunchApplicationServices` service port on Lion.
+
+Therefore the original pre-dispatch executable is useful again, but only when run under the proven v3 CoreServices adapter.
+
+The authoritative follow-up procedure is:
+
+```text
+docs/process-manager-predispatch-compat-integration-experiment.md
+```
+
+That stage reaches the previously inaccessible `SessionGetInfo(callerSecuritySession,...)` call and stops there. It does not call `_LSDoInitializeProcessesServices` or any Process Manager identity API.
+
+The original `SYSTEMSERVICE_ZERO_PORT` result remains historically valid for an unadapted PPC CarbonCore client; it is no longer the active boundary under the proven compatibility layer.
