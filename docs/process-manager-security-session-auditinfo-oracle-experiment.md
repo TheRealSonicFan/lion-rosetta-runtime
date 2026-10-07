@@ -308,3 +308,28 @@ translated PPC direct getaudit_addr semantics -> next proof
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result
+
+The corrected Snow Leopard Phase C control passed for both PPC and i386. In each architecture, the successful legacy `SessionGetInfo` session ID matched `auditinfo_addr` word `0x24`; the legacy attribute comparison remained intentionally diagnostic.
+
+The Lion Phase F oracle then passed completely:
+
+- native i386 `SessionGetInfo(callerSecuritySession,...)` returned status 0, session ID `0x000186a3`, and attributes `0x00002030`;
+- native i386 `getaudit_addr(..., 0x30)` returned the same session ID at offset `0x24` and `0x00002030` at the first 32-bit word of the 64-bit `ai_flags` field;
+- translated PPC `getaudit_addr(..., 0x30)` returned success and the same session ID `0x000186a3`;
+- the translated PPC run reported raw word `0x28 = 0`, while the i386 run reported raw word `0x28 = 0x2030`;
+- no new diagnostic was produced, protected hashes remained unchanged, and the syscall-295 gate remained a clean EBADF/no-SIGSYS PASS.
+
+The raw `0x28` cross-architecture difference does not invalidate the oracle. Darwin defines `ai_flags` as the 64-bit `au_asflgs_t`, aligned at offset `0x28`. The original oracle deliberately logged only the first 32-bit word at that offset, which is the low half on little-endian i386 but the high half on big-endian PPC. The next experiment therefore uses the typed `auditinfo_addr_t.ai_flags` field, compile-time layout assertions, and logs both raw words `0x28` and `0x2c`.
+
+The authoritative next step is:
+
+```text
+docs/process-manager-security-session-auditinfo-api-adapter-experiment.md
+```
+
+That stage interposes exactly `SessionGetInfo`, is transparent on Snow Leopard, and on Lion adapts only `callerSecuritySession` by returning `ai_asid` and the low 32 bits of the typed 64-bit `ai_flags` value. It sends no SecurityServer RPC and performs no bootstrap adaptation.
+
+No additional XNU change is indicated.
