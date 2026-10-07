@@ -277,3 +277,38 @@ Security first-use / session RPC substep -> unresolved
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed result — failure is before every legacy Security RPC
+
+The completed Snow Leopard control and Lion discriminator resolve the first-use ambiguity.
+
+Snow Leopard 10.6.8:
+
+- `bootstrap_look_up("com.apple.SecurityServer")` returns `kr=0` with a nonzero service port;
+- `verifyPrivileged2 (0x441)` completes;
+- `setup (0x3e8)` completes;
+- `getSessionInfo (0x428)` completes;
+- `SessionGetInfo` returns 0 with nonzero session ID/attributes;
+- `RESULT: PASS`.
+
+Lion 10.7.5:
+
+- the tracer reaches the same `bootstrap_look_up("com.apple.SecurityServer")`;
+- that lookup returns `kr=-304` / `MIG_BAD_ARGUMENTS`;
+- the service port remains zero;
+- no `verifyPrivileged2`, setup, setupThread, or `getSessionInfo` request is sent;
+- `SessionGetInfo` then returns status 1 with zero session ID/attributes;
+- no crash/core is generated and protected hashes remain unchanged.
+
+This supersedes the earlier leading `getSessionInfo` hypothesis as the **immediate** live failure. The retired `getSessionInfo` RPC may still become a later boundary after first-use lookup is repaired, but it was not reached in this run.
+
+The result also matches the already-proven launchd lookup protocol evolution from the earlier Process Manager bootstrap work: Snow Leopard PPC emits the legacy `0xac` `vproc_mig_look_up2` request, while Lion expects the UUID-expanded `0xbc` form. The previous standalone Lion-format lookup proof already established that the UUID-expanded shape is accepted by Lion for another service.
+
+The authoritative next stage is therefore:
+
+```text
+docs/process-manager-securityserver-bootstrap-protocol-adapter-experiment.md
+```
+
+That experiment changes only the service name/flags case that remains unproven: it sends one Lion-format `0xbc` lookup for `com.apple.SecurityServer`, target PID 0, zero instance UUID, flags 0, and stops without calling Security.
