@@ -352,3 +352,46 @@ This experiment does not:
 - modify Rosetta or XNU.
 
 It is a single post-call state discriminator for the already proven `SYSTEMSERVICE_ZERO_PORT` boundary.
+
+
+## Observed result — CarbonCore never establishes a usable client/check-in session on Lion
+
+The completed Snow Leopard/Lion stage discriminator resolves the previous two-way ambiguity.
+
+The exact PPC subject has SHA-256:
+
+```text
+aef485ca23cdc4b7a235add955835926cf6091c9fabcf6a1335b33ec0be61978
+```
+
+On Snow Leopard 10.6.8, the positive control returns a nonzero `LaunchApplicationServices` port, a nonzero CarbonCore server-checkin port, process options `0x00000000`, and `RESULT: PASS`.
+
+On Lion 10.7.5, the same subject:
+
+- returns normally from `scCreateSystemServiceVersion`;
+- reports service port `0x00000000`;
+- reports server-checkin port `0x00000000`;
+- reports process options `0x00000002`;
+- produces no crash/core diagnostic;
+- preserves the validated kernel, private dyld, system dyld, Rosetta cache, and probe hashes;
+- ends with `RESULT: CHECKIN_SESSION_UNAVAILABLE`.
+
+The zero server-checkin port is decisive: the guest PPC CarbonCore did not establish a usable coreservicesd client session, so the immediate failure is before `FindService`.
+
+The process-options value independently supports the same direction. Snow Leopard PPC `scGetProcessOptions` sets bit `0x2` when its internal CoreServices status is 1 or 3. The bit does not uniquely identify which of those states is active, so it must not be used as a stronger claim than the direct zero-port observation.
+
+The next live boundary is now only:
+
+```text
+bootstrap_look_up2 -> __scclient_ServerCheckin
+```
+
+The authoritative next experiment is:
+
+```text
+docs/process-manager-bootstrap-lookup-discriminator-experiment.md
+```
+
+That experiment tests only the bootstrap half of the boundary using the exact service name, target PID, and 64-bit flags value recovered from the Snow Leopard PPC CarbonCore callsite. It does not call `ServerCheckin` in the same run.
+
+Do not rerun this stage discriminator, proceed to `FindService`, call Security/Process Manager, patch CarbonCore, or modify XNU before the bootstrap result is reviewed.
