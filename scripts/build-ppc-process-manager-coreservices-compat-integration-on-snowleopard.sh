@@ -123,8 +123,13 @@ INTERPOSER_SOURCE_SHA="$(/usr/bin/shasum -a 256 "$INTERPOSER_SRC" | /usr/bin/awk
     /usr/bin/shasum -a 256 "$INTERPOSER_OUT"
 } > "$INFO"
 
-/usr/bin/otool -l "$INTERPOSER_OUT" | /usr/bin/grep -q '__interpose' || {
+INTERPOSE_SECTION="$(/usr/bin/otool -l "$INTERPOSER_OUT" | /usr/bin/grep -A10 -B2 '__interpose' || true)"
+echo "$INTERPOSE_SECTION" | /usr/bin/grep -q '__interpose' || {
     echo "error: interposer does not contain a __DATA,__interpose section" >&2
+    exit 71
+}
+echo "$INTERPOSE_SECTION" | /usr/bin/grep -Fq 'size 0x00000010' || {
+    echo "error: interposer __DATA,__interpose section is not exactly two PPC tuples" >&2
     exit 71
 }
 
