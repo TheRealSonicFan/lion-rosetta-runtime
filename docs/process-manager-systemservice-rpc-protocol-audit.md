@@ -249,3 +249,53 @@ docs/process-manager-systemservice-stage-discriminator-experiment.md
 It repeats the already proven `scCreateSystemServiceVersion` call and, only after that call returns, reads the existing CarbonCore server-checkin port and process options through dynamically resolved exported helpers from the same guest PPC CarbonCore image.
 
 Do not perform a raw-address call, direct `ServerCheckin`, direct `FindService`, custom bootstrap lookup, or framework patch before that result is reviewed.
+
+
+## Correction — Lion ServerCheckin does not accept the Snow Leopard PPC complex request
+
+The later live bootstrap-integration result required a re-read of the previously collected Lion i386 `__XServerCheckin` wrapper.
+
+The earlier interpretation in this document that Lion retained compatibility handling for Snow Leopard PPC's descriptor-bearing ServerCheckin request was incorrect.
+
+The shipped client/server binaries show:
+
+### Snow Leopard PPC client
+
+`__scclient_ServerCheckin` builds:
+
+- Mach bits `0x80001513` (complex);
+- request ID `0x2710`;
+- send size `0x28`;
+- receive size `0x3c`;
+- descriptor count 1;
+- one port descriptor;
+- expected reply ID `0x2774`.
+
+### Lion i386 client
+
+Lion's native `__scclient_ServerCheckin` builds:
+
+- Mach bits `0x00001513` (simple);
+- request ID `0x2710`;
+- send size `0x18`;
+- receive size `0x3c`;
+- no request descriptor;
+- expected reply ID `0x2774`.
+
+### Lion i386 server
+
+Lion's `__XServerCheckin` checks that the request is **not complex** and that its size is exactly `0x18`. A complex request is routed to the `MIG_BAD_ARGUMENTS` reply path before `__scserver_ServerCheckin` is invoked.
+
+Therefore the Snow Leopard PPC request is structurally incompatible with Lion's live ServerCheckin wrapper even though the request and reply IDs remain the same.
+
+The completed bootstrap integration experiment independently supports this correction: after the bootstrap call is adapted successfully and returns a nonzero coreservicesd port, unmodified PPC CarbonCore still never obtains a server-checkin port.
+
+The next controlled experiment is:
+
+```text
+docs/process-manager-servercheckin-protocol-adapter-experiment.md
+```
+
+It sends exactly one native Lion simple ServerCheckin request from a standalone translated PPC subject after the already-proven Lion-format bootstrap lookup.
+
+Do not use the superseded claim that Lion accepts the legacy complex ServerCheckin form.
