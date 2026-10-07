@@ -50,20 +50,20 @@ echo "private_dyld_sha256=$DYLD_SHA" | /usr/bin/tee -a "$LOG"
 [ "$ACTUAL_I386_SHA" = "$EXPECTED_I386_SHA" ] || fail "i386 hash mismatch"
 [ "$DYLD_SHA" = "$EXPECTED_DYLD_SHA" ] || fail "private dyld hash mismatch"
 
-echo "== Snow Leopard PPC session/audit mapping control ==" | /usr/bin/tee -a "$LOG"
-"$PPC" session-audit >> "$LOG" 2>&1
+echo "== Snow Leopard PPC session-ID/audit control ==" | /usr/bin/tee -a "$LOG"
+"$PPC" session-id-audit >> "$LOG" 2>&1
 PPC_RC=$?
 echo "ppc_status=$PPC_RC" | /usr/bin/tee -a "$LOG"
 
-echo "== Snow Leopard i386 session/audit mapping control ==" | /usr/bin/tee -a "$LOG"
-"$I386" session-audit >> "$LOG" 2>&1
+echo "== Snow Leopard i386 session-ID/audit control ==" | /usr/bin/tee -a "$LOG"
+"$I386" session-id-audit >> "$LOG" 2>&1
 I386_RC=$?
 echo "i386_status=$I386_RC" | /usr/bin/tee -a "$LOG"
 
 if [ "$PPC_RC" -eq 0 ] &&
    [ "$I386_RC" -eq 0 ] &&
-   [ "$(/usr/bin/grep -Fc 'PM_SECURITY_AUDITINFO_RESULT:SESSION_AUDIT_MATCH' "$LOG")" -eq 2 ] &&
-   [ "$(/usr/bin/grep -Fc 'PM_SECURITY_AUDITINFO_COMPARE:sessionIdMatch=YES attrsMatch=YES' "$LOG")" -eq 2 ]; then
+   [ "$(/usr/bin/grep -Fc 'PM_SECURITY_AUDITINFO_RESULT:SESSION_ID_AUDIT_MATCH' "$LOG")" -eq 2 ] &&
+   [ "$(/usr/bin/grep -Fc 'PM_SECURITY_AUDITINFO_COMPARE:sessionIdMatch=YES ' "$LOG")" -eq 2 ]; then
     echo "RESULT: PASS" | /usr/bin/tee -a "$LOG"
     exit 0
 fi
