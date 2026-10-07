@@ -42,7 +42,7 @@ HEADER_RE = re.compile(
 )
 
 DIRECT_CALL_RE = re.compile(
-    r"\\b(?:calll|callq|bl)\\s+0x([0-9a-fA-F]+)",
+    r"\b(?:calll|callq|bl)\s+0x([0-9a-fA-F]+)",
     re.I,
 )
 
