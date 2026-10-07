@@ -78,37 +78,41 @@ Use a staged progression so a failure identifies the layer that is still incompa
 
 ## Current Process Manager boundary
 
-The private LaunchServices compatibility experiment has cleared Lion's PPC admission gate. Three independent Process Manager identity routes remain Snow Leopard-positive but self-SIGABRT on Lion before returning.
+The private LaunchServices compatibility experiment has cleared Lion's PPC admission gate. The remaining Process Manager identity failures are now known to sit above two repaired CoreServices transport mismatches.
 
-The active prerequisite failure has now been reduced to two independently proven user-space CoreServices transport mismatches below LaunchServices.
+The two confirmed user-space mismatches are:
 
-The first is the coreservicesd bootstrap lookup. Snow Leopard PPC emits the legacy `0xac` request; Lion inserts a 16-byte instance UUID and expects `0xbc`. The standalone adapter passes, and the first process-local integration experiment proved that the UUID-expanded request can return a valid coreservicesd port directly into CarbonCore's real call path.
+- coreservicesd bootstrap lookup: Snow Leopard PPC uses the legacy `0xac` request while Lion requires the UUID-expanded `0xbc` form;
+- CoreServices `ServerCheckin`: Snow Leopard PPC uses a complex `0x28` request with one port descriptor while Lion requires a simple `0x18` request.
 
-The second is `ServerCheckin`:
+Both standalone protocol adapters pass.
 
-- Snow Leopard PPC sends a complex `0x28` request with one task-port descriptor;
-- Lion native i386 sends a simple `0x18` request;
-- Lion's i386 `__XServerCheckin` rejects the complex form before dispatch.
+The corrected `dual-bootstrap-servercheckin-v3` process-local interposer now also passes inside the real PPC CarbonCore path on Lion:
 
-The standalone ServerCheckin protocol adapter is now a clean PASS on both systems. On Lion, after the already-proven adapted bootstrap lookup, the translated PPC subject sent the native simple `0x18` request and received the expected complex `0x34` reply with descriptor count 1, disposition `0x11`, a nonzero session port, and options `0x03000000`. No diagnostic was produced, all protected hashes remained unchanged, and syscall 295 remained a clean EBADF/no-SIGSYS PASS.
+- adapted bootstrap lookup -> nonzero privileged coreservicesd port;
+- adapted ServerCheckin -> expected `0x34` reply, nonzero session port, options `0x03000000`;
+- CarbonCore check-in state -> nonzero;
+- `scCreateSystemServiceVersion("LaunchApplicationServices", 0x00010000,...)` -> nonzero;
+- process options -> `0x00000000`;
+- no crash/core;
+- protected hashes unchanged;
+- native syscall 295 -> EBADF/no-SIGSYS PASS;
+- final result -> `CORESERVICES_COMPAT_SYSTEMSERVICE_PASS`.
 
-Therefore both request-shape defects are independently closed at the protocol level.
+This closes the CarbonCore system-service client boundary and proves that the existing Snow Leopard PPC `FindService("LaunchApplicationServices")` request works against Lion without another adapter.
 
-The authoritative next step is `docs/process-manager-coreservices-compat-integration-experiment.md`.
+The active unresolved pre-dispatch primitive is now Security `SessionGetInfo`.
 
-That experiment combines only the two proven adaptations in one private PPC `__DATA,__interpose` dylib:
+Static analysis already showed a material implementation split: Snow Leopard PPC uses the legacy `SecurityServer::ClientSession::getSessionInfo` path while Lion native i386 uses `CommonCriteria::AuditInfo::get`. The original Lion pre-dispatch probe never reached this call because CoreServices service acquisition returned zero first.
 
-- the existing exact `bootstrap_look_up2` adaptation for coreservicesd;
-- one exact `mach_msg` adaptation for CarbonCore's legacy ServerCheckin request sent to the port returned by that bootstrap lookup.
+The authoritative next step is:
 
-Every non-target `bootstrap_look_up2` and `mach_msg` call passes through to the original implementation. The existing stage subject then calls unmodified `scCreateSystemServiceVersion("LaunchApplicationServices")` and reads CarbonCore's resulting check-in/service state.
+```text
+docs/process-manager-predispatch-compat-integration-experiment.md
+```
 
-A successful stage result would also prove that the existing Snow Leopard PPC `FindService` request works against Lion without another adapter. A nonzero check-in port with a zero service port would instead isolate the next boundary to `FindService`.
+That stage reuses the original PPC pre-dispatch subject under the proven v3 CoreServices adapter. It requires the nonzero `LaunchApplicationServices` port and then calls untouched `SessionGetInfo(callerSecuritySession,...)`, stopping immediately afterward.
 
-Do not rerun the standalone ServerCheckin probe, do not broaden the `mach_msg` filter, do not install the interposer system-wide, and do not change XNU. No additional XNU change is indicated.
+If `SessionGetInfo` succeeds with a nonzero session ID, the next boundary moves to LaunchServices `_LSDoInitializeProcessesServices`. If it aborts, returns an error, or returns no usable session, the Security session path becomes the next localization target.
 
-
-The first Snow Leopard control for the dual CoreServices integration exposed a harness matcher defect, not a CoreServices regression. Both PPC artifacts and the two-tuple interposer loaded correctly, the bootstrap tuple passed through with a nonzero coreservicesd port, and unmodified Snow Leopard CarbonCore still completed with nonzero service/check-in ports and `STAGE_CONTROL_PASS`; the runner failed only because the private ServerCheckin exact-match marker was absent. The v1 filter had unnecessarily required the request's port descriptor to be numerically equal to a fresh `mach_task_self()` value from the interposer. The corrected `dual-bootstrap-servercheckin-v2` filter keeps the exact server port, request ID, header/argument sizes, descriptor count/disposition/type, reply port, timeout, and notify checks, requires only a nonzero descriptor port, and logs a full ServerCheckin candidate record before matching. Pull current main, rebuild Phase B, and repeat Phase C only; do not proceed to Lion until the v2 Snow Leopard control reports `RESULT: PASS`.
-
-
-The rebuilt v2 Snow Leopard dual-integration control again proved that CarbonCore itself is healthy but exposed one remaining harness predicate error. The new candidate logger captured the real legacy ServerCheckin call with bits `0x80001513`, request ID `0x2710`, `mach_msg` send argument `0x28`, receive size `0x3c`, one nonzero port descriptor, disposition `0x13`, type `0x00`, matching reply/receive ports, and zero timeout/notify; only the in-buffer `msgh_size` word was `0x40`. Re-reading the recovered PPC MIG stub shows that CarbonCore never initializes that header word before calling `mach_msg`; the authoritative send size is the separate `0x28` argument. The corrected `dual-bootstrap-servercheckin-v3` matcher therefore logs `headerSizeObserved` but does not constrain it, while still explicitly setting `msgh_size=0x18` for the Lion adaptation. Pull current main, rebuild Phase B, and repeat Phase C only; no Lion run is authorized until v3 reports `RESULT: PASS`.
+Do not call Process Manager, do not call `_LSDoInitializeProcessesServices` yet, do not patch Security, do not broaden the CoreServices interposer, and do not change XNU.
