@@ -26,21 +26,23 @@ HEADER_CANDIDATES = [
 
 CLIENT_TARGET_RE = re.compile(
     r"(SessionGetInfo|ClientSession.*getSessionInfo|"
-    r"ucsp_client_getSessionInfo|CommonCriteria.*AuditInfo|"
+    r"ucsp_client_(?:getSessionInfo|verifyPrivileged2|setup|setupThread)|"
+    r"CommonCriteria.*AuditInfo|"
     r"ClientSession.*activate|ClientSession.*Global|findSecurityd|"
     r"CssmError.*cssmError)",
     re.I,
 )
 
 SERVER_TARGET_RE = re.compile(
-    r"(ucsp_server|ucsp.*routine|_X.*getSessionInfo|"
-    r"getSessionInfo|setupSession|Session)",
+    r"(ucsp_server|ucsp.*routine|_X.*(?:getSessionInfo|verifyPrivileged2|setup|setupThread)|"
+    r"getSessionInfo|verifyPrivileged2|setupThread|setupSession)",
     re.I,
 )
 
 IMPORT_RE = re.compile(
     r"(mach_msg|mig_|bootstrap_|audit_|getaudit|setaudit|"
-    r"SessionGetInfo|getSessionInfo|SecurityServer|AuditInfo|ucsp_)",
+    r"SessionGetInfo|getSessionInfo|verifyPrivileged2|setupThread|"
+    r"SecurityServer|AuditInfo|ucsp_)",
     re.I,
 )
 
