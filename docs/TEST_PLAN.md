@@ -107,14 +107,18 @@ The Security-only RPC discriminator has now resolved the first-use ambiguity dyn
 
 This supersedes the removed-`getSessionInfo` RPC as the immediate live boundary. That RPC may still become a later compatibility issue, but it has not yet been reached.
 
-The earlier bootstrap protocol audit and standalone adapter proof are directly relevant: Snow Leopard PPC uses the legacy `0xac` `vproc_mig_look_up2` request, while Lion expects the UUID-expanded `0xbc` request, and Lion has already accepted that corrected request shape for the earlier coreservicesd proof. The remaining unproven case is the ordinary `bootstrap_look_up` semantics used by Security: service `com.apple.SecurityServer`, target PID 0, zero instance UUID, flags 0.
+The standalone SecurityServer bootstrap adapter proof has now passed completely. Snow Leopard's ordinary `bootstrap_look_up("com.apple.SecurityServer")` returned a nonzero service port. On Lion, the prepared PPC subject sent the already-proven UUID-expanded `vproc_mig_look_up2` request with request ID `0x194`, send size `0xbc`, receive size `0x6c`, target PID 0, zero instance UUID, flags 0, and the SecurityServer service name. Lion returned Mach success and the expected complex `0x28` / reply-ID-`0x1f8` message with one descriptor and a nonzero SecurityServer port.
+
+This closes the immediate Security first-use bootstrap defect as another instance of the Snow-Leopard-to-Lion launchd lookup layout change. No additional bootstrap protocol audit is needed before continuing.
 
 The authoritative next step is:
 
 ```text
-docs/process-manager-securityserver-bootstrap-protocol-adapter-experiment.md
+docs/process-manager-security-session-bootstrap-compat-integration-experiment.md
 ```
 
-That stage performs one Snow Leopard `bootstrap_look_up` positive control and one guarded Lion transaction using the already-binary-confirmed `0xbc` request shape for `com.apple.SecurityServer`, then stops without calling Security. Do not integrate a Security bootstrap interposer or resume `SessionGetInfo` until this standalone result is reviewed.
+That stage combines only the proven SecurityServer bootstrap adaptation with the existing Security-only `SessionGetInfo` probe and a passive ucsp trace. On Snow Leopard the new two-tuple interposer must be transparent. On Lion it adapts only `bootstrap_look_up("com.apple.SecurityServer")`; every subsequent Security request is forwarded unchanged and logged. The result will show whether `verifyPrivileged2`, setup/setupThread, the retired `getSessionInfo=0x428` request, or no further Security defect is the next live boundary.
+
+Do not patch Security/securityd or make another XNU change before that post-bootstrap trace is reviewed.
 
 No additional XNU change is indicated.
