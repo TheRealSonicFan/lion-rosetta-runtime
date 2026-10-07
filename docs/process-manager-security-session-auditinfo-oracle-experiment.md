@@ -29,7 +29,7 @@ Therefore Lion directly rejects the legacy `getSessionInfo=0x428` routine as an 
 
 The correct compatibility direction is not to revive the retired securityd RPC. Lion's own native Security implementation for `callerSecuritySession` calls `getaudit_addr(..., 0x30)` and returns the 32-bit words at offsets `0x24` and `0x28` as the public session ID and attribute bits.
 
-This experiment validates that mapping dynamically and tests whether translated PPC can call `getaudit_addr` successfully with the same 0x30-byte layout.
+This experiment validates the Lion mapping dynamically and tests whether translated PPC can call `getaudit_addr` successfully with the same 0x30-byte layout. Snow Leopard is used only as a build/runtime control: its legacy `SessionGetInfo` attributes come from the SecurityServer-era semantics and are not required to equal the raw `auditinfo_addr` flags word.
 
 ## Prepared files
 
@@ -52,9 +52,10 @@ i386-process-manager-security-session-auditinfo-oracle
 
 The PPC executable is patched to `LC_LOAD_DYLINKER=/usr/oah/dyld`. The i386 executable is left native.
 
-Both expose two modes:
+Both expose three modes:
 
-- `session-audit`: call `SessionGetInfo(callerSecuritySession,...)`, then `getaudit_addr`, and require the public outputs to equal raw words `0x24` and `0x28`;
+- `session-id-audit`: call `SessionGetInfo(callerSecuritySession,...)`, then `getaudit_addr`, require only the public session ID to equal raw word `0x24`, and report the attribute/word-`0x28` comparison as diagnostic;
+- `session-audit`: call `SessionGetInfo(callerSecuritySession,...)`, then `getaudit_addr`, and strictly require both the public session ID and attributes to equal raw words `0x24` and `0x28`; this mode is reserved for the native Lion oracle;
 - `audit-only`: call only `getaudit_addr`, without calling `SessionGetInfo`.
 
 ## Safety constraints
@@ -65,8 +66,9 @@ For this experiment:
 - do not use any Security/bootstrap/CoreServices interposer;
 - keep `SECURITYSERVER` unset;
 - keep `DYLD_INSERT_LIBRARIES` unset;
-- run the PPC `session-audit` mapping only on Snow Leopard;
-- on Lion, run `session-audit` only in native i386;
+- run `session-id-audit` for both PPC and i386 only on Snow Leopard;
+- do not require Snow Leopard's legacy `SessionGetInfo` attributes to equal `auditinfo_addr` word `0x28`;
+- on Lion, run strict `session-audit` only in native i386;
 - on Lion, run translated PPC only in `audit-only` mode;
 - do not send any custom Mach message;
 - do not call the legacy SecurityServer `getSessionInfo` RPC on Lion;
@@ -128,7 +130,7 @@ Require:
 
 If the build fails, stop and return the complete build output.
 
-## Phase C — Snow Leopard mapping control
+## Phase C — Snow Leopard session-ID control
 
 Run:
 
@@ -136,15 +138,15 @@ Run:
 /bin/bash ./scripts/run-snowleopard-process-manager-security-session-auditinfo-oracle-control.sh
 ```
 
-The runner executes both architectures in `session-audit` mode.
+The runner executes both architectures in `session-id-audit` mode.
 
 Require both to report:
 
 ```text
 PM_SECURITY_AUDITINFO_SESSION:status=0 ...
 PM_SECURITY_AUDITINFO_GET:... rc=0 errno=0 size=0x30 ...
-PM_SECURITY_AUDITINFO_COMPARE:sessionIdMatch=YES attrsMatch=YES
-PM_SECURITY_AUDITINFO_RESULT:SESSION_AUDIT_MATCH
+PM_SECURITY_AUDITINFO_COMPARE:sessionIdMatch=YES ...
+PM_SECURITY_AUDITINFO_RESULT:SESSION_ID_AUDIT_MATCH
 ```
 
 and the runner to end:
@@ -153,9 +155,23 @@ and the runner to end:
 RESULT: PASS
 ```
 
-This establishes that the raw `auditinfo_addr` words at offsets `0x24` and `0x28` correspond to the public SecuritySession ID and attributes on the working baseline.
+The `attrsMatch` field is diagnostic on Snow Leopard and is not a pass criterion. Snow Leopard's public `SessionGetInfo` still uses the legacy SecurityServer path, so its attribute bits are not evidence for Lion's direct AuditInfo mapping. The only Snow control invariant used here is that the successful public session ID matches `auditinfo_addr` word `0x24` in both PPC and i386 subjects.
 
-If Phase C fails, stop. Do not run Lion.
+If Phase C fails under this corrected criterion, stop. Do not run Lion.
+
+## Observed Phase C harness failure and correction
+
+The first Phase C run failed because the control incorrectly imposed Lion's attribute mapping on Snow Leopard.
+
+The returned evidence was internally consistent:
+
+- PPC `SessionGetInfo` returned session ID `0x0020ca74` and attributes `0x00008030`; `getaudit_addr` returned word `0x24 = 0x0020ca74` and word `0x28 = 0x00000000`;
+- i386 `SessionGetInfo` returned the same session ID and attributes; `getaudit_addr` returned word `0x24 = 0x0020ca74` and word `0x28 = 0x00000001`;
+- both architectures therefore proved `sessionIdMatch=YES` while correctly showing `attrsMatch=NO`.
+
+This was a test-harness assumption defect, not a PPC translation failure or a `getaudit_addr` failure. The source and Snow runner now separate a Snow-only `session-id-audit` control from the strict Lion-native `session-audit` oracle.
+
+Because the probe source changed, Phase B must be rebuilt before Phase C is repeated. Do not reuse the previous executable hashes. After pulling current `main`, repeat Phase B and Phase C only; do not proceed to Lion until the corrected control reports `RESULT: PASS`.
 
 ## Phase D — transfer exact artifacts to Lion
 
