@@ -38,7 +38,7 @@ A new private PPC `__DATA,__interpose` dylib contains two tuples:
 2. `mach_msg` replacement:
    - passes every non-target Mach message directly to the pre-interposed original `mach_msg`;
    - recognizes only the legacy Snow Leopard PPC ServerCheckin sent to the exact coreservicesd port returned by the first adapter;
-   - requires request ID `0x2710`, complex bits `0x80001513`, send size `0x28`, receive size `0x3c`, descriptor count 1, the current task port descriptor, disposition `0x13`, and the same reply port passed to `mach_msg`;
+   - requires request ID `0x2710`, complex bits `0x80001513`, send size `0x28`, receive size `0x3c`, descriptor count 1, a nonzero port descriptor with disposition `0x13`/type `0x00`, the exact coreservicesd server port returned by the bootstrap adapter, and the same reply port passed to `mach_msg`;
    - for that one exact transaction, clears the complex bit, changes the request size to Lion's native `0x18`, and invokes the original `mach_msg` with send size `0x18`;
    - leaves Lion's reply in the original caller buffer so the unmodified Snow Leopard PPC MIG stub parses it normally.
 
@@ -159,8 +159,9 @@ Require:
 - stage links the CoreServices umbrella;
 - interposer contains `__DATA,__interpose`;
 - interposer references both `bootstrap_look_up2` and `mach_msg`;
-- build ID is `dual-bootstrap-servercheckin-v1`;
-- ServerCheckin adapter markers are present.
+- build ID is `dual-bootstrap-servercheckin-v2`;
+- the `__DATA,__interpose` section is exactly two PPC tuples (`0x10` bytes);
+- ServerCheckin candidate/exact-match adapter markers are present.
 
 If the build fails, stop and return the complete build output. Do not edit the source locally.
 
@@ -182,7 +183,8 @@ Require all of:
 ```text
 PM_CORESERVICES_COMPAT_BOOTSTRAP_EXACT_CALL:index=1 mode=passthrough
 PM_CORESERVICES_COMPAT_BOOTSTRAP_PASSTHROUGH_RETURN:kr=0 ... servicePort=nonzero
-PM_CORESERVICES_COMPAT_SERVERCHECKIN_EXACT_CALL:index=1 mode=passthrough
+PM_CORESERVICES_COMPAT_SERVERCHECKIN_CANDIDATE:bits=0x80001513 headerSize=0x00000028 id=0x00002710 option=0x00000003 send=0x00000028 recv=0x0000003c ... descriptorCount=1 descriptorPort=nonzero disposition=0x13 type=0x00 ...
+PM_CORESERVICES_COMPAT_SERVERCHECKIN_EXACT_CALL:index=1 mode=passthrough ... descriptorPort=nonzero
 PM_CORESERVICES_COMPAT_SERVERCHECKIN_PASSTHROUGH:bits=0x80001513 send=0x00000028 recv=0x0000003c
 PM_SYSTEMSERVICE_STAGE_SERVICE:port=nonzero
 PM_SYSTEMSERVICE_STAGE_CHECKIN:port=nonzero
@@ -355,3 +357,56 @@ This experiment does not:
 - modify the Rosetta cache or XNU.
 
 It is one process-local integration discriminator for the two now-proven CoreServices transport mismatches.
+
+
+## Phase C harness correction — v2 ServerCheckin matcher
+
+The first Phase C attempt did **not** expose a Snow Leopard CoreServices failure.
+
+The control log proves that:
+
+- the stage and interposer hashes matched their sidecars;
+- both artifacts were 32-bit PPC and the stage used `/usr/oah/dyld`;
+- the interposer contained the expected two-tuple `__DATA,__interpose` section;
+- dyld applied both private tuples to CarbonCore;
+- the bootstrap tuple triggered and passed through successfully with a nonzero coreservicesd port;
+- unmodified Snow Leopard CarbonCore completed `scCreateSystemServiceVersion`, exposed a nonzero server-checkin port, kept process options at zero, and ended in `STAGE_CONTROL_PASS`;
+- the runner nevertheless emitted `RESULT: FAIL` solely because the expected private ServerCheckin exact-match marker never appeared.
+
+The v1 matcher contained one unnecessary assumption: it required the port descriptor inside the legacy `ServerCheckin` request to be numerically identical to the value returned by calling `mach_task_self()` inside the private interposer. The recovered CarbonCore stub establishes only that the descriptor value is supplied by CarbonCore's process-global client state; the previous audits did not prove that its translated-process numeric name must equal a fresh `mach_task_self()` lookup performed from the interposer.
+
+That equality check was therefore too brittle for an integration discriminator.
+
+Version 2 keeps the transaction narrowly scoped but removes that unsupported numeric equality. It still requires all of the protocol identity fields that matter:
+
+```text
+remote port = exact coreservicesd port returned by the adapted bootstrap lookup
+request id = 0x2710
+bits = 0x80001513
+header/send size = 0x28
+receive size = 0x3c
+mach_msg option = 0x3
+descriptor count = 1
+descriptor port = nonzero
+descriptor disposition = 0x13
+descriptor type = 0x00
+reply port in header = mach_msg receive port
+timeout = MACH_MSG_TIMEOUT_NONE
+notify = MACH_PORT_NULL
+```
+
+Version 2 also emits a `PM_CORESERVICES_COMPAT_SERVERCHECKIN_CANDIDATE` record before the full predicate is evaluated. If another mismatch remains, the next Snow Leopard control will preserve the actual header, `mach_msg` arguments, descriptor port, disposition, type, timeout, and notify values instead of failing with an opaque missing-marker result.
+
+The corrected build ID is:
+
+```text
+dual-bootstrap-servercheckin-v2
+```
+
+### Required restart point after the failed v1 control
+
+Pull current runtime `main`, then repeat **Phase B and Phase C only**.
+
+Do not transfer the v1 artifacts to Lion and do not run Phase F until the rebuilt v2 Snow Leopard control ends in `RESULT: PASS`.
+
+The failed v1 control changes no runtime conclusion: Snow Leopard's native CarbonCore path itself completed successfully; only the private integration matcher was over-constrained.
