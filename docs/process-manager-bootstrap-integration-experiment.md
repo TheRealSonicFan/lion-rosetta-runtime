@@ -136,7 +136,7 @@ git rev-parse HEAD
 
 Confirm the five prepared files listed above.
 
-After any correction to this experiment, Phase A must be repeated before rebuilding. On Snow Leopard, also confirm the current interposer source contains the corrected build identity `interpose-replacee-v2` and does not contain a `dlsym` call. The Phase B builder enforces both conditions and will stop if the checkout is stale.
+After any correction to this experiment, Phase A must be repeated before rebuilding. On Snow Leopard, also confirm the current interposer source contains the corrected build identity `interpose-replacee-v3` and does not contain a `dlsym` call. The Phase B builder enforces both conditions and will stop if the checkout is stale.
 
 On Lion also update XNU:
 
@@ -179,11 +179,13 @@ Require:
 - the stage executable links the CoreServices umbrella;
 - the interposer contains a `__DATA,__interpose` section;
 - the interposer references `bootstrap_look_up2`, `mach_msg`, and `mig_get_reply_port`, and contains the private replacement symbol used by its `__DATA,__interpose` tuple;
-- the interposer build report contains `compat_build_id=interpose-replacee-v2`;
+- the interposer build report contains `compat_build_id=interpose-replacee-v3`;
+- the interposer build report contains `interposer_source_sha256=...`;
+- the compiled dylib contains the exact literal `PM_BOOTSTRAP_COMPAT_BUILD_ID:interpose-replacee-v3`;
 - the interposer does **not** import `_dlsym`;
 - the newly generated interposer SHA-256 is **not** the obsolete pre-fix hash `7c2e202c4fc80a33954902ccf59d66c11859e38ce59632f3184a9c71875e225b`.
 
-The builder records `runtime_git_head` in the interposer info report so the artifact can be tied to the checkout that produced it.
+The builder records `interposer_source_sha256` and `runtime_git_head` in the interposer info report. If the checkout has no `.git` metadata, the latter is recorded as `UNAVAILABLE_NON_GIT_CHECKOUT`; the source SHA-256 still provides artifact provenance.
 
 If the build fails, or if the obsolete hash/import appears, stop and return the complete build output.
 
@@ -236,7 +238,7 @@ The procedural gap was that repeating Phase B/Phase C after the first correction
 The corrected interposer has the build identity:
 
 ```text
-interpose-replacee-v2
+interpose-replacee-v3
 ```
 
 The builder now refuses stale source, refuses any rebuilt dylib that still imports `_dlsym`, embeds/logs the build identity, and records the runtime Git HEAD. The Snow Leopard and Lion runners independently reject an interposer that lacks this identity or still imports `_dlsym`.
@@ -250,6 +252,48 @@ aef485ca23cdc4b7a235add955835926cf6091c9fabcf6a1335b33ec0be61978
 ```
 
 Repeat Phase A, then Phase B, then Phase C. Do not proceed to Lion until the corrected Snow Leopard control passes.
+
+## Third Phase C submission — build-marker validation false negative
+
+The third submitted Snow Leopard artifacts are different from the obsolete pre-fix interposer and do contain the corrected tuple-based resolver.
+
+The evidence is explicit:
+
+- the interposer SHA-256 changed to `0d4a34b0df4e8bab07645a434c5f35f81bb788d7c18bbb9b2d8130df139ccb15`;
+- the build report contains `compat_build_id=interpose-replacee-v2`;
+- the build report no longer contains an undefined `_dlsym` import;
+- the control stops before launching the PPC subject with `error: corrected interposer build marker is missing`.
+
+That failure is another harness validation bug, not a resolver failure.
+
+The v2 interposer logged its build ID with a formatted call equivalent to:
+
+```text
+"PM_BOOTSTRAP_COMPAT_BUILD_ID:%s" + COMPAT_BUILD_ID
+```
+
+At runtime that would print the desired combined marker, but the preflight used `strings(1)` to search the binary for the already-concatenated text. Because the format string and build-ID string were separate constants in the binary, `strings` could not find the combined runtime text and rejected a valid corrected artifact before execution.
+
+The v3 correction makes the full marker a single compile-time string literal:
+
+```text
+PM_BOOTSTRAP_COMPAT_BUILD_ID:interpose-replacee-v3
+```
+
+The builder and both runners now validate that exact embedded literal.
+
+The builder also records:
+
+```text
+interposer_source_sha256=...
+runtime_git_head=...
+```
+
+If the checkout has no `.git` metadata, `runtime_git_head` is recorded as `UNAVAILABLE_NON_GIT_CHECKOUT` rather than left blank. The source SHA-256 remains available for artifact provenance in either case.
+
+The submitted v2 hash `0d4a34b0df4e8bab07645a434c5f35f81bb788d7c18bbb9b2d8130df139ccb15` must not be reused for the v3 control because the source and embedded marker have changed.
+
+Repeat Phase A, then Phase B, then Phase C. The corrected Phase C must reach the PPC process; a preflight-only "build marker is missing" result is no longer expected.
 
 ## Phase C — Snow Leopard positive control with pass-through interposition
 
@@ -287,7 +331,7 @@ The exact coreservicesd lookup must be visibly intercepted and then delegated to
 Require:
 
 ```text
-PM_BOOTSTRAP_COMPAT_BUILD_ID:interpose-replacee-v2
+PM_BOOTSTRAP_COMPAT_BUILD_ID:interpose-replacee-v3
 PM_BOOTSTRAP_COMPAT_EXACT_CALL:index=1 mode=passthrough
 PM_BOOTSTRAP_COMPAT_ORIGINAL_RESOLUTION:source=interpose_replacee ...
 PM_BOOTSTRAP_COMPAT_PASSTHROUGH_RETURN:kr=0 ...
