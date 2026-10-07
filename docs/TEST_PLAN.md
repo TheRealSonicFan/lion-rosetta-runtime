@@ -80,19 +80,22 @@ Use a staged progression so a failure identifies the layer that is still incompa
 
 The private LaunchServices compatibility experiment has cleared Lion's PPC admission gate. Three independent Process Manager identity routes remain Snow Leopard-positive but self-SIGABRT on Lion before returning.
 
-The earlier prerequisite failure has been localized to CarbonCore/CoreServices system-service acquisition.
+The earlier prerequisite failure has been localized below LaunchServices to CarbonCore/CoreServices client-session establishment.
 
-The guarded PPC pre-dispatch probe uses the exact same PPC executable on Snow Leopard and Lion. Snow Leopard obtains a nonzero `LaunchApplicationServices` service port and a valid Security session. Lion returns normally from `scCreateSystemServiceVersion("LaunchApplicationServices", 0x00010000, ...)` with a zero port and never reaches `SessionGetInfo`.
+The guarded PPC pre-dispatch probe first showed that Lion returns normally from `scCreateSystemServiceVersion("LaunchApplicationServices", 0x00010000, ...)` with a zero port before `SessionGetInfo` is reached.
 
-The CarbonCore client-internals and RPC protocol audits are now complete. Snow Leopard PPC and Lion i386 share the same broad client architecture through bootstrap lookup, `ServerCheckin`, `SCSession::findOrCreateService`, and client `FindService`.
+The CarbonCore client-internals and RPC protocol audits then established the exact check-in/service path. Snow Leopard PPC performs `SCDontUseServer` gating, resolves the coreservicesd check-in name, calls `bootstrap_look_up2`, calls the legacy `ServerCheckin` RPC, constructs an `SCClientSession`, and only then reaches `FindService`. Lion's server wrapper retains a compatibility path for the older Snow Leopard PPC `ServerCheckin` request, and the `FindService` wire constants align.
 
-The remaining static RPC difference is deliberate compatibility plumbing rather than an identified mismatch. Snow Leopard PPC uses the older complex `ServerCheckin` request (ID `0x2710`, send `0x28`, receive `0x3c`, reply `0x2774`); Lion's server wrapper retains handling for that descriptor-bearing legacy form. `FindService` matches directly across the audited clients (ID `0x2723`, send `0x12c`, receive `0x30`, reply `0x2787`).
+The completed guarded system-service stage discriminator now resolves the next live ambiguity. The exact PPC subject passes on Snow Leopard with a nonzero requested service port and nonzero server-checkin port. On Lion it returns a zero requested service port, a zero server-checkin port, process options `0x00000002`, no crash/core, and `RESULT: CHECKIN_SESSION_UNAVAILABLE`.
 
-The remaining live ambiguity is therefore precise:
+Therefore `FindService` is not the immediate observed failure. The guest PPC CarbonCore never establishes a usable coreservicesd client/check-in session.
 
-1. the guest PPC CarbonCore does not establish a usable coreservicesd client/check-in session; or
-2. check-in succeeds, but `FindService("LaunchApplicationServices", 0x00010000,...)` fails or returns an unusable service result.
+The next boundary is only:
 
-The authoritative next step is the guarded one-shot experiment in `docs/process-manager-systemservice-stage-discriminator-experiment.md`. It repeats the known service-acquisition call and, only after that call returns, reads the existing CarbonCore server-checkin port and process options through dynamically resolved exported helpers from the same guest PPC CarbonCore image.
+```text
+bootstrap_look_up2 -> __scclient_ServerCheckin
+```
 
-Do not rerun the earlier pre-dispatch probe, call `SessionGetInfo`, perform a custom bootstrap lookup, call `ServerCheckin` or `FindService` directly, use `SCDontUseServer`, patch frameworks/daemons, restart services, use live instrumentation, or change XNU before that result is reviewed. No additional XNU change is indicated.
+The authoritative next step is `docs/process-manager-bootstrap-lookup-discriminator-experiment.md`. It performs one Snow Leopard-controlled PPC `bootstrap_look_up2` for the exact default service `com.apple.CoreServices.coreservicesd`, target PID 0, and 64-bit flags value `0x8` recovered from the Snow Leopard PPC CarbonCore callsite. It does not call `ServerCheckin` in the same run.
+
+Do not rerun the earlier stage discriminator, proceed to `FindService`, call Security or Process Manager, set `SCDontUseServer` or `CORESERVICESD_SERVICE_NAME`, patch frameworks/daemons, restart services, use live instrumentation, or change XNU before the bootstrap result is reviewed. No additional XNU change is indicated.
