@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 
 #define COMPAT_BUILD_ID "security-session-bootstrap-compat-v1"
 #define COMPAT_BUILD_MARKER "PM_SECURITY_COMPAT_BUILD_ID:" COMPAT_BUILD_ID
