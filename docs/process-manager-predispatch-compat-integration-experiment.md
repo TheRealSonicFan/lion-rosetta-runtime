@@ -374,7 +374,7 @@ The exact Snow Leopard control returned `SessionGetInfo=0`, a nonzero session ID
 
 Status `1` is especially useful. Historical Snow Leopard-era Security code routes `SessionGetInfo` through `SecurityServer::ClientSession::getSessionInfo`, and its error bridge maps an otherwise unhandled Mach transport exception to the bare `CSSM_ERRCODE_INTERNAL_ERROR` value `1`. Historical later SecurityServer protocol source preserves the same routine slot only as `skip; // was getSessionInfo -- now kept by the kernel`, while the newer native Security client uses `CommonCriteria::AuditInfo` rather than securityd for this query.
 
-This strongly localizes the next defect to the legacy Snow Leopard Security session RPC versus Lion's newer kernel-backed session mechanism.
+This localizes the next defect to the legacy Snow Leopard Security first-use/session transport versus Lion's newer kernel-backed session mechanism. The removed legacy `getSessionInfo` RPC is the leading candidate, but the first call also performs SecurityServer lookup/verification/setup, so the exact failing substep is not yet closed.
 
 The live run did **not** expose the underlying Mach/MIG return code, so do not label it `MIG_BAD_ID` yet.
 
