@@ -1,4 +1,3 @@
-#include <dlfcn.h>
 #include <mach/mach.h>
 #include <mach/mig_errors.h>
 #include <mach/ndr.h>
@@ -46,7 +45,15 @@ typedef kern_return_t (*bootstrap_lookup2_fn)(mach_port_t,
                                               pid_t,
                                               uint64_t);
 
+struct bootstrap_interpose_tuple {
+    const void *replacement;
+    const void *replacee;
+};
+
+static struct bootstrap_interpose_tuple sBootstrapLookupInterpose;
+
 static bootstrap_lookup2_fn gOriginalLookup = NULL;
+static int gOriginalResolutionLogged = 0;
 static unsigned int gExactCallCount = 0;
 static unsigned int gAdaptedCallCount = 0;
 
@@ -82,8 +89,18 @@ original_lookup(void)
 {
     if (gOriginalLookup == NULL) {
         gOriginalLookup = (bootstrap_lookup2_fn)
-            dlsym(RTLD_NEXT, "bootstrap_look_up2");
+            (uintptr_t)sBootstrapLookupInterpose.replacee;
     }
+
+    if (!gOriginalResolutionLogged) {
+        fprintf(stderr,
+                "PM_BOOTSTRAP_COMPAT_ORIGINAL_RESOLUTION:source=interpose_replacee original=0x%08lx replacement=0x%08lx\n",
+                (unsigned long)(uintptr_t)gOriginalLookup,
+                (unsigned long)(uintptr_t)&rosetta_bootstrap_look_up2);
+        fflush(stderr);
+        gOriginalResolutionLogged = 1;
+    }
+
     return gOriginalLookup;
 }
 
@@ -390,10 +407,7 @@ rosetta_bootstrap_look_up2(mach_port_t bp,
 }
 
 __attribute__((used))
-static struct {
-    const void *replacement;
-    const void *replacee;
-} sBootstrapLookupInterpose
+static struct bootstrap_interpose_tuple sBootstrapLookupInterpose
 __attribute__((section("__DATA,__interpose"))) = {
     (const void *)(uintptr_t)&rosetta_bootstrap_look_up2,
     (const void *)(uintptr_t)&bootstrap_look_up2
