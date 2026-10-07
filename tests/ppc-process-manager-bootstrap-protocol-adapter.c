@@ -112,9 +112,10 @@ build_lion_lookup_request(unsigned char *buffer,
 static int
 layout_selfcheck(void)
 {
-    unsigned char buffer[LION_LOOKUP_SEND_SIZE];
+    uint32_t storage[LION_LOOKUP_SEND_SIZE / sizeof(uint32_t)];
+    unsigned char *buffer = (unsigned char *)storage;
 
-    memset(buffer, 0, sizeof(buffer));
+    memset(storage, 0, sizeof(storage));
     if (!build_lion_lookup_request(buffer, (mach_port_t)0x11111111U,
                                    (mach_port_t)0x22222222U)) {
         marker("PM_BOOTSTRAP_ADAPTER_LAYOUT:FAIL");
@@ -169,7 +170,8 @@ run_snow_control(void)
 static int
 run_lion_adapter(void)
 {
-    unsigned char message[LION_LOOKUP_SEND_SIZE];
+    uint32_t storage[LION_LOOKUP_SEND_SIZE / sizeof(uint32_t)];
+    unsigned char *message = (unsigned char *)storage;
     mach_port_t reply_port;
     mach_port_t service_port;
     mach_msg_return_t mr;
