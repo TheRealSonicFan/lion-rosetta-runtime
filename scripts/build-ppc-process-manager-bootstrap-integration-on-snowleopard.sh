@@ -8,6 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 STAGE_BUILDER="$SCRIPT_DIR/build-ppc-process-manager-systemservice-stage-on-snowleopard.sh"
 INTERPOSER_SRC="$ROOT/tests/ppc-process-manager-bootstrap-compat-interposer.c"
+EXPECTED_COMPAT_BUILD_ID="interpose-replacee-v2"
 INFO="$INTERPOSER_OUT.info.txt"
 SHA="$INTERPOSER_OUT.sha256"
 TMP_DYLIB="$(/usr/bin/mktemp /tmp/ppc-bootstrap-compat.XXXXXX.dylib)"
@@ -16,6 +17,10 @@ trap 'rm -f "$TMP_DYLIB" "$TMP_LOG"' EXIT HUP INT TERM
 
 [ -x "$STAGE_BUILDER" ] || { echo "error: missing stage builder: $STAGE_BUILDER" >&2; exit 66; }
 [ -f "$INTERPOSER_SRC" ] || { echo "error: missing interposer source: $INTERPOSER_SRC" >&2; exit 66; }
+/usr/bin/grep -Fq "#define COMPAT_BUILD_ID \"$EXPECTED_COMPAT_BUILD_ID\"" "$INTERPOSER_SRC" || {
+    echo "error: stale bootstrap interposer source; pull current runtime main before rebuilding" >&2
+    exit 66
+}
 
 resolve_compiler() {
     candidate="$1"
@@ -91,10 +96,14 @@ is_ppc32_macho "$INTERPOSER_OUT" || {
     exit 70
 }
 
+RUNTIME_GIT_HEAD="$(cd "$ROOT" 2>/dev/null && /usr/bin/git rev-parse HEAD 2>/dev/null || true)"
+
 {
     echo "== PPC Process Manager bootstrap compatibility interposer build =="
     echo "compiler=$CC_SELECTED"
     echo "source=$INTERPOSER_SRC"
+    echo "runtime_git_head=$RUNTIME_GIT_HEAD"
+    echo "compat_build_id=$EXPECTED_COMPAT_BUILD_ID"
     echo
     echo "== file =="
     /usr/bin/file "$INTERPOSER_OUT"
@@ -128,6 +137,16 @@ for sym in _bootstrap_look_up2 _mach_msg _mig_get_reply_port _rosetta_bootstrap_
         exit 72
     }
 done
+
+if /usr/bin/nm -m "$INTERPOSER_OUT" | /usr/bin/grep -Fq '_dlsym'; then
+    echo "error: stale interposer still imports _dlsym" >&2
+    exit 72
+fi
+
+/usr/bin/strings "$INTERPOSER_OUT" | /usr/bin/grep -Fq "PM_BOOTSTRAP_COMPAT_BUILD_ID:$EXPECTED_COMPAT_BUILD_ID" || {
+    echo "error: corrected interposer build marker is missing" >&2
+    exit 72
+}
 
 /usr/bin/shasum -a 256 "$INTERPOSER_OUT" > "$SHA"
 
