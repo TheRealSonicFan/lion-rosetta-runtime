@@ -144,3 +144,6 @@ The first Snow Leopard bootstrap integration control exposed a harness-only reso
 
 
 A second Snow Leopard integration-control submission was confirmed to be the same obsolete pre-fix interposer: it retained the old SHA-256 and `_dlsym` import and never exercised the corrected tuple-based resolver. Current build/control tooling now tags the corrected interposer as `interpose-replacee-v2`, records its runtime Git HEAD, and rejects stale binaries before execution. Phase A must be repeated before rebuilding and rerunning the Snow Leopard control; no Lion integration run is authorized until that control passes.
+
+
+The third Snow Leopard bootstrap-integration submission confirmed that the corrected no-`dlsym` resolver was rebuilt, but a preflight-only marker check rejected it before launch because the desired runtime-formatted build ID was not stored as one binary string literal. The interposer is now tagged `interpose-replacee-v3` using an exact compile-time marker, and provenance records the source SHA-256 plus a non-git-checkout sentinel when Git metadata is unavailable. Rebuild after pulling current main and rerun the Snow Leopard control before any Lion integration run.
