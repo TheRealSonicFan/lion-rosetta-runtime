@@ -15,7 +15,7 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                          uint64_t);
 extern mach_port_t mig_get_reply_port(void);
 
-#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-v1"
+#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-v2"
 #define COMPAT_BUILD_MARKER "PM_CORESERVICES_COMPAT_BUILD_ID:" COMPAT_BUILD_ID
 #define COMPAT_MODE_ENV "ROSETTA_CORESERVICES_COMPAT_MODE"
 #define COMPAT_MODE_PASSTHROUGH "passthrough"
@@ -377,6 +377,18 @@ lion_format_lookup(mach_port_t bp,
 }
 
 static int
+is_servercheckin_candidate(mach_msg_header_t *msg)
+{
+    unsigned char *m = (unsigned char *)msg;
+
+    if (msg == NULL || gCoreServicesServerPort == MACH_PORT_NULL)
+        return 0;
+
+    return get_u32(m + 0x08) == (uint32_t)gCoreServicesServerPort &&
+           get_u32(m + 0x14) == CHECKIN_REQUEST_ID;
+}
+
+static int
 is_exact_legacy_servercheckin(mach_msg_header_t *msg,
                               mach_msg_option_t option,
                               mach_msg_size_t send_size,
@@ -387,7 +399,7 @@ is_exact_legacy_servercheckin(mach_msg_header_t *msg,
 {
     unsigned char *m = (unsigned char *)msg;
 
-    if (msg == NULL || gCoreServicesServerPort == MACH_PORT_NULL)
+    if (!is_servercheckin_candidate(msg))
         return 0;
 
     if ((uint32_t)option != 0x00000003U ||
@@ -399,13 +411,11 @@ is_exact_legacy_servercheckin(mach_msg_header_t *msg,
 
     if (get_u32(m + 0x00) != CHECKIN_LEGACY_BITS ||
         get_u32(m + 0x04) != CHECKIN_LEGACY_SEND_SIZE ||
-        get_u32(m + 0x08) != (uint32_t)gCoreServicesServerPort ||
         get_u32(m + 0x0c) != (uint32_t)rcv_name ||
-        get_u32(m + 0x14) != CHECKIN_REQUEST_ID ||
         get_u32(m + 0x18) != 1U)
         return 0;
 
-    if (get_u32(m + 0x1c) != (uint32_t)mach_task_self() ||
+    if (get_u32(m + 0x1c) == (uint32_t)MACH_PORT_NULL ||
         m[0x26] != 0x13 ||
         m[0x27] != 0x00)
         return 0;
@@ -426,6 +436,27 @@ rosetta_mach_msg(mach_msg_header_t *msg,
     unsigned char *m = (unsigned char *)msg;
     mach_msg_return_t mr;
 
+    if (is_servercheckin_candidate(msg)) {
+        fprintf(stderr,
+                "PM_CORESERVICES_COMPAT_SERVERCHECKIN_CANDIDATE:bits=0x%08lx headerSize=0x%08lx id=0x%08lx option=0x%08lx send=0x%08lx recv=0x%08lx serverPort=0x%08lx headerReplyPort=0x%08lx receivePort=0x%08lx descriptorCount=%lu descriptorPort=0x%08lx disposition=0x%02x type=0x%02x timeout=0x%08lx notify=0x%08lx\n",
+                (unsigned long)get_u32(m + 0x00),
+                (unsigned long)get_u32(m + 0x04),
+                (unsigned long)get_u32(m + 0x14),
+                (unsigned long)(uint32_t)option,
+                (unsigned long)send_size,
+                (unsigned long)rcv_size,
+                (unsigned long)get_u32(m + 0x08),
+                (unsigned long)get_u32(m + 0x0c),
+                (unsigned long)rcv_name,
+                (unsigned long)get_u32(m + 0x18),
+                (unsigned long)get_u32(m + 0x1c),
+                (unsigned int)m[0x26],
+                (unsigned int)m[0x27],
+                (unsigned long)timeout,
+                (unsigned long)notify);
+        fflush(stderr);
+    }
+
     if (!is_exact_legacy_servercheckin(msg, option, send_size,
                                        rcv_size, rcv_name,
                                        timeout, notify)) {
@@ -439,11 +470,12 @@ rosetta_mach_msg(mach_msg_header_t *msg,
 
     fprintf(stderr, "%s\n", COMPAT_BUILD_MARKER);
     fprintf(stderr,
-            "PM_CORESERVICES_COMPAT_SERVERCHECKIN_EXACT_CALL:index=%u mode=%s serverPort=0x%08lx replyPort=0x%08lx\n",
+            "PM_CORESERVICES_COMPAT_SERVERCHECKIN_EXACT_CALL:index=%u mode=%s serverPort=0x%08lx replyPort=0x%08lx descriptorPort=0x%08lx\n",
             gServerCheckinExactCallCount,
             mode ? mode : "(unset)",
             (unsigned long)gCoreServicesServerPort,
-            (unsigned long)rcv_name);
+            (unsigned long)rcv_name,
+            (unsigned long)get_u32(m + 0x1c));
     fflush(stderr);
 
     if (mode != NULL && strcmp(mode, COMPAT_MODE_PASSTHROUGH) == 0) {
