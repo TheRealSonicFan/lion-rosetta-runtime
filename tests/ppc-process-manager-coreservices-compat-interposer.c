@@ -15,7 +15,7 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                          uint64_t);
 extern mach_port_t mig_get_reply_port(void);
 
-#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-v2"
+#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-v3"
 #define COMPAT_BUILD_MARKER "PM_CORESERVICES_COMPAT_BUILD_ID:" COMPAT_BUILD_ID
 #define COMPAT_MODE_ENV "ROSETTA_CORESERVICES_COMPAT_MODE"
 #define COMPAT_MODE_PASSTHROUGH "passthrough"
@@ -410,7 +410,6 @@ is_exact_legacy_servercheckin(mach_msg_header_t *msg,
         return 0;
 
     if (get_u32(m + 0x00) != CHECKIN_LEGACY_BITS ||
-        get_u32(m + 0x04) != CHECKIN_LEGACY_SEND_SIZE ||
         get_u32(m + 0x0c) != (uint32_t)rcv_name ||
         get_u32(m + 0x18) != 1U)
         return 0;
@@ -438,7 +437,7 @@ rosetta_mach_msg(mach_msg_header_t *msg,
 
     if (is_servercheckin_candidate(msg)) {
         fprintf(stderr,
-                "PM_CORESERVICES_COMPAT_SERVERCHECKIN_CANDIDATE:bits=0x%08lx headerSize=0x%08lx id=0x%08lx option=0x%08lx send=0x%08lx recv=0x%08lx serverPort=0x%08lx headerReplyPort=0x%08lx receivePort=0x%08lx descriptorCount=%lu descriptorPort=0x%08lx disposition=0x%02x type=0x%02x timeout=0x%08lx notify=0x%08lx\n",
+                "PM_CORESERVICES_COMPAT_SERVERCHECKIN_CANDIDATE:bits=0x%08lx headerSizeObserved=0x%08lx id=0x%08lx option=0x%08lx send=0x%08lx recv=0x%08lx serverPort=0x%08lx headerReplyPort=0x%08lx receivePort=0x%08lx descriptorCount=%lu descriptorPort=0x%08lx disposition=0x%02x type=0x%02x timeout=0x%08lx notify=0x%08lx\n",
                 (unsigned long)get_u32(m + 0x00),
                 (unsigned long)get_u32(m + 0x04),
                 (unsigned long)get_u32(m + 0x14),
