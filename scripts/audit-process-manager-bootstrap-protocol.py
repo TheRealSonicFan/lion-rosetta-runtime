@@ -9,7 +9,7 @@ import sys
 import tempfile
 
 DEFAULT_REPORT = "./process-manager-bootstrap-protocol.txt"
-ANALYZER_VERSION = "1"
+ANALYZER_VERSION = "2"
 
 LIBLAUNCH_CANDIDATES = [
     "/usr/lib/system/liblaunch.dylib",
@@ -38,6 +38,11 @@ HEADER_RE = re.compile(
     r"(bootstrap_look_up2|bootstrap_look_up3|"
     r"MIG_BAD_ARGUMENTS|MIG_TYPE_ERROR|"
     r"BOOTSTRAP_PER_PID_SERVICE|BOOTSTRAP_PRIVILEGED_SERVER)",
+    re.I,
+)
+
+DIRECT_CALL_RE = re.compile(
+    r"\\b(?:calll|callq|bl)\\s+0x([0-9a-fA-F]+)",
     re.I,
 )
 
@@ -149,6 +154,48 @@ def emit_window(fp, insns, ordered, name, start, max_bytes=0x2400):
     line(fp, "instruction_lines=%d" % count)
 
 
+def find_symbol(ordered, fragment):
+    frag = fragment.lower()
+    for addr, name in ordered:
+        if frag in name.lower():
+            return addr, name
+    return None, None
+
+
+def infer_mig_lookup_callee(insns, ordered):
+    start, name = find_symbol(ordered, "bootstrap_look_up3")
+    if start is None:
+        return None, 0
+
+    end = next_symbol(ordered, start)
+    if end is None:
+        end = start + 0x1000
+
+    counts = {}
+    for addr, row in insns:
+        if addr < start:
+            continue
+        if addr >= end:
+            break
+        if "symbol stub for:" in row:
+            continue
+        m = DIRECT_CALL_RE.search(row)
+        if not m:
+            continue
+        target = int(m.group(1), 16)
+        if start <= target < end:
+            continue
+        counts[target] = counts.get(target, 0) + 1
+
+    repeated = [(count, target) for target, count in counts.items()
+                if count >= 2]
+    repeated.sort(reverse=True)
+
+    if len(repeated) != 1:
+        return None, 0
+    return repeated[0][1], repeated[0][0]
+
+
 def analyze_slice(fp, path, label, arch, tempdir):
     dst = os.path.join(tempdir, "%s.%s" % (label, arch))
     ok, out = thin(path, arch, dst)
@@ -157,7 +204,8 @@ def analyze_slice(fp, path, label, arch, tempdir):
     line(fp, "thin=%s" % ("YES" if ok else "NO"))
     if not ok:
         line(fp, out.rstrip())
-        return {"arch": arch, "targets": [], "present": False}
+        return {"arch": arch, "targets": [], "present": False,
+                "inferred_mig_target": None}
 
     line(fp, "slice_sha256=%s" % sha256(dst))
 
@@ -165,7 +213,8 @@ def analyze_slice(fp, path, label, arch, tempdir):
     if rc != 0:
         line(fp, "nm_failed")
         line(fp, nmout.rstrip())
-        return {"arch": arch, "targets": [], "present": True}
+        return {"arch": arch, "targets": [], "present": True,
+                "inferred_mig_target": None}
 
     ordered, raw = parse_symbols(nmout)
     selected = [(name, addr) for addr, name in ordered if TARGET_RE.search(name)]
@@ -184,14 +233,33 @@ def analyze_slice(fp, path, label, arch, tempdir):
     if rc != 0:
         line(fp, "disassembly_failed")
         line(fp, dis.rstrip())
-        return {"arch": arch, "targets": [n for n, a in selected], "present": True}
+        return {"arch": arch, "targets": [n for n, a in selected],
+                "present": True, "inferred_mig_target": None}
 
     insns = parse_insns(dis)
     line(fp, "parsed_instruction_lines=%d" % len(insns))
     for name, addr in selected:
         emit_window(fp, insns, ordered, name, addr)
 
-    return {"arch": arch, "targets": [n for n, a in selected], "present": True}
+    inferred_mig = None
+    named_mig = any("vproc_mig_look_up2" in name.lower()
+                    for name, addr in selected)
+    if not named_mig:
+        inferred_mig, repeated_calls = infer_mig_lookup_callee(insns, ordered)
+        line(fp)
+        line(fp, "-- stripped MIG lookup inference --")
+        if inferred_mig is None:
+            line(fp, "inferred_vproc_mig_look_up2=UNRESOLVED")
+        else:
+            line(fp, "inferred_vproc_mig_look_up2=0x%x" % inferred_mig)
+            line(fp, "inference_basis=repeated non-stub direct callee from bootstrap_look_up3")
+            line(fp, "repeated_call_count=%d" % repeated_calls)
+            emit_window(fp, insns, ordered,
+                        "INFERRED_vproc_mig_look_up2_from_bootstrap_look_up3",
+                        inferred_mig)
+
+    return {"arch": arch, "targets": [n for n, a in selected],
+            "present": True, "inferred_mig_target": inferred_mig}
 
 
 def choose_liblaunch():
@@ -253,6 +321,15 @@ def has_target(results, arch, fragment):
     return False
 
 
+def has_named_or_inferred_mig(results, arch):
+    if has_target(results, arch, "vproc_mig_look_up2"):
+        return True
+    for result in results:
+        if result["arch"] == arch and result.get("inferred_mig_target") is not None:
+            return True
+    return False
+
+
 def main():
     report = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_REPORT
     tempdir = tempfile.mkdtemp(prefix="pm-bootstrap-protocol.")
@@ -300,13 +377,16 @@ def main():
             line(fp, "== Audit validation ==")
             if product.startswith("10.6"):
                 required_arch = "ppc7400"
-                required = ["bootstrap_look_up2", "vproc_mig_look_up2"]
+                required = ["bootstrap_look_up2"]
+                require_mig = True
             elif product.startswith("10.7"):
                 required_arch = "i386"
-                required = ["bootstrap_look_up2", "vproc_mig_look_up2"]
+                required = ["bootstrap_look_up2", "bootstrap_look_up3"]
+                require_mig = True
             else:
                 required_arch = None
                 required = []
+                require_mig = False
                 issues.append("unsupported OS baseline: %s" % product)
 
             if required_arch is not None:
@@ -314,6 +394,12 @@ def main():
                     if not has_target(client_results, required_arch, fragment):
                         issues.append("%s bootstrap client target missing: %s" %
                                       (required_arch, fragment))
+                if require_mig and not has_named_or_inferred_mig(
+                        client_results, required_arch):
+                    issues.append("%s bootstrap MIG lookup body unavailable: "
+                                  "no named vproc_mig_look_up2 and no unique "
+                                  "bootstrap_look_up3 callee inference" %
+                                  required_arch)
 
             # launchd is commonly more stripped than liblaunch.  Record any
             # server-side look_up2 windows, but do not make their symbol
