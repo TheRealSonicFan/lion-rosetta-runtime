@@ -38,6 +38,7 @@ echo "build_version=$BUILD_VERSION" | /usr/bin/tee -a "$LOG"
 [ -z "${CORESERVICESD_SERVICE_NAME+x}" ] || fail "CORESERVICESD_SERVICE_NAME must be unset"
 [ -z "${SCDontUseServer+x}" ] || fail "SCDontUseServer must be unset"
 [ -z "${ROSETTA_CORESERVICES_COMPAT_MODE+x}" ] || fail "ROSETTA_CORESERVICES_COMPAT_MODE must be unset before the runner"
+[ -z "${ROSETTA_BOOTSTRAP_COMPAT_MODE+x}" ] || fail "ROSETTA_BOOTSTRAP_COMPAT_MODE must be unset before the runner"
 [ -z "${DYLD_INSERT_LIBRARIES+x}" ] || fail "DYLD_INSERT_LIBRARIES must be unset before the runner"
 
 [ -x "$STAGE_EXE" ] || fail "missing or non-executable PPC stage subject: $STAGE_EXE"
@@ -76,7 +77,10 @@ OT="$(/usr/bin/otool -l "$STAGE_EXE" | /usr/bin/grep -A3 LC_LOAD_DYLINKER || tru
 echo "$OT" | /usr/bin/tee -a "$LOG"
 echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || fail "stage LC_LOAD_DYLINKER is not /usr/oah/dyld"
 
-/usr/bin/otool -l "$INTERPOSER" | /usr/bin/grep -A10 -B2 '__interpose' | /usr/bin/tee -a "$LOG" || fail "interposer section missing"
+INTERPOSE_SECTION="$(/usr/bin/otool -l "$INTERPOSER" | /usr/bin/grep -A10 -B2 '__interpose' || true)"
+echo "$INTERPOSE_SECTION" | /usr/bin/tee -a "$LOG"
+echo "$INTERPOSE_SECTION" | /usr/bin/grep -q '__interpose' || fail "interposer section missing"
+echo "$INTERPOSE_SECTION" | /usr/bin/grep -Fq 'size 0x00000010' || fail "interposer does not contain exactly two PPC interpose tuples"
 
 /usr/bin/strings "$INTERPOSER" | /usr/bin/grep -Fq "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_COMPAT_BUILD_ID" || fail "interposer build marker is missing"
 /usr/bin/strings "$INTERPOSER" | /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_SERVERCHECKIN_ADAPTER_RESULT:PASS' || fail "ServerCheckin adapter marker is missing"
