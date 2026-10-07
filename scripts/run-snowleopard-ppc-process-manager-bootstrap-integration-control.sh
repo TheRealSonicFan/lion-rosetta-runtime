@@ -89,6 +89,8 @@ echo "control_status=$RC" | /usr/bin/tee -a "$LOG"
 if [ "$RC" -eq 0 ] &&
    /usr/bin/grep -Fq "dyld: loaded: $INTERPOSER_ABS" "$LOG" &&
    /usr/bin/grep -Fq 'PM_BOOTSTRAP_COMPAT_EXACT_CALL:index=1 mode=passthrough' "$LOG" &&
+   /usr/bin/grep -Fq 'PM_BOOTSTRAP_COMPAT_ORIGINAL_RESOLUTION:source=interpose_replacee ' "$LOG" &&
+   ! /usr/bin/grep -Fq 'PM_BOOTSTRAP_COMPAT_ORIGINAL_UNAVAILABLE:' "$LOG" &&
    /usr/bin/grep -Fq 'PM_BOOTSTRAP_COMPAT_PASSTHROUGH_RETURN:kr=0 ' "$LOG" &&
    /usr/bin/grep -Eq 'PM_BOOTSTRAP_COMPAT_PASSTHROUGH_RETURN:.*servicePort=0x0*[1-9a-fA-F][0-9a-fA-F]*' "$LOG" &&
    /usr/bin/grep -Eq 'PM_SYSTEMSERVICE_STAGE_SERVICE:port=0x0*[1-9a-fA-F][0-9a-fA-F]*' "$LOG" &&
