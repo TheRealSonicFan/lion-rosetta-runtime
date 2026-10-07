@@ -540,3 +540,52 @@ This experiment does not:
 - modify Rosetta or XNU.
 
 It is one process-local integration discriminator between the now-proven bootstrap compatibility fix and CarbonCore's next native client-session stages.
+
+
+## Observed Lion result — bootstrap integration succeeds, ServerCheckin remains blocked
+
+The completed Lion Phase F run reached the intended integration boundary.
+
+The validated v3 interposer was loaded and triggered once. Its Lion-format bootstrap request completed successfully:
+
+```text
+PM_BOOTSTRAP_COMPAT_ADAPTER_MACH_MSG:kr=0
+PM_BOOTSTRAP_COMPAT_ADAPTER_REPLY:bits=0x80001200 size=0x00000028 id=0x000001f8
+PM_BOOTSTRAP_COMPAT_ADAPTER_RESULT:LOOKUP_PASS servicePort=nonzero serverEuid=0
+```
+
+Unmodified PPC CarbonCore then returned from `scCreateSystemServiceVersion` with both the requested service port and its server-checkin port still zero, process options `0x00000002`, and:
+
+```text
+RESULT: BOOTSTRAP_COMPAT_SERVERCHECKIN_FAILURE
+```
+
+No crash/core diagnostic was produced and all protected hashes remained unchanged.
+
+The Snow Leopard control for the same v3 interposer is a clean PASS: tuple-based pass-through resolves the original PPC `bootstrap_look_up2`, CarbonCore obtains a nonzero service/check-in port, and process options remain zero.
+
+### Correction to the earlier ServerCheckin static interpretation
+
+Re-reading the already-collected Lion i386 `__XServerCheckin` disassembly reveals that the prior statement that Lion retained compatibility for Snow Leopard PPC's complex descriptor-bearing request was incorrect.
+
+Lion's i386 server wrapper:
+
+- rejects a request when the Mach complex bit is set;
+- accepts only a simple request of size `0x18`;
+- otherwise returns `MIG_BAD_ARGUMENTS`.
+
+Snow Leopard PPC `__scclient_ServerCheckin`, by contrast, sends a complex `0x28` request with one port descriptor.
+
+Lion's own i386 client sends the simple `0x18` form.
+
+This provides a concrete protocol explanation for the live integration result and moves the active boundary from bootstrap to ServerCheckin request shape.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-servercheckin-protocol-adapter-experiment.md
+```
+
+It first proves the exact native Lion simple ServerCheckin request in a standalone PPC subject after the already-proven adapted bootstrap lookup. It does not modify the existing integration interposer and does not call `FindService`.
+
+Do not rerun the bootstrap integration experiment before the standalone ServerCheckin result is reviewed.
