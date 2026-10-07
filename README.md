@@ -141,3 +141,6 @@ The standalone PPC bootstrap protocol adapter proof is now a clean PASS. Lion ac
 
 
 The first Snow Leopard bootstrap integration control exposed a harness-only resolver defect before any Lion run: the interposer loaded and triggered correctly, but its `RTLD_NEXT` lookup could not recover the pre-interposed `bootstrap_look_up2` address. The interposer now uses the `replacee` pointer already stored in its own `__DATA,__interpose` tuple, and the control explicitly verifies that resolution path. Rebuild the Phase B artifacts and rerun Phase C before continuing to Lion.
+
+
+A second Snow Leopard integration-control submission was confirmed to be the same obsolete pre-fix interposer: it retained the old SHA-256 and `_dlsym` import and never exercised the corrected tuple-based resolver. Current build/control tooling now tags the corrected interposer as `interpose-replacee-v2`, records its runtime Git HEAD, and rejects stale binaries before execution. Phase A must be repeated before rebuilding and rerunning the Snow Leopard control; no Lion integration run is authorized until that control passes.
