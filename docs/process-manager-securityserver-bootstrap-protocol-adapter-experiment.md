@@ -268,3 +268,40 @@ legacy Security ucsp RPCs -> not reached on Lion
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed result — Lion accepts the corrected SecurityServer lookup
+
+The completed experiment ended with:
+
+```text
+RESULT: SECURITYSERVER_BOOTSTRAP_PROTOCOL_ADAPTER_PASS
+```
+
+The Snow Leopard positive control used the ordinary `bootstrap_look_up` path for `com.apple.SecurityServer` and returned a nonzero service port.
+
+On Lion 10.7.5, the exact PPC subject sent the already-binary-confirmed Lion lookup form:
+
+- request ID `0x194`;
+- send size `0xbc`;
+- receive size `0x6c`;
+- target PID 0;
+- zero 16-byte instance UUID;
+- flags 0;
+- service name `com.apple.SecurityServer`.
+
+`mach_msg` returned success. Lion returned the expected complex `0x28` reply with reply ID `0x1f8`, descriptor count 1, and a nonzero SecurityServer service port.
+
+No crash/core diagnostic was generated. The kernel, translator, private dyld, native Lion dyld, securityd, Rosetta cache, and PPC subject identities remained unchanged. The native syscall-295 probe also remained a clean EBADF/no-SIGSYS PASS.
+
+This directly proves that the immediate Security first-use bootstrap failure is the same Snow-Leopard-to-Lion launchd request-layout mismatch already established elsewhere in the Process Manager work. It is no longer necessary to investigate the failing `bootstrap_look_up` itself.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-security-session-bootstrap-compat-integration-experiment.md
+```
+
+That stage integrates only this proven SecurityServer bootstrap adaptation into the existing Security-only `SessionGetInfo` probe and passively traces the untouched Security ucsp requests that follow. It does not modify those requests.
+
+Do not patch Security/securityd or make another XNU change before that post-bootstrap trace is reviewed.
