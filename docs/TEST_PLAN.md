@@ -80,22 +80,21 @@ Use a staged progression so a failure identifies the layer that is still incompa
 
 The private LaunchServices compatibility experiment has cleared Lion's PPC admission gate. Three independent Process Manager identity routes remain Snow Leopard-positive but self-SIGABRT on Lion before returning.
 
-The earlier prerequisite failure has been localized below LaunchServices to CarbonCore/CoreServices client-session establishment.
+The prerequisite failure has now been localized below LaunchServices and below CarbonCore's service lookup to the bootstrap protocol used to reach coreservicesd.
 
-The guarded PPC pre-dispatch probe first showed that Lion returns normally from `scCreateSystemServiceVersion("LaunchApplicationServices", 0x00010000, ...)` with a zero port before `SessionGetInfo` is reached.
+The guarded system-service stage discriminator showed that the translated PPC CarbonCore returns a zero `LaunchApplicationServices` port, a zero server-checkin port, and process options `0x00000002` on Lion. That established that no usable CoreServices client/check-in session is created and that `FindService` is downstream of the immediate fault.
 
-The CarbonCore client-internals and RPC protocol audits then established the exact check-in/service path. Snow Leopard PPC performs `SCDontUseServer` gating, resolves the coreservicesd check-in name, calls `bootstrap_look_up2`, calls the legacy `ServerCheckin` RPC, constructs an `SCClientSession`, and only then reaches `FindService`. Lion's server wrapper retains a compatibility path for the older Snow Leopard PPC `ServerCheckin` request, and the `FindService` wire constants align.
+The subsequent exact bootstrap-lookup discriminator now resolves the first half of that boundary. The identical PPC executable succeeds on Snow Leopard 10.6.8 with a nonzero bootstrap port, `kr=0`, and a nonzero `com.apple.CoreServices.coreservicesd` service port. On Lion 10.7.5 it has a nonzero bootstrap port and the same clean environment/name/target/flags, but `bootstrap_look_up2` returns `kr=-304` (`0xfffffed0`), service port zero, and `RESULT: BOOTSTRAP_LOOKUP_ERROR`, with no crash and no protected-file changes.
 
-The completed guarded system-service stage discriminator now resolves the next live ambiguity. The exact PPC subject passes on Snow Leopard with a nonzero requested service port and nonzero server-checkin port. On Lion it returns a zero requested service port, a zero server-checkin port, process options `0x00000002`, no crash/core, and `RESULT: CHECKIN_SESSION_UNAVAILABLE`.
+Darwin Mach/MIG defines `-304` as `MIG_BAD_ARGUMENTS`, not an unknown-service result.
 
-Therefore `FindService` is not the immediate observed failure. The guest PPC CarbonCore never establishes a usable coreservicesd client/check-in session.
+Public Apple launchd source for the exact releases exposes a matching protocol evolution beneath the stable public API:
 
-The next boundary is only:
+- Snow Leopard 10.6.8 / launchd-329.3.3 `vproc_mig_look_up2` carries target PID followed directly by 64-bit flags.
+- Lion 10.7.5 / launchd-392.39 inserts `instanceid : uuid_t` between target PID and flags, and Lion's `bootstrap_look_up2` routes through `bootstrap_look_up3` to populate the expanded request.
 
-```text
-bootstrap_look_up2 -> __scclient_ServerCheckin
-```
+This is now the leading explanation for Lion's `MIG_BAD_ARGUMENTS`: the restored Snow Leopard PPC liblaunch client emits the legacy request layout to Lion launchd.
 
-The authoritative next step is `docs/process-manager-bootstrap-lookup-discriminator-experiment.md`. It performs one Snow Leopard-controlled PPC `bootstrap_look_up2` for the exact default service `com.apple.CoreServices.coreservicesd`, target PID 0, and 64-bit flags value `0x8` recovered from the Snow Leopard PPC CarbonCore callsite. It does not call `ServerCheckin` in the same run.
+The authoritative next step is the read-only binary confirmation in `docs/process-manager-bootstrap-protocol-audit.md`, implemented by `scripts/audit-process-manager-bootstrap-protocol.py`. Run it once on Snow Leopard and once on Lion and return both reports. It compares the shipped `bootstrap_look_up2` / `vproc_mig_look_up2` client stubs, visible launchd server-side lookup machinery, Mach-message constants, and installed MIG/bootstrap header evidence.
 
-Do not rerun the earlier stage discriminator, proceed to `FindService`, call Security or Process Manager, set `SCDontUseServer` or `CORESERVICESD_SERVICE_NAME`, patch frameworks/daemons, restart services, use live instrumentation, or change XNU before the bootstrap result is reviewed. No additional XNU change is indicated.
+Do not rerun the PPC bootstrap probe, send a custom Mach message, call `ServerCheckin`, proceed to `FindService`, patch libSystem/liblaunch/launchd, restart services, use live instrumentation, or change XNU before that binary audit is reviewed. No additional XNU change is indicated.
