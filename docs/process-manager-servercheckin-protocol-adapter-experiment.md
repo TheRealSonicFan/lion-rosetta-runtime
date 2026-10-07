@@ -343,3 +343,59 @@ This experiment does not:
 - modify Rosetta or XNU.
 
 It is one isolated protocol proof for the ServerCheckin boundary.
+
+
+## Observed result — Lion native-format ServerCheckin succeeds from translated PPC
+
+All phases of this experiment completed successfully.
+
+The Snow Leopard control validated the recovered legacy request and returned a nonzero session port:
+
+```text
+request mode=snow-legacy
+bits=0x80001513
+send=0x28
+recv=0x3c
+reply id=0x2774
+session port=nonzero
+RESULT: PASS
+```
+
+The Lion subject then completed the already-proven UUID-expanded bootstrap lookup and obtained a nonzero coreservicesd port. It sent exactly one native Lion simple ServerCheckin request:
+
+```text
+bits=0x00001513
+id=0x2710
+send=0x18
+recv=0x3c
+```
+
+Lion returned:
+
+```text
+mach_msg kr=0
+reply bits=0x80001200
+reply size=0x34
+reply id=0x2774
+descriptor count=1
+disposition=0x11
+session port=nonzero
+options=0x03000000
+RESULT: SERVERCHECKIN_PROTOCOL_ADAPTER_PASS
+```
+
+No crash/core diagnostic was produced. The private dyld, Lion system dyld, kernel, Rosetta cache, and probe hashes remained unchanged, and the native syscall-295 probe remained a clean EBADF/no-SIGSYS PASS.
+
+This independently proves the second user-space protocol mismatch: Lion accepts its native simple `0x18` ServerCheckin from the translated PPC task, while the restored Snow Leopard PPC CarbonCore emits the incompatible complex `0x28` form.
+
+The bootstrap and ServerCheckin request-shape defects are therefore both independently closed at the standalone protocol level.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-coreservices-compat-integration-experiment.md
+```
+
+That experiment combines only the two proven adaptations in one private process-local interposer and returns control to unmodified PPC CarbonCore. It then observes whether CarbonCore establishes its check-in session and whether its existing `FindService("LaunchApplicationServices")` transaction succeeds.
+
+Do not rerun this standalone ServerCheckin experiment before the dual-integration result is reviewed.
