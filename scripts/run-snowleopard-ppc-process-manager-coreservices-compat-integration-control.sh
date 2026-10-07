@@ -9,7 +9,7 @@ LOG="${5:-./ppc-process-manager-coreservices-compat-integration-snowleopard-cont
 
 PRIVATE_DYLD="/usr/oah/dyld"
 EXPECTED_DYLD_SHA="963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb"
-EXPECTED_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-v2"
+EXPECTED_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-v3"
 
 fail() {
     echo "error: $*" | /usr/bin/tee -a "$LOG" >&2
@@ -100,7 +100,7 @@ if [ "$RC" -eq 0 ] &&
    /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_BOOTSTRAP_EXACT_CALL:index=1 mode=passthrough' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_BOOTSTRAP_PASSTHROUGH_RETURN:kr=0 ' "$LOG" &&
    /usr/bin/grep -Eq 'PM_CORESERVICES_COMPAT_BOOTSTRAP_PASSTHROUGH_RETURN:.*servicePort=0x0*[1-9a-fA-F][0-9a-fA-F]*' "$LOG" &&
-   /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_SERVERCHECKIN_CANDIDATE:bits=0x80001513 headerSize=0x00000028 id=0x00002710 option=0x00000003 send=0x00000028 recv=0x0000003c' "$LOG" &&
+   /usr/bin/grep -Eq 'PM_CORESERVICES_COMPAT_SERVERCHECKIN_CANDIDATE:bits=0x80001513 headerSizeObserved=0x[0-9a-fA-F]+ id=0x00002710 option=0x00000003 send=0x00000028 recv=0x0000003c' "$LOG" &&
    /usr/bin/grep -Eq 'PM_CORESERVICES_COMPAT_SERVERCHECKIN_CANDIDATE:.*descriptorCount=1 descriptorPort=0x0*[1-9a-fA-F][0-9a-fA-F]* disposition=0x13 type=0x00' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_SERVERCHECKIN_EXACT_CALL:index=1 mode=passthrough' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_SERVERCHECKIN_PASSTHROUGH:bits=0x80001513 send=0x00000028 recv=0x0000003c' "$LOG" &&
