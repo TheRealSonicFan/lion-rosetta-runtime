@@ -346,3 +346,42 @@ This experiment does not:
 - modify Rosetta or XNU.
 
 It is one controlled pre-dispatch discriminator that advances from the now-closed CarbonCore boundary to the previously unreachable Security-session boundary.
+
+
+## Observed result — CoreServices passes; SessionGetInfo returns status 1
+
+Phase F reached the intended Security boundary cleanly.
+
+The proven v3 CoreServices compatibility layer reproduced its prior Lion success:
+
+- bootstrap lookup adaptation returned a nonzero coreservicesd port;
+- ServerCheckin adaptation returned a nonzero session port;
+- unmodified PPC CarbonCore returned a nonzero `LaunchApplicationServices` port.
+
+The untouched Snow Leopard PPC Security call then returned normally:
+
+```text
+PM_PREDISPATCH_MILESTONE:M03_BEFORE_SessionGetInfo
+PM_PREDISPATCH_STATUS:SessionGetInfo=1
+PM_PREDISPATCH_SESSION:ID=0x00000000 ATTRS=0x00000000
+PM_PREDISPATCH_MILESTONE:M04_AFTER_SessionGetInfo
+PM_PREDISPATCH_RESULT:SESSIONGETINFO_ERROR
+```
+
+There was no crash/core diagnostic. The executable, interposer, Rosetta cache, private/system dyld, and kernel hashes remained unchanged, and the native syscall-295 safety probe remained a clean EBADF/no-SIGSYS PASS.
+
+The exact Snow Leopard control returned `SessionGetInfo=0`, a nonzero session ID, nonzero attributes, and `RESULT: PASS`.
+
+Status `1` is especially useful. Historical Snow Leopard-era Security code routes `SessionGetInfo` through `SecurityServer::ClientSession::getSessionInfo`, and its error bridge maps an otherwise unhandled Mach transport exception to the bare `CSSM_ERRCODE_INTERNAL_ERROR` value `1`. Historical later SecurityServer protocol source preserves the same routine slot only as `skip; // was getSessionInfo -- now kept by the kernel`, while the newer native Security client uses `CommonCriteria::AuditInfo` rather than securityd for this query.
+
+This strongly localizes the next defect to the legacy Snow Leopard Security session RPC versus Lion's newer kernel-backed session mechanism.
+
+The live run did **not** expose the underlying Mach/MIG return code, so do not label it `MIG_BAD_ID` yet.
+
+The authoritative next stage is the read-only shipped-binary audit in:
+
+```text
+docs/process-manager-security-session-protocol-audit.md
+```
+
+Do not rerun Phase F, do not patch Security, and do not proceed to LaunchServices process-services initialization until that audit is reviewed.
