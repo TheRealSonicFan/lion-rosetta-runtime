@@ -136,6 +136,8 @@ git rev-parse HEAD
 
 Confirm the five prepared files listed above.
 
+After any correction to this experiment, Phase A must be repeated before rebuilding. On Snow Leopard, also confirm the current interposer source contains the corrected build identity `interpose-replacee-v2` and does not contain a `dlsym` call. The Phase B builder enforces both conditions and will stop if the checkout is stale.
+
 On Lion also update XNU:
 
 ```sh
@@ -176,9 +178,14 @@ Require:
 - the stage executable uses `LC_LOAD_DYLINKER=/usr/oah/dyld`;
 - the stage executable links the CoreServices umbrella;
 - the interposer contains a `__DATA,__interpose` section;
-- the interposer references `bootstrap_look_up2`, `mach_msg`, and `mig_get_reply_port`, and contains the private replacement symbol used by its `__DATA,__interpose` tuple.
+- the interposer references `bootstrap_look_up2`, `mach_msg`, and `mig_get_reply_port`, and contains the private replacement symbol used by its `__DATA,__interpose` tuple;
+- the interposer build report contains `compat_build_id=interpose-replacee-v2`;
+- the interposer does **not** import `_dlsym`;
+- the newly generated interposer SHA-256 is **not** the obsolete pre-fix hash `7c2e202c4fc80a33954902ccf59d66c11859e38ce59632f3184a9c71875e225b`.
 
-If the build fails, stop and return the complete build output.
+The builder records `runtime_git_head` in the interposer info report so the artifact can be tied to the checkout that produced it.
+
+If the build fails, or if the obsolete hash/import appears, stop and return the complete build output.
 
 ## Phase C correction — original implementation resolution
 
@@ -210,6 +217,39 @@ and must not emit `PM_BOOTSTRAP_COMPAT_ORIGINAL_UNAVAILABLE`.
 Because the interposer binary changes, repeat Phase B to rebuild it and regenerate its SHA-256 sidecar before rerunning Phase C. The stage executable source is unchanged, but using the Phase B builder again preserves the paired-artifact provenance.
 
 Do not proceed to Lion until the revised Snow Leopard Phase C ends in `RESULT: PASS`.
+
+## Second Phase C submission — stale pre-fix interposer identified
+
+The second submitted Snow Leopard control did not exercise the corrected `interpose_replacee` resolver.
+
+The evidence is explicit:
+
+- the interposer SHA-256 is still `7c2e202c4fc80a33954902ccf59d66c11859e38ce59632f3184a9c71875e225b`, exactly the pre-fix binary identity;
+- the interposer build report still lists an undefined `_dlsym` import;
+- the control still emits `PM_BOOTSTRAP_COMPAT_ORIGINAL_UNAVAILABLE:reason=SNOW_CONTROL_EXACT_TARGET`;
+- the control does not emit `PM_BOOTSTRAP_COMPAT_ORIGINAL_RESOLUTION:source=interpose_replacee`.
+
+The corrected source on current `main` contains no `dlsym` call. Therefore this result does not test, and cannot falsify, the corrected pass-through resolver.
+
+The procedural gap was that repeating Phase B/Phase C after the first correction was not sufficient unless Phase A was repeated first to pull the corrected source. The build/control tooling now enforces corrected-artifact provenance instead of relying on that assumption.
+
+The corrected interposer has the build identity:
+
+```text
+interpose-replacee-v2
+```
+
+The builder now refuses stale source, refuses any rebuilt dylib that still imports `_dlsym`, embeds/logs the build identity, and records the runtime Git HEAD. The Snow Leopard and Lion runners independently reject an interposer that lacks this identity or still imports `_dlsym`.
+
+The old interposer and sidecar with SHA-256 `7c2e202c4fc80a33954902ccf59d66c11859e38ce59632f3184a9c71875e225b` must not be reused.
+
+The stage executable source is unchanged, so its SHA-256 may legitimately remain:
+
+```text
+aef485ca23cdc4b7a235add955835926cf6091c9fabcf6a1335b33ec0be61978
+```
+
+Repeat Phase A, then Phase B, then Phase C. Do not proceed to Lion until the corrected Snow Leopard control passes.
 
 ## Phase C — Snow Leopard positive control with pass-through interposition
 
@@ -247,6 +287,7 @@ The exact coreservicesd lookup must be visibly intercepted and then delegated to
 Require:
 
 ```text
+PM_BOOTSTRAP_COMPAT_BUILD_ID:interpose-replacee-v2
 PM_BOOTSTRAP_COMPAT_EXACT_CALL:index=1 mode=passthrough
 PM_BOOTSTRAP_COMPAT_ORIGINAL_RESOLUTION:source=interpose_replacee ...
 PM_BOOTSTRAP_COMPAT_PASSTHROUGH_RETURN:kr=0 ...
@@ -254,7 +295,7 @@ PM_SYSTEMSERVICE_STAGE_RESULT:STAGE_CONTROL_PASS
 RESULT: PASS
 ```
 
-Also require nonzero service ports in both the interposer pass-through return and the normal CoreServices stage output.
+Also require nonzero service ports in both the interposer pass-through return and the normal CoreServices stage output. `PM_BOOTSTRAP_COMPAT_ORIGINAL_UNAVAILABLE` must not appear.
 
 This control proves that the private dyld loads the interposer, that the `__interpose` tuple actually reaches CarbonCore's bootstrap call, that the tuple's replacee address resolves the original Snow Leopard PPC implementation, and that pass-through remains functional.
 
