@@ -97,4 +97,6 @@ This is now the leading explanation for Lion's `MIG_BAD_ARGUMENTS`: the restored
 
 The authoritative next step is the read-only binary confirmation in `docs/process-manager-bootstrap-protocol-audit.md`, implemented by `scripts/audit-process-manager-bootstrap-protocol.py`. Run it once on Snow Leopard and once on Lion and return both reports. It compares the shipped `bootstrap_look_up2` / `vproc_mig_look_up2` client stubs, visible launchd server-side lookup machinery, Mach-message constants, and installed MIG/bootstrap header evidence.
 
+The first Lion Phase C run exposed an analyzer-only validation bug: Lion's `liblaunch.dylib` strips the private `_vproc_mig_look_up2` symbol name even though `bootstrap_look_up3` visibly calls the same anonymous non-stub target twice around the per-user fallback. Analyzer version 2 now infers that unique repeated callee and emits its disassembly window instead of requiring the private symbol name. The Snow Leopard Phase B PASS remains valid; rerun only Lion Phase C after pulling current `main`.
+
 Do not rerun the PPC bootstrap probe, send a custom Mach message, call `ServerCheckin`, proceed to `FindService`, patch libSystem/liblaunch/launchd, restart services, use live instrumentation, or change XNU before that binary audit is reviewed. No additional XNU change is indicated.
