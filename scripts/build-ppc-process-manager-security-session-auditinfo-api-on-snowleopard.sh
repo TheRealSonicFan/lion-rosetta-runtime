@@ -28,8 +28,26 @@ CC_SELECTED="${CC:-/Developer-3.2.6/usr/bin/gcc-4.2}"
 
 "$CC_SELECTED" -arch ppc -mmacosx-version-min=10.5     -dynamiclib "$INTERPOSER_SRC" -framework Security -o "$OUT_INTERPOSER"
 
-/usr/bin/lipo -verify_arch ppc "$OUT_EXE"
-/usr/bin/lipo -verify_arch ppc "$OUT_INTERPOSER"
+is_ppc32_macho() {
+    file="$1"
+    if [ -x /usr/bin/lipo ]; then
+        /usr/bin/lipo -verify_arch ppc "$file" >/dev/null 2>&1 && return 0
+        /usr/bin/lipo "$file" -verify_arch ppc >/dev/null 2>&1 && return 0
+    fi
+    desc="$(/usr/bin/file "$file" 2>/dev/null || true)"
+    echo "$desc" | /usr/bin/grep -Eiq '(^|[^[:alnum:]_])(ppc|powerpc)([^[:alnum:]_]|$)' || return 1
+    echo "$desc" | /usr/bin/grep -Eiq 'ppc64|powerpc64' && return 1
+    return 0
+}
+
+is_ppc32_macho "$OUT_EXE" || {
+    echo "error: probe is not a 32-bit PPC Mach-O" >&2
+    exit 70
+}
+is_ppc32_macho "$OUT_INTERPOSER" || {
+    echo "error: interposer is not a 32-bit PPC Mach-O dylib" >&2
+    exit 70
+}
 
 OT="$(/usr/bin/otool -l "$OUT_EXE" | /usr/bin/grep -A3 LC_LOAD_DYLINKER || true)"
 echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || {
