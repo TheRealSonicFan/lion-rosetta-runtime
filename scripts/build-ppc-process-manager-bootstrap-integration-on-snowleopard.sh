@@ -111,7 +111,7 @@ is_ppc32_macho "$INTERPOSER_OUT" || {
     /usr/bin/otool -l "$INTERPOSER_OUT" | /usr/bin/grep -A10 -B2 '__interpose' || true
     echo
     echo "== required imports/symbols =="
-    /usr/bin/nm -m "$INTERPOSER_OUT" | /usr/bin/grep -E 'bootstrap_look_up2|mach_msg|mig_get_reply_port|dlsym' || true
+    /usr/bin/nm -m "$INTERPOSER_OUT" | /usr/bin/grep -E 'bootstrap_look_up2|mach_msg|mig_get_reply_port|rosetta_bootstrap_look_up2' || true
     echo
     echo "== SHA-256 =="
     /usr/bin/shasum -a 256 "$INTERPOSER_OUT"
@@ -122,7 +122,7 @@ is_ppc32_macho "$INTERPOSER_OUT" || {
     exit 71
 }
 
-for sym in _bootstrap_look_up2 _mach_msg _mig_get_reply_port _dlsym; do
+for sym in _bootstrap_look_up2 _mach_msg _mig_get_reply_port _rosetta_bootstrap_look_up2; do
     /usr/bin/nm -m "$INTERPOSER_OUT" | /usr/bin/grep -Fq "$sym" || {
         echo "error: interposer does not reference $sym" >&2
         exit 72
