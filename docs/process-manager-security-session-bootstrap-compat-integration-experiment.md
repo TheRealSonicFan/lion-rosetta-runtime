@@ -294,3 +294,34 @@ post-bootstrap untouched Security first-use/session path -> unresolved
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed result — legacy getSessionInfo is rejected with MIG_BAD_ID
+
+The completed Snow Leopard control remained fully transparent: SecurityServer lookup, `verifyPrivileged2`, setup, and `getSessionInfo (0x428)` all completed, and `SessionGetInfo` returned status 0 with nonzero session data.
+
+On Lion, the proven SecurityServer bootstrap adaptation succeeded and returned a nonzero service port. The untouched Snow Leopard PPC Security client then proceeded further:
+
+- `verifyPrivileged2 (0x441)` returned Mach success with the expected complex reply;
+- `setup (0x3e8)` returned Mach success with RetCode 0;
+- `getSessionInfo (0x428)` was finally sent;
+- Mach transport itself returned success;
+- the reply was a non-complex `0x24` MIG error reply with reply ID `0x48c`;
+- the tracer observed raw offset-`0x20` word `0xd1feffff`;
+- `SessionGetInfo` then returned status 1.
+
+The shipped Snow Leopard PPC generated stub explicitly checks the reply NDR integer representation and performs a byte swap on the `0x20` error word when the server's representation differs. Applying that exact generated-client behavior to `0xd1feffff` yields `0xfffffed1`, which is signed `-303` / `MIG_BAD_ID`.
+
+Therefore the retired legacy `getSessionInfo=0x428` routine is now directly proven as the next live incompatibility after bootstrap adaptation. The failure is not `verifyPrivileged2`, setup, Mach transport, or another XNU routing defect.
+
+Lion's native `SessionGetInfo(callerSecuritySession,...)` does not send this RPC. Its shipped implementation calls `CommonCriteria::AuditInfo::get()`, which calls `getaudit_addr(..., 0x30)`, and then returns the words at structure offsets `0x24` and `0x28` as the public session ID and attribute bits.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-security-session-auditinfo-oracle-experiment.md
+```
+
+That experiment first proves the `SessionGetInfo <-> getaudit_addr` field mapping on Snow Leopard and native Lion i386, then calls only `getaudit_addr` from translated PPC on Lion. It does not interpose `SessionGetInfo`, revive the old securityd RPC, or modify any system component.
+
+Do not design the final SessionGetInfo compatibility shim until the translated-PPC AuditInfo oracle result is reviewed.
