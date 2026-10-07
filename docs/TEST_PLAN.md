@@ -80,20 +80,25 @@ Use a staged progression so a failure identifies the layer that is still incompa
 
 The private LaunchServices compatibility experiment has cleared Lion's PPC admission gate. Three independent Process Manager identity routes remain Snow Leopard-positive but self-SIGABRT on Lion before returning.
 
-The prerequisite failure is now localized below LaunchServices to the launchd/bootstrap protocol used by restored Snow Leopard PPC libSystem before CarbonCore can establish a coreservicesd client session.
+The prerequisite failure is now localized below LaunchServices to the launchd/bootstrap protocol used by the restored Snow Leopard PPC libSystem before CarbonCore can establish a coreservicesd client session.
 
-The guarded system-service stage discriminator established that Lion returns a zero `LaunchApplicationServices` port, a zero CarbonCore server-checkin port, and process options `0x00000002`. The exact PPC bootstrap discriminator then showed that the process has a valid bootstrap port but Lion returns `MIG_BAD_ARGUMENTS (-304)` for `bootstrap_look_up2("com.apple.CoreServices.coreservicesd", target_pid=0, flags=0x8)`, while the identical subject succeeds on Snow Leopard.
+The guarded CarbonCore stage discriminator first showed that Lion returns a zero `LaunchApplicationServices` service port, a zero CarbonCore server-checkin port, and process options `0x00000002`.
 
-The corrected bootstrap protocol audit is complete and confirms the exact shipped binary mismatch.
+The exact PPC bootstrap discriminator then showed that the process has a valid bootstrap port but Lion returns `MIG_BAD_ARGUMENTS (-304)` for the Snow Leopard PPC `bootstrap_look_up2("com.apple.CoreServices.coreservicesd", target_pid=0, flags=0x8)` request.
 
-Snow Leopard PPC `_vproc_mig_look_up2` uses request ID `0x194`, send size `0xac`, receive size `0x6c`, reply ID `0x1f8`, service-name offset `0x20`, target-PID offset `0xa0`, and 64-bit flags beginning at `0xa4`.
+The corrected binary audit established the exact schema mismatch:
 
-Lion i386 strips the private MIG symbol name, but analyzer version 2 identifies the unique repeated non-stub callee of `bootstrap_look_up3` at `0x7967`. That generated client body uses the same request/reply IDs and receive size, but copies an additional 16-byte field at request offset `0xa4`, moves the 64-bit flags to `0xb4`, and sends `0xbc` bytes.
+- Snow Leopard PPC request: ID `0x194`, send `0xac`, receive `0x6c`, reply ID `0x1f8`, target PID at `0xa0`, flags at `0xa4`.
+- Lion request: the same IDs/receive size, but a 16-byte instance UUID begins at `0xa4`, flags move to `0xb4`, and the send size becomes `0xbc`.
 
-The `0x10` send-size delta exactly matches Lion launchd's inserted `instanceid : uuid_t` field. The earlier live `MIG_BAD_ARGUMENTS` is therefore explained by a concrete legacy-request versus Lion-server type/layout mismatch.
+The guarded standalone protocol-adapter proof has now passed. The validated PPC subject constructed exactly the Lion UUID-expanded request, `mach_msg` returned success, and Lion returned the expected complex reply with descriptor count 1 and a nonzero coreservicesd service port. No crash occurred and all protected hashes remained unchanged.
 
-The authoritative next step is the guarded one-transaction proof in `docs/process-manager-bootstrap-protocol-adapter-experiment.md`. Build the prepared PPC subject on Snow Leopard, require its legacy positive control and in-memory Lion-layout self-check, transfer that exact hashed executable to Lion, repeat the native commpage/syscall-295 safety gates, and run the Lion adapter mode exactly once.
+Therefore the bootstrap wire-format defect itself is experimentally closed: supplying the missing 16-byte Lion instance field is sufficient for a translated PPC task to resolve coreservicesd.
 
-The adapter sends one Lion-format `look_up2` request only: request ID `0x194`, send size `0xbc`, receive size `0x6c`, target PID 0, a zero 16-byte instance UUID, and flags `0x8`. It validates the expected reply ID/shape, deallocates any returned service port, and exits.
+The next question is integration, not another protocol guess. The authoritative next step is `docs/process-manager-bootstrap-integration-experiment.md`.
 
-Do not call CoreServices `ServerCheckin`, `FindService`, Security, LaunchServices process services, or Process Manager in this stage. Do not interpose globally, patch libSystem/liblaunch/launchd, restart services, modify Rosetta, or change XNU. No additional XNU change is indicated.
+That experiment uses a private PPC `__DATA,__interpose` dylib loaded only into the dedicated test process. The replacement intercepts only the exact coreservicesd `bootstrap_look_up2` call with target PID 0 and flags `0x8`; Lion mode permits one adapted request only. All non-target calls pass through to the original Snow Leopard PPC implementation. The corrected service port is then returned to unmodified PPC CarbonCore, which continues its own normal `ServerCheckin -> FindService` path.
+
+The same stage executable is used to read CarbonCore's resulting server-checkin port and requested service port. Possible outcomes distinguish live `ServerCheckin` failure, later `FindService` failure, or complete CoreServices service acquisition.
+
+Do not call `ServerCheckin` or `FindService` directly, do not use `DYLD_FORCE_FLAT_NAMESPACE`, do not install the interposer system-wide, do not patch libSystem/liblaunch/launchd/CarbonCore, do not call Security or Process Manager, and do not change XNU. No additional XNU change is indicated.
