@@ -13,6 +13,10 @@ ANALYZER_VERSION = "1"
 
 SECURITY = "/System/Library/Frameworks/Security.framework/Versions/A/Security"
 SECURITYD = "/usr/sbin/securityd"
+SECURITYD_PLIST_CANDIDATES = [
+    "/System/Library/LaunchDaemons/com.apple.securityd.plist",
+    "/System/Library/LaunchDaemons/com.apple.SecurityServer.plist",
+]
 ROSETTA_CACHE = "/private/var/db/dyld/dyld_shared_cache_rosetta"
 ROSETTA_MAP = "/private/var/db/dyld/dyld_shared_cache_rosetta.map"
 
@@ -309,14 +313,34 @@ def securityd_state(fp):
     if rc != 0:
         line(fp, "launchctl_list_failed")
         line(fp, out.rstrip())
-        return
-    hits = [row for row in out.splitlines()
-            if re.search(r"(securityd|SecurityServer)", row, re.I)]
-    if hits:
-        for row in hits:
-            line(fp, row)
     else:
-        line(fp, "(no matching launchctl rows)")
+        hits = [row for row in out.splitlines()
+                if re.search(r"(securityd|SecurityServer)", row, re.I)]
+        if hits:
+            for row in hits:
+                line(fp, row)
+        else:
+            line(fp, "(no matching launchctl rows)")
+
+    line(fp)
+    line(fp, "-- securityd LaunchDaemon metadata --")
+    found = 0
+    for path in SECURITYD_PLIST_CANDIDATES:
+        if not os.path.isfile(path):
+            continue
+        found += 1
+        line(fp, "plist_path=%s" % path)
+        line(fp, "plist_sha256=%s" % sha256(path))
+        rc, xml = run(["/usr/bin/plutil", "-convert", "xml1", "-o", "-", path])
+        if rc != 0:
+            line(fp, "plist_read_failed")
+            line(fp, xml.rstrip())
+            continue
+        for row in xml.splitlines():
+            if re.search(r"(Label|MachServices|securityd|SecurityServer|ProgramArguments)", row, re.I):
+                line(fp, row)
+    if found == 0:
+        line(fp, "securityd_plist=NOT_FOUND_AT_KNOWN_PATHS")
 
 
 def emit_headers(fp):
