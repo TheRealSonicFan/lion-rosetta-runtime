@@ -467,3 +467,44 @@ Pull current runtime `main`, then repeat **Phase B and Phase C only**.
 Do not transfer the v2 artifacts to Lion and do not run Phase F until the rebuilt v3 Snow Leopard control ends in `RESULT: PASS`.
 
 As with the v1 failure, this changes no CoreServices runtime conclusion: the Snow Leopard control path itself passed; only the private matcher was over-constrained.
+
+
+## Observed result — dual CoreServices integration passes on Lion
+
+All phases of the corrected v3 experiment completed successfully.
+
+The Snow Leopard pass-through control ended in `RESULT: PASS`.
+
+On Lion, the process-local v3 interposer:
+
+- adapted exactly one coreservicesd bootstrap lookup and received a nonzero privileged service port;
+- recognized CarbonCore's exact legacy complex ServerCheckin transaction;
+- converted it to Lion's native simple `0x18` request;
+- received the expected complex `0x34` reply with a nonzero session port and options `0x03000000`;
+- returned control to unmodified PPC CarbonCore.
+
+CarbonCore then completed its own service acquisition:
+
+```text
+PM_SYSTEMSERVICE_STAGE_SERVICE:port=nonzero
+PM_SYSTEMSERVICE_STAGE_CHECKIN:port=nonzero
+PM_SYSTEMSERVICE_STAGE_OPTIONS:0x00000000
+PM_SYSTEMSERVICE_STAGE_RESULT:STAGE_CONTROL_PASS
+RESULT: CORESERVICES_COMPAT_SYSTEMSERVICE_PASS
+```
+
+No crash/core diagnostic was produced. The private dyld, Lion system dyld, kernel, Rosetta cache, stage executable, and interposer hashes remained unchanged, and the native syscall-295 probe remained a clean EBADF/no-SIGSYS PASS.
+
+This result closes the CarbonCore system-service boundary.
+
+Because `scCreateSystemServiceVersion("LaunchApplicationServices", 0x00010000,...)` returned a nonzero port after check-in, CarbonCore's existing Snow Leopard PPC `FindService` transaction is also accepted by Lion without another adapter.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-predispatch-compat-integration-experiment.md
+```
+
+That stage reuses the original pre-dispatch subject under the now-proven v3 CoreServices compatibility layer. It stops after `SessionGetInfo(callerSecuritySession,...)` and does not call LaunchServices process-services initialization or any Process Manager API.
+
+Do not rerun this dual CoreServices integration stage before the pre-dispatch compatibility result is reviewed.
