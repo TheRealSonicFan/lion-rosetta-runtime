@@ -111,14 +111,18 @@ The standalone SecurityServer bootstrap adapter proof has now passed completely.
 
 This closes the immediate Security first-use bootstrap defect as another instance of the Snow-Leopard-to-Lion launchd lookup layout change. No additional bootstrap protocol audit is needed before continuing.
 
+The Security bootstrap compatibility integration has now reached the retired session RPC itself. With only the proven SecurityServer lookup adaptation enabled on Lion, `verifyPrivileged2 (0x441)` succeeds, `setup (0x3e8)` succeeds with RetCode 0, and untouched Snow Leopard PPC Security sends `getSessionInfo (0x428)`. Mach transport succeeds, but Lion returns a non-complex `0x24` MIG error reply. The raw PPC-visible error word is `0xd1feffff`; the shipped PPC generated stub's NDR conversion byte-swaps that to `0xfffffed1`, i.e. signed `-303` / `MIG_BAD_ID`. `SessionGetInfo` consequently returns status 1.
+
+This directly proves that Lion no longer implements the legacy `getSessionInfo=0x428` routine. The next compatibility design must follow Lion's native semantics rather than revive the retired securityd RPC. Lion's native `SessionGetInfo(callerSecuritySession,...)` calls `getaudit_addr(..., 0x30)` and returns the words at offsets `0x24` and `0x28` as session ID and attributes.
+
 The authoritative next step is:
 
 ```text
-docs/process-manager-security-session-bootstrap-compat-integration-experiment.md
+docs/process-manager-security-session-auditinfo-oracle-experiment.md
 ```
 
-That stage combines only the proven SecurityServer bootstrap adaptation with the existing Security-only `SessionGetInfo` probe and a passive ucsp trace. On Snow Leopard the new two-tuple interposer must be transparent. On Lion it adapts only `bootstrap_look_up("com.apple.SecurityServer")`; every subsequent Security request is forwarded unchanged and logged. The result will show whether `verifyPrivileged2`, setup/setupThread, the retired `getSessionInfo=0x428` request, or no further Security defect is the next live boundary.
+That stage validates the `SessionGetInfo <-> getaudit_addr` field mapping on Snow Leopard and native Lion i386, then performs a translated-PPC `getaudit_addr`-only call on Lion. It intentionally does not interpose `SessionGetInfo` yet. If the oracle passes, the following stage can implement a narrow process-local `callerSecuritySession` adapter using Lion's kernel-backed AuditInfo semantics.
 
-Do not patch Security/securityd or make another XNU change before that post-bootstrap trace is reviewed.
+Do not patch Security/securityd or make another XNU change before the AuditInfo oracle is reviewed.
 
 No additional XNU change is indicated.
