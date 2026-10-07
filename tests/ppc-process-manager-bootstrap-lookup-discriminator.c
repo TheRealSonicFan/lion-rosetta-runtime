@@ -1,6 +1,7 @@
 #include <mach/mach.h>
 #include <mach/kern_return.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <sys/types.h>
 
@@ -9,7 +10,7 @@ extern kern_return_t bootstrap_look_up2(mach_port_t bp,
                                          const char *service_name,
                                          mach_port_t *service_port,
                                          pid_t target_pid,
-                                         unsigned int flags);
+                                         uint64_t flags);
 
 static void
 marker(const char *text)
@@ -54,7 +55,7 @@ main(void)
                             serviceName,
                             &servicePort,
                             (pid_t)0,
-                            0x00000008U);
+                            (uint64_t)0x00000008ULL);
     fprintf(stderr,
             "PM_BOOTSTRAP_LOOKUP_RETURN:kr=%ld hex=0x%08lx servicePort=0x%08lx\n",
             (long)kr,
