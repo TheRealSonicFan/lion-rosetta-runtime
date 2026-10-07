@@ -9,7 +9,7 @@ LOG="${5:-./ppc-process-manager-bootstrap-integration-snowleopard-control.log}"
 
 PRIVATE_DYLD="/usr/oah/dyld"
 EXPECTED_DYLD_SHA="963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb"
-EXPECTED_COMPAT_BUILD_ID="interpose-replacee-v2"
+EXPECTED_COMPAT_BUILD_ID="interpose-replacee-v3"
 
 fail() {
     echo "error: $*" | /usr/bin/tee -a "$LOG" >&2
