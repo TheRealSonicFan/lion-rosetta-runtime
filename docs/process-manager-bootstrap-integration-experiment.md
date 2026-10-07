@@ -176,9 +176,40 @@ Require:
 - the stage executable uses `LC_LOAD_DYLINKER=/usr/oah/dyld`;
 - the stage executable links the CoreServices umbrella;
 - the interposer contains a `__DATA,__interpose` section;
-- the interposer references `bootstrap_look_up2`, `mach_msg`, `mig_get_reply_port`, and `dlsym`.
+- the interposer references `bootstrap_look_up2`, `mach_msg`, and `mig_get_reply_port`, and contains the private replacement symbol used by its `__DATA,__interpose` tuple.
 
 If the build fails, stop and return the complete build output.
+
+## Phase C correction — original implementation resolution
+
+The first Snow Leopard Phase C run did not reach Lion and did not expose a CoreServices compatibility failure. The interposer loaded and the exact CarbonCore lookup was intercepted, but the control then recorded:
+
+```text
+PM_BOOTSTRAP_COMPAT_ORIGINAL_UNAVAILABLE:reason=SNOW_CONTROL_EXACT_TARGET
+PM_SYSTEMSERVICE_STAGE_RESULT:CHECKIN_SESSION_UNAVAILABLE
+control_status=20
+RESULT: FAIL
+```
+
+The failure was in the test interposer's pass-through resolver.
+
+The original implementation was being recovered with `dlsym(RTLD_NEXT, "bootstrap_look_up2")`. Under the Snow Leopard dyld interposition model used by `/usr/oah/dyld`, that lookup is not a reliable way to recover the pre-interposed function address: the resolved address can itself reflect the active interposition mapping.
+
+The `__DATA,__interpose` tuple already contains the exact pre-interposed replacee address that dyld used when installing the replacement. The corrected interposer therefore uses its own tuple's `replacee` field as the original Snow Leopard PPC `bootstrap_look_up2` address and no longer uses `dlsym` for pass-through resolution.
+
+This is narrower than adding another symbol-lookup mechanism: it uses the exact address already recorded in the interpose tuple and does not search any other image or namespace.
+
+The corrected control emits:
+
+```text
+PM_BOOTSTRAP_COMPAT_ORIGINAL_RESOLUTION:source=interpose_replacee ...
+```
+
+and must not emit `PM_BOOTSTRAP_COMPAT_ORIGINAL_UNAVAILABLE`.
+
+Because the interposer binary changes, repeat Phase B to rebuild it and regenerate its SHA-256 sidecar before rerunning Phase C. The stage executable source is unchanged, but using the Phase B builder again preserves the paired-artifact provenance.
+
+Do not proceed to Lion until the revised Snow Leopard Phase C ends in `RESULT: PASS`.
 
 ## Phase C — Snow Leopard positive control with pass-through interposition
 
@@ -217,6 +248,7 @@ Require:
 
 ```text
 PM_BOOTSTRAP_COMPAT_EXACT_CALL:index=1 mode=passthrough
+PM_BOOTSTRAP_COMPAT_ORIGINAL_RESOLUTION:source=interpose_replacee ...
 PM_BOOTSTRAP_COMPAT_PASSTHROUGH_RETURN:kr=0 ...
 PM_SYSTEMSERVICE_STAGE_RESULT:STAGE_CONTROL_PASS
 RESULT: PASS
@@ -224,7 +256,7 @@ RESULT: PASS
 
 Also require nonzero service ports in both the interposer pass-through return and the normal CoreServices stage output.
 
-This control proves that the private dyld loads the interposer, that the `__interpose` tuple actually reaches CarbonCore's bootstrap call, and that pass-through to the original implementation remains functional.
+This control proves that the private dyld loads the interposer, that the `__interpose` tuple actually reaches CarbonCore's bootstrap call, that the tuple's replacee address resolves the original Snow Leopard PPC implementation, and that pass-through remains functional.
 
 If Phase C fails, stop. Do not run Lion.
 
