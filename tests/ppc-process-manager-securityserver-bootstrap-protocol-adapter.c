@@ -3,6 +3,7 @@
 #include <servers/bootstrap.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 extern mach_port_t bootstrap_port;
