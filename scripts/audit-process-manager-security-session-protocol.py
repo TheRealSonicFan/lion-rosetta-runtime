@@ -361,6 +361,18 @@ def has_target(results, arch, fragment):
     return False
 
 
+def has_target_all(results, arch, fragments):
+    wanted = [fragment.lower() for fragment in fragments]
+    for result in results:
+        if result["arch"] != arch:
+            continue
+        for name in result["targets"]:
+            low = name.lower()
+            if all(fragment in low for fragment in wanted):
+                return True
+    return False
+
+
 def count_target(results, arch, fragment):
     frag = fragment.lower()
     count = 0
@@ -420,8 +432,11 @@ def main():
                 required_arch = "ppc7400"
                 if not has_target(client_results, required_arch, "SessionGetInfo"):
                     issues.append("%s Security SessionGetInfo missing" % required_arch)
-                if not has_target(client_results, required_arch, "ClientSession"):
-                    issues.append("%s legacy ClientSession path missing" % required_arch)
+                if not has_target_all(
+                        client_results, required_arch,
+                        ["ClientSession", "getSessionInfo"]):
+                    issues.append("%s legacy ClientSession::getSessionInfo path missing" %
+                                  required_arch)
                 if not os.path.isfile(SECURITYD):
                     issues.append("securityd binary missing")
             elif product.startswith("10.7"):
