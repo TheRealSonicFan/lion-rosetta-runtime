@@ -358,7 +358,7 @@ Any abort/crash before the lookup returns is unexpected. Preserve diagnostics an
 
 The completed stage discriminator rules out `FindService` as the immediate observed failure: CarbonCore never established a usable client/check-in session.
 
-The completed RPC audit already shows that `FindService` wire constants align, and Lion's server wrapper retains a legacy `ServerCheckin` compatibility path. Those facts do not prove the live check-in works.
+The completed RPC audit shows that `FindService` wire constants align. A later re-read corrected the earlier ServerCheckin interpretation: Lion rejects Snow Leopard PPC's complex ServerCheckin request and expects its native simple form.
 
 The next live discriminator is therefore exactly one bootstrap lookup. It must not issue `ServerCheckin` in the same run.
 
