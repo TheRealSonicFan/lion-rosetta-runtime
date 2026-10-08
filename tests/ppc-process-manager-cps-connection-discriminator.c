@@ -17,9 +17,9 @@
 #define LS_GET_SERVER_PORT_TEXT_OFFSET 0x000186a8UL
 #define LS_EXPECTED_PROLOGUE_WORD 0x7c0802a6UL
 
-#define CG_CPS_WITH_OPTIONS_VMADDR 0x001fcfdcUL
-#define CG_CPS_SET_FRONT_VMADDR 0x001fd0ccUL
-#define CG_CONNECTION_SLOT_VMADDR 0x007007c8UL
+#define CG_CPS_WITH_OPTIONS_IMAGE_OFFSET 0x001fcfdcUL
+#define CG_CPS_SET_FRONT_IMAGE_OFFSET 0x001fd0ccUL
+#define CG_CONNECTION_SLOT_IMAGE_OFFSET 0x007007c8UL
 #define CG_EXPECTED_PROLOGUE_WORD 0x7c0802a6UL
 #define CG_CPS_NO_CONNECTION_STATUS 0x000003ebUL
 
@@ -101,9 +101,9 @@ find_text_segment(const struct mach_header *mh,
 }
 
 static int
-find_segment_for_vmaddr(const struct mach_header *mh,
-                        uint32_t target,
-                        char segname_out[17])
+find_segment_for_runtime_addr(const struct mach_header *mh,
+                              uintptr_t target,
+                              char segname_out[17])
 {
     const uint8_t *p;
     uint32_t i;
@@ -163,12 +163,6 @@ read_u32(const void *p)
     return v;
 }
 
-static uintptr_t
-apply_slide(uint32_t original_vmaddr, intptr_t slide)
-{
-    return (uintptr_t)((intptr_t)(uintptr_t)original_vmaddr + slide);
-}
-
 static void
 log_connection_state(const char *phase, const void *slot)
 {
@@ -194,6 +188,8 @@ main(void)
     intptr_t cg_slide = 0;
     uint32_t text_vmaddr = 0;
     uint32_t text_vmsize = 0;
+    uint32_t cg_text_vmaddr = 0;
+    uint32_t cg_text_vmsize = 0;
     void *setup_addr;
     void *dispatch_addr;
     void *server_addr;
@@ -326,53 +322,68 @@ main(void)
         return 35;
     }
 
+    if (!find_text_segment(cg_mh, &cg_text_vmaddr, &cg_text_vmsize)) {
+        marker("PM_CPS_DISCRIMINATOR_RESULT:COREGRAPHICS_TEXT_SEGMENT_NOT_FOUND");
+        return 36;
+    }
+
     cg_slide = _dyld_get_image_vmaddr_slide(cg_index);
     cps_with_options_addr = dlsym(RTLD_DEFAULT, "_CPSSetFrontProcessWithOptions");
     cps_set_front_addr = dlsym(RTLD_DEFAULT, "CPSSetFrontProcess");
     if (cps_with_options_addr == NULL || cps_set_front_addr == NULL) {
         marker("PM_CPS_DISCRIMINATOR_RESULT:CPS_SYMBOL_MISSING");
-        return 36;
-    }
-
-    expected_cps_with_options =
-        apply_slide(CG_CPS_WITH_OPTIONS_VMADDR, cg_slide);
-    expected_cps_set_front =
-        apply_slide(CG_CPS_SET_FRONT_VMADDR, cg_slide);
-    connection_slot_addr =
-        (void *)apply_slide(CG_CONNECTION_SLOT_VMADDR, cg_slide);
-
-    cps_segment[0] = '\0';
-    slot_segment[0] = '\0';
-    if (!find_segment_for_vmaddr(cg_mh, CG_CPS_WITH_OPTIONS_VMADDR,
-                                 cps_segment) ||
-        !find_segment_for_vmaddr(cg_mh, CG_CONNECTION_SLOT_VMADDR,
-                                 slot_segment)) {
-        marker("PM_CPS_DISCRIMINATOR_RESULT:AUDITED_VMADDR_OUTSIDE_IMAGE");
         return 37;
     }
 
+    expected_cps_with_options =
+        (uintptr_t)cg_mh + (uintptr_t)CG_CPS_WITH_OPTIONS_IMAGE_OFFSET;
+    expected_cps_set_front =
+        (uintptr_t)cg_mh + (uintptr_t)CG_CPS_SET_FRONT_IMAGE_OFFSET;
+    connection_slot_addr =
+        (void *)((uintptr_t)cg_mh +
+                 (uintptr_t)CG_CONNECTION_SLOT_IMAGE_OFFSET);
+
+    cps_segment[0] = '\0';
+    slot_segment[0] = '\0';
+    if (!find_segment_for_runtime_addr(cg_mh, expected_cps_with_options,
+                                       cps_segment) ||
+        !find_segment_for_runtime_addr(cg_mh,
+                                       (uintptr_t)connection_slot_addr,
+                                       slot_segment)) {
+        marker("PM_CPS_DISCRIMINATOR_RESULT:AUDITED_OFFSET_OUTSIDE_IMAGE");
+        return 38;
+    }
+
     fprintf(stderr,
-            "PM_CPS_IMAGE:name=%s header=0x%08lx slide=%ld slideHex=0x%08lx cpsWithOptionsOriginal=0x%08lx cpsWithOptionsExpected=0x%08lx cpsWithOptionsResolved=0x%08lx cpsSetFrontOriginal=0x%08lx cpsSetFrontExpected=0x%08lx cpsSetFrontResolved=0x%08lx connectionSlotOriginal=0x%08lx connectionSlotRuntime=0x%08lx cpsSegment=%s slotSegment=%s\n",
+            "PM_CPS_IMAGE:name=%s header=0x%08lx textVMAddr=0x%08lx textVMSize=0x%08lx headerMatchesTextVMAddr=%s dyldSlide=%ld dyldSlideHex=0x%08lx cpsWithOptionsOffset=0x%08lx cpsWithOptionsExpected=0x%08lx cpsWithOptionsResolved=0x%08lx cpsSetFrontOffset=0x%08lx cpsSetFrontExpected=0x%08lx cpsSetFrontResolved=0x%08lx connectionSlotOffset=0x%08lx connectionSlotRuntime=0x%08lx cpsSegment=%s slotSegment=%s\n",
             cg_image_name != NULL ? cg_image_name : "(null)",
             (unsigned long)(uintptr_t)cg_mh,
+            (unsigned long)cg_text_vmaddr,
+            (unsigned long)cg_text_vmsize,
+            ((uintptr_t)cg_mh == (uintptr_t)cg_text_vmaddr) ? "YES" : "NO",
             (long)cg_slide,
             (unsigned long)(uintptr_t)cg_slide,
-            (unsigned long)CG_CPS_WITH_OPTIONS_VMADDR,
+            (unsigned long)CG_CPS_WITH_OPTIONS_IMAGE_OFFSET,
             (unsigned long)expected_cps_with_options,
             (unsigned long)(uintptr_t)cps_with_options_addr,
-            (unsigned long)CG_CPS_SET_FRONT_VMADDR,
+            (unsigned long)CG_CPS_SET_FRONT_IMAGE_OFFSET,
             (unsigned long)expected_cps_set_front,
             (unsigned long)(uintptr_t)cps_set_front_addr,
-            (unsigned long)CG_CONNECTION_SLOT_VMADDR,
+            (unsigned long)CG_CONNECTION_SLOT_IMAGE_OFFSET,
             (unsigned long)(uintptr_t)connection_slot_addr,
             cps_segment,
             slot_segment);
     fflush(stderr);
 
+    if ((uintptr_t)cg_mh != (uintptr_t)cg_text_vmaddr) {
+        marker("PM_CPS_DISCRIMINATOR_RESULT:COREGRAPHICS_CACHE_ADDRESS_MODEL_MISMATCH");
+        return 39;
+    }
+
     if ((uintptr_t)cps_with_options_addr != expected_cps_with_options ||
         (uintptr_t)cps_set_front_addr != expected_cps_set_front) {
         marker("PM_CPS_DISCRIMINATOR_RESULT:CPS_SYMBOL_ADDRESS_MISMATCH");
-        return 38;
+        return 40;
     }
 
     fprintf(stderr,
@@ -382,7 +393,7 @@ main(void)
     fflush(stderr);
     if (read_u32(cps_with_options_addr) != CG_EXPECTED_PROLOGUE_WORD) {
         marker("PM_CPS_DISCRIMINATOR_RESULT:CPS_PROLOGUE_MISMATCH");
-        return 39;
+        return 41;
     }
 
     log_connection_state("preidentity", connection_slot_addr);
