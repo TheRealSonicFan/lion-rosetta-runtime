@@ -392,3 +392,51 @@ real LaunchServices process-dispatch setup -> next proof
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result
+
+The corrected Snow Leopard Phase C control passed completely, and the Lion Phase F run also passed completely.
+
+On both systems, the corrected shared-cache address model resolved the same audited LaunchServices local functions:
+
+```text
+LaunchServices header / __TEXT.vmaddr = 0x97329000
+SetupCoreApplicationServicesCommunicationPort = 0x97341070
+getProcessDispatchTable                       = 0x97341654
+getProcessesServerPort                        = 0x973416a8
+entry prologue word at all three              = 0x7c0802a6
+```
+
+Snow Leopard returned:
+
+```text
+dispatch table = 0xa0bbf59c
+server port    = 0x00002003
+RESULT         = PASS
+```
+
+Lion, with the proven CoreServices and Security compatibility layers active, returned:
+
+```text
+CoreServices bootstrap adapter            = PASS
+CoreServices ServerCheckin adapter         = PASS
+Security SessionGetInfo AuditInfo adapter  = PASS
+dispatch table                             = 0xa0bbf59c
+server port                                = 0x00008f03
+RESULT                                     = LAUNCHSERVICES_DISPATCH_SETUP_PASS
+```
+
+No new diagnostic was produced, protected hashes remained unchanged, and the syscall-295 gate remained a clean EBADF/no-SIGSYS PASS.
+
+This closes the earlier LaunchServices process-dispatch abort candidate dynamically. The real Snow Leopard PPC post-reply setup can now create and publish usable process-services state on Lion once the two proven compatibility adapters are active.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-postdispatch-getprocessforpid-experiment.md
+```
+
+That experiment proves the dispatch table and server port again in the same process, keeps `LSDONOTABORTIFNOASN` unset, and then calls exactly one `GetProcessForPID(getpid(), &psn)`. It stops immediately after the identity result and does not perform foreground conversion, window creation, or event-loop work.
+
+No additional XNU change is indicated.
