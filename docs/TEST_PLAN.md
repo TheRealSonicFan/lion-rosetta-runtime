@@ -119,17 +119,7 @@ The AuditInfo oracle has now passed completely. Native Lion i386 `SessionGetInfo
 
 The one-tuple Security `SessionGetInfo(callerSecuritySession,...)` AuditInfo adapter has now passed completely. On Lion, typed `getaudit_addr` returned `ai_asid=0x000186a3` and logical `ai_flags=0x00002030`; the adapter returned those values through the public API with status 0, and the runner confirmed exact ID/attribute equality. The translated PPC raw words also confirm the big-endian 64-bit `ai_flags` layout: offset `0x28` is the high half and offset `0x2c` is the low half.
 
-The authoritative next step is:
-
-```text
-docs/process-manager-predispatch-full-compat-integration-experiment.md
-```
-
-That stage loads the proven `dual-bootstrap-servercheckin-v3` CoreServices adapter and `security-session-auditinfo-api-v1` Security adapter together, then reruns the original pre-dispatch service/session sequence. It still stops before `_LSDoInitializeProcessesServices` and all Process Manager identity APIs.
-
-Do not merge or broaden the interposers and do not make another XNU change before the combined pre-dispatch result is reviewed.
-
-No additional XNU change is indicated.
+That standalone Security adapter result has since been integrated successfully with the proven CoreServices layer; see the combined pre-dispatch result below.
 
 
 The first Snow Leopard AuditInfo oracle control exposed a harness overconstraint rather than a platform failure. Both PPC and i386 subjects returned a successful legacy `SessionGetInfo`, and both raw `getaudit_addr` reads succeeded with the same session ID at word `0x24`; only the legacy public attribute bits (`0x8030`) differed from raw word `0x28` (PPC `0`, i386 `1`). The corrected oracle now uses a Snow-only `session-id-audit` mode that requires only the proven session-ID correspondence, while preserving strict ID+attribute equality for the native Lion `session-audit` oracle. Pull current main, rebuild Phase B, and rerun Phase C only; do not proceed to Lion until the corrected control reports `RESULT: PASS`.
