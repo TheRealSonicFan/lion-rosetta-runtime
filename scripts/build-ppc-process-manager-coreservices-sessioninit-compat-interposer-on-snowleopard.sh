@@ -6,7 +6,7 @@ OUT="${1:-./ppc-process-manager-coreservices-sessioninit-compat-interposer.dylib
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SRC="$ROOT/tests/ppc-process-manager-coreservices-sessioninit-compat-interposer.c"
-EXPECTED_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v4"
+EXPECTED_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5"
 INFO="$OUT.info.txt"
 SHA="$OUT.sha256"
 TMP_DYLIB="$(/usr/bin/mktemp /tmp/ppc-coreservices-sessioninit-compat.XXXXXX.dylib)"
@@ -124,7 +124,7 @@ SOURCE_SHA="$(/usr/bin/shasum -a 256 "$SRC" | /usr/bin/awk '{print $1}')"
     /usr/bin/nm -m "$OUT" | /usr/bin/grep -E 'bootstrap_look_up2|mach_msg|mig_get_reply_port|rosetta_bootstrap_look_up2|rosetta_mach_msg' || true
     echo
     echo "== required markers =="
-    /usr/bin/strings "$OUT" | /usr/bin/grep -E 'PM_CORESERVICES_COMPAT_BUILD_ID|PM_CORESERVICES_COMPAT_SERVERCHECKIN_ADAPTER_RESULT|PM_CORESERVICES_COMPAT_SESSIONINIT_RESULT' || true
+    /usr/bin/strings "$OUT" | /usr/bin/grep -E 'PM_CORESERVICES_COMPAT_BUILD_ID|PM_CORESERVICES_COMPAT_SERVERCHECKIN_ADAPTER_RESULT|PM_CORESERVICES_COMPAT_SERVERCHECKIN_REPLY_PORT|PM_CORESERVICES_COMPAT_SESSIONINIT_ROUTE|PM_CORESERVICES_COMPAT_SESSIONINIT_RESULT' || true
     echo
     echo "== SHA-256 =="
     /usr/bin/shasum -a 256 "$OUT"
@@ -164,6 +164,11 @@ fi
 
 /usr/bin/strings "$OUT" | /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_SESSIONINIT_RESULT:PASS' || {
     echo "error: SessionInit adapter success marker is missing" >&2
+    exit 72
+}
+
+/usr/bin/strings "$OUT" | /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_SESSIONINIT_ROUTE:' || {
+    echo "error: SessionInit route marker is missing" >&2
     exit 72
 }
 
