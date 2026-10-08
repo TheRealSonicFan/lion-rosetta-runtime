@@ -148,3 +148,6 @@ No additional XNU change is indicated.
 
 
 The first Snow Leopard dispatch-setup Phase C failure was a harness address-resolution defect, not a LaunchServices compatibility failure. The corrected `loaded_header + offset` resolver and PPC prologue guards were subsequently rebuilt and passed on both Snow Leopard and Lion, so that earlier rerun gate is closed.
+
+
+The first post-dispatch GetProcessForPID build failure was a harness linkage-gate defect. The PPC executable was produced, but the builder then incorrectly required direct CoreServices and Security LC_LOAD_DYLIB entries. For this Carbon subject, direct Carbon linkage and the exact GetProcessForPID import are the valid build-time gates; CoreServices/Security runtime participation is proven later by the existing adapter markers. The builder has been corrected and now clears stale outputs before rebuilding. Repeat Phase B and then Phase C; do not proceed to Lion until Phase C passes.
