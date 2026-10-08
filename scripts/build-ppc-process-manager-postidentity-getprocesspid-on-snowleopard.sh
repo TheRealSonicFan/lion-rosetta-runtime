@@ -26,7 +26,7 @@ cleanup_on_exit() {
 }
 trap cleanup_on_exit EXIT
 
-"$CC_SELECTED" -arch ppc -mmacosx-version-min=10.5     "$SRC" -framework Carbon -o "$OUT"
+"$CC_SELECTED" -arch ppc -mmacosx-version-min=10.5 "$SRC" -framework Carbon -o "$OUT"
 /bin/chmod +x "$OUT"
 
 /usr/bin/python "$PATCH_DYLINKER" "$OUT" /usr/oah/dyld
@@ -54,12 +54,24 @@ echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || {
     exit 71
 }
 
-/usr/bin/otool -L "$OUT" | /usr/bin/grep -Fq     '/System/Library/Frameworks/Carbon.framework/Versions/A/Carbon' || {
+/usr/bin/otool -L "$OUT" | /usr/bin/grep -Fq '/System/Library/Frameworks/Carbon.framework/Versions/A/Carbon' || {
     echo "error: output does not link Carbon" >&2
     exit 72
 }
 
-/usr/bin/nm -u "$OUT" | /usr/bin/grep -Eq '(^|[[:space:]])_GetProcessForPID
+/usr/bin/nm -u "$OUT" | /usr/bin/grep -Eq '(^|[[:space:]])_GetProcessForPID$' || {
+    echo "error: output does not import GetProcessForPID" >&2
+    exit 72
+}
+/usr/bin/nm -u "$OUT" | /usr/bin/grep -Eq '(^|[[:space:]])_GetProcessPID$' || {
+    echo "error: output does not import GetProcessPID" >&2
+    exit 72
+}
+
+if /usr/bin/nm -u "$OUT" | /usr/bin/grep -Eq '(_GetCurrentProcess|_GetFrontProcess|_SetFrontProcess|_TransformProcessType)($|[[:space:]])'; then
+    echo "error: probe unexpectedly imports a broader Process Manager/foreground API" >&2
+    exit 72
+fi
 
 for marker in     'PM_POSTIDENTITY_MILESTONE:M05_BEFORE_GetProcessForPID'     'PM_POSTIDENTITY_MILESTONE:M06_AFTER_GetProcessForPID'     'PM_POSTIDENTITY_RESULT:GETPROCESSFORPID_PASS'     'PM_POSTIDENTITY_MILESTONE:M07_BEFORE_GetProcessPID'     'PM_POSTIDENTITY_MILESTONE:M08_AFTER_GetProcessPID'     'PM_POSTIDENTITY_RESULT:GETPROCESSPID_ROUNDTRIP_PASS'     'PM_POSTIDENTITY_MILESTONE:M09_SUCCESS'; do
     /usr/bin/strings "$OUT" | /usr/bin/grep -Fq "$marker" || {
@@ -86,111 +98,7 @@ done
     echo "CoreServices and Security are runtime/transitive participants and are validated by the Snow/Lion runners, not by direct LC_LOAD_DYLIB entries."
     echo
     echo "== Process Manager imports =="
-    /usr/bin/nm -u "$OUT" | /usr/bin/grep -E         '(_GetProcessForPID|_GetProcessPID|_GetCurrentProcess|_GetFrontProcess|_SetFrontProcess|_TransformProcessType)' || true
-    echo
-    echo "== fixed Snow Leopard PPC LaunchServices __TEXT-relative symbol offsets =="
-    echo "SetupCoreApplicationServicesCommunicationPort=0x00018070"
-    echo "getProcessDispatchTable=0x00018654"
-    echo "getProcessesServerPort=0x000186a8"
-    echo "expected_ppc_prologue_word=0x7c0802a6"
-    echo
-    echo "== SHA-256 =="
-    /usr/bin/shasum -a 256 "$OUT"
-} > "$INFO"
-
-/usr/bin/shasum -a 256 "$OUT" > "$SHA"
-BUILD_COMPLETE=1
-
-echo "Created:"
-echo "  $OUT"
-echo "  $INFO"
-echo "  $SHA"
- || {
-    echo "error: output does not import GetProcessForPID" >&2
-    exit 72
-}
-/usr/bin/nm -u "$OUT" | /usr/bin/grep -Eq '(^|[[:space:]])_GetProcessPID
-
-for marker in     'PM_POSTDISPATCH_MILESTONE:M05_BEFORE_GetProcessForPID'     'PM_POSTDISPATCH_MILESTONE:M06_AFTER_GetProcessForPID'     'PM_POSTDISPATCH_RESULT:GETPROCESSFORPID_PASS'; do
-    /usr/bin/strings "$OUT" | /usr/bin/grep -Fq "$marker" || {
-        echo "error: required probe marker missing: $marker" >&2
-        exit 72
-    }
-done
-
-{
-    echo "== PPC post-dispatch GetProcessForPID probe =="
-    echo "compiler=$CC_SELECTED"
-    echo "source=$SRC"
-    /usr/bin/file "$OUT"
-    /usr/bin/lipo -info "$OUT" 2>/dev/null || true
-    echo
-    echo "== LC_LOAD_DYLINKER =="
-    /usr/bin/otool -l "$OUT" | /usr/bin/grep -A3 LC_LOAD_DYLINKER
-    echo
-    echo "== linked libraries =="
-    /usr/bin/otool -L "$OUT"
-    echo
-    echo "== linkage note =="
-    echo "Direct Carbon linkage is required."
-    echo "CoreServices and Security are runtime/transitive participants and are validated by the Snow/Lion runners, not by direct LC_LOAD_DYLIB entries."
-    echo
-    echo "== Process Manager imports =="
-    /usr/bin/nm -u "$OUT" | /usr/bin/grep -E         '(_GetProcessForPID|_GetCurrentProcess|_GetProcessPID|_GetFrontProcess|_SetFrontProcess|_TransformProcessType)' || true
-    echo
-    echo "== fixed Snow Leopard PPC LaunchServices __TEXT-relative symbol offsets =="
-    echo "SetupCoreApplicationServicesCommunicationPort=0x00018070"
-    echo "getProcessDispatchTable=0x00018654"
-    echo "getProcessesServerPort=0x000186a8"
-    echo "expected_ppc_prologue_word=0x7c0802a6"
-    echo
-    echo "== SHA-256 =="
-    /usr/bin/shasum -a 256 "$OUT"
-} > "$INFO"
-
-/usr/bin/shasum -a 256 "$OUT" > "$SHA"
-BUILD_COMPLETE=1
-
-echo "Created:"
-echo "  $OUT"
-echo "  $INFO"
-echo "  $SHA"
- || {
-    echo "error: output does not import GetProcessPID" >&2
-    exit 72
-}
-
-if /usr/bin/nm -u "$OUT" | /usr/bin/grep -Eq     '(_GetCurrentProcess|_GetFrontProcess|_SetFrontProcess|_TransformProcessType)($|[[:space:]])'; then
-    echo "error: probe unexpectedly imports a broader Process Manager/foreground API" >&2
-    exit 72
-fi
-
-for marker in     'PM_POSTDISPATCH_MILESTONE:M05_BEFORE_GetProcessForPID'     'PM_POSTDISPATCH_MILESTONE:M06_AFTER_GetProcessForPID'     'PM_POSTDISPATCH_RESULT:GETPROCESSFORPID_PASS'; do
-    /usr/bin/strings "$OUT" | /usr/bin/grep -Fq "$marker" || {
-        echo "error: required probe marker missing: $marker" >&2
-        exit 72
-    }
-done
-
-{
-    echo "== PPC post-dispatch GetProcessForPID probe =="
-    echo "compiler=$CC_SELECTED"
-    echo "source=$SRC"
-    /usr/bin/file "$OUT"
-    /usr/bin/lipo -info "$OUT" 2>/dev/null || true
-    echo
-    echo "== LC_LOAD_DYLINKER =="
-    /usr/bin/otool -l "$OUT" | /usr/bin/grep -A3 LC_LOAD_DYLINKER
-    echo
-    echo "== linked libraries =="
-    /usr/bin/otool -L "$OUT"
-    echo
-    echo "== linkage note =="
-    echo "Direct Carbon linkage is required."
-    echo "CoreServices and Security are runtime/transitive participants and are validated by the Snow/Lion runners, not by direct LC_LOAD_DYLIB entries."
-    echo
-    echo "== Process Manager imports =="
-    /usr/bin/nm -u "$OUT" | /usr/bin/grep -E         '(_GetProcessForPID|_GetCurrentProcess|_GetProcessPID|_GetFrontProcess|_SetFrontProcess|_TransformProcessType)' || true
+    /usr/bin/nm -u "$OUT" | /usr/bin/grep -E '(_GetProcessForPID|_GetProcessPID|_GetCurrentProcess|_GetFrontProcess|_SetFrontProcess|_TransformProcessType)' || true
     echo
     echo "== fixed Snow Leopard PPC LaunchServices __TEXT-relative symbol offsets =="
     echo "SetupCoreApplicationServicesCommunicationPort=0x00018070"
