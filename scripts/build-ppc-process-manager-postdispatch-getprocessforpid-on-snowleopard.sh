@@ -16,6 +16,16 @@ CC_SELECTED="${CC:-/Developer-3.2.6/usr/bin/gcc-4.2}"
 
 /bin/rm -f "$OUT" "$INFO" "$SHA"
 
+BUILD_COMPLETE=0
+cleanup_on_exit() {
+    rc=$?
+    if [ "$BUILD_COMPLETE" -ne 1 ]; then
+        /bin/rm -f "$OUT" "$INFO" "$SHA"
+    fi
+    return "$rc"
+}
+trap cleanup_on_exit EXIT
+
 "$CC_SELECTED" -arch ppc -mmacosx-version-min=10.5     "$SRC" -framework Carbon -o "$OUT"
 /bin/chmod +x "$OUT"
 
@@ -97,6 +107,7 @@ done
 } > "$INFO"
 
 /usr/bin/shasum -a 256 "$OUT" > "$SHA"
+BUILD_COMPLETE=1
 
 echo "Created:"
 echo "  $OUT"
