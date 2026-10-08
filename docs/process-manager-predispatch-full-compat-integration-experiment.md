@@ -295,3 +295,36 @@ combined pre-dispatch coexistence -> next proof
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result
+
+The combined Snow Leopard passthrough control passed with both compatibility dylibs loaded simultaneously.
+
+The Lion Phase F run then passed the complete pre-dispatch prerequisite sequence in one translated PPC process:
+
+```text
+coreservicesd bootstrap adaptation -> PASS
+ServerCheckin adaptation -> PASS
+LaunchApplicationServices port -> 0x00009103
+SessionGetInfo AuditInfo adapter -> PASS
+SessionGetInfo status -> 0
+session ID -> 0x000186a3
+attributes -> 0x00002030
+PREDISPATCH_PRIMITIVES_PASS
+RESULT: PREDISPATCH_FULL_COMPAT_PRIMITIVES_PASS
+```
+
+No diagnostic was produced and all protected identities remained unchanged. The native syscall-295 gate also remained a clean EBADF/no-SIGSYS PASS.
+
+This closes coexistence of the two compatibility layers and closes the entire pre-InitializeProcessesServices prerequisite sequence.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-launchservices-init-wire-experiment.md
+```
+
+That stage sends exactly one binary-proven Snow Leopard PPC `InitializeProcessesServices` request (ID `0x4650`, send `0x2c`, receive `0x50`, expected reply `0x46b4`) after obtaining the proven service port and session ID. It stops after decoding the reply and does not call Process Manager or install a dispatch table.
+
+No additional XNU change is indicated.
