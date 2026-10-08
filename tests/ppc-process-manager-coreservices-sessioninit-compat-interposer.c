@@ -789,8 +789,7 @@ rosetta_mach_msg(mach_msg_header_t *msg,
             get_u32(m + CHECKIN_REPLY_PORT_OFF) != 0U &&
             m[CHECKIN_REPLY_DISPOSITION_OFF] == 0x11 &&
             m[CHECKIN_REPLY_TYPE_OFF] == 0x00) {
-            gCoreServicesSessionPort =
-                (mach_port_t)get_u32(m + CHECKIN_REPLY_PORT_OFF);
+            record_servercheckin_session_port(m, mr, "adapter");
             fprintf(stderr,
                     "PM_CORESERVICES_COMPAT_SERVERCHECKIN_ADAPTER_RESULT:PASS sessionPort=0x%08lx options=0x%08lx\n",
                     (unsigned long)gCoreServicesSessionPort,
