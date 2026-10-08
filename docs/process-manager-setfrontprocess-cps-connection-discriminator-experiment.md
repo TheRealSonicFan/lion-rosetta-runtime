@@ -185,6 +185,34 @@ The builder requires:
 
 Do not manually create sidecars if the builder fails.
 
+
+### Phase B harness correction
+
+An initial Phase B attempt can fail after the PPC executable has compiled, linked, and had its `LC_LOAD_DYLINKER` patched with:
+
+```text
+error: required discriminator marker missing: PM_CPS_CONNECTION_STATE:phase=posttransform
+```
+
+That message identifies a **builder validation defect**, not a missing runtime code path. The subject emits connection-state lines through one format string:
+
+```text
+PM_CPS_CONNECTION_STATE:phase=%s slot=...
+```
+
+and supplies `preidentity`, `postidentity`, `posttransform`, and `postcps` as separate string arguments. Therefore the fully rendered text `PM_CPS_CONNECTION_STATE:phase=posttransform` does not exist as one literal string in the Mach-O and cannot correctly be required by `strings`.
+
+Current `main` fixes the build gate to require the emitted format template plus all four phase literals separately. No subject behavior, CoreGraphics offset, private CPS call, or experiment interpretation changed.
+
+If the old failure was observed:
+
+1. pull current runtime `main`;
+2. rerun **Phase B only**;
+3. require the builder to create all three artifacts normally;
+4. continue to Phase C only after Phase B succeeds.
+
+The builder's failure-cleanup trap removes partial executable/info/SHA outputs, so do not reuse or manually reconstruct artifacts from the failed attempt.
+
 ## Phase C — Snow Leopard control
 
 Use the already accepted v5 CoreServices and v1 Security interposers:
