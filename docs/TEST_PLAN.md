@@ -146,15 +146,17 @@ The InitConnection protocol audit has now passed on both Snow Leopard and Lion a
 
 The v5 SessionInit experiment has now passed completely. Snow Leopard observed the exact legacy InitConnection transaction transparently; Lion translated only request `0x2712` from `0x2c [PID,UID,layout]` to `0x28 [UID,layout]`, received the compatible success reply, and then returned successfully from `GetProcessForPID(getpid(), &psn)` with a nonzero PSN. No crash/core diagnostic appeared, protected hashes remained unchanged, and syscall 295 remained healthy.
 
+The post-identity `GetProcessPID` round-trip experiment has now passed completely. Snow Leopard and Lion both re-proved the one-call SessionInit path, returned a nonzero PSN from `GetProcessForPID`, and then returned the exact original PID from `GetProcessPID`. Lion ended `RESULT: POSTIDENTITY_GETPROCESSPID_ROUNDTRIP_PASS` with no new crash/core diagnostic and unchanged protected hashes.
+
 The authoritative next step is:
 
 ```text
-docs/process-manager-postidentity-getprocesspid-experiment.md
+docs/process-manager-postidentity-transformprocesstype-experiment.md
 ```
 
-Build the new PPC post-identity subject on Snow Leopard and require its passthrough control. It re-proves the accepted `GetProcessForPID` path and then calls exactly one `GetProcessPID` using that returned PSN, requiring `noErr` and an exact round-trip to the subject PID. The Snow control also requires that this sequence does not trigger a second exact SessionInit call before Lion is attempted.
+Build the new PPC post-identity foreground-conversion subject on Snow Leopard and require its complete direct-execution control. It re-proves both identity directions and then calls exactly one `TransformProcessType(..., kProcessTransformToForegroundApplication)`, stopping before `SetFrontProcess`, window creation, or an event loop. Because the accepted Lion identity run emitted non-fatal WindowServer/default-connection diagnostics, the Snow Leopard TransformProcessType result is a hard harness-validity gate; if Snow does not return status 0 in the same direct-execution context, do not run Lion.
 
-Do not call `GetCurrentProcess`, perform foreground conversion, create a window, broaden the v5 adapter, or change XNU before this result is reviewed.
+Do not broaden the v5 adapter, add a WindowServer workaround, call `GetCurrentProcess`, or change XNU before this result is reviewed.
 
 No additional XNU change is indicated.
 
