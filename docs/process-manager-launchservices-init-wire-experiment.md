@@ -289,3 +289,57 @@ InitializeProcessesServices 0x4650 wire transaction -> next proof
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result
+
+The Snow Leopard positive control and the Lion Phase F run both passed completely.
+
+Lion sent the exact Snow Leopard PPC request after the two proven prerequisite adapters succeeded:
+
+```text
+LaunchApplicationServices port = 0x00008f03
+security session ID            = 0x000186a3
+security attributes            = 0x00002030
+request bits                   = 0x00001513
+request ID                     = 0x00004650
+send size                      = 0x0000002c
+receive size                   = 0x00000050
+session1/session2              = 0x000186a3
+requested version              = 0x00a1be40
+```
+
+Lion coreservicesd returned:
+
+```text
+mach_msg                       = KERN_SUCCESS
+reply bits                     = 0x80001200
+reply size                     = 0x00000048
+reply ID                       = 0x000046b4
+complex                        = YES
+descriptor count               = 2
+process port                   = 0x00008f03
+port disposition               = 0x11
+port type                      = 0x00
+OOL address/size               = 0 / 0
+OOL type                       = 0x01
+remote NDR int rep             = 0x01
+PPC local NDR int rep          = 0x00
+outVersion                     = 0x00a1be40
+outError                       = 0
+outCount                       = 0
+```
+
+The Snow Leopard control produced the same successful reply shape and scalar values (with system-specific port/session names). This proves the Snow Leopard PPC InitializeProcessesServices wire contract is accepted unchanged by Lion once the already-proven CoreServices and Security prerequisites are restored.
+
+No diagnostic was produced, protected identities remained unchanged, and the syscall-295 gate remained a clean EBADF/no-SIGSYS PASS.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-launchservices-dispatch-setup-experiment.md
+```
+
+That stage invokes the already-audited Snow Leopard PPC LaunchServices `getProcessDispatchTable()` local function directly in a fresh process, allowing the real post-reply setup path to run while still stopping before every Process Manager identity API.
+
+No additional XNU change is indicated.
