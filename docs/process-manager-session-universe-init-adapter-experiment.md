@@ -142,15 +142,17 @@ The older proven `dual-bootstrap-servercheckin-v3` source remains unchanged and 
 
 ## Repository-side verification before execution
 
-The prepared changes were re-fetched from current `main` and checked before this runbook was made authoritative:
+The corrected v5 changes were re-fetched from current `main` after all edits and checked as a unit:
 
-- the new build, Snow control, and Lion runner pass `bash -n` syntax validation;
-- the v5 C source has balanced C delimiters, exactly one `__DATA,__interpose` section with exactly two tuples, and no `dlsym`;
-- the original v3 CoreServices source remains unchanged with build ID `dual-bootstrap-servercheckin-v3`;
-- the v5 source uses a distinct build ID `dual-bootstrap-servercheckin-sessioninit-v5`;
-- the v5 source recognizes request ID `0x2712` only on the coreservicesd server/check-in port returned by the proven bootstrap lookup, records the distinct ServerCheckin reply descriptor separately, does not require an uninitialized pre-send `msgh_size`, and does not add a MapSharedSegment adapter.
+- the C source has balanced braces/parentheses/brackets, exactly one `__DATA,__interpose` declaration with exactly two tuples, and no `dlsym`;
+- the active InitConnection candidate matches request ID `0x2712` against `gCoreServicesServerPort`, not the separately recorded ServerCheckin reply descriptor;
+- the invalid pre-send `msgh_size == 0x2c` matcher is absent;
+- the v5 route and ServerCheckin-reply diagnostics are present in the source and are required by the build/control runners;
+- the build, Snow control, and Lion runner all require build ID `dual-bootstrap-servercheckin-sessioninit-v5`, contain no active v4 build-ID reference, and their shell control structures are balanced;
+- the old ambiguous `PM_CORESERVICES_COMPAT_SESSION_PORT` marker is absent from the active v5 source/runners;
+- no MapSharedSegment adapter was added.
 
-The actual PowerPC C compile/link cannot be reproduced off Snow Leopard. Phase B is therefore the mandatory compiler/toolchain validation gate; do not proceed if it fails.
+The actual PowerPC C compile/link and real shell execution cannot be reproduced off Snow Leopard. Phase B and then Phase C remain the mandatory compiler/runtime validation gates; do not proceed if either fails.
 
 ## Phase A — update repositories
 
