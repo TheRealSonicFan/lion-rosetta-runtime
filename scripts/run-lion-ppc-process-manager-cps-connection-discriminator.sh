@@ -331,10 +331,11 @@ if /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M10_AFTER_TransformProcessType' 
     exit 1
 fi
 
-if ! /usr/bin/grep -Fq 'PM_CPS_PROLOGUE:expected=0x7c0802a6 actual=0x7c0802a6' "$RAW_LOG" ||
-   ! /usr/bin/grep -Fq 'cpsWithOptionsOriginal=0x001fcfdc' "$RAW_LOG" ||
-   ! /usr/bin/grep -Fq 'cpsSetFrontOriginal=0x001fd0cc' "$RAW_LOG" ||
-   ! /usr/bin/grep -Fq 'connectionSlotOriginal=0x007007c8' "$RAW_LOG"; then
+if ! /usr/bin/grep -Eq 'PM_CPS_IMAGE:.*headerMatchesTextVMAddr=YES' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_CPS_PROLOGUE:expected=0x7c0802a6 actual=0x7c0802a6' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'cpsWithOptionsOffset=0x001fcfdc' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'cpsSetFrontOffset=0x001fd0cc' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'connectionSlotOffset=0x007007c8' "$RAW_LOG"; then
     log "RESULT: CPS_DISCRIMINATOR_AUDITED_ADDRESS_FAILURE"
     [ "$RC" -ne 0 ] && exit "$RC"
     exit 1
