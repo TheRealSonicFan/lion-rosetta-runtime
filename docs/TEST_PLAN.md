@@ -130,14 +130,16 @@ The corrected Security AuditInfo oracle now passes completely. On Lion, native i
 
 The combined pre-dispatch integration has now passed completely. In one translated PPC process on Lion, the proven CoreServices bootstrap/ServerCheckin adaptations and the proven AuditInfo-backed `SessionGetInfo` adapter coexist successfully; CarbonCore returns a nonzero `LaunchApplicationServices` port, `SessionGetInfo` returns status 0 with a nonzero session ID, and the original subject reaches `PREDISPATCH_PRIMITIVES_PASS`.
 
+The InitializeProcessesServices wire experiment has now passed completely. Lion accepted the exact Snow Leopard PPC `0x4650` request unchanged and returned the expected complex `0x48` / reply-ID-`0x46b4` response with two descriptors, `outVersion=0x00a1be40`, `outError=0`, and `outCount=0`. The Snow Leopard control returned the same successful reply shape and scalar values.
+
 The authoritative next step is:
 
 ```text
-docs/process-manager-launchservices-init-wire-experiment.md
+docs/process-manager-launchservices-dispatch-setup-experiment.md
 ```
 
-That stage sends one exact Snow Leopard PPC InitializeProcessesServices MIG request using the established request ID `0x4650`, send size `0x2c`, receive size `0x50`, current session ID twice, and process-services version `0x00a1be40`. It validates the expected complex `0x48` / reply-ID-`0x46b4` response and server error word, then exits before CFMachPort creation, dispatch-table installation, or any Process Manager identity call.
+That stage invokes the audited local Snow Leopard PPC `getProcessDispatchTable()` function directly in a fresh process with the two proven adapters active. It verifies that the real LaunchServices setup returns a nonzero process-dispatch table and then that `getProcessesServerPort()` returns a nonzero process-services port, while still avoiding every Process Manager identity API and the prior no-ASN override.
 
-Do not broaden either compatibility layer or change XNU before this wire result is reviewed.
+Do not interpose `abort`, broaden the compatibility layers, or change XNU before this result is reviewed.
 
 No additional XNU change is indicated.
