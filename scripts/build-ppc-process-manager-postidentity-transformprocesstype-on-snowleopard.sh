@@ -63,7 +63,19 @@ echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || {
     echo "error: output does not import GetProcessForPID" >&2
     exit 72
 }
-/usr/bin/nm -u "$OUT" | /usr/bin/grep -Eq '(^|[[:space:]])_GetProcessPID
+/usr/bin/nm -u "$OUT" | /usr/bin/grep -Eq '(^|[[:space:]])_GetProcessPID$' || {
+    echo "error: output does not import GetProcessPID" >&2
+    exit 72
+}
+/usr/bin/nm -u "$OUT" | /usr/bin/grep -Eq '(^|[[:space:]])_TransformProcessType$' || {
+    echo "error: output does not import TransformProcessType" >&2
+    exit 72
+}
+
+if /usr/bin/nm -u "$OUT" | /usr/bin/grep -Eq '(_GetCurrentProcess|_GetFrontProcess|_SetFrontProcess)($|[[:space:]])'; then
+    echo "error: probe unexpectedly imports a later Process Manager/activation API" >&2
+    exit 72
+fi
 
 for marker in     'PM_POSTIDENTITY_MILESTONE:M05_BEFORE_GetProcessForPID'     'PM_POSTIDENTITY_MILESTONE:M06_AFTER_GetProcessForPID'     'PM_POSTIDENTITY_RESULT:GETPROCESSFORPID_PASS'     'PM_POSTIDENTITY_MILESTONE:M07_BEFORE_GetProcessPID'     'PM_POSTIDENTITY_MILESTONE:M08_AFTER_GetProcessPID'     'PM_POSTIDENTITY_RESULT:GETPROCESSPID_ROUNDTRIP_PASS'     'PM_POSTIDENTITY_MILESTONE:M09_BEFORE_TransformProcessType'     'PM_POSTIDENTITY_MILESTONE:M10_AFTER_TransformProcessType'     'PM_POSTIDENTITY_RESULT:TRANSFORMPROCESSTYPE_PASS'     'PM_POSTIDENTITY_MILESTONE:M11_SUCCESS'; do
     /usr/bin/strings "$OUT" | /usr/bin/grep -Fq "$marker" || {
@@ -74,110 +86,6 @@ done
 
 {
     echo "== PPC post-identity TransformProcessType probe =="
-    echo "compiler=$CC_SELECTED"
-    echo "source=$SRC"
-    /usr/bin/file "$OUT"
-    /usr/bin/lipo -info "$OUT" 2>/dev/null || true
-    echo
-    echo "== LC_LOAD_DYLINKER =="
-    /usr/bin/otool -l "$OUT" | /usr/bin/grep -A3 LC_LOAD_DYLINKER
-    echo
-    echo "== linked libraries =="
-    /usr/bin/otool -L "$OUT"
-    echo
-    echo "== linkage note =="
-    echo "Direct Carbon linkage is required."
-    echo "CoreServices and Security are runtime/transitive participants and are validated by the Snow/Lion runners, not by direct LC_LOAD_DYLIB entries."
-    echo
-    echo "== Process Manager imports =="
-    /usr/bin/nm -u "$OUT" | /usr/bin/grep -E '(_GetProcessForPID|_GetProcessPID|_GetCurrentProcess|_GetFrontProcess|_SetFrontProcess|_TransformProcessType)' || true
-    echo
-    echo "== fixed Snow Leopard PPC LaunchServices __TEXT-relative symbol offsets =="
-    echo "SetupCoreApplicationServicesCommunicationPort=0x00018070"
-    echo "getProcessDispatchTable=0x00018654"
-    echo "getProcessesServerPort=0x000186a8"
-    echo "expected_ppc_prologue_word=0x7c0802a6"
-    echo
-    echo "== SHA-256 =="
-    /usr/bin/shasum -a 256 "$OUT"
-} > "$INFO"
-
-/usr/bin/shasum -a 256 "$OUT" > "$SHA"
-BUILD_COMPLETE=1
-
-echo "Created:"
-echo "  $OUT"
-echo "  $INFO"
-echo "  $SHA"
- || {
-    echo "error: output does not import GetProcessPID" >&2
-    exit 72
-}
-/usr/bin/nm -u "$OUT" | /usr/bin/grep -Eq '(^|[[:space:]])_TransformProcessType
-
-for marker in     'PM_POSTIDENTITY_MILESTONE:M05_BEFORE_GetProcessForPID'     'PM_POSTIDENTITY_MILESTONE:M06_AFTER_GetProcessForPID'     'PM_POSTIDENTITY_RESULT:GETPROCESSFORPID_PASS'     'PM_POSTIDENTITY_MILESTONE:M07_BEFORE_GetProcessPID'     'PM_POSTIDENTITY_MILESTONE:M08_AFTER_GetProcessPID'     'PM_POSTIDENTITY_RESULT:GETPROCESSPID_ROUNDTRIP_PASS'     'PM_POSTIDENTITY_MILESTONE:M09_SUCCESS'; do
-    /usr/bin/strings "$OUT" | /usr/bin/grep -Fq "$marker" || {
-        echo "error: required probe marker missing: $marker" >&2
-        exit 72
-    }
-done
-
-{
-    echo "== PPC post-identity GetProcessPID round-trip probe =="
-    echo "compiler=$CC_SELECTED"
-    echo "source=$SRC"
-    /usr/bin/file "$OUT"
-    /usr/bin/lipo -info "$OUT" 2>/dev/null || true
-    echo
-    echo "== LC_LOAD_DYLINKER =="
-    /usr/bin/otool -l "$OUT" | /usr/bin/grep -A3 LC_LOAD_DYLINKER
-    echo
-    echo "== linked libraries =="
-    /usr/bin/otool -L "$OUT"
-    echo
-    echo "== linkage note =="
-    echo "Direct Carbon linkage is required."
-    echo "CoreServices and Security are runtime/transitive participants and are validated by the Snow/Lion runners, not by direct LC_LOAD_DYLIB entries."
-    echo
-    echo "== Process Manager imports =="
-    /usr/bin/nm -u "$OUT" | /usr/bin/grep -E '(_GetProcessForPID|_GetProcessPID|_GetCurrentProcess|_GetFrontProcess|_SetFrontProcess|_TransformProcessType)' || true
-    echo
-    echo "== fixed Snow Leopard PPC LaunchServices __TEXT-relative symbol offsets =="
-    echo "SetupCoreApplicationServicesCommunicationPort=0x00018070"
-    echo "getProcessDispatchTable=0x00018654"
-    echo "getProcessesServerPort=0x000186a8"
-    echo "expected_ppc_prologue_word=0x7c0802a6"
-    echo
-    echo "== SHA-256 =="
-    /usr/bin/shasum -a 256 "$OUT"
-} > "$INFO"
-
-/usr/bin/shasum -a 256 "$OUT" > "$SHA"
-BUILD_COMPLETE=1
-
-echo "Created:"
-echo "  $OUT"
-echo "  $INFO"
-echo "  $SHA"
- || {
-    echo "error: output does not import TransformProcessType" >&2
-    exit 72
-}
-
-if /usr/bin/nm -u "$OUT" | /usr/bin/grep -Eq '(_GetCurrentProcess|_GetFrontProcess|_SetFrontProcess)($|[[:space:]])'; then
-    echo "error: probe unexpectedly imports a later Process Manager/activation API" >&2
-    exit 72
-fi
-
-for marker in     'PM_POSTIDENTITY_MILESTONE:M05_BEFORE_GetProcessForPID'     'PM_POSTIDENTITY_MILESTONE:M06_AFTER_GetProcessForPID'     'PM_POSTIDENTITY_RESULT:GETPROCESSFORPID_PASS'     'PM_POSTIDENTITY_MILESTONE:M07_BEFORE_GetProcessPID'     'PM_POSTIDENTITY_MILESTONE:M08_AFTER_GetProcessPID'     'PM_POSTIDENTITY_RESULT:GETPROCESSPID_ROUNDTRIP_PASS'     'PM_POSTIDENTITY_MILESTONE:M09_SUCCESS'; do
-    /usr/bin/strings "$OUT" | /usr/bin/grep -Fq "$marker" || {
-        echo "error: required probe marker missing: $marker" >&2
-        exit 72
-    }
-done
-
-{
-    echo "== PPC post-identity GetProcessPID round-trip probe =="
     echo "compiler=$CC_SELECTED"
     echo "source=$SRC"
     /usr/bin/file "$OUT"
