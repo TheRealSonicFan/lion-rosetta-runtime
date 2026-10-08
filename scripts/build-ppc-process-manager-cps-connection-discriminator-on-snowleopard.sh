@@ -71,9 +71,25 @@ if /usr/bin/nm -u "$OUT" | /usr/bin/grep -Eq '(_SetFrontProcess|_GetFrontProcess
     exit 72
 fi
 
-for marker in     'PM_POSTIDENTITY_MILESTONE:M05_BEFORE_GetProcessForPID'     'PM_POSTIDENTITY_RESULT:GETPROCESSFORPID_PASS'     'PM_POSTIDENTITY_RESULT:GETPROCESSPID_ROUNDTRIP_PASS'     'PM_POSTIDENTITY_RESULT:TRANSFORMPROCESSTYPE_PASS'     'PM_CPS_IMAGE:'     'PM_CPS_PROLOGUE:'     'PM_CPS_CONNECTION_STATE:phase=posttransform'     'PM_CPS_DISCRIMINATOR_MILESTONE:M11_BEFORE_CPSSetFrontProcess'     'PM_CPS_DISCRIMINATOR_MILESTONE:M12_AFTER_CPSSetFrontProcess'     'PM_CPS_DISCRIMINATOR_STATUS:CPSSetFrontProcess='     'PM_CPS_DISCRIMINATOR_RESULT:CPS_RAW_ZERO'     'PM_CPS_DISCRIMINATOR_RESULT:CPS_RAW_0X000003EB'; do
+for marker in \
+    'PM_POSTIDENTITY_MILESTONE:M05_BEFORE_GetProcessForPID' \
+    'PM_POSTIDENTITY_RESULT:GETPROCESSFORPID_PASS' \
+    'PM_POSTIDENTITY_RESULT:GETPROCESSPID_ROUNDTRIP_PASS' \
+    'PM_POSTIDENTITY_RESULT:TRANSFORMPROCESSTYPE_PASS' \
+    'PM_CPS_IMAGE:' \
+    'PM_CPS_PROLOGUE:' \
+    'PM_CPS_CONNECTION_STATE:phase=%s slot=' \
+    'preidentity' \
+    'postidentity' \
+    'posttransform' \
+    'postcps' \
+    'PM_CPS_DISCRIMINATOR_MILESTONE:M11_BEFORE_CPSSetFrontProcess' \
+    'PM_CPS_DISCRIMINATOR_MILESTONE:M12_AFTER_CPSSetFrontProcess' \
+    'PM_CPS_DISCRIMINATOR_STATUS:CPSSetFrontProcess=' \
+    'PM_CPS_DISCRIMINATOR_RESULT:CPS_RAW_ZERO' \
+    'PM_CPS_DISCRIMINATOR_RESULT:CPS_RAW_0X000003EB'; do
     /usr/bin/strings "$OUT" | /usr/bin/grep -Fq "$marker" || {
-        echo "error: required discriminator marker missing: $marker" >&2
+        echo "error: required discriminator artifact string missing: $marker" >&2
         exit 72
     }
 done
