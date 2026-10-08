@@ -444,3 +444,55 @@ next live discriminator                      -> connection slot + raw CPS status
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — null default connection is the active boundary
+
+The corrected discriminator has now completed successfully on both systems.
+
+Snow Leopard control:
+
+```text
+connection slot before identity      = 0
+GetProcessForPID                     = 0
+connection slot after identity       = nonzero
+GetProcessPID round-trip             = PASS
+TransformProcessType                 = 0
+raw CPSSetFrontProcess               = 0
+RESULT                               = PASS
+```
+
+Lion:
+
+```text
+connection slot before identity      = 0
+SessionInit v5                       = PASS
+GetProcessForPID                     = 0
+_RegisterApplication diagnostic      = _CGSDefaultConnection() is NULL
+connection slot after identity       = 0
+GetProcessPID round-trip             = PASS
+TransformProcessType                 = 0
+connection slot after transform      = 0
+raw CPSSetFrontProcess               = 0x000003eb / 1003
+connection slot after CPS call       = 0
+new crash/core diagnostic            = none
+protected hashes unchanged           = YES
+RESULT: CPS_CONNECTION_NULL_PRETRANSPORT_CONFIRMED
+```
+
+This closes the immediate `SetFrontProcess=-50` discriminator. The public error is caused by the Snow PPC CoreGraphics no-connection guard, before `__CGSSetFrontProcess` is reached.
+
+The already-proven Snow-PPC/Lion `SetFrontProcess` request-ID difference (`0x729e -> 0x72a1`) remains a latent later boundary. Do not adapt it yet.
+
+The dynamic result also converts the earlier registration diagnostic into causal evidence: on Snow Leopard, `GetProcessForPID` registration changes the decoded CoreGraphics connection slot from zero to nonzero; on Lion, registration logs `_CGSDefaultConnection() is NULL` and leaves the same decoded slot zero.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-cgs-default-connection-audit.md
+scripts/audit-process-manager-cgs-default-connection.py
+```
+
+That stage is read-only. It compares Snow PPC and Lion native `_CGSDefaultConnection -> _CGSNewConnection` behavior, WindowServer service-port acquisition, bootstrap/vproc/XPC usage, and connection-creation transport before any new compatibility behavior is designed.
+
+No additional XNU change is indicated.
