@@ -312,3 +312,51 @@ SetFrontProcess(returned PSN) -> next live proof
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — Snow passes, Lion returns -50
+
+The SetFrontProcess experiment produced a clean cross-version differential.
+
+Snow Leopard direct-execution control:
+
+```text
+GetProcessForPID              = 0
+GetProcessPID                 = 0
+PID round-trip                = exact
+TransformProcessType          = 0
+SetFrontProcess               = 0
+SessionInit exact calls       = 1
+RESULT                        = PASS
+```
+
+Lion:
+
+```text
+GetProcessForPID              = 0
+returned PSN                  = 0x00000000:0x000c30c3
+GetProcessPID                 = 0
+round-trip PID                = 23575 -> 23575
+TransformProcessType          = 0
+SetFrontProcess               = -50
+subject exit status           = 32
+new crash/core diagnostic     = none
+protected hashes unchanged    = YES
+RESULT: POSTIDENTITY_SETFRONTPROCESS_RETURNED_ERROR
+```
+
+The Lion call returned normally after the before/after milestones. It did not crash, self-abort, trigger another exact SessionInit transaction, or disturb any protected identity.
+
+The same registration-time WindowServer/default-connection diagnostics seen in the preceding successful identity and TransformProcessType experiments still appear before the Process Manager results. Their presence is therefore not, by itself, sufficient to explain the new `-50` return.
+
+Do not add a WindowServer/CGS workaround, broaden the v5 CoreServices adapter, or proceed to `GetFrontProcess`/window creation from this result.
+
+The authoritative next step is:
+
+```text
+docs/process-manager-setfrontprocess-callpath-audit.md
+```
+
+That stage is read-only. It compares Snow Leopard PPC/i386 and Lion i386 HIServices foreground-selection code plus CoreGraphics/CGS/CPS/LaunchServices dependencies to determine exactly where `SetFrontProcess` produces or receives the returned status.
+
+No additional XNU change is indicated.
