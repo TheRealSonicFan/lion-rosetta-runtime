@@ -101,9 +101,9 @@ TransformProcessType(...foreground...)
 It then:
 
 1. resolves the loaded PPC CoreGraphics image;
-2. validates the Rosetta-cache address model (`loaded header == in-memory __TEXT.vmaddr`) and resolves the audited Snow PPC `__CPSSetFrontProcessWithOptions` / `CPSSetFrontProcess` locations as `loaded_header + original_image_offset`;
+2. resolves the loaded Snow PPC `_CPSSetFrontProcessWithOptions` and `CPSSetFrontProcess` symbols dynamically and validates their audited same-`__TEXT` runtime delta (`0xf0`);
 3. validates the `__CPSSetFrontProcessWithOptions` PPC prologue word `0x7c0802a6`;
-4. reads the audited connection-record slot at `loaded_header + 0x007007c8`, without invoking a connection getter;
+4. decodes the loaded PPC PIC `addis`/`lwz` pair inside `_CPSSetFrontProcessWithOptions` to reconstruct the actual shared-cache runtime address of the connection-record slot, without invoking a connection getter;
 5. logs that slot before identity, after identity, after foreground conversion, and after the private CPS call;
 6. calls exactly one `CPSSetFrontProcess(&psn)`;
 7. records the **raw CPS status**, before HIServices maps it to an OSStatus;
@@ -111,7 +111,7 @@ It then:
 
 The subject does **not** import or call public `SetFrontProcess`, `GetFrontProcess`, or `GetCurrentProcess`.
 
-As with the already-proven LaunchServices cache resolver, shared-cache load commands are rebased in memory; therefore the discriminator deliberately does **not** treat the Snow file's symbol values as absolute runtime VM addresses and does not rely on a traditional dyld slide calculation for them.
+The static Snow CoreGraphics values remain provenance only. The live discriminator deliberately derives the cross-segment connection-slot address from the loaded PPC instructions because the Rosetta shared cache can relocate `__TEXT` and `__DATA` independently.
 
 ## Safety constraints
 
@@ -177,10 +177,11 @@ The builder requires:
 - direct Carbon linkage;
 - exact `GetProcessForPID`, `GetProcessPID`, `TransformProcessType`, and `dlsym` imports;
 - **no** public `SetFrontProcess`, `GetFrontProcess`, or `GetCurrentProcess` import;
-- the audited CoreGraphics original-image offsets:
-  - `__CPSSetFrontProcessWithOptions = 0x001fcfdc`;
-  - `CPSSetFrontProcess = 0x001fd0cc`;
-  - connection-record slot = `0x007007c8`;
+- the audited CoreGraphics static values:
+  - `_CPSSetFrontProcessWithOptions` symbol value `0x001fcfdc`;
+  - `CPSSetFrontProcess` symbol value `0x001fd0cc` and same-`__TEXT` delta `0xf0`;
+  - standalone-image connection target `0x007007c8` as provenance;
+  - loaded PPC PIC instruction pattern used to derive the actual runtime slot;
   - raw no-connection status `0x000003eb`.
 
 Do not manually create sidecars if the builder fails.
@@ -212,6 +213,39 @@ If the old failure was observed:
 4. continue to Phase C only after Phase B succeeds.
 
 The builder's failure-cleanup trap removes partial executable/info/SHA outputs, so do not reuse or manually reconstruct artifacts from the failed attempt.
+
+
+### Phase C address-model correction
+
+The first Snow Leopard Phase C run with executable SHA-256
+`367235a029bfc887d76c8826ad3ea79c76bedac56ab01ec2b0d2a0ad0244dabc`
+failed before the identity/CPS discriminator itself ran:
+
+```text
+PM_POSTIDENTITY_SERVER_PORT:port=0x00002003 nonzero=YES
+PM_CPS_DISCRIMINATOR_RESULT:AUDITED_OFFSET_OUTSIDE_IMAGE
+control_status=38
+RESULT: FAIL
+```
+
+This is a second harness/address-resolution defect, not a Snow Leopard Process Manager or CPS failure. The executable provenance was otherwise correct: PPC7400, private `/usr/oah/dyld`, the intended Process Manager imports only, and the audited CoreGraphics static values.
+
+The defect was treating the standalone Snow PPC CoreGraphics `nm` values
+`0x001fcfdc`, `0x001fd0cc`, and the statically computed connection target
+`0x007007c8` as if they were all runtime offsets from the loaded shared-cache image header. That model is valid for the already-audited LaunchServices local `__TEXT` offsets but is not valid for this CoreGraphics cross-segment data reference in the optimized Rosetta shared cache.
+
+The corrected discriminator now uses the loaded code itself as the authority:
+
+1. resolve `_CPSSetFrontProcessWithOptions` and `CPSSetFrontProcess` with `dlsym`;
+2. require their runtime separation to equal the audited same-`__TEXT` delta `0xf0`;
+3. validate the PPC prologue;
+4. decode the loaded `addis r2,r31,imm16` instruction at function offset `0x1c` and loaded `lwz r2,disp16(r2)` at offset `0x28`;
+5. reconstruct the actual runtime connection-slot address from the loaded PIC sequence using the `bcl` LR base at function offset `0x08`;
+6. require both the resolved CPS function and decoded slot to fall inside loaded CoreGraphics segments before reading the slot.
+
+This preserves the original static audit as provenance while correctly allowing dyld shared-cache split-segment rebasing to alter the runtime `__TEXT -> __DATA` displacement.
+
+Because the subject source changed, the old executable and sidecars are stale. Pull current runtime `main`, repeat **Phase B**, and then repeat **Phase C only**. Do not proceed to Lion until the rebuilt Snow control reaches the actual identity/foreground/CPS milestones and ends in `RESULT: PASS`.
 
 ## Phase C — Snow Leopard control
 
