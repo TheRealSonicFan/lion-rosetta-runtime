@@ -82,10 +82,11 @@ fi
     echo "== forbidden Process Manager imports =="
     /usr/bin/nm -u "$OUT" | /usr/bin/grep -E         '(_GetCurrentProcess|_GetProcessPID|_GetProcessForPID|_GetFrontProcess|_SetFrontProcess)' || true
     echo
-    echo "== fixed Snow Leopard PPC LaunchServices n_value offsets =="
+    echo "== fixed Snow Leopard PPC LaunchServices __TEXT-relative symbol offsets =="
     echo "SetupCoreApplicationServicesCommunicationPort=0x00018070"
     echo "getProcessDispatchTable=0x00018654"
     echo "getProcessesServerPort=0x000186a8"
+    echo "expected_ppc_prologue_word=0x7c0802a6"
     echo
     echo "== SHA-256 =="
     /usr/bin/shasum -a 256 "$OUT"
