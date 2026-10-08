@@ -134,15 +134,17 @@ The InitializeProcessesServices wire experiment has now passed completely. Lion 
 
 The corrected LaunchServices process-dispatch experiment has now passed completely on both Snow Leopard and Lion. On Lion, the proven CoreServices and Security adapters allowed the real Snow Leopard PPC setup path to return a nonzero process-dispatch table and a nonzero process-services port, with no diagnostic or integrity change.
 
+The post-dispatch `GetProcessForPID` experiment has now reached the identity call after successfully re-establishing a nonzero LaunchServices dispatch table and process-services port in the same translated PPC process. Lion reaches the marker immediately before `GetProcessForPID`, then terminates before the call returns with exit status `138`, producing a crash report and `/cores/core.17940`. The Snow Leopard control returns status 0 and a nonzero PSN.
+
+The original runner's `POSTDISPATCH_GETPROCESSFORPID_ABORT_BEFORE_RETURN` label was too broad because it classified every non-returning call as an abort without reading the crash signal. The observed status also differs from the historical status-`134` SIGABRT cases.
+
 The authoritative next step is:
 
 ```text
-docs/process-manager-postdispatch-getprocessforpid-experiment.md
+docs/process-manager-postdispatch-getprocessforpid-postmortem.md
 ```
 
-That stage re-establishes the nonzero dispatch table and process-services port in the same PPC process, requires `LSDONOTABORTIFNOASN` to remain unset, and then calls exactly one `GetProcessForPID(getpid(), &psn)`. It exits immediately after logging the identity result, with no foreground conversion, window, event-loop, or second Process Manager API.
-
-Do not suppress `abort`, enable the no-ASN override, broaden the compatibility layers, or change XNU before this result is reviewed.
+Use the new read-only preserved-core collector before changing behavior. Do not rerun the PPC subject and do not set `LSDONOTABORTIFNOASN=0` until the actual crash/core signal and Rosetta host path are established.
 
 No additional XNU change is indicated.
 
