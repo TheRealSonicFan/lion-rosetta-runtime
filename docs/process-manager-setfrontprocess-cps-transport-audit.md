@@ -265,3 +265,50 @@ CoreGraphics CPS/CGS transport               -> next read-only proof
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — two distinct CPS/CGS boundaries are now proven
+
+The focused audit completed with `RESULT: PASS` on Snow Leopard and Lion and resolves the previously missing CoreGraphics windows.
+
+The immediate Snow PPC CPS path is:
+
+```text
+CPSSetFrontProcess
+  -> __CPSSetFrontProcessWithOptions
+       -> read current CoreGraphics connection record
+       -> if null: return raw CPS 0x000003eb (1003)
+       -> otherwise: __CGSSetFrontProcess
+```
+
+The connection-record load in the Snow PPC image is derived from the `__CPSSetFrontProcessWithOptions` PIC sequence and lands at original-image offset `0x007007c8`. Lion native CoreGraphics contains the same semantic pre-transport guard and also returns `0x3eb` when its current connection record is absent.
+
+Snow PPC HIServices maps the positive CPS status `0x3eb` to public `paramErr (-50)`. This exactly fits the previously observed Lion public result, but a dynamic raw-CPS/state correlation is required before declaring the null connection causal.
+
+The audit also proves a second, later protocol difference:
+
+```text
+Snow PPC __CGSSetFrontProcess:
+  request 0x729e
+  reply   0x7302
+  send    0x30
+  receive 0x2c
+
+Lion i386 __CGSSetFrontProcess:
+  request 0x72a1
+  reply   0x7305
+  send    0x30
+  receive 0x2c
+```
+
+Therefore a CGS request-ID adapter may eventually be needed, but only after proving the current translated process actually reaches that transport.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-setfrontprocess-cps-connection-discriminator-experiment.md
+```
+
+That experiment reads the audited PPC CoreGraphics connection slot using the already-proven Rosetta-cache `loaded_header + original_image_offset` address model, calls exactly one private `CPSSetFrontProcess`, and records its raw status. It does not call public `SetFrontProcess`, `GetFrontProcess`, or any window/event-loop API.
+
+No additional XNU change is indicated.
