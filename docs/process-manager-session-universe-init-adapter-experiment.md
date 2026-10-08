@@ -136,6 +136,18 @@ The older proven `dual-bootstrap-servercheckin-v3` source remains unchanged and 
 - do not use live GDB, DTrace, or dtruss;
 - do not proceed to Lion if the Snow Leopard build or passthrough control fails.
 
+## Repository-side verification before execution
+
+The prepared changes were re-fetched from current `main` and checked before this runbook was made authoritative:
+
+- the new build, Snow control, and Lion runner pass `bash -n` syntax validation;
+- the v4 C source has balanced C delimiters, exactly one `__DATA,__interpose` section with exactly two tuples, and no `dlsym`;
+- the original v3 CoreServices source remains unchanged with build ID `dual-bootstrap-servercheckin-v3`;
+- the v4 source uses a distinct build ID `dual-bootstrap-servercheckin-sessioninit-v4`;
+- the v4 source recognizes only request ID `0x2712` on the captured session port and does not add a MapSharedSegment adapter.
+
+The actual PowerPC C compile/link cannot be reproduced off Snow Leopard. Phase B is therefore the mandatory compiler/toolchain validation gate; do not proceed if it fails.
+
 ## Phase A — update repositories
 
 On Snow Leopard and Lion:
