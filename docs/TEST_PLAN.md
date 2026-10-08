@@ -172,3 +172,16 @@ The first post-dispatch GetProcessForPID build failure was a harness linkage-gat
 
 
 The first Snow Leopard passthrough control for this stage failed only because the v4 harness watched the wrong port and overconstrained an uninitialized header field. The subject itself completed with `GetProcessForPID=0` and a nonzero PSN. Existing CoreServices controls prove `scGetServerCheckinPort()` returns the original coreservicesd service/check-in port, not the different descriptor returned by ServerCheckin; the Snow PPC generated InitConnection client also uses the `mach_msg` send-size argument `0x2c` without initializing pre-send `msgh_size`. Current v5 corrects both assumptions. Rebuild the v5 interposer on Snow Leopard and repeat Phase C only. Do not transfer to Lion until that control reports `RESULT: PASS`.
+
+
+The first SetFrontProcess call-path audit has now passed on both systems and localizes the returned Lion `-50` below the public HIServices argument checks. Snow PPC and Lion i386 both delegate valid `SetFrontProcessWithOptions` inputs to CoreGraphics `_CPSSetFrontProcess`. The v1 audit, however, did not emit the exact CoreGraphics CPS/CGS function windows needed to decide whether the error is pre-transport, a wire mismatch, or backend-returned.
+
+The authoritative next step is:
+
+```text
+docs/process-manager-setfrontprocess-cps-transport-audit.md
+```
+
+Run the focused read-only analyzer once on Snow Leopard and once on Lion. It exact-targets the CPS/default-connection/CGS transport functions and requires the relevant Snow PPC and Lion i386 symbols to be present. Do not rerun the PPC application or design a CPS/CGS adapter until those two reports are reviewed.
+
+No additional XNU change is indicated.
