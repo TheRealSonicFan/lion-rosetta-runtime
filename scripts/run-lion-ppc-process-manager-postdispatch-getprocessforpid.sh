@@ -228,7 +228,11 @@ fi
 
 if /usr/bin/grep -Fq 'PM_POSTDISPATCH_MILESTONE:M05_BEFORE_GetProcessForPID' "$RAW_LOG" &&
    ! /usr/bin/grep -Fq 'PM_POSTDISPATCH_MILESTONE:M06_AFTER_GetProcessForPID' "$RAW_LOG"; then
-    log "RESULT: POSTDISPATCH_GETPROCESSFORPID_ABORT_BEFORE_RETURN"
+    if [ "$RC" -eq 134 ]; then
+        log "RESULT: POSTDISPATCH_GETPROCESSFORPID_SIGABRT_BEFORE_RETURN"
+    else
+        log "RESULT: POSTDISPATCH_GETPROCESSFORPID_TERMINATED_BEFORE_RETURN exit_status=$RC"
+    fi
     [ "$RC" -ne 0 ] && exit "$RC"
     exit 1
 fi
