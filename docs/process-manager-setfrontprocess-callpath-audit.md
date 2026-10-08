@@ -231,3 +231,31 @@ next step      -> read-only SetFrontProcess call-path differential audit
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — HIServices localizes the failure to CPS/CoreGraphics
+
+The first call-path audit completed with `RESULT: PASS` on both systems.
+
+The reports establish four important facts.
+
+First, both systems use the same validated Rosetta cache and map, and both HIServices and CoreGraphics are members of that cache. The translated Lion process therefore continues to execute the restored Snow Leopard PPC guest-side framework code while talking to Lion host services.
+
+Second, Snow Leopard PPC `SetFrontProcessWithOptions` validates a non-null PSN pointer and options no greater than 1, performs lazy registration if needed, and then calls `_CPSSetFrontProcess`. The Snow PPC wrapper explicitly recognizes/preserves several CPS return codes, including `0xffce` (-50), before returning an OSStatus.
+
+Third, Lion native i386 `SetFrontProcessWithOptions` has the same decisive structure: after its own local pointer/options checks and lazy registration state checks, it calls `_CPSSetFrontProcess` and maps/preserves that returned CPS status. With the experiment's actual non-null PSN and options `0`, the observed Lion `SetFrontProcess=-50` is therefore generated at or below the CPS/CoreGraphics boundary rather than by the initial public-API argument validation.
+
+Fourth, the v1 analyzer did not emit the exact CoreGraphics `_CPSSetFrontProcess`, `__CPSSetFrontProcessWithOptions`, or `__CGSSetFrontProcess` disassembly windows needed for the relevant Snow PPC versus Lion native comparison. Those symbols are present, but the generic symbol-window cap was reached before them because the v1 `CoreGraphics` exact-target list was empty.
+
+The authoritative next stage is therefore:
+
+```text
+docs/process-manager-setfrontprocess-cps-transport-audit.md
+scripts/audit-process-manager-setfrontprocess-cps.py
+```
+
+That audit is still read-only. It exact-targets the CPS/default-connection/CGS transport functions so the next review can decide whether Lion's `-50` reflects a missing CPS connection, a Snow-PPC-to-Lion CGS wire mismatch, or a backend-returned error.
+
+Do not rerun the PPC subject or add a CPS/CGS/WindowServer workaround until that focused evidence is reviewed.
+
+No additional XNU change is indicated.
