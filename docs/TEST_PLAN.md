@@ -143,3 +143,6 @@ That stage invokes the audited local Snow Leopard PPC `getProcessDispatchTable()
 Do not interpose `abort`, broaden the compatibility layers, or change XNU before this result is reviewed.
 
 No additional XNU change is indicated.
+
+
+The first Snow Leopard dispatch-setup Phase C failure was a harness address-resolution defect, not a LaunchServices compatibility failure. The Rosetta shared-cache image exposed a rebased in-memory `__TEXT.vmaddr=0x97329000`, while the audited PPC local-function values `0x18070`, `0x18654`, and `0x186a8` are original-image `__TEXT` offsets. The corrected probe resolves them as `loaded_header + offset`, validates the loaded `__TEXT` bounds and the common PPC `mflr r0` prologue word, and still makes no Process Manager identity call. Rebuild Phase B and rerun Phase C only; do not proceed to Lion until the corrected Snow control passes.
