@@ -11,7 +11,7 @@ LOG="${7:-./ppc-process-manager-session-universe-init-adapter-snowleopard-contro
 
 PRIVATE_DYLD="/usr/oah/dyld"
 EXPECTED_DYLD_SHA="963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb"
-EXPECTED_CORE_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v4"
+EXPECTED_CORE_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5"
 EXPECTED_SEC_BUILD_ID="security-session-auditinfo-api-v1"
 
 fail() {
@@ -81,8 +81,9 @@ if [ "$RC" -eq 0 ] &&
    /usr/bin/grep -Fq 'PM_POSTDISPATCH_PROLOGUE:expected=0x7c0802a6 setup=0x7c0802a6 dispatch=0x7c0802a6 server=0x7c0802a6' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_BOOTSTRAP_EXACT_CALL:index=1 mode=passthrough' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_SERVERCHECKIN_EXACT_CALL:index=1 mode=passthrough' "$LOG" &&
-   /usr/bin/grep -Eq 'PM_CORESERVICES_COMPAT_SESSION_PORT:source=passthrough port=0x0*[1-9a-fA-F][0-9a-fA-F]*' "$LOG" &&
+   /usr/bin/grep -Eq 'PM_CORESERVICES_COMPAT_SERVERCHECKIN_REPLY_PORT:source=passthrough port=0x0*[1-9a-fA-F][0-9a-fA-F]*' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_SESSIONINIT_EXACT_CALL:index=1 mode=passthrough' "$LOG" &&
+   /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_SESSIONINIT_ROUTE:' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_SESSIONINIT_PASSTHROUGH_RETURN:kr=0 hex=0x00000000' "$LOG" &&
    /usr/bin/grep -Fq 'PM_SECURITY_SESSION_API_COMPAT_CALL:index=1 mode=passthrough requested=0xffffffff targetCaller=YES' "$LOG" &&
    /usr/bin/grep -Eq 'PM_POSTDISPATCH_TABLE:pointer=0x0*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$LOG" &&
