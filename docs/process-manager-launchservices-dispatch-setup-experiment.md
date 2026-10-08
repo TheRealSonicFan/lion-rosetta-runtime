@@ -42,23 +42,47 @@ Therefore the remaining earlier LaunchServices abort boundary is no longer the s
 
 ## Binary-proven local function offsets
 
-The prior Snow Leopard PPC LaunchServices disassembly established:
+The prior Snow Leopard PPC LaunchServices disassembly established these original-image `__TEXT`-relative symbol offsets:
 
 ```text
-SetupCoreApplicationServicesCommunicationPort = n_value 0x00018070
-getProcessDispatchTable                       = n_value 0x00018654
-getProcessesServerPort                        = n_value 0x000186a8
+SetupCoreApplicationServicesCommunicationPort = 0x00018070
+getProcessDispatchTable                       = 0x00018654
+getProcessesServerPort                        = 0x000186a8
 ```
 
-The probe does not assume a fixed load address. At runtime it:
+They are not absolute in-memory `vmaddr` values.
+
+The first Phase C run proved why that distinction matters. Snow Leopard loaded LaunchServices from the Rosetta shared cache with:
+
+```text
+loaded Mach-O header = 0x97329000
+in-memory __TEXT.vmaddr = 0x97329000
+__TEXT.vmsize = 0x000a5000
+```
+
+The original harness incorrectly subtracted this already-rebased in-memory `__TEXT.vmaddr` from the small static offsets, so every address resolved to null before either compatibility layer or LaunchServices setup was called.
+
+The corrected probe does not assume a fixed load address. At runtime it:
 
 1. locates the loaded PPC `LaunchServices.framework/Versions/A/LaunchServices` image through dyld;
 2. verifies a 32-bit PPC Mach-O header;
-3. reads the loaded `__TEXT` segment's preferred `vmaddr` and size;
-4. verifies each audited `n_value` lies within that `__TEXT` range;
-5. resolves the actual function address as `loaded_header + (n_value - __TEXT.vmaddr)`.
+3. reads the loaded `__TEXT` segment address and size;
+4. requires the dyld header pointer to equal the loaded `__TEXT.vmaddr`;
+5. verifies each audited static offset is smaller than the loaded `__TEXT.vmsize`;
+6. resolves each function as `loaded_header + audited_text_offset`;
+7. verifies the first PPC instruction at all three resolved addresses is the audited `mflr r0` / `0x7c0802a6` prologue before making any call.
 
-Snow Leopard must pass this exact resolution and call sequence before Lion is attempted.
+For the observed Snow Leopard cache base, the corrected addresses are:
+
+```text
+SetupCoreApplicationServicesCommunicationPort = 0x97341070
+getProcessDispatchTable                       = 0x97341654
+getProcessesServerPort                        = 0x973416a8
+```
+
+All three lie within the observed loaded `__TEXT` range.
+
+Snow Leopard must pass this corrected resolution, prologue check, and call sequence before Lion is attempted.
 
 ## Why this is the narrowest next discriminator
 
@@ -166,7 +190,8 @@ Require:
 - `LC_LOAD_DYLINKER=/usr/oah/dyld`;
 - CoreServices and Security linkage;
 - no Process Manager identity/foreground imports;
-- the three audited local-function offsets recorded in the build report.
+- the three audited original-image `__TEXT` offsets recorded in the build report;
+- the expected PPC entry prologue word `0x7c0802a6` recorded in the build report.
 
 If the build fails, stop and return the complete build output. Do not change the offsets to make the build or control pass.
 
@@ -191,7 +216,8 @@ Require:
 
 ```text
 PM_LS_DISPATCH_IMAGE:... cputype=18 ...
-PM_LS_DISPATCH_LAYOUT:... dispatchNValue=0x00018654 ... serverNValue=0x000186a8 ...
+PM_LS_DISPATCH_LAYOUT:... headerMatchesTextVMAddr=YES ... dispatchTextOffset=0x00018654 ... serverTextOffset=0x000186a8 ...
+PM_LS_DISPATCH_PROLOGUE:expected=0x7c0802a6 setup=0x7c0802a6 dispatch=0x7c0802a6 server=0x7c0802a6
 CoreServices passthrough lookup/ServerCheckin -> observed
 Security SessionGetInfo passthrough -> observed
 PM_LS_DISPATCH_MILESTONE:M01_BEFORE_getProcessDispatchTable
@@ -205,6 +231,24 @@ RESULT: PASS
 ```
 
 If Phase C aborts, crashes, returns a null table, or returns a zero server port, stop. Do not run Lion. That would mean the local-function offset/resolution harness is not yet validated.
+
+## Observed Phase C harness failure and correction
+
+The first Snow Leopard Phase C run ended:
+
+```text
+PM_LS_DISPATCH_IMAGE:... header=0x97329000 ... cputype=18 ...
+PM_LS_DISPATCH_LAYOUT:textVMAddr=0x97329000 textVMSize=0x000a5000 ... setupAddr=0 dispatchAddr=0 serverAddr=0
+PM_LS_DISPATCH_RESULT:LOCAL_OFFSET_INVALID
+control_status=22
+RESULT: FAIL
+```
+
+This is a resolver defect in the experiment harness, not a failure of LaunchServices, Rosetta, CoreServices compatibility, or Security compatibility. No audited local function was called.
+
+The corrected source treats `0x18070`, `0x18654`, and `0x186a8` as original-image `__TEXT` offsets and resolves them from the dyld-loaded Mach-O header. It also adds an instruction-word guard for the audited PPC `mflr r0` prologue at each address.
+
+Because the probe source changed, **repeat Phase B and Phase C only** after pulling current `main`. The executable and SHA-256 sidecar must change. Do not reuse the failed `575057bfa91c82758a1f95cff6e162af415f1443fcfd8de64abf3a557bb03c4a` binary. Do not proceed to Lion unless the rebuilt Snow Leopard control reports `RESULT: PASS`.
 
 ## Phase D — transfer exact artifacts to Lion
 
@@ -267,7 +311,8 @@ Expected success:
 
 ```text
 PM_LS_DISPATCH_IMAGE:... cputype=18 ...
-PM_LS_DISPATCH_LAYOUT:... dispatchNValue=0x00018654 ... serverNValue=0x000186a8 ...
+PM_LS_DISPATCH_LAYOUT:... headerMatchesTextVMAddr=YES ... dispatchTextOffset=0x00018654 ... serverTextOffset=0x000186a8 ...
+PM_LS_DISPATCH_PROLOGUE:expected=0x7c0802a6 setup=0x7c0802a6 dispatch=0x7c0802a6 server=0x7c0802a6
 CoreServices bootstrap adapter -> PASS
 CoreServices ServerCheckin adapter -> PASS
 Security AuditInfo SessionGetInfo adapter -> PASS
