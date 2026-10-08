@@ -314,7 +314,7 @@ PM_POSTDISPATCH_RESULT:GETPROCESSFORPID_PASS
 RESULT: POSTDISPATCH_GETPROCESSFORPID_PASS
 ```
 
-### Abort-before-return discriminator
+### Termination-before-return discriminator
 
 If:
 
@@ -322,13 +322,14 @@ If:
 M05_BEFORE_GetProcessForPID
 ```
 
-appears but `M06_AFTER_GetProcessForPID` does not, the runner reports:
+appears but `M06_AFTER_GetProcessForPID` does not, current `main` distinguishes the shell exit status instead of calling every such termination an abort:
 
 ```text
-RESULT: POSTDISPATCH_GETPROCESSFORPID_ABORT_BEFORE_RETURN
+status 134 -> RESULT: POSTDISPATCH_GETPROCESSFORPID_SIGABRT_BEFORE_RETURN
+other      -> RESULT: POSTDISPATCH_GETPROCESSFORPID_TERMINATED_BEFORE_RETURN exit_status=...
 ```
 
-Preserve every crash/core diagnostic and stop. Do not rerun with `LSDONOTABORTIFNOASN=0` until that result is reviewed.
+Preserve every crash/core diagnostic and stop. Do not rerun with `LSDONOTABORTIFNOASN=0` until the actual crash/core signal path is reviewed.
 
 ### Returned error
 
@@ -379,11 +380,13 @@ The original shell-launched Process Manager identity failure is closed without a
 
 The next stage should then test a minimally broader Carbon application sequence, beginning with the returned PSN and foreground conversion, rather than invent another compatibility layer.
 
-### `POSTDISPATCH_GETPROCESSFORPID_ABORT_BEFORE_RETURN`
+### `POSTDISPATCH_GETPROCESSFORPID_SIGABRT_BEFORE_RETURN`
 
-Because the same process already proved a nonzero dispatch table and process-services port, the former LaunchServices process-dispatch abort cannot explain this run. The remaining abort is downstream, with HIServices `__RegisterApplication` / ASN acquisition now the leading boundary.
+A confirmed SIGABRT after the same-process nonzero dispatch table/server port excludes the former LaunchServices dispatch-table abort. Review the crash/core first; only if it is the expected guest-requested abort family should the next discriminator use the already-audited process-local `LSDONOTABORTIFNOASN=0` override.
 
-The next discriminator would be a controlled repeat with the already-audited process-local `LSDONOTABORTIFNOASN=0` override, but only after reviewing the crash and confirming that the same dispatch setup markers preceded it.
+### `POSTDISPATCH_GETPROCESSFORPID_TERMINATED_BEFORE_RETURN`
+
+Do not infer the HIServices no-ASN abort from a non-returning call alone. The crash/core signal and Rosetta host path must be established before changing behavior.
 
 ### `POSTDISPATCH_GETPROCESSFORPID_RETURNED_ERROR`
 
@@ -404,5 +407,48 @@ InitializeProcessesServices wire transaction -> PASS
 real LaunchServices process-dispatch setup -> PASS
 GetProcessForPID after proven dispatch setup -> next proof
 ```
+
+No additional XNU change is indicated.
+
+
+## Observed Lion result — dispatch setup remains good, identity call terminates differently
+
+The Snow Leopard Phase C control passed completely. After proving the same nonzero dispatch table and server port, `GetProcessForPID(getpid(), &psn)` returned status 0 with PSN `0x00000000:0x0008f08f` and the control ended `RESULT: PASS`.
+
+On Lion, the same PPC subject and exact hashes re-proved:
+
+```text
+LSDONOTABORTIFNOASN = unset
+CoreServices bootstrap adapter = PASS
+CoreServices ServerCheckin adapter = PASS
+Security AuditInfo SessionGetInfo adapter = PASS
+dispatch table = 0xa0bbf59c
+process-services port = 0x00009103
+```
+
+The subject then reached:
+
+```text
+PM_POSTDISPATCH_MILESTONE:M05_BEFORE_GetProcessForPID
+```
+
+and did not reach `M06_AFTER_GetProcessForPID`. The runner recorded exit status `138` and listed both a crash report and `/cores/core.17940`. Protected hashes remained unchanged, and the syscall-295 probe remained a clean EBADF/no-SIGSYS PASS.
+
+The original runner printed:
+
+```text
+RESULT: POSTDISPATCH_GETPROCESSFORPID_ABORT_BEFORE_RETURN
+```
+
+but that label was only a generic non-return classification. It did not inspect the signal. Because this run's status differs from the already-proven historical status-134 SIGABRT family, do not yet attribute this termination to the HIServices no-ASN branch.
+
+The authoritative next stage is the read-only preserved-core/crash analysis:
+
+```text
+docs/process-manager-postdispatch-getprocessforpid-postmortem.md
+scripts/collect-lion-postdispatch-getprocessforpid-core.sh
+```
+
+Do not rerun the PPC subject and do not enable `LSDONOTABORTIFNOASN=0` before that postmortem is reviewed.
 
 No additional XNU change is indicated.
