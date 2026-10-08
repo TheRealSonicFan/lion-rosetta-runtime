@@ -307,3 +307,47 @@ GetProcessPID(returned PSN) -> next live proof
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — exact GetProcessPID round-trip pass
+
+The post-identity round-trip experiment passed completely.
+
+Snow Leopard direct-execution control:
+
+```text
+GetProcessForPID              = 0
+returned PSN                  = 0x00000000:0x000b30b3
+GetProcessPID                 = 0
+round-trip PID                = 54812 -> 54812
+SessionInit exact calls       = 1
+RESULT                        = PASS
+```
+
+Lion:
+
+```text
+SessionInit exact calls       = 1
+SessionInit adapter result    = PASS
+GetProcessForPID              = 0
+returned PSN                  = 0x00000000:0x000bc0bc
+GetProcessPID                 = 0
+round-trip PID                = 21863 -> 21863
+new crash/core diagnostic     = none
+protected hashes unchanged    = YES
+RESULT: POSTIDENTITY_GETPROCESSPID_ROUNDTRIP_PASS
+```
+
+This closes the second documented Process Manager identity direction under the current compatibility stack: the PSN created after the repaired registration/SessionInit path is not merely nonzero, but can be consumed by `GetProcessPID` and maps back to the exact process that supplied the original PID.
+
+The Lion run again emitted non-fatal WindowServer/default-connection diagnostics during registration, but both identity APIs completed successfully. Those diagnostics are therefore not treated as an identity failure.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-postidentity-transformprocesstype-experiment.md
+```
+
+That experiment keeps the accepted v5 CoreServices and v1 Security adapters unchanged, re-proves both identity directions, then calls exactly one `TransformProcessType(..., kProcessTransformToForegroundApplication)` and stops before `SetFrontProcess`, window creation, or an event loop. The Snow Leopard direct-execution result is a hard gate because this is the first foreground/WindowServer-sensitive boundary.
+
+No additional XNU change is indicated.
