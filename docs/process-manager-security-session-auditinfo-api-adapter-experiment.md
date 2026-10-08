@@ -209,3 +209,41 @@ typed PPC SessionGetInfo AuditInfo adapter -> next proof
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result
+
+The Snow Leopard passthrough control passed with the one-tuple interposer loaded. The interposed `SessionGetInfo(callerSecuritySession,...)` call passed through to the original implementation and returned status 0 with the normal Snow Leopard session data.
+
+The Lion Phase F adapter proof then passed completely:
+
+```text
+requested=callerSecuritySession
+auditinfo size=0x30
+ai_asid offset=0x24
+ai_flags offset=0x28
+ai_flags size=0x08
+getaudit_addr rc=0 errno=0
+rawWord28=0x00000000
+rawWord2c=0x00002030
+asid=0x000186a3
+flagsHigh=0x00000000
+flagsLow=0x00002030
+SessionGetInfo=0
+returned ID=0x000186a3
+returned ATTRS=0x00002030
+```
+
+The runner independently confirmed that the adapter's ID and attributes exactly matched the values observed by the public probe. No diagnostic was produced, all protected identities remained unchanged, and the syscall-295 gate remained a clean EBADF/no-SIGSYS PASS.
+
+This closes `SessionGetInfo(callerSecuritySession,...)` as a standalone compatibility primitive. The retired SecurityServer `getSessionInfo=0x428` RPC is not needed for this API on Lion.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-predispatch-full-compat-integration-experiment.md
+```
+
+That experiment loads the already-proven CoreServices v3 and Security AuditInfo API adapters together and reruns the original pre-dispatch primitive sequence. It still stops before `_LSDoInitializeProcessesServices` and every Process Manager identity API.
+
+No additional XNU change is indicated.
