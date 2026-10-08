@@ -142,13 +142,17 @@ The preserved post-dispatch core has now resolved the termination. The failure i
 
 The CarbonCore session-universe differential audit has now passed on both Snow Leopard and Lion. It identifies a concrete InitConnection protocol evolution: Snow Leopard PPC and native clients pass an explicit PID to `__scclient_SCSessionUniverseInitConnection_rpc`, while Lion native clients no longer do. Snow PPC also continues after an RPC error without constructing a universe, which is consistent with the later protected-zero-page fault. The preserved `-304/MIG_BAD_ARGUMENTS` register value is now a strong correlation clue, but the generated MIG stubs must prove the exact request mismatch before compatibility code is justified.
 
+The InitConnection protocol audit has now passed on both Snow Leopard and Lion and proves the exact wire mismatch. Snow Leopard PPC sends request ID `0x2712`, size `0x2c`, with payload `PID, UID, layout`. Lion uses the same request ID but requires size `0x28`, with only `UID, layout`; its generated dispatcher sends `MIG_BAD_ARGUMENTS (-304)` on the legacy size mismatch. The reply ID and success/error shapes remain compatible, so no reply translation is indicated.
+
 The authoritative next step is:
 
 ```text
-docs/process-manager-session-universe-init-rpc-protocol-audit.md
+docs/process-manager-session-universe-init-adapter-experiment.md
 ```
 
-Run the new read-only protocol audit once on Snow Leopard and once on Lion. Do not rerun the PPC subject, do not set `LSDONOTABORTIFNOASN=0`, and do not extend the CoreServices adapter until the exact InitConnection message ID, request/reply sizes, field ordering, and Lion validation are established.
+Build the new `dual-bootstrap-servercheckin-sessioninit-v4` CoreServices interposer on Snow Leopard and require the new passthrough control before Lion. On Lion, the adapter rewrites only the exact `0x2712` request from `0x2c [PID,UID,layout]` to `0x28 [UID,layout]`, keeps `LSDONOTABORTIFNOASN` unset, and stops after the one existing `GetProcessForPID` identity result.
+
+Do not adapt MapSharedSegment, broaden the Security layer, patch coreservicesd/CarbonCore, or change XNU before this result is reviewed.
 
 No additional XNU change is indicated.
 
