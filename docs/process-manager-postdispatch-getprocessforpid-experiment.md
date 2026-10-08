@@ -272,6 +272,8 @@ and requires `LSDONOTABORTIFNOASN` to remain unset.
 ### Expected success
 
 ```text
+PM_POSTDISPATCH_LAYOUT:... headerMatchesTextVMAddr=YES ... dispatchTextOffset=0x00018654 ... serverTextOffset=0x000186a8 ...
+PM_POSTDISPATCH_PROLOGUE:expected=0x7c0802a6 setup=0x7c0802a6 dispatch=0x7c0802a6 server=0x7c0802a6
 CoreServices bootstrap adapter -> PASS
 CoreServices ServerCheckin adapter -> PASS
 Security AuditInfo SessionGetInfo adapter -> PASS
