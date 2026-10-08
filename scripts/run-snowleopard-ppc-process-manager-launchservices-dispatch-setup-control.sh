@@ -75,8 +75,10 @@ echo "control_status=$RC" | /usr/bin/tee -a "$LOG"
 if [ "$RC" -eq 0 ] &&
    /usr/bin/grep -Fq 'PM_LS_DISPATCH_IMAGE:' "$LOG" &&
    /usr/bin/grep -Fq 'cputype=18 ' "$LOG" &&
-   /usr/bin/grep -Fq 'dispatchNValue=0x00018654' "$LOG" &&
-   /usr/bin/grep -Fq 'serverNValue=0x000186a8' "$LOG" &&
+   /usr/bin/grep -Fq 'headerMatchesTextVMAddr=YES' "$LOG" &&
+   /usr/bin/grep -Fq 'dispatchTextOffset=0x00018654' "$LOG" &&
+   /usr/bin/grep -Fq 'serverTextOffset=0x000186a8' "$LOG" &&
+   /usr/bin/grep -Fq 'PM_LS_DISPATCH_PROLOGUE:expected=0x7c0802a6 setup=0x7c0802a6 dispatch=0x7c0802a6 server=0x7c0802a6' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_BOOTSTRAP_EXACT_CALL:index=1 mode=passthrough' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_SERVERCHECKIN_EXACT_CALL:index=1 mode=passthrough' "$LOG" &&
    /usr/bin/grep -Fq 'PM_SECURITY_SESSION_API_COMPAT_CALL:index=1 mode=passthrough requested=0xffffffff targetCaller=YES' "$LOG" &&
