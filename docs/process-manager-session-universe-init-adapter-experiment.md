@@ -450,3 +450,54 @@ request-only InitConnection compatibility adapter -> next live proof
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — SessionInit repair restores GetProcessForPID
+
+The corrected v5 experiment passed completely on both systems.
+
+Snow Leopard passthrough control:
+
+```text
+remotePort              = 0x00002003
+serverCheckinPort       = 0x00002003
+serverCheckinReplyPort  = 0x00002103
+SessionInit mach_msg    = KERN_SUCCESS
+GetProcessForPID        = 0
+returned PSN            = 0x00000000:0x000b00b0
+RESULT                  = PASS
+```
+
+This confirms that v5 observes the exact legacy InitConnection transaction while remaining transparent on Snow Leopard.
+
+Lion adaptation:
+
+```text
+bootstrap service/check-in port = 0x00009103
+ServerCheckin reply descriptor  = 0x00009203
+Security SessionGetInfo         = PASS
+SessionInit legacy request      = 0x2712 / 0x2c [PID,UID,layout]
+SessionInit adapted request     = 0x2712 / 0x28 [UID,layout]
+mach_msg return                 = 0
+reply                            = 0x2776 / 0x2c / RetCode=0
+PM_CORESERVICES_COMPAT_SESSIONINIT_RESULT:PASS
+GetProcessForPID                = 0
+returned PSN                    = 0x00000000:0x000ba0ba
+new crash/core diagnostic       = none
+protected hashes unchanged      = YES
+RESULT: SESSIONINIT_ADAPTER_GETPROCESSFORPID_PASS
+```
+
+The repaired route therefore closes the CarbonCore SessionUniverse InitConnection mismatch and the original first real shell-launched `GetProcessForPID` identity failure without setting `LSDONOTABORTIFNOASN`.
+
+The same run emitted two non-target distributed-notification bootstrap passthrough failures with `MIG_BAD_ARGUMENTS` and WindowServer/default-connection diagnostics, but neither prevented identity registration or the successful Process Manager return. They are not broadened into compatibility work at this stage.
+
+The authoritative next experiment is:
+
+```text
+docs/process-manager-postidentity-getprocesspid-experiment.md
+```
+
+That stage reuses the accepted v5 CoreServices and v1 Security adapters unchanged and tests exactly one additional documented identity operation: `GetProcessPID` on the PSN just returned by `GetProcessForPID`, requiring an exact PID round-trip. It still stops before `GetCurrentProcess`, foreground conversion, activation, window creation, or event-loop work.
+
+No additional XNU change is indicated.
