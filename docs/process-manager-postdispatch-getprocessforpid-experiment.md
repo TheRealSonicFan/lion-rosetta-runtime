@@ -165,12 +165,38 @@ Require:
 
 - 32-bit PPC/ppc7400;
 - `LC_LOAD_DYLINKER=/usr/oah/dyld`;
-- Carbon, CoreServices, and Security linkage;
+- direct Carbon linkage;
 - `GetProcessForPID` imported;
+- do **not** require direct `LC_LOAD_DYLIB` entries for CoreServices or Security: with this Carbon subject, Snow Leopard's linker may omit those redundant/transitive framework load commands; their actual runtime participation is proven later by the LaunchServices image check plus the CoreServices/Security adapter call markers in Phase C and Phase F;
 - no imports of `GetCurrentProcess`, `GetProcessPID`, `GetFrontProcess`, `SetFrontProcess`, or `TransformProcessType`;
 - the three audited LaunchServices `__TEXT` offsets and PPC prologue word recorded in the info sidecar.
 
 If build fails, stop and return the complete output.
+
+## Observed first build-gate failure and correction
+
+The first attempted Snow Leopard build successfully produced and patched a PPC executable, then the builder stopped with:
+
+```text
+error: output does not link /System/Library/Frameworks/CoreServices.framework/Versions/A/CoreServices
+```
+
+That is a build-harness overconstraint, not a compiler, Rosetta, LaunchServices, CoreServices, or Security failure.
+
+This subject directly imports `GetProcessForPID` through the Carbon umbrella and uses dyld APIs to reach the already-audited LaunchServices local functions. The earlier validated GetProcessForPID-first Snow Leopard builder likewise requires direct Carbon linkage only. On Snow Leopard, explicitly naming CoreServices and Security on the link command does not guarantee redundant direct `LC_LOAD_DYLIB` entries will remain in the final executable, so requiring those entries in `otool -L` was not a valid provenance gate.
+
+The corrected builder now:
+
+- links the subject through Carbon, which is the direct framework required by the source;
+- requires the Carbon load command and the exact `GetProcessForPID` import;
+- preserves the existing forbidden-Process-Manager-import checks;
+- records the actual linked-library list in the info sidecar;
+- treats CoreServices and Security as runtime/transitive participants and proves them dynamically in Phase C/Phase F through the existing adapter call markers;
+- removes any stale executable/info/SHA outputs before rebuilding.
+
+The lone executable left by the failed builder is **not** an accepted Phase B artifact because the builder stopped before generating the info and SHA sidecars. Delete/overwrite it by rerunning the corrected Phase B command. Do not create sidecars manually from that failed build.
+
+After pulling current `main`, repeat **Phase B**. If Phase B succeeds and creates all three expected artifacts, continue to Phase C. Lion remains blocked until Phase C reports `RESULT: PASS`.
 
 ## Phase C — Snow Leopard positive control
 
