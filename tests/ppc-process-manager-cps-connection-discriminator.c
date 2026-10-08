@@ -17,9 +17,17 @@
 #define LS_GET_SERVER_PORT_TEXT_OFFSET 0x000186a8UL
 #define LS_EXPECTED_PROLOGUE_WORD 0x7c0802a6UL
 
-#define CG_CPS_WITH_OPTIONS_IMAGE_OFFSET 0x001fcfdcUL
-#define CG_CPS_SET_FRONT_IMAGE_OFFSET 0x001fd0ccUL
-#define CG_CONNECTION_SLOT_IMAGE_OFFSET 0x007007c8UL
+#define CG_CPS_WITH_OPTIONS_STATIC_N_VALUE 0x001fcfdcUL
+#define CG_CPS_SET_FRONT_STATIC_N_VALUE 0x001fd0ccUL
+#define CG_CONNECTION_SLOT_STATIC_TARGET 0x007007c8UL
+#define CG_CPS_SET_FRONT_STATIC_DELTA 0x000000f0UL
+#define CG_CPS_PIC_ADDIS_OFFSET 0x0000001cUL
+#define CG_CPS_PIC_LWZ_OFFSET 0x00000028UL
+#define CG_CPS_PIC_LR_OFFSET 0x00000008UL
+#define CG_CPS_PIC_ADDIS_MASK 0xffff0000UL
+#define CG_CPS_PIC_ADDIS_EXPECTED 0x3c5f0000UL
+#define CG_CPS_PIC_LWZ_MASK 0xffff0000UL
+#define CG_CPS_PIC_LWZ_EXPECTED 0x80420000UL
 #define CG_EXPECTED_PROLOGUE_WORD 0x7c0802a6UL
 #define CG_CPS_NO_CONNECTION_STATUS 0x000003ebUL
 
@@ -196,8 +204,14 @@ main(void)
     void *cps_with_options_addr;
     void *cps_set_front_addr;
     void *connection_slot_addr;
-    uintptr_t expected_cps_with_options;
-    uintptr_t expected_cps_set_front;
+    uintptr_t runtime_cps_delta;
+    uintptr_t runtime_pic_delta;
+    uint32_t pic_addis_word;
+    uint32_t pic_lwz_word;
+    intptr_t pic_base;
+    intptr_t pic_high;
+    intptr_t pic_low;
+    int pic_pattern_ok;
     char cps_segment[17];
     char slot_segment[17];
     get_dispatch_table_fn_t get_dispatch;
@@ -335,55 +349,11 @@ main(void)
         return 37;
     }
 
-    expected_cps_with_options =
-        (uintptr_t)cg_mh + (uintptr_t)CG_CPS_WITH_OPTIONS_IMAGE_OFFSET;
-    expected_cps_set_front =
-        (uintptr_t)cg_mh + (uintptr_t)CG_CPS_SET_FRONT_IMAGE_OFFSET;
-    connection_slot_addr =
-        (void *)((uintptr_t)cg_mh +
-                 (uintptr_t)CG_CONNECTION_SLOT_IMAGE_OFFSET);
-
-    cps_segment[0] = '\0';
-    slot_segment[0] = '\0';
-    if (!find_segment_for_runtime_addr(cg_mh, expected_cps_with_options,
-                                       cps_segment) ||
-        !find_segment_for_runtime_addr(cg_mh,
-                                       (uintptr_t)connection_slot_addr,
-                                       slot_segment)) {
-        marker("PM_CPS_DISCRIMINATOR_RESULT:AUDITED_OFFSET_OUTSIDE_IMAGE");
+    runtime_cps_delta =
+        (uintptr_t)cps_set_front_addr - (uintptr_t)cps_with_options_addr;
+    if (runtime_cps_delta != (uintptr_t)CG_CPS_SET_FRONT_STATIC_DELTA) {
+        marker("PM_CPS_DISCRIMINATOR_RESULT:CPS_SYMBOL_DELTA_MISMATCH");
         return 38;
-    }
-
-    fprintf(stderr,
-            "PM_CPS_IMAGE:name=%s header=0x%08lx textVMAddr=0x%08lx textVMSize=0x%08lx headerMatchesTextVMAddr=%s dyldSlide=%ld dyldSlideHex=0x%08lx cpsWithOptionsOffset=0x%08lx cpsWithOptionsExpected=0x%08lx cpsWithOptionsResolved=0x%08lx cpsSetFrontOffset=0x%08lx cpsSetFrontExpected=0x%08lx cpsSetFrontResolved=0x%08lx connectionSlotOffset=0x%08lx connectionSlotRuntime=0x%08lx cpsSegment=%s slotSegment=%s\n",
-            cg_image_name != NULL ? cg_image_name : "(null)",
-            (unsigned long)(uintptr_t)cg_mh,
-            (unsigned long)cg_text_vmaddr,
-            (unsigned long)cg_text_vmsize,
-            ((uintptr_t)cg_mh == (uintptr_t)cg_text_vmaddr) ? "YES" : "NO",
-            (long)cg_slide,
-            (unsigned long)(uintptr_t)cg_slide,
-            (unsigned long)CG_CPS_WITH_OPTIONS_IMAGE_OFFSET,
-            (unsigned long)expected_cps_with_options,
-            (unsigned long)(uintptr_t)cps_with_options_addr,
-            (unsigned long)CG_CPS_SET_FRONT_IMAGE_OFFSET,
-            (unsigned long)expected_cps_set_front,
-            (unsigned long)(uintptr_t)cps_set_front_addr,
-            (unsigned long)CG_CONNECTION_SLOT_IMAGE_OFFSET,
-            (unsigned long)(uintptr_t)connection_slot_addr,
-            cps_segment,
-            slot_segment);
-    fflush(stderr);
-
-    if ((uintptr_t)cg_mh != (uintptr_t)cg_text_vmaddr) {
-        marker("PM_CPS_DISCRIMINATOR_RESULT:COREGRAPHICS_CACHE_ADDRESS_MODEL_MISMATCH");
-        return 39;
-    }
-
-    if ((uintptr_t)cps_with_options_addr != expected_cps_with_options ||
-        (uintptr_t)cps_set_front_addr != expected_cps_set_front) {
-        marker("PM_CPS_DISCRIMINATOR_RESULT:CPS_SYMBOL_ADDRESS_MISMATCH");
-        return 40;
     }
 
     fprintf(stderr,
@@ -393,8 +363,77 @@ main(void)
     fflush(stderr);
     if (read_u32(cps_with_options_addr) != CG_EXPECTED_PROLOGUE_WORD) {
         marker("PM_CPS_DISCRIMINATOR_RESULT:CPS_PROLOGUE_MISMATCH");
+        return 39;
+    }
+
+    pic_addis_word =
+        read_u32((const uint8_t *)cps_with_options_addr +
+                 CG_CPS_PIC_ADDIS_OFFSET);
+    pic_lwz_word =
+        read_u32((const uint8_t *)cps_with_options_addr +
+                 CG_CPS_PIC_LWZ_OFFSET);
+    pic_pattern_ok =
+        ((pic_addis_word & CG_CPS_PIC_ADDIS_MASK) ==
+         CG_CPS_PIC_ADDIS_EXPECTED) &&
+        ((pic_lwz_word & CG_CPS_PIC_LWZ_MASK) ==
+         CG_CPS_PIC_LWZ_EXPECTED);
+
+    if (!pic_pattern_ok) {
+        marker("PM_CPS_DISCRIMINATOR_RESULT:CPS_PIC_PATTERN_MISMATCH");
+        return 40;
+    }
+
+    pic_base =
+        (intptr_t)((uintptr_t)cps_with_options_addr +
+                   (uintptr_t)CG_CPS_PIC_LR_OFFSET);
+    pic_high =
+        (intptr_t)(int16_t)(pic_addis_word & 0xffffUL) * 65536L;
+    pic_low =
+        (intptr_t)(int16_t)(pic_lwz_word & 0xffffUL);
+    connection_slot_addr =
+        (void *)(uintptr_t)(pic_base + pic_high + pic_low);
+    runtime_pic_delta =
+        (uintptr_t)connection_slot_addr -
+        (uintptr_t)cps_with_options_addr;
+
+    cps_segment[0] = '\0';
+    slot_segment[0] = '\0';
+    if (!find_segment_for_runtime_addr(cg_mh,
+                                       (uintptr_t)cps_with_options_addr,
+                                       cps_segment)) {
+        marker("PM_CPS_DISCRIMINATOR_RESULT:CPS_RUNTIME_TEXT_OUTSIDE_IMAGE");
         return 41;
     }
+    if (!find_segment_for_runtime_addr(cg_mh,
+                                       (uintptr_t)connection_slot_addr,
+                                       slot_segment)) {
+        marker("PM_CPS_DISCRIMINATOR_RESULT:CPS_RUNTIME_SLOT_OUTSIDE_IMAGE");
+        return 42;
+    }
+
+    fprintf(stderr,
+            "PM_CPS_IMAGE:name=%s header=0x%08lx textVMAddr=0x%08lx textVMSize=0x%08lx headerMatchesTextVMAddr=%s dyldSlide=%ld dyldSlideHex=0x%08lx cpsWithOptionsStaticNValue=0x%08lx cpsWithOptionsResolved=0x%08lx cpsSetFrontStaticNValue=0x%08lx cpsSetFrontResolved=0x%08lx staticSymbolDelta=0x%08lx runtimeSymbolDelta=0x%08lx connectionSlotStaticTarget=0x%08lx picAddisWord=0x%08lx picLwzWord=0x%08lx picPattern=YES runtimePICDelta=0x%08lx connectionSlotRuntime=0x%08lx cpsSegment=%s slotSegment=%s\n",
+            cg_image_name != NULL ? cg_image_name : "(null)",
+            (unsigned long)(uintptr_t)cg_mh,
+            (unsigned long)cg_text_vmaddr,
+            (unsigned long)cg_text_vmsize,
+            ((uintptr_t)cg_mh == (uintptr_t)cg_text_vmaddr) ? "YES" : "NO",
+            (long)cg_slide,
+            (unsigned long)(uintptr_t)cg_slide,
+            (unsigned long)CG_CPS_WITH_OPTIONS_STATIC_N_VALUE,
+            (unsigned long)(uintptr_t)cps_with_options_addr,
+            (unsigned long)CG_CPS_SET_FRONT_STATIC_N_VALUE,
+            (unsigned long)(uintptr_t)cps_set_front_addr,
+            (unsigned long)CG_CPS_SET_FRONT_STATIC_DELTA,
+            (unsigned long)runtime_cps_delta,
+            (unsigned long)CG_CONNECTION_SLOT_STATIC_TARGET,
+            (unsigned long)pic_addis_word,
+            (unsigned long)pic_lwz_word,
+            (unsigned long)runtime_pic_delta,
+            (unsigned long)(uintptr_t)connection_slot_addr,
+            cps_segment,
+            slot_segment);
+    fflush(stderr);
 
     log_connection_state("preidentity", connection_slot_addr);
 
