@@ -11,7 +11,18 @@ INFO="$OUT.info.txt"
 SHA="$OUT.sha256"
 TMP_DYLIB="$(/usr/bin/mktemp /tmp/ppc-coreservices-sessioninit-compat.XXXXXX.dylib)"
 TMP_LOG="$(/usr/bin/mktemp /tmp/ppc-coreservices-sessioninit-compat.XXXXXX.log)"
-trap 'rm -f "$TMP_DYLIB" "$TMP_LOG"' EXIT HUP INT TERM
+BUILD_COMPLETE=0
+cleanup() {
+    rc=$?
+    /bin/rm -f "$TMP_DYLIB" "$TMP_LOG"
+    if [ "$BUILD_COMPLETE" -ne 1 ]; then
+        /bin/rm -f "$OUT" "$INFO" "$SHA"
+    fi
+    exit "$rc"
+}
+trap cleanup EXIT HUP INT TERM
+
+/bin/rm -f "$OUT" "$INFO" "$SHA"
 
 [ -f "$SRC" ] || { echo "error: missing interposer source: $SRC" >&2; exit 66; }
 /usr/bin/grep -Fq "#define COMPAT_BUILD_ID \"$EXPECTED_COMPAT_BUILD_ID\"" "$SRC" || {
@@ -153,6 +164,7 @@ fi
 }
 
 /usr/bin/shasum -a 256 "$OUT" > "$SHA"
+BUILD_COMPLETE=1
 
 echo "Created:"
 echo "  $OUT"
