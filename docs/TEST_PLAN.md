@@ -136,3 +136,18 @@ The first Snow Leopard AuditInfo oracle control exposed a harness overconstraint
 
 
 The corrected Security AuditInfo oracle now passes completely. On Lion, native i386 `SessionGetInfo(callerSecuritySession,...)` returned status 0 and exactly matched the typed audit session ID/attribute values from `getaudit_addr(..., 0x30)`; translated PPC also called `getaudit_addr` successfully and returned the same audit session ID. The raw 32-bit word at offset `0x28` differs between i386 and PPC because `ai_flags` is a 64-bit field: the previous probe logged only the first word, which is the low half on little-endian i386 and the high half on big-endian PPC. The next controlled stage is `docs/process-manager-security-session-auditinfo-api-adapter-experiment.md`, a one-tuple process-local `SessionGetInfo` adapter for `callerSecuritySession` that uses typed `auditinfo_addr_t.ai_asid` / `ai_flags` and sends no SecurityServer RPC. No additional XNU change is indicated.
+
+
+The combined pre-dispatch integration has now passed completely. In one translated PPC process on Lion, the proven CoreServices bootstrap/ServerCheckin adaptations and the proven AuditInfo-backed `SessionGetInfo` adapter coexist successfully; CarbonCore returns a nonzero `LaunchApplicationServices` port, `SessionGetInfo` returns status 0 with a nonzero session ID, and the original subject reaches `PREDISPATCH_PRIMITIVES_PASS`.
+
+The authoritative next step is:
+
+```text
+docs/process-manager-launchservices-init-wire-experiment.md
+```
+
+That stage sends one exact Snow Leopard PPC InitializeProcessesServices MIG request using the established request ID `0x4650`, send size `0x2c`, receive size `0x50`, current session ID twice, and process-services version `0x00a1be40`. It validates the expected complex `0x48` / reply-ID-`0x46b4` response and server error word, then exits before CFMachPort creation, dispatch-table installation, or any Process Manager identity call.
+
+Do not broaden either compatibility layer or change XNU before this wire result is reviewed.
+
+No additional XNU change is indicated.
