@@ -312,3 +312,45 @@ TransformProcessType(returned PSN, foreground) -> next live proof
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — TransformProcessType pass
+
+The TransformProcessType experiment passed completely on both Snow Leopard and Lion.
+
+Snow Leopard direct-execution control:
+
+```text
+GetProcessForPID              = 0
+GetProcessPID                 = 0
+PID round-trip                = exact
+TransformProcessType          = 0
+SessionInit exact calls       = 1
+RESULT                        = PASS
+```
+
+Lion:
+
+```text
+GetProcessForPID              = 0
+returned PSN                  = 0x00000000:0x000be0be
+GetProcessPID                 = 0
+round-trip PID                = 22705 -> 22705
+TransformProcessType          = 0
+SessionInit exact calls       = 1
+new crash/core diagnostic     = none
+protected hashes unchanged    = YES
+RESULT: POSTIDENTITY_TRANSFORMPROCESSTYPE_PASS
+```
+
+This closes the foreground-conversion boundary under the current compatibility stack. The already-known WindowServer/default-connection diagnostics still appeared during the preceding registration path on Lion, but they did not prevent either identity API or `TransformProcessType` from succeeding.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-postidentity-setfrontprocess-experiment.md
+```
+
+That experiment keeps the accepted v5 CoreServices and v1 Security adapters unchanged, re-proves identity and foreground conversion, then calls exactly one `SetFrontProcess` using the same PSN and stops before any window operation or event loop. The Snow Leopard direct-execution result remains a hard gate.
+
+No additional XNU change is indicated.
