@@ -140,13 +140,15 @@ The original runner's `POSTDISPATCH_GETPROCESSFORPID_ABORT_BEFORE_RETURN` label 
 
 The preserved post-dispatch core has now resolved the termination. The failure is `EXC_BAD_ACCESS (SIGBUS)` with `KERN_PROTECTION_FAILURE` at guest address `0x3c`, not the historical guest-requested SIGABRT/no-ASN branch. The PPC stack localizes the fault below `__LSApplicationCheckIn` in CarbonCore's filesystem/session-universe path, ending at `__SCSessionUniverseByUIDAcquireAndLock`. The crash state also contains a possible byte-swapped `-304/MIG_BAD_ARGUMENTS` clue, but its liveness is not yet established.
 
+The CarbonCore session-universe differential audit has now passed on both Snow Leopard and Lion. It identifies a concrete InitConnection protocol evolution: Snow Leopard PPC and native clients pass an explicit PID to `__scclient_SCSessionUniverseInitConnection_rpc`, while Lion native clients no longer do. Snow PPC also continues after an RPC error without constructing a universe, which is consistent with the later protected-zero-page fault. The preserved `-304/MIG_BAD_ARGUMENTS` register value is now a strong correlation clue, but the generated MIG stubs must prove the exact request mismatch before compatibility code is justified.
+
 The authoritative next step is:
 
 ```text
-docs/process-manager-carboncore-session-universe-audit.md
+docs/process-manager-session-universe-init-rpc-protocol-audit.md
 ```
 
-Run the new read-only static differential audit once on Snow Leopard and once on Lion. Do not rerun the PPC subject, do not enable `LSDONOTABORTIFNOASN=0`, and do not design a compatibility shim until the session-universe client/state path is compared.
+Run the new read-only protocol audit once on Snow Leopard and once on Lion. Do not rerun the PPC subject, do not set `LSDONOTABORTIFNOASN=0`, and do not extend the CoreServices adapter until the exact InitConnection message ID, request/reply sizes, field ordering, and Lion validation are established.
 
 No additional XNU change is indicated.
 
