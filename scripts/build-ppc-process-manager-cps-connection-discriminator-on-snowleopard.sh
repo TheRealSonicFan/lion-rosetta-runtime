@@ -100,10 +100,10 @@ done
     echo "getProcessesServerPort=0x000186a8"
     echo "expected_ppc_prologue_word=0x7c0802a6"
     echo
-    echo "== audited Snow Leopard PPC CoreGraphics addresses =="
-    echo "__CPSSetFrontProcessWithOptions=0x001fcfdc"
-    echo "CPSSetFrontProcess=0x001fd0cc"
-    echo "CPS_connection_record_slot=0x007007c8"
+    echo "== audited Snow Leopard PPC CoreGraphics original-image offsets =="
+    echo "__CPSSetFrontProcessWithOptions_image_offset=0x001fcfdc"
+    echo "CPSSetFrontProcess_image_offset=0x001fd0cc"
+    echo "CPS_connection_record_slot_image_offset=0x007007c8"
     echo "CPS_no_connection_raw_status=0x000003eb"
     echo "expected_CPS_with_options_prologue_word=0x7c0802a6"
     echo
