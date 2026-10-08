@@ -109,10 +109,11 @@ if [ "$RC" -eq 0 ] &&
    /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M10_AFTER_TransformProcessType' "$LOG" &&
    /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:TransformProcessType=0' "$LOG" &&
    /usr/bin/grep -Fq 'PM_POSTIDENTITY_RESULT:TRANSFORMPROCESSTYPE_PASS' "$LOG" &&
+   /usr/bin/grep -Eq 'PM_CPS_IMAGE:.*headerMatchesTextVMAddr=YES' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CPS_PROLOGUE:expected=0x7c0802a6 actual=0x7c0802a6' "$LOG" &&
-   /usr/bin/grep -Fq 'cpsWithOptionsOriginal=0x001fcfdc' "$LOG" &&
-   /usr/bin/grep -Fq 'cpsSetFrontOriginal=0x001fd0cc' "$LOG" &&
-   /usr/bin/grep -Fq 'connectionSlotOriginal=0x007007c8' "$LOG" &&
+   /usr/bin/grep -Fq 'cpsWithOptionsOffset=0x001fcfdc' "$LOG" &&
+   /usr/bin/grep -Fq 'cpsSetFrontOffset=0x001fd0cc' "$LOG" &&
+   /usr/bin/grep -Fq 'connectionSlotOffset=0x007007c8' "$LOG" &&
    /usr/bin/grep -Eq 'PM_CPS_CONNECTION_STATE:phase=posttransform slot=0x[0-9a-fA-F]{8} pointer=0x0*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CPS_DISCRIMINATOR_MILESTONE:M11_BEFORE_CPSSetFrontProcess' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CPS_DISCRIMINATOR_MILESTONE:M12_AFTER_CPSSetFrontProcess' "$LOG" &&
