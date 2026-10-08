@@ -185,3 +185,18 @@ docs/process-manager-setfrontprocess-cps-transport-audit.md
 Run the focused read-only analyzer once on Snow Leopard and once on Lion. It exact-targets the CPS/default-connection/CGS transport functions and requires the relevant Snow PPC and Lion i386 symbols to be present. Do not rerun the PPC application or design a CPS/CGS adapter until those two reports are reviewed.
 
 No additional XNU change is indicated.
+
+
+The focused SetFrontProcess CPS/CGS audit has now passed on both systems and proves that the current public `-50` has two possible lower-layer causes that must be ordered, not conflated. Snow PPC `__CPSSetFrontProcessWithOptions` returns raw `0x3eb` before transport when its current CoreGraphics connection record is null, and Snow PPC HIServices maps that status to `-50`; independently, Snow PPC `__CGSSetFrontProcess` uses request/reply IDs `0x729e/0x7302` while Lion native uses `0x72a1/0x7305` with otherwise matching `0x30/0x2c` transport sizes.
+
+The authoritative next step is:
+
+```text
+docs/process-manager-setfrontprocess-cps-connection-discriminator-experiment.md
+```
+
+Build the new PPC discriminator on Snow Leopard and require its direct-execution control to pass with a nonzero audited CoreGraphics connection slot and raw `CPSSetFrontProcess=0`. Then run Lion exactly once. The leading Lion result is a zero audited connection slot plus raw CPS `0x3eb`, which will establish that the present failure occurs before the legacy `0x729e` Mach request. Only if the connection slot is nonzero should the already-proven request-ID mismatch become the next active boundary.
+
+Do not add a CGS request adapter, call public `SetFrontProcess` again, call `GetFrontProcess`, create a window, broaden v5, or change XNU before this discriminator is reviewed.
+
+No additional XNU change is indicated.
