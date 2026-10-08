@@ -150,7 +150,7 @@ The authoritative next step is:
 docs/process-manager-session-universe-init-adapter-experiment.md
 ```
 
-Build the new `dual-bootstrap-servercheckin-sessioninit-v4` CoreServices interposer on Snow Leopard and require the new passthrough control before Lion. On Lion, the adapter rewrites only the exact `0x2712` request from `0x2c [PID,UID,layout]` to `0x28 [UID,layout]`, keeps `LSDONOTABORTIFNOASN` unset, and stops after the one existing `GetProcessForPID` identity result.
+Build the new `dual-bootstrap-servercheckin-sessioninit-v5` CoreServices interposer on Snow Leopard and require the new passthrough control before Lion. On Lion, the adapter rewrites only the exact `0x2712` request from `0x2c [PID,UID,layout]` to `0x28 [UID,layout]`, keeps `LSDONOTABORTIFNOASN` unset, and stops after the one existing `GetProcessForPID` identity result.
 
 Do not adapt MapSharedSegment, broaden the Security layer, patch coreservicesd/CarbonCore, or change XNU before this result is reviewed.
 
@@ -161,3 +161,6 @@ The first Snow Leopard dispatch-setup Phase C failure was a harness address-reso
 
 
 The first post-dispatch GetProcessForPID build failure was a harness linkage-gate defect. That corrected builder subsequently produced the accepted artifact, the Snow Leopard control passed, and the Lion run reached the post-dispatch identity boundary; the earlier rebuild gate is closed.
+
+
+The first Snow Leopard passthrough control for this stage failed only because the v4 harness watched the wrong port and overconstrained an uninitialized header field. The subject itself completed with `GetProcessForPID=0` and a nonzero PSN. Existing CoreServices controls prove `scGetServerCheckinPort()` returns the original coreservicesd service/check-in port, not the different descriptor returned by ServerCheckin; the Snow PPC generated InitConnection client also uses the `mach_msg` send-size argument `0x2c` without initializing pre-send `msgh_size`. Current v5 corrects both assumptions. Rebuild the v5 interposer on Snow Leopard and repeat Phase C only. Do not transfer to Lion until that control reports `RESULT: PASS`.
