@@ -208,6 +208,14 @@ log "protected_hashes_unchanged=YES"
 if ! /usr/bin/grep -Fq 'PM_POSTDISPATCH_ENV:LSDONOTABORTIFNOASN=(unset)' "$RAW_LOG"; then
     log "RESULT: POSTDISPATCH_IDENTITY_ENVIRONMENT_FAILURE"; exit 1
 fi
+if ! /usr/bin/grep -Fq 'headerMatchesTextVMAddr=YES' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'dispatchTextOffset=0x00018654' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'serverTextOffset=0x000186a8' "$RAW_LOG"; then
+    log "RESULT: POSTDISPATCH_IDENTITY_OFFSET_FAILURE"; exit 1
+fi
+if ! /usr/bin/grep -Fq 'PM_POSTDISPATCH_PROLOGUE:expected=0x7c0802a6 setup=0x7c0802a6 dispatch=0x7c0802a6 server=0x7c0802a6' "$RAW_LOG"; then
+    log "RESULT: POSTDISPATCH_IDENTITY_PROLOGUE_FAILURE"; exit 1
+fi
 if ! /usr/bin/grep -Eq 'PM_POSTDISPATCH_TABLE:pointer=0x0*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$RAW_LOG" ||
    ! /usr/bin/grep -Eq 'PM_POSTDISPATCH_SERVER_PORT:port=0x0*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$RAW_LOG"; then
     log "RESULT: POSTDISPATCH_IDENTITY_SETUP_REGRESSION"; exit 1
