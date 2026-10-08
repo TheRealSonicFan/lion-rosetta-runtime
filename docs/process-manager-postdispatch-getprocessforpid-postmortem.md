@@ -197,3 +197,49 @@ actual termination signal/call path -> next proof
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result
+
+The postmortem collector completed with all three GDB passes returning status 0, produced the expected 512-byte crash window, and ended `RESULT: PASS`.
+
+The preserved Lion crash is **not SIGABRT**:
+
+```text
+Exception Type:  EXC_BAD_ACCESS (SIGBUS)
+Exception Codes: KERN_PROTECTION_FAILURE at 0x000000000000003c
+```
+
+The PPC stack localizes the failure inside `GetProcessForPID` as:
+
+```text
+GetProcessForPID
+  -> __RegisterApplication
+  -> __LSApplicationCheckIn
+  -> __CSCheckFix
+  -> _GetBugsForOurBundleIDFromCoreservicesd
+  -> CFBundle/CoreFoundation FSRef conversion
+  -> CarbonCore filesystem mount/ID-tree path
+  -> _FSNodeStorageGetAndLockCurrentUniverse
+  -> __SCSessionUniverseByUIDAcquireAndLock
+  -> fault
+```
+
+The crash state includes `r3=0x0000003c`, and Rosetta's host-side instruction at the fault is a load from `EDI=0x3c`, matching the protected-zero-page address. The PPC state also contains `r9=0x4d555458` and `r10=0xd0feffff`. Byte-swapping the latter yields `0xfffffed0`, signed `-304` / `MIG_BAD_ARGUMENTS`; this is recorded only as a clue because register liveness has not yet been proven.
+
+The crash-window SHA-256 is:
+
+```text
+6e1ccbb59f4a75bf57abc7ccf3fdb74d92927741e736274d00011615e75bbd70
+```
+
+This result rejects the planned no-ASN behavior override for the current failure. The authoritative next stage is the read-only differential audit:
+
+```text
+docs/process-manager-carboncore-session-universe-audit.md
+scripts/audit-process-manager-carboncore-session-universe.py
+```
+
+Run that audit once on Snow Leopard and once on Lion. Do not rerun the PPC subject or set `LSDONOTABORTIFNOASN=0`.
+
+No additional XNU change is indicated.
