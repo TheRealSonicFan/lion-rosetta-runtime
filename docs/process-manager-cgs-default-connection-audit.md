@@ -334,3 +334,29 @@ next step                                         -> _CGSDefaultConnection/_CGSN
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — server-port acquisition is the active differential
+
+The read-only audit has now passed on both Snow Leopard and Lion.
+
+Both systems had a live WindowServer process, so the translated Lion failure is not an absent-daemon condition.
+
+The Snow PPC and Lion native default-connection paths retain the same high-level structure: `__CGSDefaultConnection` creates a connection through `_CGSNewConnection`, and only a successful connection lets HIServices proceed to `__CPSRegisterWithServer`.
+
+The generated/client `__CGSNewConnectionPort` windows are also materially aligned at the visible wire boundary. Snow PPC and Lion i386 both use request ID `0x7469`, expected reply ID `0x74cd`, receive size `0x44`, Mach options `0x3`, complex request bits `0x80001513`, and the same aligned-name-plus-`0x44` send-size construction. That transaction is therefore no longer the leading mismatch.
+
+The concrete differential is one layer earlier. Snow PPC `_CGSLookupServerPort` calls `_lookupServerPort(0,1)`. Lion native x86_64 instead calls `_getSessionPort(1)` and falls back to `_CGSLookupServerRootPort(1)`; Lion also exposes `_CGSessionGetWindowServerPort`, per-session/root WindowServer helpers, `_current_session_set_bootstrap_port`, `bootstrap_look_up_per_user`, and XPC imports that are absent from the Snow PPC lookup path.
+
+This strongly localizes the current translated-PPC failure to WindowServer **server-port acquisition**, but the prior audit did not emit the hidden helper bodies or addressed service-name cstrings needed to prove the exact obsolete lookup tuple and Lion replacement semantics.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-cgs-server-port-acquisition-audit.md
+scripts/audit-process-manager-cgs-server-port-acquisition.py
+```
+
+Run that read-only analyzer on Snow Leopard first as a hard gate, then Lion. Do not rerun the PPC subject, dynamically call a CGS helper, perform a bootstrap lookup, fabricate a connection record, adapt `0x7469` or `0x729e`, or change XNU before the helper audit is reviewed.
+
+No additional XNU change is indicated.
