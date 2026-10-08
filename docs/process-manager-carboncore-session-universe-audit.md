@@ -114,6 +114,8 @@ The analyzer is Python-2-compatible and read-only. It records:
 
 The analyzer does not invoke any of those private functions.
 
+On Snow Leopard, the PPC crash-path symbols are required as a tooling/provenance gate because that is the code family actually executed by Rosetta. On Lion, the native i386 slice must be readable and disassemblable, but the exact Snow Leopard symbol names are **not** required to exist: disappearance or renaming of that session-universe path is itself potentially meaningful semantic evidence rather than a tooling failure.
+
 ## Safety constraints
 
 For this stage:
