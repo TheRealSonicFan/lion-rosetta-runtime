@@ -117,15 +117,17 @@ This directly proves that Lion no longer implements the legacy `getSessionInfo=0
 
 The AuditInfo oracle has now passed completely. Native Lion i386 `SessionGetInfo(callerSecuritySession,...)` matches the typed audit-session data returned by `getaudit_addr(..., 0x30)`, and translated PPC can call `getaudit_addr` directly with the same audit session ID. The first raw 32-bit word of `ai_flags` differs across i386/PPC because `ai_flags` is a 64-bit field and the two architectures have opposite endianness.
 
+The one-tuple Security `SessionGetInfo(callerSecuritySession,...)` AuditInfo adapter has now passed completely. On Lion, typed `getaudit_addr` returned `ai_asid=0x000186a3` and logical `ai_flags=0x00002030`; the adapter returned those values through the public API with status 0, and the runner confirmed exact ID/attribute equality. The translated PPC raw words also confirm the big-endian 64-bit `ai_flags` layout: offset `0x28` is the high half and offset `0x2c` is the low half.
+
 The authoritative next step is:
 
 ```text
-docs/process-manager-security-session-auditinfo-api-adapter-experiment.md
+docs/process-manager-predispatch-full-compat-integration-experiment.md
 ```
 
-That stage tests exactly one process-local `SessionGetInfo` interpose tuple. Snow Leopard must pass through unchanged. Lion adapts only `callerSecuritySession` by using typed `auditinfo_addr_t.ai_asid` and the low 32 bits of typed 64-bit `ai_flags`; it does not call the retired SecurityServer session RPC.
+That stage loads the proven `dual-bootstrap-servercheckin-v3` CoreServices adapter and `security-session-auditinfo-api-v1` Security adapter together, then reruns the original pre-dispatch service/session sequence. It still stops before `_LSDoInitializeProcessesServices` and all Process Manager identity APIs.
 
-Do not patch Security/securityd or make another XNU change before that API adapter proof is reviewed.
+Do not merge or broaden the interposers and do not make another XNU change before the combined pre-dispatch result is reviewed.
 
 No additional XNU change is indicated.
 
