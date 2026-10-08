@@ -192,9 +192,10 @@ The corrected builder now:
 - preserves the existing forbidden-Process-Manager-import checks;
 - records the actual linked-library list in the info sidecar;
 - treats CoreServices and Security as runtime/transitive participants and proves them dynamically in Phase C/Phase F through the existing adapter call markers;
-- removes any stale executable/info/SHA outputs before rebuilding.
+- removes any stale executable/info/SHA outputs before rebuilding;
+- removes partial outputs automatically if any later validation gate fails, so a failed build cannot leave a lone executable that looks accepted.
 
-The lone executable left by the failed builder is **not** an accepted Phase B artifact because the builder stopped before generating the info and SHA sidecars. Delete/overwrite it by rerunning the corrected Phase B command. Do not create sidecars manually from that failed build.
+The lone executable left by the original failed builder is **not** an accepted Phase B artifact because the builder stopped before generating the info and SHA sidecars. The corrected builder deletes stale outputs at startup and deletes partial outputs again on failure, so rerunning the corrected Phase B command is sufficient. Do not create sidecars manually from the original failed build.
 
 After pulling current `main`, repeat **Phase B**. If Phase B succeeds and creates all three expected artifacts, continue to Phase C. Lion remains blocked until Phase C reports `RESULT: PASS`.
 
