@@ -15,13 +15,13 @@ Both focused reports completed with `RESULT: PASS`.
 
 ### The immediate pre-transport guard is identical in Snow PPC and Lion native CoreGraphics
 
-Snow Leopard PPC `__CPSSetFrontProcessWithOptions` is at original VM address:
+Snow Leopard PPC `__CPSSetFrontProcessWithOptions` has audited original-image offset:
 
 ```text
 0x001fcfdc
 ```
 
-Its first state test loads a CoreGraphics connection-record pointer from original VM address:
+Its first state test loads a CoreGraphics connection-record pointer from audited original-image offset:
 
 ```text
 0x007007c8
@@ -35,12 +35,12 @@ and returns raw CPS status:
 
 if that pointer is zero, before calling `__CGSSetFrontProcess`.
 
-The slot address is derived directly from the PPC sequence:
+The slot offset is derived directly from the PPC sequence in the original Snow Leopard PPC image:
 
 ```text
 bcl ...                    -> LR/PC 0x001fcfe4
 addis r2,r31,0x50          -> +0x00500000
-lwz   r2,0x37e4(r2)        -> 0x007007c8
+lwz   r2,0x37e4(r2)        -> original-image offset 0x007007c8
 cmpwi r2,0
 beq   return_0x3eb
 ```
@@ -101,15 +101,17 @@ TransformProcessType(...foreground...)
 It then:
 
 1. resolves the loaded PPC CoreGraphics image;
-2. validates the audited Snow PPC `__CPSSetFrontProcessWithOptions` and `CPSSetFrontProcess` addresses against that image's dyld slide;
+2. validates the Rosetta-cache address model (`loaded header == in-memory __TEXT.vmaddr`) and resolves the audited Snow PPC `__CPSSetFrontProcessWithOptions` / `CPSSetFrontProcess` locations as `loaded_header + original_image_offset`;
 3. validates the `__CPSSetFrontProcessWithOptions` PPC prologue word `0x7c0802a6`;
-4. reads the audited connection-record slot at original VM address `0x007007c8`;
+4. reads the audited connection-record slot at `loaded_header + 0x007007c8`, without invoking a connection getter;
 5. logs that slot before identity, after identity, after foreground conversion, and after the private CPS call;
 6. calls exactly one `CPSSetFrontProcess(&psn)`;
 7. records the **raw CPS status**, before HIServices maps it to an OSStatus;
 8. exits immediately.
 
 The subject does **not** import or call public `SetFrontProcess`, `GetFrontProcess`, or `GetCurrentProcess`.
+
+As with the already-proven LaunchServices cache resolver, shared-cache load commands are rebased in memory; therefore the discriminator deliberately does **not** treat the Snow file's symbol values as absolute runtime VM addresses and does not rely on a traditional dyld slide calculation for them.
 
 ## Safety constraints
 
@@ -175,10 +177,10 @@ The builder requires:
 - direct Carbon linkage;
 - exact `GetProcessForPID`, `GetProcessPID`, `TransformProcessType`, and `dlsym` imports;
 - **no** public `SetFrontProcess`, `GetFrontProcess`, or `GetCurrentProcess` import;
-- the audited CoreGraphics constants:
+- the audited CoreGraphics original-image offsets:
   - `__CPSSetFrontProcessWithOptions = 0x001fcfdc`;
   - `CPSSetFrontProcess = 0x001fd0cc`;
-  - connection-record slot `0x007007c8`;
+  - connection-record slot = `0x007007c8`;
   - raw no-connection status `0x000003eb`.
 
 Do not manually create sidecars if the builder fails.
