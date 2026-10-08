@@ -202,7 +202,7 @@ def analyze_slice(fp, label, path, arch, tempdir):
     write_line(fp, "thin=%s" % ("YES" if ok else "NO"))
     if not ok:
         write_line(fp, out.rstrip())
-        return {"arch": arch, "present": False, "targets": [], "cstrings": 0}
+        return {"arch": arch, "present": False, "analyzed": False, "targets": [], "cstrings": 0}
 
     write_line(fp, "slice_sha256=%s" % sha256(thin))
 
@@ -214,7 +214,7 @@ def analyze_slice(fp, label, path, arch, tempdir):
     if rc != 0:
         write_line(fp, "nm_failed")
         write_line(fp, nm_out.rstrip())
-        return {"arch": arch, "present": True, "targets": [], "cstrings": 0}
+        return {"arch": arch, "present": True, "analyzed": False, "targets": [], "cstrings": 0}
 
     ordered, nm_lines = parse_symbols(nm_out)
 
@@ -222,7 +222,7 @@ def analyze_slice(fp, label, path, arch, tempdir):
     if rc != 0:
         write_line(fp, "disassembly_failed")
         write_line(fp, dis_out.rstrip())
-        return {"arch": arch, "present": True, "targets": [], "cstrings": 0}
+        return {"arch": arch, "present": True, "analyzed": False, "targets": [], "cstrings": 0}
 
     rows = parse_instructions(dis_out)
     selected = [(name, addr) for addr, name in ordered if TARGET_RE.search(name)]
@@ -246,6 +246,7 @@ def analyze_slice(fp, label, path, arch, tempdir):
     return {
         "arch": arch,
         "present": True,
+        "analyzed": True,
         "targets": [name for name, addr in selected],
         "cstrings": cstrings,
     }
@@ -360,15 +361,29 @@ def main():
                 issues.append("unsupported OS baseline: %s" % product)
 
             if required_arch is not None:
-                for fragment in [
-                    "SCSessionUniverseByUIDAcquireAndLock",
-                    "FSNodeStorageGetAndLockCurrentUniverse",
-                    "GetBugsForOurBundleIDFromCoreservicesd",
-                    "CSCheckFix",
-                ]:
-                    if not has_target(results, required_arch, fragment):
-                        issues.append("%s CarbonCore target missing: %s" %
-                                      (required_arch, fragment))
+                required_result = None
+                for result in results:
+                    if result["arch"] == required_arch:
+                        required_result = result
+                        break
+                if required_result is None or not required_result["present"]:
+                    issues.append("%s CarbonCore slice missing" % required_arch)
+                elif not required_result["analyzed"]:
+                    issues.append("%s CarbonCore slice could not be symbol/disassembly analyzed" %
+                                  required_arch)
+
+                if product.startswith("10.6"):
+                    for fragment in [
+                        "SCSessionUniverseByUIDAcquireAndLock",
+                        "FSNodeStorageGetAndLockCurrentUniverse",
+                        "GetBugsForOurBundleIDFromCoreservicesd",
+                        "CSCheckFix",
+                    ]:
+                        if not has_target(results, required_arch, fragment):
+                            issues.append("%s CarbonCore target missing: %s" %
+                                          (required_arch, fragment))
+                else:
+                    write_line(fp, "lion_native_target_absence_is_semantic_evidence=YES")
 
             if not os.path.isfile(CORESERVICESD):
                 issues.append("coreservicesd executable missing")
