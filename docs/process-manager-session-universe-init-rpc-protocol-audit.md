@@ -211,3 +211,64 @@ exact InitConnection MIG request/reply layout -> next proof
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result
+
+Both Snow Leopard and Lion protocol reports completed with `RESULT: PASS`.
+
+The generated stubs prove the InitConnection mismatch conclusively.
+
+Snow Leopard PPC uses:
+
+```text
+request ID = 0x00002712
+send size  = 0x0000002c
+receive    = 0x00000034
+
+0x18..0x1f  NDR
+0x20        PID
+0x24        UID
+0x28        architecture/layout
+```
+
+Its generated dispatcher requires `msgh_size == 0x2c`, byte-swaps all three scalar fields when NDR conversion is required, and emits `MIG_BAD_ARGUMENTS (-304)` on the request-shape failure path.
+
+Lion keeps the same request and reply IDs but changes the request:
+
+```text
+request ID = 0x00002712
+send size  = 0x00000028
+receive    = 0x00000034
+
+0x18..0x1f  NDR
+0x20        UID
+0x24        architecture/layout
+```
+
+Lion's generated dispatcher requires `msgh_size == 0x28` before dispatching and writes `0xfffffed0` / `MIG_BAD_ARGUMENTS` into the reply on failure. Therefore an untouched Snow PPC `0x2c` request is deterministically rejected by Lion before the server implementation is called.
+
+The reply contract remains compatible for this boundary:
+
+```text
+reply ID       = 0x00002776
+success size   = 0x0000002c
+error size     = 0x00000024
+receive buffer = 0x00000034
+```
+
+No reply translation is indicated.
+
+The Lion server path receives the caller audit token and derives caller identity server-side, so no replacement PID field is required in the Lion request.
+
+This turns the preserved translated-PPC `r10=0xd0feffff` from a correlation clue into an exact protocol explanation: the PPC-generated stub observes the byte-swapped form of Lion's `-304/MIG_BAD_ARGUMENTS` rejection, Snow CarbonCore then continues without a mapped universe, and the later `0x3c` SIGBUS follows from that invalid state.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-session-universe-init-adapter-experiment.md
+```
+
+That experiment uses a new v4 process-local CoreServices interposer to translate only this exact legacy request from `0x2c [PID,UID,layout]` to `0x28 [UID,layout]`, leaving the reply untouched.
+
+Do not set `LSDONOTABORTIFNOASN=0`, do not adapt MapSharedSegment yet, and do not change XNU.
