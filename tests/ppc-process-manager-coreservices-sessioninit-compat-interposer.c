@@ -15,7 +15,7 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                          uint64_t);
 extern mach_port_t mig_get_reply_port(void);
 
-#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v4"
+#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5"
 #define COMPAT_BUILD_MARKER "PM_CORESERVICES_COMPAT_BUILD_ID:" COMPAT_BUILD_ID
 #define COMPAT_MODE_ENV "ROSETTA_CORESERVICES_COMPAT_MODE"
 #define COMPAT_MODE_PASSTHROUGH "passthrough"
@@ -115,7 +115,7 @@ static unsigned int gServerCheckinAdaptedCallCount = 0;
 static unsigned int gSessionInitExactCallCount = 0;
 static unsigned int gSessionInitAdaptedCallCount = 0;
 static mach_port_t gCoreServicesServerPort = MACH_PORT_NULL;
-static mach_port_t gCoreServicesSessionPort = MACH_PORT_NULL;
+static mach_port_t gServerCheckinReplyPort = MACH_PORT_NULL;
 
 static void
 put_u32(unsigned char *p, uint32_t value)
@@ -467,12 +467,12 @@ record_servercheckin_session_port(unsigned char *m,
         get_u32(m + CHECKIN_REPLY_PORT_OFF) != 0U &&
         m[CHECKIN_REPLY_DISPOSITION_OFF] == 0x11 &&
         m[CHECKIN_REPLY_TYPE_OFF] == 0x00) {
-        gCoreServicesSessionPort =
+        gServerCheckinReplyPort =
             (mach_port_t)get_u32(m + CHECKIN_REPLY_PORT_OFF);
         fprintf(stderr,
-                "PM_CORESERVICES_COMPAT_SESSION_PORT:source=%s port=0x%08lx\n",
+                "PM_CORESERVICES_COMPAT_SERVERCHECKIN_REPLY_PORT:source=%s port=0x%08lx\n",
                 source ? source : "(unknown)",
-                (unsigned long)gCoreServicesSessionPort);
+                (unsigned long)gServerCheckinReplyPort);
         fflush(stderr);
     }
 }
@@ -482,10 +482,10 @@ is_sessioninit_candidate(mach_msg_header_t *msg)
 {
     unsigned char *m = (unsigned char *)msg;
 
-    if (msg == NULL || gCoreServicesSessionPort == MACH_PORT_NULL)
+    if (msg == NULL || gCoreServicesServerPort == MACH_PORT_NULL)
         return 0;
 
-    return get_u32(m + 0x08) == (uint32_t)gCoreServicesSessionPort &&
+    return get_u32(m + 0x08) == (uint32_t)gCoreServicesServerPort &&
            get_u32(m + 0x14) == SESSIONINIT_REQUEST_ID;
 }
 
@@ -511,7 +511,6 @@ is_exact_legacy_sessioninit(mach_msg_header_t *msg,
         return 0;
 
     if (get_u32(m + 0x00) != SESSIONINIT_BITS ||
-        get_u32(m + 0x04) != SESSIONINIT_LEGACY_SEND_SIZE ||
         get_u32(m + 0x0c) != (uint32_t)rcv_name)
         return 0;
 
@@ -538,14 +537,16 @@ handle_sessioninit(mach_msg_header_t *msg,
     uint32_t retcode_raw;
 
     fprintf(stderr,
-            "PM_CORESERVICES_COMPAT_SESSIONINIT_CANDIDATE:bits=0x%08lx headerSizeObserved=0x%08lx id=0x%08lx option=0x%08lx send=0x%08lx recv=0x%08lx sessionPort=0x%08lx headerReplyPort=0x%08lx receivePort=0x%08lx timeout=0x%08lx notify=0x%08lx\n",
+            "PM_CORESERVICES_COMPAT_SESSIONINIT_CANDIDATE:bits=0x%08lx headerSizeObserved=0x%08lx id=0x%08lx option=0x%08lx send=0x%08lx recv=0x%08lx remotePort=0x%08lx serverCheckinPort=0x%08lx serverCheckinReplyPort=0x%08lx headerReplyPort=0x%08lx receivePort=0x%08lx timeout=0x%08lx notify=0x%08lx\n",
             (unsigned long)get_u32(m + 0x00),
             (unsigned long)get_u32(m + 0x04),
             (unsigned long)get_u32(m + 0x14),
             (unsigned long)(uint32_t)option,
             (unsigned long)send_size,
             (unsigned long)rcv_size,
-            (unsigned long)gCoreServicesSessionPort,
+            (unsigned long)get_u32(m + 0x08),
+            (unsigned long)gCoreServicesServerPort,
+            (unsigned long)gServerCheckinReplyPort,
             (unsigned long)get_u32(m + 0x0c),
             (unsigned long)rcv_name,
             (unsigned long)timeout,
@@ -577,6 +578,13 @@ handle_sessioninit(mach_msg_header_t *msg,
             (unsigned long)legacy_pid,
             (unsigned long)legacy_uid,
             (unsigned long)legacy_layout);
+    fflush(stderr);
+
+    fprintf(stderr,
+            "PM_CORESERVICES_COMPAT_SESSIONINIT_ROUTE:remotePort=0x%08lx serverCheckinPort=0x%08lx serverCheckinReplyPort=0x%08lx\n",
+            (unsigned long)get_u32(m + 0x08),
+            (unsigned long)gCoreServicesServerPort,
+            (unsigned long)gServerCheckinReplyPort);
     fflush(stderr);
 
     if (mode != NULL && strcmp(mode, COMPAT_MODE_PASSTHROUGH) == 0) {
@@ -792,7 +800,7 @@ rosetta_mach_msg(mach_msg_header_t *msg,
             record_servercheckin_session_port(m, mr, "adapter");
             fprintf(stderr,
                     "PM_CORESERVICES_COMPAT_SERVERCHECKIN_ADAPTER_RESULT:PASS sessionPort=0x%08lx options=0x%08lx\n",
-                    (unsigned long)gCoreServicesSessionPort,
+                    (unsigned long)gServerCheckinReplyPort,
                     (unsigned long)get_u32(m + CHECKIN_REPLY_OPTIONS_OFF));
             fflush(stderr);
         } else {
