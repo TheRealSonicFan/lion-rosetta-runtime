@@ -148,15 +148,17 @@ The v5 SessionInit experiment has now passed completely. Snow Leopard observed t
 
 The post-identity `GetProcessPID` round-trip experiment has now passed completely. Snow Leopard and Lion both re-proved the one-call SessionInit path, returned a nonzero PSN from `GetProcessForPID`, and then returned the exact original PID from `GetProcessPID`. Lion ended `RESULT: POSTIDENTITY_GETPROCESSPID_ROUNDTRIP_PASS` with no new crash/core diagnostic and unchanged protected hashes.
 
+The post-identity `TransformProcessType` experiment has now passed completely. Snow Leopard and Lion both re-proved the identity path and returned `noErr` from `TransformProcessType(..., kProcessTransformToForegroundApplication)`. Lion ended `RESULT: POSTIDENTITY_TRANSFORMPROCESSTYPE_PASS` with no new crash/core diagnostic and unchanged protected hashes.
+
 The authoritative next step is:
 
 ```text
-docs/process-manager-postidentity-transformprocesstype-experiment.md
+docs/process-manager-postidentity-setfrontprocess-experiment.md
 ```
 
-Build the new PPC post-identity foreground-conversion subject on Snow Leopard and require its complete direct-execution control. It re-proves both identity directions and then calls exactly one `TransformProcessType(..., kProcessTransformToForegroundApplication)`, stopping before `SetFrontProcess`, window creation, or an event loop. Because the accepted Lion identity run emitted non-fatal WindowServer/default-connection diagnostics, the Snow Leopard TransformProcessType result is a hard harness-validity gate; if Snow does not return status 0 in the same direct-execution context, do not run Lion.
+Build the new PPC activation subject on Snow Leopard and require its complete direct-execution control. It re-proves both identity directions and foreground conversion, then calls exactly one `SetFrontProcess(&psn)`, stopping before any window operation, `GetFrontProcess`, or event loop. The Snow Leopard SetFrontProcess result is a hard harness-validity gate before Lion.
 
-Do not broaden the v5 adapter, add a WindowServer workaround, call `GetCurrentProcess`, or change XNU before this result is reviewed.
+Do not broaden the v5 adapter, add a WindowServer/CGS workaround, call `GetCurrentProcess`, create a window, or change XNU before this result is reviewed.
 
 No additional XNU change is indicated.
 
