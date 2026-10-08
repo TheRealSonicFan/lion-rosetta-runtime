@@ -158,7 +158,7 @@ INSERTED="$CORE_ABS:$SEC_ABS"
 log "coreservices_interposer_absolute_path=$CORE_ABS"
 log "security_interposer_absolute_path=$SEC_ABS"
 
-MARKER="$(/usr/bin/mktemp /tmp/lion-pm-postdispatch-marker.XXXXXX)" || die 73 "could not create diagnostic marker"
+MARKER="$(/usr/bin/mktemp /tmp/lion-pm-postidentity-marker.XXXXXX)" || die 73 "could not create diagnostic marker"
 if ulimit -c unlimited 2>/dev/null; then
     log "core_dump_limit=unlimited"
 fi
@@ -206,24 +206,24 @@ log "== Post-test integrity =="
 log "protected_hashes_unchanged=YES"
 
 if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_ENV:LSDONOTABORTIFNOASN=(unset)' "$RAW_LOG"; then
-    log "RESULT: POSTDISPATCH_IDENTITY_ENVIRONMENT_FAILURE"; exit 1
+    log "RESULT: POSTIDENTITY_ENVIRONMENT_FAILURE"; exit 1
 fi
 if ! /usr/bin/grep -Fq 'headerMatchesTextVMAddr=YES' "$RAW_LOG" ||
    ! /usr/bin/grep -Fq 'dispatchTextOffset=0x00018654' "$RAW_LOG" ||
    ! /usr/bin/grep -Fq 'serverTextOffset=0x000186a8' "$RAW_LOG"; then
-    log "RESULT: POSTDISPATCH_IDENTITY_OFFSET_FAILURE"; exit 1
+    log "RESULT: POSTIDENTITY_OFFSET_FAILURE"; exit 1
 fi
 if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_PROLOGUE:expected=0x7c0802a6 setup=0x7c0802a6 dispatch=0x7c0802a6 server=0x7c0802a6' "$RAW_LOG"; then
-    log "RESULT: POSTDISPATCH_IDENTITY_PROLOGUE_FAILURE"; exit 1
+    log "RESULT: POSTIDENTITY_PROLOGUE_FAILURE"; exit 1
 fi
 if ! /usr/bin/grep -Eq 'PM_POSTIDENTITY_TABLE:pointer=0x0*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$RAW_LOG" ||
    ! /usr/bin/grep -Eq 'PM_POSTIDENTITY_SERVER_PORT:port=0x0*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$RAW_LOG"; then
-    log "RESULT: POSTDISPATCH_IDENTITY_SETUP_REGRESSION"; exit 1
+    log "RESULT: POSTIDENTITY_SETUP_REGRESSION"; exit 1
 fi
 if ! /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_BOOTSTRAP_ADAPTER_RESULT:LOOKUP_PASS' "$RAW_LOG" ||
    ! /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_SERVERCHECKIN_ADAPTER_RESULT:PASS' "$RAW_LOG" ||
    ! /usr/bin/grep -Fq 'PM_SECURITY_SESSION_API_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
-    log "RESULT: POSTDISPATCH_IDENTITY_COMPAT_REGRESSION"; exit 1
+    log "RESULT: POSTIDENTITY_COMPAT_REGRESSION"; exit 1
 fi
 
 if ! /usr/bin/grep -Eq 'PM_CORESERVICES_COMPAT_SERVERCHECKIN_REPLY_PORT:source=adapter port=0x0*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG"; then
