@@ -200,3 +200,18 @@ Build the new PPC discriminator on Snow Leopard and require its direct-execution
 Do not add a CGS request adapter, call public `SetFrontProcess` again, call `GetFrontProcess`, create a window, broaden v5, or change XNU before this discriminator is reviewed.
 
 No additional XNU change is indicated.
+
+
+The CPS connection-state discriminator has now passed completely. Snow Leopard changes the decoded Snow PPC CoreGraphics connection slot from zero to nonzero during `GetProcessForPID` registration and returns raw `CPSSetFrontProcess=0`. Lion leaves that slot zero, logs `_RegisterApplication(), FAILED TO establish the default connection to the WindowServer, _CGSDefaultConnection() is NULL`, and returns raw CPS `0x3eb`; the runner ends `RESULT: CPS_CONNECTION_NULL_PRETRANSPORT_CONFIRMED`. No crash/core diagnostic appeared, protected hashes remained unchanged, and syscall 295 remains healthy.
+
+The authoritative next step is:
+
+```text
+docs/process-manager-cgs-default-connection-audit.md
+```
+
+Run the new read-only analyzer once on Snow Leopard and once on Lion. It exact-targets the registration/default-connection creation path, including `_CGSDefaultConnection`, `_CGSNewConnection`, `__CGSNewConnectionPort`, `_CGSLookupServerPort`, bootstrap/vproc/XPC imports, and `_CPSRegisterWithServer` ordering. Snow Leopard `RESULT: PASS` is a hard tooling gate before Lion.
+
+Do not rerun the PPC discriminator, adapt `0x729e -> 0x72a1`, force a CoreGraphics connection record, add a WindowServer/CPS interposer, call `GetFrontProcess`, create a window, broaden v5, or change XNU until the two default-connection audit reports are reviewed.
+
+No additional XNU change is indicated.
