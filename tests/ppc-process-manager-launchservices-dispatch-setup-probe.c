@@ -6,9 +6,10 @@
 #include <string.h>
 
 #define LS_IMAGE_SUFFIX "/LaunchServices.framework/Versions/A/LaunchServices"
-#define LS_SETUP_NVALUE 0x00018070UL
-#define LS_GET_DISPATCH_NVALUE 0x00018654UL
-#define LS_GET_SERVER_PORT_NVALUE 0x000186a8UL
+#define LS_SETUP_TEXT_OFFSET 0x00018070UL
+#define LS_GET_DISPATCH_TEXT_OFFSET 0x00018654UL
+#define LS_GET_SERVER_PORT_TEXT_OFFSET 0x000186a8UL
+#define LS_EXPECTED_PROLOGUE_WORD 0x7c0802a6UL
 
 typedef const void *(*get_dispatch_table_fn_t)(void);
 typedef mach_port_t (*get_server_port_fn_t)(void);
@@ -84,22 +85,39 @@ find_text_segment(const struct mach_header *mh,
 }
 
 static void *
-resolve_local_nvalue(const struct mach_header *mh,
-                     uint32_t text_vmaddr,
-                     uint32_t text_vmsize,
-                     uint32_t nvalue)
+resolve_local_text_offset(const struct mach_header *mh,
+                          uint32_t text_vmaddr,
+                          uint32_t text_vmsize,
+                          uint32_t text_offset)
 {
-    uintptr_t loaded_text;
-    uintptr_t delta;
+    uintptr_t loaded_header;
 
-    if (nvalue < text_vmaddr)
-        return NULL;
-    delta = (uintptr_t)nvalue - (uintptr_t)text_vmaddr;
-    if (delta >= (uintptr_t)text_vmsize)
+    if (mh == NULL)
         return NULL;
 
-    loaded_text = (uintptr_t)mh;
-    return (void *)(loaded_text + delta);
+    loaded_header = (uintptr_t)mh;
+
+    /*
+     * In the Rosetta shared cache the in-memory LC_SEGMENT vmaddr has already
+     * been rebased to the loaded cache address.  The static audit addresses
+     * (0x18070, 0x18654, 0x186a8) are offsets from the original PPC image
+     * __TEXT base, not absolute in-memory vmaddrs.  _dyld_get_image_header()
+     * points at the loaded start of __TEXT, so resolve as header + offset.
+     */
+    if (loaded_header != (uintptr_t)text_vmaddr)
+        return NULL;
+    if ((uintptr_t)text_offset >= (uintptr_t)text_vmsize)
+        return NULL;
+
+    return (void *)(loaded_header + (uintptr_t)text_offset);
+}
+
+static uint32_t
+read_u32(const void *p)
+{
+    uint32_t v;
+    memcpy(&v, p, sizeof(v));
+    return v;
 }
 
 int
@@ -139,27 +157,43 @@ main(void)
         return 21;
     }
 
-    setup_addr = resolve_local_nvalue(mh, text_vmaddr, text_vmsize,
-                                      LS_SETUP_NVALUE);
-    dispatch_addr = resolve_local_nvalue(mh, text_vmaddr, text_vmsize,
-                                         LS_GET_DISPATCH_NVALUE);
-    server_addr = resolve_local_nvalue(mh, text_vmaddr, text_vmsize,
-                                       LS_GET_SERVER_PORT_NVALUE);
+    setup_addr = resolve_local_text_offset(mh, text_vmaddr, text_vmsize,
+                                           LS_SETUP_TEXT_OFFSET);
+    dispatch_addr = resolve_local_text_offset(mh, text_vmaddr, text_vmsize,
+                                              LS_GET_DISPATCH_TEXT_OFFSET);
+    server_addr = resolve_local_text_offset(mh, text_vmaddr, text_vmsize,
+                                            LS_GET_SERVER_PORT_TEXT_OFFSET);
 
     fprintf(stderr,
-            "PM_LS_DISPATCH_LAYOUT:textVMAddr=0x%08lx textVMSize=0x%08lx setupNValue=0x%08lx setupAddr=0x%08lx dispatchNValue=0x%08lx dispatchAddr=0x%08lx serverNValue=0x%08lx serverAddr=0x%08lx\n",
+            "PM_LS_DISPATCH_LAYOUT:textVMAddr=0x%08lx textVMSize=0x%08lx headerMatchesTextVMAddr=%s setupTextOffset=0x%08lx setupAddr=0x%08lx dispatchTextOffset=0x%08lx dispatchAddr=0x%08lx serverTextOffset=0x%08lx serverAddr=0x%08lx\n",
             (unsigned long)text_vmaddr,
             (unsigned long)text_vmsize,
-            (unsigned long)LS_SETUP_NVALUE,
+            ((uintptr_t)mh == (uintptr_t)text_vmaddr) ? "YES" : "NO",
+            (unsigned long)LS_SETUP_TEXT_OFFSET,
             (unsigned long)(uintptr_t)setup_addr,
-            (unsigned long)LS_GET_DISPATCH_NVALUE,
+            (unsigned long)LS_GET_DISPATCH_TEXT_OFFSET,
             (unsigned long)(uintptr_t)dispatch_addr,
-            (unsigned long)LS_GET_SERVER_PORT_NVALUE,
+            (unsigned long)LS_GET_SERVER_PORT_TEXT_OFFSET,
             (unsigned long)(uintptr_t)server_addr);
     fflush(stderr);
 
     if (setup_addr == NULL || dispatch_addr == NULL || server_addr == NULL) {
         marker("PM_LS_DISPATCH_RESULT:LOCAL_OFFSET_INVALID");
+        return 22;
+    }
+
+    fprintf(stderr,
+            "PM_LS_DISPATCH_PROLOGUE:expected=0x%08lx setup=0x%08lx dispatch=0x%08lx server=0x%08lx\n",
+            (unsigned long)LS_EXPECTED_PROLOGUE_WORD,
+            (unsigned long)read_u32(setup_addr),
+            (unsigned long)read_u32(dispatch_addr),
+            (unsigned long)read_u32(server_addr));
+    fflush(stderr);
+
+    if (read_u32(setup_addr) != LS_EXPECTED_PROLOGUE_WORD ||
+        read_u32(dispatch_addr) != LS_EXPECTED_PROLOGUE_WORD ||
+        read_u32(server_addr) != LS_EXPECTED_PROLOGUE_WORD) {
+        marker("PM_LS_DISPATCH_RESULT:LOCAL_PROLOGUE_MISMATCH");
         return 22;
     }
 
