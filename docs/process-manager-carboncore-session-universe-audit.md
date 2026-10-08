@@ -242,3 +242,51 @@ session-universe protocol/state differential -> next proof
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result
+
+Both Snow Leopard and Lion reports completed with `RESULT: PASS`.
+
+The Rosetta shared-cache identity and map are the same on both systems, so the translated PPC CarbonCore client executing on Lion is the same Snow Leopard PPC code family being audited on Snow Leopard.
+
+The decisive differential is at `__SCSessionUniverseByUIDAcquireAndLock`.
+
+Snow Leopard PPC prepares the InitConnection call as:
+
+```text
+port, pid, uid, 0, &out
+```
+
+Snow Leopard native clients corroborate that five-argument contract:
+
+```text
+i386:   port, pid, uid, 2, &out
+x86_64: port, pid, uid, 3, &out
+```
+
+Lion native CarbonCore instead prepares:
+
+```text
+i386:   port, uid, 2, &out
+x86_64: port, uid, 3, &out
+```
+
+The explicit PID parameter is gone.
+
+The error path also differs materially. Snow PPC checks the return from `__scclient_SCSessionUniverseInitConnection_rpc`, but a nonzero result skips universe construction and continues with the still-null universe pointer into `_SCGetSessionLocalUniverseInfo` and mutex/state handling. Lion native CarbonCore detects the same nonzero RPC result, formats/logs the error, and aborts immediately instead of continuing with invalid state.
+
+This makes the preserved Lion evidence internally coherent: the translated Snow PPC client can receive a protocol rejection and then fault later at `0x3c`; its preserved `r10=0xd0feffff` byte-swaps to `-304/MIG_BAD_ARGUMENTS`, exactly the class of error expected from a generated MIG server rejecting an old request shape. The register value remains correlation, not final wire proof, until the generated stubs are compared directly.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-session-universe-init-rpc-protocol-audit.md
+scripts/audit-process-manager-session-universe-init-rpc-protocol.py
+```
+
+That read-only audit extracts the generated InitConnection client/server/dispatcher windows on Snow Leopard and Lion to prove request ID, request/reply sizes, field ordering, and server validation before any compatibility adapter is written.
+
+Do not rerun the PPC subject and do not set `LSDONOTABORTIFNOASN=0`.
+
+No additional XNU change is indicated.
