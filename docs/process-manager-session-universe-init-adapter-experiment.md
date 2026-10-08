@@ -75,7 +75,7 @@ scripts/run-lion-ppc-process-manager-session-universe-init-adapter.sh
 The new interposer build ID is:
 
 ```text
-dual-bootstrap-servercheckin-sessioninit-v4
+dual-bootstrap-servercheckin-sessioninit-v5
 ```
 
 It still has exactly two `__DATA,__interpose` tuples:
@@ -85,10 +85,12 @@ bootstrap_look_up2
 mach_msg
 ```
 
-For the InitConnection path it first captures the nonzero per-session CoreServices port returned by the already-proven ServerCheckin transaction. It then considers a message an InitConnection candidate only when both are true:
+The InitConnection transaction does **not** use the port descriptor returned inside the ServerCheckin reply. Earlier dynamic controls already proved that CarbonCore's private `scGetServerCheckinPort()` returns the original nonzero coreservicesd service/check-in port obtained by `bootstrap_look_up2`; the separate descriptor carried by the ServerCheckin reply is a different port.
+
+The v5 interposer therefore records both values but routes InitConnection only on the already-proven coreservicesd server/check-in port. It considers a message an InitConnection candidate only when both are true:
 
 ```text
-remote port == captured CoreServices session port
+remote port == coreservicesd server/check-in port from bootstrap lookup
 message ID  == 0x00002712
 ```
 
@@ -99,10 +101,12 @@ option      = 0x00000003
 send size   = 0x0000002c
 receive     = 0x00000034
 bits        = 0x00001513
-header size = 0x0000002c
+reply port  = mach_msg receive port
 timeout     = none
 notify      = null
 ```
+
+It deliberately does **not** require the pre-send `msgh_size` word to equal `0x2c`. The generated Snow PPC client passes `0x2c` as the `mach_msg` send-size argument but does not initialize `msgh_size` before the call; the receive path later overwrites that header field with the reply size. The `mach_msg` send-size argument is therefore the authoritative legacy-size discriminator.
 
 In the Lion adaptation mode it performs only:
 
@@ -141,10 +145,10 @@ The older proven `dual-bootstrap-servercheckin-v3` source remains unchanged and 
 The prepared changes were re-fetched from current `main` and checked before this runbook was made authoritative:
 
 - the new build, Snow control, and Lion runner pass `bash -n` syntax validation;
-- the v4 C source has balanced C delimiters, exactly one `__DATA,__interpose` section with exactly two tuples, and no `dlsym`;
+- the v5 C source has balanced C delimiters, exactly one `__DATA,__interpose` section with exactly two tuples, and no `dlsym`;
 - the original v3 CoreServices source remains unchanged with build ID `dual-bootstrap-servercheckin-v3`;
-- the v4 source uses a distinct build ID `dual-bootstrap-servercheckin-sessioninit-v4`;
-- the v4 source recognizes only request ID `0x2712` on the captured session port and does not add a MapSharedSegment adapter.
+- the v5 source uses a distinct build ID `dual-bootstrap-servercheckin-sessioninit-v5`;
+- the v5 source recognizes request ID `0x2712` only on the coreservicesd server/check-in port returned by the proven bootstrap lookup, records the distinct ServerCheckin reply descriptor separately, does not require an uninitialized pre-send `msgh_size`, and does not add a MapSharedSegment adapter.
 
 The actual PowerPC C compile/link cannot be reproduced off Snow Leopard. Phase B is therefore the mandatory compiler/toolchain validation gate; do not proceed if it fails.
 
@@ -168,7 +172,7 @@ git rev-parse HEAD
 
 No kernel rebuild or reboot is part of this experiment.
 
-## Phase B — build only the new v4 CoreServices interposer on Snow Leopard
+## Phase B — build only the new v5 CoreServices interposer on Snow Leopard
 
 Reuse the exact already-proven post-dispatch executable and Security adapter:
 
@@ -182,7 +186,7 @@ ppc-process-manager-security-session-auditinfo-api.dylib.info.txt
 ppc-process-manager-security-session-auditinfo-api.dylib.sha256
 ```
 
-Build the new v4 CoreServices interposer:
+Build the new v5 CoreServices interposer:
 
 ```sh
 cd /path/to/lion-rosetta-runtime
@@ -202,7 +206,7 @@ ppc-process-manager-coreservices-sessioninit-compat-interposer.dylib.sha256
 Require:
 
 - 32-bit PPC;
-- build ID `dual-bootstrap-servercheckin-sessioninit-v4`;
+- build ID `dual-bootstrap-servercheckin-sessioninit-v5`;
 - exactly two PPC interpose tuples / `__DATA,__interpose` size `0x10`;
 - imports/references for `bootstrap_look_up2`, `mach_msg`, and `mig_get_reply_port`;
 - no `dlsym`;
@@ -236,9 +240,10 @@ Both compatibility layers are in passthrough mode.
 Require, in addition to all prior post-dispatch control markers:
 
 ```text
-PM_CORESERVICES_COMPAT_BUILD_ID:dual-bootstrap-servercheckin-sessioninit-v4
-PM_CORESERVICES_COMPAT_SESSION_PORT:source=passthrough port=nonzero
+PM_CORESERVICES_COMPAT_BUILD_ID:dual-bootstrap-servercheckin-sessioninit-v5
+PM_CORESERVICES_COMPAT_SERVERCHECKIN_REPLY_PORT:source=passthrough port=nonzero
 PM_CORESERVICES_COMPAT_SESSIONINIT_EXACT_CALL:index=1 mode=passthrough ...
+PM_CORESERVICES_COMPAT_SESSIONINIT_ROUTE:remotePort=... serverCheckinPort=... serverCheckinReplyPort=...
 PM_CORESERVICES_COMPAT_SESSIONINIT_PASSTHROUGH_RETURN:kr=0 hex=0x00000000
 PM_POSTDISPATCH_MILESTONE:M06_AFTER_GetProcessForPID
 PM_POSTDISPATCH_STATUS:GetProcessForPID=0
@@ -247,9 +252,30 @@ PM_POSTDISPATCH_RESULT:GETPROCESSFORPID_PASS
 RESULT: PASS
 ```
 
-This is a hard gate. It proves that the new v4 interposer observes the exact Snow InitConnection transaction but remains transparent on Snow Leopard.
+This is a hard gate. It proves that the new v5 interposer observes the exact Snow InitConnection transaction but remains transparent on Snow Leopard.
 
 If Phase C fails for any reason, stop. Do not run Lion.
+
+## Observed first Phase C failure and correction
+
+The first v4 Snow Leopard control failed only at the new SessionInit-observation gate. The underlying PPC subject completed normally: the v4 interposer loaded, the bootstrap lookup returned a nonzero coreservicesd port, ServerCheckin passthrough completed and exposed a nonzero reply descriptor, Security passthrough completed, and `GetProcessForPID` returned status 0 with a nonzero PSN. The runner nevertheless ended `RESULT: FAIL` because no `PM_CORESERVICES_COMPAT_SESSIONINIT_*` marker appeared.
+
+That failure exposed two harness assumptions, not a Snow Leopard compatibility failure.
+
+First, v4 incorrectly treated the port descriptor returned inside the ServerCheckin reply as CarbonCore's later "server check-in port." Existing dynamic evidence proves they are distinct: on Snow Leopard the bootstrap/service/check-in port is `0x00002003`, while the ServerCheckin reply descriptor is `0x00002103`; on the prior Lion integration they were likewise `0x00009103` and `0x00009203`. CarbonCore's private `scGetServerCheckinPort()` returned the former value in both systems. InitConnection therefore targets the original coreservicesd server/check-in port, not the ServerCheckin reply descriptor.
+
+Second, v4 required the pre-send message-header `msgh_size` field to equal `0x2c`. The generated Snow PPC InitConnection client does not initialize that field before calling `mach_msg`; it passes `0x2c` as the function's send-size argument. Requiring the header word would have rejected the exact legacy call even after correcting the port routing.
+
+Current v5 corrects both issues while remaining narrow:
+
+- build ID is `dual-bootstrap-servercheckin-sessioninit-v5`;
+- ServerCheckin's reply descriptor is recorded only as diagnostic state;
+- InitConnection matching uses the coreservicesd server/check-in port already captured by the proven bootstrap adapter;
+- exact matching uses the `mach_msg` send-size argument and no longer constrains the uninitialized pre-send `msgh_size`;
+- the adapter still targets only request ID `0x2712`, rewrites only `[PID,UID,layout] -> [UID,layout]`, and leaves MapSharedSegment/Disconnect untouched;
+- a new `PM_CORESERVICES_COMPAT_SESSIONINIT_ROUTE` marker records the actual remote port, the server/check-in port, and the distinct ServerCheckin reply descriptor.
+
+Because the v4 artifact is now stale, pull current runtime `main`, repeat **Phase B** to rebuild the v5 interposer, and then repeat **Phase C only**. Do not transfer the old v4 dylib or proceed to Lion until the rebuilt v5 Snow control ends in `RESULT: PASS`.
 
 ## Phase D — transfer exact artifacts to Lion
 
@@ -320,7 +346,7 @@ Before accepting an identity result, the runner requires:
 ```text
 CoreServices bootstrap adapter -> PASS
 CoreServices ServerCheckin adapter -> PASS
-PM_CORESERVICES_COMPAT_SESSION_PORT:source=adapter port=nonzero
+PM_CORESERVICES_COMPAT_SERVERCHECKIN_REPLY_PORT:source=adapter port=nonzero
 Security AuditInfo SessionGetInfo adapter -> PASS
 dispatch table -> nonzero
 process-services port -> nonzero
@@ -328,6 +354,10 @@ process-services port -> nonzero
 PM_CORESERVICES_COMPAT_SESSIONINIT_EXACT_CALL:
   index=1
   mode=lion-dual-sessioninit-adapter
+
+PM_CORESERVICES_COMPAT_SESSIONINIT_ROUTE:
+  remotePort == serverCheckinPort
+  serverCheckinReplyPort recorded separately
 
 PM_CORESERVICES_COMPAT_SESSIONINIT_ADAPTER_REQUEST:
   id=0x00002712
