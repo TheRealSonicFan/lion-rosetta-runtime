@@ -14,6 +14,7 @@ TMP_LOG="$(/usr/bin/mktemp /tmp/ppc-coreservices-sessioninit-compat.XXXXXX.log)"
 BUILD_COMPLETE=0
 cleanup() {
     rc=$?
+    trap - EXIT HUP INT TERM
     /bin/rm -f "$TMP_DYLIB" "$TMP_LOG"
     if [ "$BUILD_COMPLETE" -ne 1 ]; then
         /bin/rm -f "$OUT" "$INFO" "$SHA"
