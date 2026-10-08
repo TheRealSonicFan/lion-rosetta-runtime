@@ -138,13 +138,15 @@ The post-dispatch `GetProcessForPID` experiment has now reached the identity cal
 
 The original runner's `POSTDISPATCH_GETPROCESSFORPID_ABORT_BEFORE_RETURN` label was too broad because it classified every non-returning call as an abort without reading the crash signal. The observed status also differs from the historical status-`134` SIGABRT cases.
 
+The preserved post-dispatch core has now resolved the termination. The failure is `EXC_BAD_ACCESS (SIGBUS)` with `KERN_PROTECTION_FAILURE` at guest address `0x3c`, not the historical guest-requested SIGABRT/no-ASN branch. The PPC stack localizes the fault below `__LSApplicationCheckIn` in CarbonCore's filesystem/session-universe path, ending at `__SCSessionUniverseByUIDAcquireAndLock`. The crash state also contains a possible byte-swapped `-304/MIG_BAD_ARGUMENTS` clue, but its liveness is not yet established.
+
 The authoritative next step is:
 
 ```text
-docs/process-manager-postdispatch-getprocessforpid-postmortem.md
+docs/process-manager-carboncore-session-universe-audit.md
 ```
 
-Use the new read-only preserved-core collector before changing behavior. Do not rerun the PPC subject and do not set `LSDONOTABORTIFNOASN=0` until the actual crash/core signal and Rosetta host path are established.
+Run the new read-only static differential audit once on Snow Leopard and once on Lion. Do not rerun the PPC subject, do not enable `LSDONOTABORTIFNOASN=0`, and do not design a compatibility shim until the session-universe client/state path is compared.
 
 No additional XNU change is indicated.
 
@@ -152,4 +154,4 @@ No additional XNU change is indicated.
 The first Snow Leopard dispatch-setup Phase C failure was a harness address-resolution defect, not a LaunchServices compatibility failure. The corrected `loaded_header + offset` resolver and PPC prologue guards were subsequently rebuilt and passed on both Snow Leopard and Lion, so that earlier rerun gate is closed.
 
 
-The first post-dispatch GetProcessForPID build failure was a harness linkage-gate defect. The PPC executable was produced, but the builder then incorrectly required direct CoreServices and Security LC_LOAD_DYLIB entries. For this Carbon subject, direct Carbon linkage and the exact GetProcessForPID import are the valid build-time gates; CoreServices/Security runtime participation is proven later by the existing adapter markers. The builder has been corrected and now clears stale outputs before rebuilding. Repeat Phase B and then Phase C; do not proceed to Lion until Phase C passes.
+The first post-dispatch GetProcessForPID build failure was a harness linkage-gate defect. That corrected builder subsequently produced the accepted artifact, the Snow Leopard control passed, and the Lion run reached the post-dispatch identity boundary; the earlier rebuild gate is closed.
