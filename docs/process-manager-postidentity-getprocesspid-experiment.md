@@ -151,7 +151,7 @@ Run from the logged-in user's Terminal:
 
 Both compatibility layers run in passthrough mode.
 
-Require all established setup/SessionInit markers and:
+Require all established setup/SessionInit markers, require exactly one observed SessionInit exact call (no `index=2`), and:
 
 ```text
 PM_POSTIDENTITY_STATUS:GetProcessForPID=0
@@ -238,6 +238,7 @@ Before accepting the new round-trip result it re-requires:
 - ServerCheckin adapter PASS;
 - Security AuditInfo adapter PASS;
 - v5 SessionInit exact-call/request/reply PASS;
+- no second exact SessionInit call; the Snow control is a hard gate for that invariant;
 - nonzero dispatch table and process-services port;
 - `GetProcessForPID=0` and a nonzero returned PSN.
 
@@ -261,7 +262,7 @@ If the API returns a nonzero OSStatus, preserve it and stop.
 
 If it returns `noErr` but a different PID, preserve both PIDs and stop.
 
-Do not compensate by enabling the no-ASN override or moving to foreground APIs.
+An unexpected second SessionInit is classified separately as `POSTIDENTITY_UNEXPECTED_SECOND_SESSIONINIT`; do not weaken the v5 one-call safety guard from a Lion-only observation. Do not compensate by enabling the no-ASN override or moving to foreground APIs.
 
 ## Phase G — return evidence
 
