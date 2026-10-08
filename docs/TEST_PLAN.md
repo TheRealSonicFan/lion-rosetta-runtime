@@ -144,15 +144,17 @@ The CarbonCore session-universe differential audit has now passed on both Snow L
 
 The InitConnection protocol audit has now passed on both Snow Leopard and Lion and proves the exact wire mismatch. Snow Leopard PPC sends request ID `0x2712`, size `0x2c`, with payload `PID, UID, layout`. Lion uses the same request ID but requires size `0x28`, with only `UID, layout`; its generated dispatcher sends `MIG_BAD_ARGUMENTS (-304)` on the legacy size mismatch. The reply ID and success/error shapes remain compatible, so no reply translation is indicated.
 
+The v5 SessionInit experiment has now passed completely. Snow Leopard observed the exact legacy InitConnection transaction transparently; Lion translated only request `0x2712` from `0x2c [PID,UID,layout]` to `0x28 [UID,layout]`, received the compatible success reply, and then returned successfully from `GetProcessForPID(getpid(), &psn)` with a nonzero PSN. No crash/core diagnostic appeared, protected hashes remained unchanged, and syscall 295 remained healthy.
+
 The authoritative next step is:
 
 ```text
-docs/process-manager-session-universe-init-adapter-experiment.md
+docs/process-manager-postidentity-getprocesspid-experiment.md
 ```
 
-Build the new `dual-bootstrap-servercheckin-sessioninit-v5` CoreServices interposer on Snow Leopard and require the new passthrough control before Lion. On Lion, the adapter rewrites only the exact `0x2712` request from `0x2c [PID,UID,layout]` to `0x28 [UID,layout]`, keeps `LSDONOTABORTIFNOASN` unset, and stops after the one existing `GetProcessForPID` identity result.
+Build the new PPC post-identity subject on Snow Leopard and require its passthrough control. It re-proves the accepted `GetProcessForPID` path and then calls exactly one `GetProcessPID` using that returned PSN, requiring `noErr` and an exact round-trip to the subject PID. The Snow control also requires that this sequence does not trigger a second exact SessionInit call before Lion is attempted.
 
-Do not adapt MapSharedSegment, broaden the Security layer, patch coreservicesd/CarbonCore, or change XNU before this result is reviewed.
+Do not call `GetCurrentProcess`, perform foreground conversion, create a window, broaden the v5 adapter, or change XNU before this result is reviewed.
 
 No additional XNU change is indicated.
 
