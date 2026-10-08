@@ -286,7 +286,7 @@ Also return every new crash/core diagnostic named by the Lion runner.
 
 ### `POSTIDENTITY_SETFRONTPROCESS_PASS`
 
-The current compatibility stack restores Process Manager identity, foreground conversion, and front-process selection in the direct-execution Aqua session. The next controlled stage can introduce the first actual window operation, still before an event loop.
+The current compatibility stack restores Process Manager identity, foreground conversion, and a successful SetFrontProcess return in the direct-execution Aqua session. Before introducing a window, the next controlled stage should verify the selection with one `GetFrontProcess` call and require that it returns the same PSN.
 
 ### `POSTIDENTITY_SETFRONTPROCESS_RETURNED_ERROR`
 
