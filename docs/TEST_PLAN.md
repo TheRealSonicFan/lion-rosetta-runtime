@@ -215,3 +215,18 @@ Run the new read-only analyzer once on Snow Leopard and once on Lion. It exact-t
 Do not rerun the PPC discriminator, adapt `0x729e -> 0x72a1`, force a CoreGraphics connection record, add a WindowServer/CPS interposer, call `GetFrontProcess`, create a window, broaden v5, or change XNU until the two default-connection audit reports are reviewed.
 
 No additional XNU change is indicated.
+
+
+The CGS default-connection differential audit has now passed on Snow Leopard and Lion. Both systems had a live WindowServer. Snow PPC and Lion native `__CGSDefaultConnection` both create through `_CGSNewConnection`, while their visible `__CGSNewConnectionPort` client contracts match at request/reply IDs `0x7469/0x74cd`, receive size `0x44`, Mach options `0x3`, complex request bits `0x80001513`, and aligned-name-plus-`0x44` send sizing. The active static differential is earlier: Snow PPC `_CGSLookupServerPort` calls `_lookupServerPort(0,1)`; Lion native x86_64 calls `_getSessionPort(1)` and then `_CGSLookupServerRootPort(1)` fallback, with additional per-session WindowServer/bootstrap/XPC helpers.
+
+The authoritative next step is:
+
+```text
+docs/process-manager-cgs-server-port-acquisition-audit.md
+```
+
+Run the new read-only helper analyzer first on Snow Leopard as the hard gate, then Lion. It exact-targets `_CGSServerPort`, `_lookupServerPort`, `_getSessionPort`, `_CGSLookupServerRootPort`, `_CGSessionGetWindowServerPort`, root/active WindowServer helpers, bootstrap/XPC imports, and addressed service-name cstrings. Return only the two generated server-port acquisition reports.
+
+Do not rerun the PPC discriminator or SetFrontProcess subject, dynamically call private CGS helpers, perform a bootstrap lookup, add a WindowServer/CoreGraphics interposer, fabricate a connection record, adapt `0x7469` or `0x729e`, broaden v5, or change XNU until those two reports are reviewed.
+
+No additional XNU change is indicated.
