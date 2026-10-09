@@ -382,3 +382,54 @@ later SetFrontProcess 0x729e/0x72a1          -> still out of scope
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — copied-buffer policy proof passed
+
+The returned Snow and Lion evidence fully passed this stage.
+
+Artifact/control provenance:
+
+```text
+build ID                               cps-registration-compat-protocol-v1
+architecture                           ppc7400
+LC_LOAD_DYLINKER                       /usr/oah/dyld
+Snow control                           PASS
+syscall 295                            PASS
+```
+
+Lion copied-buffer proof:
+
+```text
+legacy request ID                      0x7372
+adapted request ID                     0x73c1
+legacy send size                       0x84
+adapted send size                      0x90
+receive size                           0x2c
+changed common bytes                   1
+source request changed bytes           0
+tail byte                              0
+tail u32[0]                            0
+tail u32[1]                            0x10
+Lion reply ID                          0x7425
+legacy-facing reply ID                 0x73d6
+reply size                             0x24
+changed reply bytes                    2
+decoded result                         0
+NDR swapped relative to PPC            YES
+new diagnostic                         none
+protected hashes                       unchanged
+RESULT                                 CPS_REGISTRATION_COMPAT_POLICY_PROOF_PASS
+```
+
+This closes the copied-buffer prerequisite. The exact request/reply conversion is now proven without Mach IPC or server-state changes.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-cps-registration-compat-integration-experiment.md
+```
+
+That stage integrates the exact conversion into the existing two-tuple CoreServices `mach_msg` interposer using a private request/reply buffer. Snow remains passthrough. Lion translates only the first exact observed registration request and requires the exact native `0x7425` success reply before converting only its reply ID back to `0x73d6`.
+
+Do not rerun this standalone proof unless provenance changes. Do not proceed to SetFrontProcess until the live registration integration is reviewed.
