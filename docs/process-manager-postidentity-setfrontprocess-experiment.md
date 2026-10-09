@@ -360,3 +360,16 @@ docs/process-manager-setfrontprocess-callpath-audit.md
 That stage is read-only. It compares Snow Leopard PPC/i386 and Lion i386 HIServices foreground-selection code plus CoreGraphics/CGS/CPS/LaunchServices dependencies to determine exactly where `SetFrontProcess` produces or receives the returned status.
 
 No additional XNU change is indicated.
+
+
+## Current-path note after CPS registration repair
+
+This historical SetFrontProcess experiment predates restoration of the default CoreGraphics connection and CPS application registration. Its earlier Lion result was therefore dominated by the pre-transport no-connection state and is not the current live gate.
+
+The current authoritative procedure is:
+
+```text
+docs/process-manager-setfront-transport-trace-experiment.md
+```
+
+That procedure reuses the complete accepted session/server-version/registration stack, preserves the exact executable basename required by the narrow registration predicate, and passively traces the first public SetFrontProcess transaction. Do not use this older runner as a substitute and do not adapt the SetFrontProcess wire IDs before the new trace is reviewed.
