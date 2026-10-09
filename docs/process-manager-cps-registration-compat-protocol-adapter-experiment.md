@@ -203,12 +203,13 @@ The first attempted Phase B exposed a build-script validation defect, not a comp
 Mach-O executable ppc
 ```
 
-Current `main` corrects the validator. Both the Snow builder and the Lion policy-proof runner now use the same architecture predicate already proven in the earlier server-version builder:
+Current `main` corrects the validator. Both the Snow builder and the Lion policy-proof runner now use the same fallback strategy proven in the earlier server-version builder, with an additional explicit Mach-O check:
 
 1. try both supported `lipo -verify_arch ppc` argument orders;
 2. if neither verifies the file, inspect `/usr/bin/file`;
-3. accept only a tokenized `ppc` or `powerpc` Mach-O description;
-4. explicitly reject `ppc64` / `powerpc64`.
+3. require the description to identify a Mach-O file;
+4. require a tokenized `ppc` or `powerpc` architecture;
+5. explicitly reject `ppc64` / `powerpc64`.
 
 The previously failed Phase B output should not be promoted to later phases because the script exited before producing its normal `.info.txt` and SHA sidecar. Pull current `main`, discard or overwrite that partial output, and rerun Phase B. No source-level policy change is involved.
 
