@@ -188,6 +188,11 @@ def parse_sections(path):
     current = None
     for raw in out.splitlines():
         line = raw.strip()
+        if line.startswith("Load command "):
+            if current and current.get("sectname") and current.get("segname"):
+                sections[(current["segname"], current["sectname"])] = current
+            current = None
+            continue
         if line == "Section":
             if current and current.get("sectname") and current.get("segname"):
                 sections[(current["segname"], current["sectname"])] = current
