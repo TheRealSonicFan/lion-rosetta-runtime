@@ -16,7 +16,7 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
 extern mach_port_t mig_get_reply_port(void);
 
 #ifdef PM_CGS_CONNECTION_TRACE
-#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-trace-v1"
+#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-trace-v2"
 #else
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5"
 #endif
@@ -75,6 +75,8 @@ extern mach_port_t mig_get_reply_port(void);
 #define PRIVILEGED_SERVER_FLAG 0x0000000000000008ULL
 
 #ifdef PM_CGS_CONNECTION_TRACE
+#define CGS_SERVER_VERSION_REQUEST_ID 0x00007148U
+#define CGS_SERVER_VERSION_REPLY_ID 0x000071acU
 #define CGS_DEATHWATCH_REQUEST_ID 0x0000714cU
 #define CGS_DEATHWATCH_REPLY_ID 0x000071b0U
 #define CGS_NEW_CONNECTION_REQUEST_ID 0x00007469U
@@ -201,6 +203,8 @@ call_original_mach_msg(mach_msg_header_t *msg,
 static const char *
 cgs_trace_kind(uint32_t request_id)
 {
+    if (request_id == CGS_SERVER_VERSION_REQUEST_ID)
+        return "SERVER_VERSION";
     if (request_id == CGS_DEATHWATCH_REQUEST_ID)
         return "DEATHWATCH";
     if (request_id == CGS_NEW_CONNECTION_REQUEST_ID)
@@ -211,6 +215,8 @@ cgs_trace_kind(uint32_t request_id)
 static uint32_t
 cgs_trace_expected_reply(uint32_t request_id)
 {
+    if (request_id == CGS_SERVER_VERSION_REQUEST_ID)
+        return CGS_SERVER_VERSION_REPLY_ID;
     if (request_id == CGS_DEATHWATCH_REQUEST_ID)
         return CGS_DEATHWATCH_REPLY_ID;
     if (request_id == CGS_NEW_CONNECTION_REQUEST_ID)
@@ -228,7 +234,8 @@ is_cgs_trace_candidate(mach_msg_header_t *msg)
         return 0;
 
     request_id = get_u32(m + 0x14);
-    return request_id == CGS_DEATHWATCH_REQUEST_ID ||
+    return request_id == CGS_SERVER_VERSION_REQUEST_ID ||
+           request_id == CGS_DEATHWATCH_REQUEST_ID ||
            request_id == CGS_NEW_CONNECTION_REQUEST_ID;
 }
 
@@ -272,6 +279,23 @@ trace_cgs_message(mach_msg_header_t *msg,
             (unsigned long)rcv_name,
             (unsigned long)timeout,
             (unsigned long)notify);
+    fflush(stderr);
+
+    limit = (uint32_t)send_size;
+    if (limit > 0x44U)
+        limit = 0x44U;
+
+    fprintf(stderr,
+            "PM_CGS_CONNECTION_TRACE_REQUEST_WORDS:index=%u kind=%s",
+            gCGSTraceCallCount,
+            cgs_trace_kind(request_id));
+    for (off = 0x18U; off + 4U <= limit; off += 4U) {
+        fprintf(stderr,
+                " off%02lx=0x%08lx",
+                (unsigned long)off,
+                (unsigned long)get_u32(m + off));
+    }
+    fprintf(stderr, "\n");
     fflush(stderr);
 
     mr = call_original_mach_msg(msg, option, send_size,
