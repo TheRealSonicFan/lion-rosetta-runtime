@@ -386,3 +386,36 @@ latent later boundary                             -> SetFrontProcess 0x729e vs 0
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed Lion result — session bridge passed, process exited before GetProcessForPID returned
+
+The first Lion registration integration did **not** fail at the session-bootstrap adapter. The returned log proves:
+
+```text
+SessionInit v5 adapter                         -> PASS
+CGS exact legacy session lookup               -> reached
+Lion active-root lookup 0x194                 -> PASS
+root WindowServer send right                  -> valid
+GetSessionPort 0x7151 -> 0x71b5               -> PASS
+returned session send right                   -> valid
+CGS session-bootstrap adapter                 -> ADAPTER_PASS
+M06_AFTER_GetProcessForPID                    -> absent
+process exit status                           -> 1
+new crash/core diagnostic                     -> none
+protected hashes                              -> unchanged
+```
+
+The runner's original terminal label `GETPROCESSFORPID_ABORT_OR_CRASH` was too broad. A status-1 process exit with no new diagnostic is not evidence of a signal or crash. Current `main` now classifies that exact pattern as `GETPROCESSFORPID_CLEAN_EARLY_EXIT_AFTER_SESSION_ADAPTER`.
+
+This result advances the boundary downstream of the compatibility lookup itself. It does **not** yet prove that the legacy client accepted the returned session port through DeathWatch, nor that `__CGSNewConnectionPort 0x7469` was reached.
+
+The authoritative next step is now:
+
+```text
+docs/process-manager-cgs-connection-transport-trace-experiment.md
+```
+
+That stage is behavior-preserving. It builds a trace-only variant of the existing CoreServices v5 `mach_msg` interposer, validates it on Snow Leopard, and then records only the integrated `0x714c -> 0x71b0` DeathWatch and `0x7469 -> 0x74cd` connection-creation transactions during one Lion run. No request is adapted and no connection record is written.
+
+Do not rerun this integration with the ordinary v5 interposer, do not adapt `0x7469` or `0x729e`, and do not change XNU until the passive trace is reviewed.
