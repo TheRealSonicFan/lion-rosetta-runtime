@@ -300,3 +300,6 @@ docs/process-manager-cps-registration-transport-trace-experiment.md
 ```
 
 That stage is passive. It observes the unchanged Snow PPC `0x7372` request first on Snow and then once on Lion while retaining the already-proven session and server-version compatibility layers. It does not adapt `0x7372`, synthesize `0x73c1`, or proceed to SetFrontProcess.
+
+
+The subsequent passive legacy-reply trace and standalone copied-buffer policy proof have both passed. The current authoritative next stage is `docs/process-manager-cps-registration-compat-integration-experiment.md`; the static protocol audit itself remains closed.
