@@ -66,6 +66,26 @@ Current `main` fixes that parser by preserving the complete symbol name followin
 
 Discard or overwrite the analyzer-v2 Snow report and rerun Phase B with current `main`.
 
+## Reviewed analyzer-v3 result
+
+The corrected analyzer-v3 reports pass on both Snow Leopard and Lion and close the parser issue, but the static evidence still does not identify the final Lion service name.
+
+The decisive v3 observations are:
+
+- Snow PPC Foundation's ordinary distributed-center path reaches `__CFXNotificationGetHostCenter`;
+- Lion Foundation's `notificationCenterForType:` likewise reaches `__CFXNotificationGetHostCenter` for the ordinary local distributed-center type;
+- Lion `CFNotificationCenterGetDistributedCenter` uses a one-time initializer whose private block calls `___CFXNotificationCenterCreate`;
+- Lion CoreFoundation still contains both `com.apple.distributed_notifications@1v3` and `com.apple.distributed_notifications@Uv3`;
+- the static cstring-reference scan reports zero direct references for both names in both Lion architecture slices.
+
+Therefore the static audit has reached its intended ambiguity branch. Do **not** choose a replacement from the suffixes. The next discriminator is the native Lion trace in:
+
+```text
+docs/distributed-notifications-native-service-selection-trace-experiment.md
+```
+
+That experiment launches only native i386 Lion probe processes, observes the service name passed to `xpc_connection_create`, forwards the call unchanged, and performs no notification post/register/remove operation.
+
 ## Prepared implementation
 
 Current runtime `main` provides:
@@ -151,7 +171,7 @@ No PowerPC application was launched and no system state was modified.
 RESULT: PASS
 ```
 
-If Phase B reports `RESULT: FAIL`, stop. Otherwise confirm `analyzer_version=2` before continuing.
+If Phase B reports `RESULT: FAIL`, stop. Otherwise confirm `analyzer_version=3` before continuing.
 
 ## Phase C — Lion static client audit
 
@@ -163,7 +183,7 @@ cd /path/to/lion-rosetta-runtime
   ./distributed-notifications-client-service-selection-lion.txt
 ```
 
-Require `analyzer_version=2`, the same completion messages, and `RESULT: PASS`.
+Require `analyzer_version=3`, the same completion messages, and `RESULT: PASS`.
 
 Do not run a live lookup after the static audit.
 
@@ -187,7 +207,7 @@ The returned static windows will choose the next branch:
 - If `@Uv3` and `@1v3` are both used by distinct options (for example current-user versus all-session behavior), the compatibility target must be limited to the path equivalent to the Snow call reached by HIToolbox.
 - If the static references remain ambiguous, the next discriminator will be a native Lion trace/probe that observes only service selection; do not guess the target from the suffixes.
 
-Even after the service identity is proven, do not assume v2 and v3 notification message layouts are wire-compatible merely because both endpoints are served by `distnoted`.
+Analyzer v3 reached the final ambiguity branch above. Proceed to `docs/distributed-notifications-native-service-selection-trace-experiment.md`; do not rerun the static audit unless that trace documentation explicitly asks for it. Even after the service identity is proven, do not assume v2 and v3 notification message layouts are wire-compatible merely because both endpoints are served by `distnoted`.
 
 ## Current boundary
 
@@ -199,7 +219,7 @@ Lion current-user launchd job                   -> com.apple.distnoted.xpc.agent
 Snow CoreFoundation client string               -> .2
 Lion CoreFoundation client strings              -> @Uv3 and @1v3
 failed Lion .2 native-format lookup              -> BOOTSTRAP_UNKNOWN_SERVICE (1102)
-next step                                       -> rerun corrected static client-selection audit v3
+next step                                       -> native Lion XPC service-selection trace
 ```
 
 No additional XNU change is indicated.
