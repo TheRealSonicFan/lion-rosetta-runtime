@@ -383,3 +383,6 @@ docs/process-manager-cps-registration-compat-protocol-adapter-experiment.md
 ```
 
 It proves the exact `0x7372 -> 0x73c1`, send-size `+0x0c`, Lion-tail, and `0x7425 -> 0x73d6` conversion locally without sending a new registration request. Do not integrate the translator or proceed to SetFrontProcess until that proof is reviewed.
+
+
+The subsequent standalone copied-buffer registration policy proof has now passed, so this passive trace stage is closed. The authoritative next procedure is `docs/process-manager-cps-registration-compat-integration-experiment.md`. Do not rerun the trace unless registration-message provenance changes.
