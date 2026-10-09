@@ -288,3 +288,41 @@ next step                                          -> rerun corrected analyzer v
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed analyzer-v2 result
+
+Both corrected analyzer-v2 reports passed. The omitted private MIG client is now fully visible and materially narrows the boundary.
+
+Snow Leopard PPC `__CGSGetCoreGraphicsServerVersion` and Lion i386 `__CGSGetCoreGraphicsServerVersion` use the same visible transport contract:
+
+```text
+request ID        0x7148
+reply ID          0x71ac
+request bits      0x1513
+mach_msg options  0x3
+send size         0x24
+receive size      0x48
+request payload   NDR + pid
+```
+
+Both implementations handle simple and complex replies and include NDR/endian conversion logic. There is therefore no static evidence of a request-ID or envelope evolution at this helper.
+
+The reports simultaneously make the version-skew explanation the leading hypothesis:
+
+```text
+Snow Leopard CoreGraphics current version  545.0.0
+Lion CoreGraphics current version           600.0.0
+```
+
+Snow PPC `_connectAndCheck` calls the server-version helper, then compares the returned server values against its local CoreGraphics version values. On a disallowed mismatch it destroys the selected port and returns `0x3f0`; Snow PPC `_CGSServerPort` handles `0x3f0` with `exit(1)`. That is structurally identical to the already-observed translated-PPC symptom after the successful Lion session-port adapter.
+
+The static reports do not prove the actual Lion WindowServer reply bytes seen by translated PPC, so no compatibility rewrite is authorized yet.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-cgs-server-version-transport-trace-experiment.md
+```
+
+It extends the already-proven passive trace by exactly one request class, `SERVER_VERSION 0x7148 -> 0x71ac`, adds raw request-word logging, requires a Snow positive control, and permits exactly one Lion translated-PPC run before review. Do not rerun analyzer v2 unless provenance changes.
