@@ -160,6 +160,8 @@ def emit_binary_strings(fp, label, path):
 
     rc, out = run(["/usr/bin/strings", "-a", path])
     if rc != 0:
+        rc, out = run(["/usr/bin/strings", path])
+    if rc != 0:
         write_line(fp, "strings_failed")
         write_line(fp, out.rstrip())
         return 0
