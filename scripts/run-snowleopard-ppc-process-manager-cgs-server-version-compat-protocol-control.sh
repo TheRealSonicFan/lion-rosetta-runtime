@@ -88,8 +88,8 @@ if [ "$RC" -eq 0 ] &&
    /usr/bin/grep -Fq 'id=0x000071ac kr=0 ' "$LOG" &&
    /usr/bin/grep -Fq 'disposition=0x11 type=0x00' "$LOG" &&
    /usr/bin/grep -Fq 'major=545 minor=0 ' "$LOG" &&
-   /usr/bin/grep -Fq 'PM_CGS_SERVER_VERSION_RIGHT:label=snow-version-descriptor' "$LOG" &&
-   /usr/bin/grep -Fq 'send=YES' "$LOG" &&
+   /usr/bin/grep -Eq 'PM_CGS_SERVER_VERSION_RIGHT:label=snow-version-descriptor .* send=YES' "$LOG" &&
+   /usr/bin/grep -Fq 'ndrSwapped=YES major=545 minor=0 ' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CGS_SERVER_VERSION_SNOW_POLICY:serverMajor=545 serverMinor=0 localMajor=545 localMinor=0 match=YES' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CGS_SERVER_VERSION_RESULT:SNOW_CONTROL_PASS' "$LOG"; then
     echo "RESULT: PASS" | /usr/bin/tee -a "$LOG"
