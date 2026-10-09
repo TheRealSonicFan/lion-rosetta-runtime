@@ -183,8 +183,8 @@ if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ] &&
    /usr/bin/grep -Fq 'disposition=0x11 type=0x00' "$RAW_LOG" &&
    /usr/bin/grep -Fq 'PM_CGS_SERVER_VERSION_MACH_RETURN:kr=0 ' "$RAW_LOG" &&
    /usr/bin/grep -Fq 'id=0x000071ac kr=0 ' "$RAW_LOG" &&
-   /usr/bin/grep -Fq 'major=600 minor=0 ' "$RAW_LOG" &&
-   /usr/bin/grep -Fq 'PM_CGS_SERVER_VERSION_RIGHT:label=lion-version-descriptor' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'ndrSwapped=YES major=600 minor=0 ' "$RAW_LOG" &&
+   /usr/bin/grep -Eq 'PM_CGS_SERVER_VERSION_RIGHT:label=lion-version-descriptor .* send=YES' "$RAW_LOG" &&
    /usr/bin/grep -Fq 'PM_CGS_SERVER_VERSION_POLICY:originalMajor=600 originalMinor=0 localMajor=545 localMinor=0 mismatch=YES' "$RAW_LOG" &&
    /usr/bin/grep -Fq 'outsideVersionBytesChanged=0' "$RAW_LOG" &&
    /usr/bin/grep -Fq 'adaptedMajor=545 adaptedMinor=0 match=YES' "$RAW_LOG" &&
