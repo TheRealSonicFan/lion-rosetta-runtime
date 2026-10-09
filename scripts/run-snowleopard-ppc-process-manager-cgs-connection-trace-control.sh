@@ -14,7 +14,7 @@ LOG="${9:-./ppc-process-manager-cgs-connection-trace-snowleopard-control.log}"
 PRIVATE_DYLD="/usr/oah/dyld"
 EXPECTED_DYLD_SHA="963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb"
 EXPECTED_SUBJECT_BUILD_ID="cgs-session-bootstrap-integration-v1"
-EXPECTED_CORE_TRACE_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-trace-v1"
+EXPECTED_CORE_TRACE_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-trace-v2"
 EXPECTED_SEC_BUILD_ID="security-session-auditinfo-api-v1"
 EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-compat-v1"
 
@@ -121,6 +121,11 @@ DYLD_PRINT_INTERPOSING=1 DYLD_PRINT_LIBRARIES=1 \
 RC=$?
 echo "control_status=$RC" | /usr/bin/tee -a "$LOG"
 
+if /usr/bin/grep -Fq 'kind=SERVER_VERSION' "$LOG"; then
+    echo "server_version_observed=YES" | /usr/bin/tee -a "$LOG"
+else
+    echo "server_version_observed=NO" | /usr/bin/tee -a "$LOG"
+fi
 if /usr/bin/grep -Fq 'kind=DEATHWATCH' "$LOG"; then
     echo "deathwatch_observed=YES" | /usr/bin/tee -a "$LOG"
 else
@@ -135,6 +140,11 @@ fi
 if [ "$RC" -eq 0 ] &&
    /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_SESSIONINIT_EXACT_CALL:index=1 mode=passthrough' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_CALL:index=1 mode=passthrough' "$LOG" &&
+   /usr/bin/grep -Fq 'kind=SERVER_VERSION' "$LOG" &&
+   /usr/bin/grep -Fq 'id=0x00007148 expectedReply=0x000071ac' "$LOG" &&
+   /usr/bin/grep -Fq 'kind=SERVER_VERSION kr=0 hex=0x00000000' "$LOG" &&
+   /usr/bin/grep -Fq 'id=0x000071ac expected=0x000071ac idMatch=YES' "$LOG" &&
+   /usr/bin/grep -Fq 'PM_CGS_CONNECTION_TRACE_REQUEST_WORDS:' "$LOG" &&
    /usr/bin/grep -Fq 'kind=NEW_CONNECTION' "$LOG" &&
    /usr/bin/grep -Fq 'kind=NEW_CONNECTION kr=0 hex=0x00000000' "$LOG" &&
    /usr/bin/grep -Fq 'id=0x000074cd expected=0x000074cd idMatch=YES' "$LOG" &&
