@@ -27,14 +27,26 @@ CC_SELECTED="${CC:-/Developer-3.2.6/usr/bin/gcc-4.2}"
 
 /usr/bin/python "$PATCH_DYLINKER" "$OUT" /usr/oah/dyld
 
-if /usr/bin/lipo -verify_arch ppc "$OUT" >/dev/null 2>&1; then
-    :
-elif /usr/bin/lipo "$OUT" -verify_arch ppc >/dev/null 2>&1; then
-    :
-else
-    echo "error: output is not 32-bit PPC" >&2
+is_ppc32_macho() {
+    file="$1"
+
+    if [ -x /usr/bin/lipo ]; then
+        /usr/bin/lipo -verify_arch ppc "$file" >/dev/null 2>&1 && return 0
+        /usr/bin/lipo "$file" -verify_arch ppc >/dev/null 2>&1 && return 0
+    fi
+
+    desc="$(/usr/bin/file "$file" 2>/dev/null || true)"
+    echo "$desc" | /usr/bin/grep -Eiq '(^|[^[:alnum:]_])(ppc|powerpc)([^[:alnum:]_]|$)' || return 1
+    echo "$desc" | /usr/bin/grep -Eiq 'ppc64|powerpc64' && return 1
+    return 0
+}
+
+is_ppc32_macho "$OUT" || {
+    echo "error: output is not a 32-bit PowerPC Mach-O executable" >&2
+    /usr/bin/file "$OUT" >&2 || true
+    /usr/bin/lipo -info "$OUT" >&2 2>/dev/null || true
     exit 70
-fi
+}
 
 OT="$(/usr/bin/otool -l "$OUT" | /usr/bin/grep -A3 LC_LOAD_DYLINKER || true)"
 echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || {
