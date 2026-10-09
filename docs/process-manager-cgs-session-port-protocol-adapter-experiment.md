@@ -79,6 +79,31 @@ docs/process-manager-cgs-session-port-protocol-adapter-experiment.md
 
 The PPC executable has two modes.
 
+## Corrected Phase-C tooling gate
+
+The first returned Snow Leopard control built correctly but stopped immediately at:
+
+```text
+PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v1
+PM_CGS_SESSION_PORT_MILESTONE:M00_MAIN_ENTER
+PM_CGS_SESSION_PORT_LAYOUT:FAIL_LOOKUP
+control_status=41
+RESULT: FAIL
+```
+
+No bootstrap lookup, Mach request, or WindowServer RPC was reached. The failure was in the probe's own layout self-check.
+
+Version 1 wrote the 64-bit launchd `flags` field with a native `uint64_t` copy, which is correct for the PPC-generated request, but then validated that same field by reading its two 32-bit halves in little-endian word order. On big-endian PPC, `flags=8` is represented with the high 32-bit word first, so the checker compared the correct in-memory 64-bit value against the wrong 32-bit half ordering and rejected the request before execution.
+
+Version 2 fixes only that tooling defect:
+
+- the request construction is unchanged;
+- the 64-bit flags self-check now reads the field back as one native `uint64_t`;
+- a failed lookup-layout check now logs the decoded header, size, ID, and 64-bit flags before stopping;
+- the build ID is now `cgs-session-port-protocol-v2` so stale version-1 artifacts cannot pass the runners.
+
+The version-1 executable, SHA sidecar, info file, and failed control log are provenance only. Do **not** transfer or run that executable on Lion. Pull current `main`, rebuild on Snow Leopard, and repeat Phase C with the version-2 artifact.
+
 ### `snow-control`
 
 It performs:
@@ -188,7 +213,7 @@ ppc-process-manager-cgs-session-port-protocol-private-dyld.sha256
 Require:
 
 - a 32-bit PPC executable;
-- build marker `PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v1`;
+- build marker `PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v2`;
 - `LC_LOAD_DYLINKER=/usr/oah/dyld`;
 - imports for `bootstrap_look_up`, `bootstrap_port`, `mig_get_reply_port`, `mach_msg`, `task_get_special_port`, `mach_port_type`, and `mach_port_deallocate`.
 
@@ -215,7 +240,7 @@ PM_CGS_SESSION_PORT_RESULT:SNOW_CONTROL_PASS
 RESULT: PASS
 ```
 
-Phase C is a hard gate. If it fails, stop and do not run Lion.
+Phase C is a hard gate. If it fails, stop and do not run Lion. For the corrected pass, confirm the log contains `PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v2`; a version-1 log is not eligible to advance.
 
 ## Phase D — transfer exact artifacts to Lion
 
@@ -229,6 +254,8 @@ ppc-process-manager-cgs-session-port-protocol-snowleopard-control.log
 ```
 
 Place the executable and SHA sidecar under runtime `payload/`, or pass explicit paths.
+
+Before transfer, confirm the info file contains `build_id=cgs-session-port-protocol-v2` and the control log contains both the v2 build marker and `RESULT: PASS`. Do not transfer the failed version-1 artifact.
 
 Do not rebuild on Lion.
 
