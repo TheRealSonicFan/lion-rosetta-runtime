@@ -18,6 +18,27 @@ The next question is the exact semantic translation:
 
 No live adapter is authorized until those mappings are statically grounded.
 
+## Reviewed analyzer-v1 result
+
+Both Snow Leopard and Lion schema reports pass their static validation and preserve the audit integrity boundary.
+
+The returned evidence materially narrows the bridge design:
+
+- Snow PPC uses a binary-property-list payload carried in a private Mach envelope. The client-to-server header stores `msgh_bits = 0x1413` at offset `0x00` and `msgh_id = 4` at offset `0x14`; the server-to-client path stores `msgh_bits = 0x13` and the same `msgh_id = 4`. The earlier wording that called `0x1413` a message ID was incorrect.
+- Snow's legacy dictionary vocabulary is now grounded around `message_type`, `post`, `register`, `unregister`, `suspend`, `session_reset`, `name`, `object`, `userinfo`, `client`, `sessionid`, `counter`, `entry`, `behavior`, `entries`, and `state`.
+- Lion's v3 callback envelope is grounded as `method=post_token`, `version=1`, plus `token`, `name`, `object`, and optional serialized `userinfo`.
+- Lion `distnoted` exposes the v3 vocabulary `method`, `version`, `post`, `post_all`, `options`, `register`, `unregister`, `tokens`, `suspend`, `unsuspend`, `post_token`, `token`, `name`, `object`, and `userinfo`; its i386 image imports neither `mach_msg` nor bootstrap lookup.
+
+The schema is not yet complete enough to authorize a live bridge. Analyzer v1 does not formally decode every Snow `CFDictionaryCreate` key/value vector, its i386 PIC resolver misses important constants in the Snow server-side and Lion outgoing-client paths, and the exact semantic relation between several legacy fields/options and the v3 token/options model still needs to be grounded rather than inferred.
+
+Current `main` therefore advances to:
+
+```text
+docs/distributed-notifications-protocol-abi-audit.md
+```
+
+That stage is static/read-only. It corrects the Mach-header interpretation, improves PIC constant recovery, and emits exact request/callback construction contexts before any standalone adapter is built or executed.
+
 ## Prepared implementation
 
 Current runtime `main` provides:
@@ -178,7 +199,7 @@ The returned schema reports will choose the next engineering branch:
 - If request mapping is complete but callback/reply mapping is incomplete, the next stage must resolve the callback schema before any bridge is executed.
 - If stripped Lion server code still leaves key semantics ambiguous after this audit, use a narrowly scoped native Lion payload-observation experiment for only the missing fields. Do not guess field meanings from string names or numeric values.
 
-The bridge must not be designed as a global `distnoted` replacement and must not modify launchd state.
+The bridge must not be designed as a global `distnoted` replacement and must not modify launchd state. The reviewed analyzer-v1 result does not yet authorize that bridge; proceed to `docs/distributed-notifications-protocol-abi-audit.md`.
 
 ## Current boundary
 
@@ -186,11 +207,11 @@ The bridge must not be designed as a global `distnoted` replacement and must not
 Snow service                                   -> com.apple.distributed_notifications.2
 Lion selected service                           -> com.apple.distributed_notifications@Uv3
 Snow post-lookup transport                      -> binary-plist payload in legacy Mach messages
-Snow legacy request message ID                  -> 0x1413
+Snow client->server Mach header                 -> msgh_bits=0x1413, msgh_id=4
 Lion client transport                           -> XPC dictionaries / XPC connection
 Lion distnoted transport surface                -> XPC dictionary/array/send primitives
 simple service-name translation                 -> insufficient
-next step                                       -> static v2/v3 protocol schema/key mapping
+next step                                       -> static v2/v3 protocol ABI/field-semantics audit
 ```
 
 No XNU change is indicated.
