@@ -14,6 +14,30 @@ The native Lion trace observed that exact name at the first `xpc_connection_crea
 
 The next question is protocol compatibility, not namespace selection.
 
+## Reviewed result
+
+Both returned analyzer-v1 reports pass. The differential is decisive enough to reject the name-only branch.
+
+Snow PPC CoreFoundation's `___CFXNotificationSendToServer`:
+
+- obtains the bootstrap port and calls `bootstrap_look_up2` with flags `8`;
+- serializes the request dictionary with `___CFBinaryPlistWriteToStream`;
+- builds the legacy Mach envelope with message ID `0x1413`;
+- sends it with `mach_msg`;
+- retains explicit `SendToServer`, `ReceiveFromServer`, `SendToClient`, and `ReceiveFromClient` protocol functions.
+
+Lion's distributed-notification implementation instead exposes XPC-oriented private client functions such as `__CFXNotificationRegisterObserver`, `__CFXNotificationPost`, and `___CFXNotificationCenterSetupConnection`. The Lion `distnoted` executable imports XPC dictionary/array and connection-send primitives and its stripped text contains active XPC request/reply handling. The Snow private legacy server function family is not present in the Lion client symbol set.
+
+Therefore a process-local `.2 -> @Uv3` service-name rewrite alone is **not** a valid compatibility design. The wire representation changed from the Snow binary-plist Mach envelope to the Lion XPC object protocol.
+
+Current `main` advances to:
+
+```text
+docs/distributed-notifications-protocol-schema-audit.md
+```
+
+That audit remains static/read-only and resolves the exact Snow CFDictionary/CFString keys and Lion XPC keys/operation values needed before a standalone bridge can be designed.
+
 ## Prepared implementation
 
 Current runtime `main` provides:
@@ -137,7 +161,7 @@ The reports will choose the next branch:
 - If Lion `@Uv3` still exposes a legacy message path matching the Snow request/reply layouts, the next stage can prepare a standalone proof that translates only the bootstrap service identity and leaves the wire payload unchanged.
 - If the static server-side evidence is incomplete because private symbols are stripped, the next discriminator should be a passive native Lion transport trace of a harmless center-construction/registration-free path or another narrowly scoped static extraction. Do not infer compatibility from `xpc_connection_set_legacy` alone.
 
-No PPC subject or window-system retry is authorized by this audit.
+No PPC subject or window-system retry is authorized by this audit. The completed result now advances to `docs/distributed-notifications-protocol-schema-audit.md`; do not rerun this differential unless that later document explicitly requests it.
 
 ## Current boundary
 
@@ -147,8 +171,9 @@ Lion ordinary current-user service             -> com.apple.distributed_notifica
 native trace first observed XPC target          -> @Uv3
 native trace failure                            -> tracer recursive forwarding / status 139
 service identity ambiguity                      -> closed
-wire/protocol compatibility                     -> unresolved
-next step                                      -> static Snow-v2 / Lion-@Uv3 protocol differential
+wire/protocol compatibility                     -> incompatible at representation/transport layer
+name-only translation                           -> rejected
+next step                                      -> static v2/v3 protocol schema/key mapping
 ```
 
 No XNU change is indicated.
