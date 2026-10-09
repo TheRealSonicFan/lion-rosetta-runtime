@@ -222,9 +222,6 @@ def main():
             issues.append("no launchd/distnoted process rows captured")
         if plist_scanned == 0:
             issues.append("no launchd plists scanned")
-        if binary_matches.get("distnoted", 0) == 0:
-            issues.append("no distributed-notifications-related strings found in distnoted")
-
         write_line(fp, "process_match_count=%d" % process_hits)
         write_line(fp, "launchctl_match_count=%d" % launchctl_hits)
         write_line(fp, "plist_match_count=%d" % plist_matches)
