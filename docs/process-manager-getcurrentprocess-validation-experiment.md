@@ -344,3 +344,44 @@ window creation / event loop                -> held until this gate is reviewed
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — historic GetCurrentProcess boundary closed
+
+The returned Snow control and Lion validation fully passed this stage.
+
+Snow:
+
+```text
+GetFrontProcess                         exact PSN match
+GetCurrentProcess                       0
+current PSN                             exact match
+M19_SUCCESS                             reached
+RESULT                                  PASS
+```
+
+Lion:
+
+```text
+registration adapter                    PASS
+SetFront adapter                        PASS
+SetFrontProcess                         0
+GetFrontProcess                         exact PSN match
+GetCurrentProcess                       0
+expected PSN                            0x00000000 / 0x00146146
+returned current PSN                    0x00000000 / 0x00146146
+current PSN match                       YES
+new diagnostic                          none
+protected hashes                        unchanged
+RESULT                                  GETCURRENTPROCESS_VALIDATION_PASS
+```
+
+This closes the investigation's original translated-PPC `GetCurrentProcess` abort boundary for the fully restored registration/foreground sequence. No abort suppression, `LSDONOTABORTIFNOASN` override, PSN synthesis, or GetCurrentProcess-specific adapter is required.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-createwindow-validation-experiment.md
+```
+
+That stage keeps every accepted compatibility dylib unchanged and rebuilds only the exact-basename PPC subject. It advances one call beyond the now-restored Process Manager path to `CreateNewWindow`, requires status zero and a nonzero `WindowRef`, immediately disposes the window, and stops before show/select/visibility or event-loop work.
