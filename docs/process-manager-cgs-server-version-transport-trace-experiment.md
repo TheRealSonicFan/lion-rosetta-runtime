@@ -1,6 +1,6 @@
 # Process Manager CGS server-version passive trace experiment
 
-> **Completed historical stage.** The returned trace-v2 result is `CGS_TRACE_SERVER_VERSION_REPLY_OBSERVED_CLEAN_EARLY_EXIT_RC1`, and the Snow/Lion reply differential confirms server-version skew. Do not rerun this integrated trace before the standalone policy proof. The authoritative next procedure is `docs/process-manager-cgs-server-version-compat-protocol-adapter-experiment.md`.
+> **Completed historical stage.** The returned trace-v2 result is `CGS_TRACE_SERVER_VERSION_REPLY_OBSERVED_CLEAN_EARLY_EXIT_RC1`, and the Snow/Lion reply differential confirms server-version skew. The subsequent standalone normalization proof also passed. Do not rerun this trace. The authoritative next procedure is `docs/process-manager-cgs-server-version-compat-integration-experiment.md`.
 
 
 ## Objective
