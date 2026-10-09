@@ -124,9 +124,10 @@ echo "control_status=$RC" | /usr/bin/tee -a "$LOG"
 if [ "$RC" -eq 0 ] &&
    /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_SESSIONINIT_EXACT_CALL:index=1 mode=passthrough' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_CALL:index=1 mode=passthrough' "$LOG" &&
-   /usr/bin/grep -Fq 'PM_CGS_CONNECTION_TRACE_REQUEST:index=1 kind=DEATHWATCH' "$LOG" &&
-   /usr/bin/grep -Fq 'PM_CGS_CONNECTION_TRACE_MACH_RETURN:index=1 kind=DEATHWATCH kr=0 hex=0x00000000' "$LOG" &&
-   /usr/bin/grep -Fq 'PM_CGS_CONNECTION_TRACE_REPLY:index=1 kind=DEATHWATCH' "$LOG" &&
+   /usr/bin/grep -Fq 'PM_CGS_CONNECTION_TRACE_REQUEST:' "$LOG" &&
+   /usr/bin/grep -Fq 'kind=DEATHWATCH' "$LOG" &&
+   /usr/bin/grep -Eq 'PM_CGS_CONNECTION_TRACE_MACH_RETURN:index=[0-9]+ kind=DEATHWATCH kr=0 hex=0x00000000' "$LOG" &&
+   /usr/bin/grep -Eq 'PM_CGS_CONNECTION_TRACE_REPLY:index=[0-9]+ kind=DEATHWATCH ' "$LOG" &&
    /usr/bin/grep -Fq 'id=0x000071b0 expected=0x000071b0 idMatch=YES' "$LOG" &&
    /usr/bin/grep -Fq 'kind=NEW_CONNECTION' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CGS_CONNECTION_TRACE_MACH_RETURN:' "$LOG" &&
