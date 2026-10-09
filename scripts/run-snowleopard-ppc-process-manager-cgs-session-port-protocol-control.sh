@@ -51,7 +51,7 @@ OT="$(/usr/bin/otool -l "$EXE" | /usr/bin/grep -A3 LC_LOAD_DYLINKER || true)"
 echo "$OT" | /usr/bin/tee -a "$LOG"
 echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || fail "LC_LOAD_DYLINKER is not /usr/oah/dyld"
 
-/usr/bin/strings "$EXE" | /usr/bin/grep -Fq 'PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v1' || fail "build marker missing"
+/usr/bin/strings "$EXE" | /usr/bin/grep -Fq 'PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v2' || fail "build marker missing"
 
 echo "== Snow Leopard PPC CGS session-port positive control ==" | /usr/bin/tee -a "$LOG"
 DYLD_PRINT_LIBRARIES=1 "$EXE" snow-control >> "$LOG" 2>&1
