@@ -97,7 +97,7 @@ is_ppc32_macho "$OUT" || {
 
 {
     echo "== PPC CGS session-port protocol probe build =="
-    echo "build_id=cgs-session-port-protocol-v2"
+    echo "build_id=cgs-session-port-protocol-v3"
     echo "compiler=$CC_SELECTED"
     echo "source=$SRC"
     echo
@@ -119,7 +119,7 @@ is_ppc32_macho "$OUT" || {
     /usr/bin/nm -m "$OUT" | /usr/bin/grep -E '(_bootstrap_look_up|_bootstrap_port|_mig_get_reply_port|_mach_msg|_task_get_special_port|_mach_port_type|_mach_port_deallocate)' || true
     echo
     echo "== build marker =="
-    /usr/bin/strings "$OUT" | /usr/bin/grep -F 'PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v2' || true
+    /usr/bin/strings "$OUT" | /usr/bin/grep -F 'PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v3' || true
     echo
     echo "== SHA-256 =="
     /usr/bin/shasum -a 256 "$OUT"
@@ -138,7 +138,7 @@ for sym in _bootstrap_look_up _bootstrap_port _mig_get_reply_port _mach_msg _tas
     }
 done
 
-/usr/bin/strings "$OUT" | /usr/bin/grep -Fq 'PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v2' || {
+/usr/bin/strings "$OUT" | /usr/bin/grep -Fq 'PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v3' || {
     echo "error: build marker missing" >&2
     exit 72
 }
