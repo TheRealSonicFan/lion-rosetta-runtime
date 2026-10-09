@@ -149,6 +149,33 @@ Current `main` corrects the probe source by defining that full build marker as o
 
 No bootstrap protocol, lookup predicate, service name, Mach message format, or runtime compatibility behavior changed. Pull current `main`, discard or overwrite the partial Phase B outputs from the failed attempt, and rerun Phase B from the beginning.
 
+## Phase B interposer-result-marker correction
+
+The next Phase B attempt advanced past the probe marker and the private-dylinker patch, then stopped at:
+
+```text
+error: required interposer marker missing: PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_RESULT:ADAPTER_PASS
+```
+
+This is another build-artifact validation defect, not evidence that the bootstrap adapter ran or failed. The interposer encoded the result as a format string plus a separate status literal:
+
+```text
+PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_RESULT:%s ...
+ADAPTER_PASS
+ADAPTER_FAILED
+```
+
+At runtime that produces the intended line, but `strings` cannot recover the single full marker required by the Phase B provenance gate. Current `main` now emits the success and failure result lines from branch-specific compile-time literals, including:
+
+```text
+PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_RESULT:ADAPTER_PASS
+PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_RESULT:ADAPTER_FAILED
+```
+
+The success predicate, return value, exact service name, target PID, flags, Lion lookup formatter, Mach request/reply contract, interpose tuples, and Snow passthrough behavior are unchanged. This correction only makes the already-required runtime result markers visible in the built dylib so the builder can validate the artifact before execution.
+
+Pull current `main`, discard or overwrite the partial Phase B outputs from this failed attempt, and rerun Phase B from the beginning. Continue to Phase C only if Phase B completes successfully and creates all six expected artifacts.
+
 ## Phase B — build the standalone probe and protocol interposer on Snow Leopard
 
 ```sh
