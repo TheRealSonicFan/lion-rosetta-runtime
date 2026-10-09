@@ -366,8 +366,9 @@ run_lion_policy_proof(void)
     if (legacy_send_size != 0x84U ||
         lion_send_size != 0x90U ||
         get_u32(lion + HEADER_ID_OFF) != LION_REQUEST_ID ||
-        changed_common == 0U ||
+        changed_common != 1U ||
         source_changed != 0U ||
+        get_u32(lion + 0x04U) != 0xa5a5a5a5U ||
         lion[tail_off + LION_TAIL_BYTE_REL] != 0U ||
         lion[tail_off + 1U] != 0U ||
         lion[tail_off + 2U] != 0U ||
@@ -397,7 +398,7 @@ run_lion_policy_proof(void)
     if (get_u32(legacy_reply + HEADER_ID_OFF) != LEGACY_REPLY_ID ||
         get_u32(legacy_reply + 0x04U) != SUCCESS_REPLY_SIZE ||
         parsed_result != 0 ||
-        reply_changed == 0U)
+        reply_changed != 2U)
         return 0;
 
     fprintf(stderr,
