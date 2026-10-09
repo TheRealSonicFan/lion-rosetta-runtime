@@ -29,6 +29,15 @@ die() {
     exit "$code"
 }
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
+distnoted_snapshot() {
+    /bin/ps -axo pid=,uid=,command= | /usr/bin/awk '
+        $3 == "/usr/sbin/distnoted" {
+            line = $1 ":" $2 ":" $3
+            for (i = 4; i <= NF; i++)
+                line = line " " $i
+            print line
+        }' | /usr/bin/sort
+}
 
 PRODUCT_VERSION="$(/usr/bin/sw_vers -productVersion 2>/dev/null || true)"
 BUILD_VERSION="$(/usr/bin/sw_vers -buildVersion 2>/dev/null || true)"
@@ -74,12 +83,18 @@ INTERPOSER_SHA_BEFORE="$(sha256 "$INTERPOSER")"
 CF_SHA_BEFORE="$(sha256 "$COREFOUNDATION")"
 FOUNDATION_SHA_BEFORE="$(sha256 "$FOUNDATION")"
 DISTNOTED_SHA_BEFORE="$(sha256 "$DISTNOTED")"
+DISTNOTED_PROCESSES_BEFORE="$(distnoted_snapshot)"
+
+[ -n "$DISTNOTED_PROCESSES_BEFORE" ] || die 69 "no active distnoted process found; do not use this trace to launch it"
+echo "$DISTNOTED_PROCESSES_BEFORE" | /usr/bin/grep -Fq " daemon" || die 69 "distnoted daemon is not already active"
+echo "$DISTNOTED_PROCESSES_BEFORE" | /usr/bin/grep -Fq " agent" || die 69 "distnoted agent is not already active"
 
 log "probe_sha256=$PROBE_SHA_BEFORE"
 log "interposer_sha256=$INTERPOSER_SHA_BEFORE"
 log "corefoundation_sha256_before=$CF_SHA_BEFORE"
 log "foundation_sha256_before=$FOUNDATION_SHA_BEFORE"
 log "distnoted_sha256_before=$DISTNOTED_SHA_BEFORE"
+log "distnoted_processes_before=$DISTNOTED_PROCESSES_BEFORE"
 
 log ""
 log "== CFNotificationCenterGetDistributedCenter =="
@@ -135,17 +150,20 @@ INTERPOSER_SHA_AFTER="$(sha256 "$INTERPOSER")"
 CF_SHA_AFTER="$(sha256 "$COREFOUNDATION")"
 FOUNDATION_SHA_AFTER="$(sha256 "$FOUNDATION")"
 DISTNOTED_SHA_AFTER="$(sha256 "$DISTNOTED")"
+DISTNOTED_PROCESSES_AFTER="$(distnoted_snapshot)"
 
 log "selected_service=$CF_NAMES"
 log "corefoundation_sha256_after=$CF_SHA_AFTER"
 log "foundation_sha256_after=$FOUNDATION_SHA_AFTER"
 log "distnoted_sha256_after=$DISTNOTED_SHA_AFTER"
+log "distnoted_processes_after=$DISTNOTED_PROCESSES_AFTER"
 
 [ "$PROBE_SHA_BEFORE" = "$PROBE_SHA_AFTER" ] || die 86 "probe changed during run"
 [ "$INTERPOSER_SHA_BEFORE" = "$INTERPOSER_SHA_AFTER" ] || die 86 "interposer changed during run"
 [ "$CF_SHA_BEFORE" = "$CF_SHA_AFTER" ] || die 86 "CoreFoundation changed during run"
 [ "$FOUNDATION_SHA_BEFORE" = "$FOUNDATION_SHA_AFTER" ] || die 86 "Foundation changed during run"
 [ "$DISTNOTED_SHA_BEFORE" = "$DISTNOTED_SHA_AFTER" ] || die 86 "distnoted changed during run"
+[ "$DISTNOTED_PROCESSES_BEFORE" = "$DISTNOTED_PROCESSES_AFTER" ] || die 87 "distnoted process set changed during run"
 
 /bin/rm -f "$TMP_CF" "$TMP_FOUNDATION"
 
