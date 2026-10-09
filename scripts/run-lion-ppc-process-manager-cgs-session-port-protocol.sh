@@ -109,7 +109,7 @@ OT="$(/usr/bin/otool -l "$EXE" | /usr/bin/grep -A3 LC_LOAD_DYLINKER || true)"
 echo "$OT" | /usr/bin/tee -a "$REPORT"
 echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || die 68 "LC_LOAD_DYLINKER is not /usr/oah/dyld"
 
-/usr/bin/strings "$EXE" | /usr/bin/grep -Fq 'PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v1' || die 68 "build marker missing"
+/usr/bin/strings "$EXE" | /usr/bin/grep -Fq 'PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v2' || die 68 "build marker missing"
 /usr/bin/grep -Fq "$COREGRAPHICS" "$ROSETTA_CACHE_MAP" || die 68 "CoreGraphics absent from Rosetta cache map"
 
 log ""
