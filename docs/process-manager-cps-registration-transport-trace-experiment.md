@@ -339,3 +339,47 @@ later SetFrontProcess 0x729e/0x72a1          -> still out of scope
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — legacy reply directly returns -304
+
+The returned Snow and Lion evidence passed this stage.
+
+Snow control:
+
+```text
+0x7372 request send/receive               0x84 / 0x2c
+Mach result                               0
+reply                                     0x73d6 / 0x24
+raw result                                0
+GetProcessForPID                          PASS
+default connection                        nonzero
+RESULT                                    PASS
+```
+
+Lion translated PPC:
+
+```text
+0x7372 request send/receive               0x84 / 0x2c
+Mach result                               0
+reply                                     0x73d6 / 0x24
+raw result word                           0xd0feffff
+reply NDR                                 swapped relative to PPC
+decoded result                            -304
+_RegisterApplication diagnostic           err=-304
+GetProcessForPID                          PASS
+default connection                        nonzero
+new diagnostic                            none
+protected hashes                          unchanged
+RESULT                                    CPS_REGISTRATION_TRACE_LEGACY_REPLY_OBSERVED
+```
+
+This directly joins the WindowServer reply scalar to the Process Manager diagnostic. The failure is a normal successful Mach transaction returning the legacy expected reply ID, not a transport error or reply-ID mismatch.
+
+The authoritative next stage is the standalone copied-buffer policy proof:
+
+```text
+docs/process-manager-cps-registration-compat-protocol-adapter-experiment.md
+```
+
+It proves the exact `0x7372 -> 0x73c1`, send-size `+0x0c`, Lion-tail, and `0x7425 -> 0x73d6` conversion locally without sending a new registration request. Do not integrate the translator or proceed to SetFrontProcess until that proof is reviewed.
