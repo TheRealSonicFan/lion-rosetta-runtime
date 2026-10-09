@@ -329,3 +329,50 @@ next step                                   -> exact copied-buffer ID policy pro
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — SetFrontProcess policy proof passed
+
+The returned Snow control and Lion protocol proof fully passed this stage.
+
+Snow:
+
+```text
+SetFront compatibility mode             passthrough
+exact legacy predicate                  YES
+legacy request/reply                    0x729e -> 0x7302
+reply result                            0
+SetFrontProcess                         0
+RESULT                                  PASS
+```
+
+Lion:
+
+```text
+exact legacy predicate                  YES
+registration compatibility calls         1
+private request                         0x729e -> 0x72a1
+request changed bytes                   1
+source request changed bytes             0
+native Mach result                      0
+native reply                            0x7305 / 0x24 / result 0
+private reply                           0x7305 -> 0x7302
+reply changed bytes                     1
+SetFront adapter                        PASS
+legacy-facing result                    0
+SetFrontProcess                         0
+M13_SUCCESS                             reached
+new diagnostic                          none
+protected hashes                        unchanged
+RESULT                                  CPS_SETFRONT_COMPAT_POLICY_PROOF_PASS
+```
+
+This proves the SetFrontProcess incompatibility is exactly resolved by the narrow request/reply ID translation for the validated live request; no payload rewrite or server-result normalization is required.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-setfront-compat-integration-experiment.md
+```
+
+That stage promotes the same exact copied-buffer policy to the normal combined compatibility build under `PM_CPS_SETFRONT_COMPAT_INTEGRATION`, reuses the accepted subject unchanged, requires Snow passthrough, and performs exactly one Lion integration run. Do not broaden the predicate.
