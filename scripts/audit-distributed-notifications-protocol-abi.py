@@ -392,7 +392,14 @@ def resolve_i386(rows, cstrings, cfstrings):
 
         m = re.search(r"\bcalll\s+0x([0-9a-fA-F]+)", asm)
         if m:
-            pending_call_target = int(m.group(1), 16)
+            call_target = int(m.group(1), 16)
+            if call_target == addr + 5:
+                pending_call_target = call_target
+            else:
+                pending_call_target = None
+                regs.pop("eax", None)
+                regs.pop("ecx", None)
+                regs.pop("edx", None)
 
         m = re.match(r"popl\s+%(e[a-z]{2})$", asm)
         if m and pending_call_target is not None:
