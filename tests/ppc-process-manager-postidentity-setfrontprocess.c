@@ -14,6 +14,12 @@
 #define LS_GET_SERVER_PORT_TEXT_OFFSET 0x000186a8UL
 #define LS_EXPECTED_PROLOGUE_WORD 0x7c0802a6UL
 
+#ifdef PM_CPS_REGISTRATION_SETFRONT_TRACE_SUBJECT
+#define PM_CPS_REGISTRATION_SETFRONT_TRACE_BUILD_ID "cps-registration-setfront-trace-v1"
+#define PM_CPS_REGISTRATION_SETFRONT_TRACE_BUILD_MARKER \
+    "PM_CPS_REGISTRATION_SETFRONT_TRACE_BUILD_ID:" PM_CPS_REGISTRATION_SETFRONT_TRACE_BUILD_ID
+#endif
+
 typedef const void *(*get_dispatch_table_fn_t)(void);
 typedef mach_port_t (*get_server_port_fn_t)(void);
 
@@ -137,6 +143,9 @@ main(void)
     OSStatus status;
 
     marker("PM_POSTIDENTITY_MILESTONE:M00_MAIN_ENTER");
+#ifdef PM_CPS_REGISTRATION_SETFRONT_TRACE_SUBJECT
+    marker(PM_CPS_REGISTRATION_SETFRONT_TRACE_BUILD_MARKER);
+#endif
 
     noasn = getenv("LSDONOTABORTIFNOASN");
     fprintf(stderr,
