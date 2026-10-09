@@ -14,7 +14,7 @@ extern kern_return_t bootstrap_look_up(mach_port_t,
                                        mach_port_t *);
 extern mach_port_t mig_get_reply_port(void);
 
-#define BUILD_ID "cgs-session-port-protocol-v1"
+#define BUILD_ID "cgs-session-port-protocol-v2"
 #define BUILD_MARKER "PM_CGS_SESSION_PORT_BUILD_ID:" BUILD_ID
 
 #define BOOTSTRAP_SPECIAL_PORT 4
@@ -82,6 +82,14 @@ put_u64(unsigned char *p, uint64_t value)
     memcpy(p, &value, sizeof(value));
 }
 
+static uint64_t
+get_u64(const unsigned char *p)
+{
+    uint64_t value;
+    memcpy(&value, p, sizeof(value));
+    return value;
+}
+
 static int
 has_send_right(mach_port_t port)
 {
@@ -141,9 +149,7 @@ build_lion_lookup_request(unsigned char *buffer,
     return get_u32(buffer + 0x00) == LION_LOOKUP_REQUEST_BITS &&
            get_u32(buffer + 0x04) == LION_LOOKUP_SEND_SIZE &&
            get_u32(buffer + 0x14) == LION_LOOKUP_REQUEST_ID &&
-           get_u32(buffer + LION_LOOKUP_FLAGS_OFF) == (uint32_t)flags &&
-           get_u32(buffer + LION_LOOKUP_FLAGS_OFF + 4U) ==
-               (uint32_t)(flags >> 32);
+           get_u64(buffer + LION_LOOKUP_FLAGS_OFF) == flags;
 }
 
 static int
@@ -423,6 +429,15 @@ layout_selfcheck(void)
                                    (mach_port_t)0x22222222U,
                                    kActiveServiceName,
                                    PRIVILEGED_SERVER_FLAG)) {
+        fprintf(stderr,
+                "PM_CGS_SESSION_PORT_LAYOUT_LOOKUP_FAILURE:bits=0x%08lx size=0x%08lx id=0x%08lx flags=0x%08lx%08lx\n",
+                (unsigned long)get_u32(lookup + 0x00),
+                (unsigned long)get_u32(lookup + 0x04),
+                (unsigned long)get_u32(lookup + 0x14),
+                (unsigned long)(uint32_t)
+                    (get_u64(lookup + LION_LOOKUP_FLAGS_OFF) >> 32),
+                (unsigned long)(uint32_t)
+                    get_u64(lookup + LION_LOOKUP_FLAGS_OFF));
         marker("PM_CGS_SESSION_PORT_LAYOUT:FAIL_LOOKUP");
         return 0;
     }
