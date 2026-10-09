@@ -9,7 +9,7 @@ import sys
 import tempfile
 
 DEFAULT_REPORT = "./process-manager-cgs-connect-and-check.txt"
-ANALYZER_VERSION = "1"
+ANALYZER_VERSION = "2"
 
 ROSETTA_CACHE = "/private/var/db/dyld/dyld_shared_cache_rosetta"
 ROSETTA_MAP = "/private/var/db/dyld/dyld_shared_cache_rosetta.map"
@@ -21,6 +21,8 @@ ARCHES = ["i386", "x86_64", "ppc7400"]
 EXACT_TARGETS = [
     "_CGSServerPort",
     "_connectAndCheck",
+    "_CGSGetCoreGraphicsVersion",
+    "__CGSGetCoreGraphicsServerVersion",
     "_lookupServerPort",
     "_CGSLookupSessionPort",
     "_CGSLookupServerRootPort",
@@ -35,6 +37,8 @@ EXACT_TARGETS = [
 SNOW_REQUIRED = [
     "_CGSServerPort",
     "_connectAndCheck",
+    "_CGSGetCoreGraphicsVersion",
+    "__CGSGetCoreGraphicsServerVersion",
     "_lookupServerPort",
     "_CGSNewConnection",
     "__CGSNewConnectionPort",
@@ -43,6 +47,8 @@ SNOW_REQUIRED = [
 LION_REQUIRED = [
     "_CGSServerPort",
     "_connectAndCheck",
+    "_CGSGetCoreGraphicsVersion",
+    "__CGSGetCoreGraphicsServerVersion",
     "_CGSNewConnection",
     "__CGSNewConnectionPort",
     "_getSessionPort",
@@ -50,7 +56,7 @@ LION_REQUIRED = [
 ]
 
 FOCUS_RE = re.compile(
-    r"(connectAndCheck|CGSServerPort|lookupServerPort|CGSLookupSessionPort|"
+    r"(connectAndCheck|CGSGetCoreGraphicsVersion|CGSServerPort|lookupServerPort|CGSLookupSessionPort|"
     r"CGSLookupServerRootPort|getSessionPort|CGSGetSessionPort|"
     r"CGSSessionDeathWatchPort|CGSNewConnection|CGSSetDenyWindowServerConnections|"
     r"mach_msg|mach_port_|bootstrap_|CGSGlobalError|CGError|WindowServer|windowserver|"
