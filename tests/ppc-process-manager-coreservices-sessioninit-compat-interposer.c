@@ -15,7 +15,9 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                          uint64_t);
 extern mach_port_t mig_get_reply_port(void);
 
-#ifdef PM_CGS_CONNECTION_TRACE
+#if defined(PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION)
+#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-v1"
+#elif defined(PM_CGS_CONNECTION_TRACE)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-trace-v2"
 #else
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5"
@@ -74,13 +76,37 @@ extern mach_port_t mig_get_reply_port(void);
 
 #define PRIVILEGED_SERVER_FLAG 0x0000000000000008ULL
 
-#ifdef PM_CGS_CONNECTION_TRACE
+#if defined(PM_CGS_CONNECTION_TRACE) || defined(PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION)
 #define CGS_SERVER_VERSION_REQUEST_ID 0x00007148U
 #define CGS_SERVER_VERSION_REPLY_ID 0x000071acU
 #define CGS_DEATHWATCH_REQUEST_ID 0x0000714cU
 #define CGS_DEATHWATCH_REPLY_ID 0x000071b0U
 #define CGS_NEW_CONNECTION_REQUEST_ID 0x00007469U
 #define CGS_NEW_CONNECTION_REPLY_ID 0x000074cdU
+#endif
+
+#ifdef PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION
+#define CGS_SERVER_VERSION_COMPAT_ENV "ROSETTA_CGS_SERVER_VERSION_COMPAT_MODE"
+#define CGS_SERVER_VERSION_COMPAT_PASSTHROUGH "passthrough"
+#define CGS_SERVER_VERSION_COMPAT_LION_V1 "lion-server-version-v1"
+#define CGS_SERVER_VERSION_REPLY_SIZE 0x00000040U
+#define CGS_SERVER_VERSION_REPLY_DESC_COUNT_OFF 0x18U
+#define CGS_SERVER_VERSION_REPLY_PORT_OFF 0x1cU
+#define CGS_SERVER_VERSION_REPLY_DISPOSITION_OFF 0x26U
+#define CGS_SERVER_VERSION_REPLY_TYPE_OFF 0x27U
+#define CGS_SERVER_VERSION_REPLY_NDR_OFF 0x28U
+#define CGS_SERVER_VERSION_REPLY_MAJOR_OFF 0x30U
+#define CGS_SERVER_VERSION_REPLY_MINOR_OFF 0x34U
+#define CGS_SERVER_VERSION_REPLY_AUX_OFF 0x38U
+#define CGS_SERVER_VERSION_REPLY_FLAGS_OFF 0x3cU
+#define CGS_SERVER_VERSION_EXPECTED_DISPOSITION 0x11U
+#define CGS_SERVER_VERSION_EXPECTED_TYPE 0x00U
+#define CGS_SERVER_VERSION_LION_MAJOR 600U
+#define CGS_SERVER_VERSION_LION_MINOR 0U
+#define CGS_SERVER_VERSION_SNOW_MAJOR 545U
+#define CGS_SERVER_VERSION_SNOW_MINOR 0U
+#define CGS_SERVER_VERSION_EXPECTED_AUX 0x69333836U
+#define CGS_SERVER_VERSION_EXPECTED_FLAGS 0x00000001U
 #endif
 
 static const char *kCoreServicesDName =
@@ -127,8 +153,11 @@ static unsigned int gServerCheckinExactCallCount = 0;
 static unsigned int gServerCheckinAdaptedCallCount = 0;
 static unsigned int gSessionInitExactCallCount = 0;
 static unsigned int gSessionInitAdaptedCallCount = 0;
-#ifdef PM_CGS_CONNECTION_TRACE
+#if defined(PM_CGS_CONNECTION_TRACE) || defined(PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION)
 static unsigned int gCGSTraceCallCount = 0;
+#endif
+#ifdef PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION
+static unsigned int gCGSServerVersionCompatCallCount = 0;
 #endif
 static mach_port_t gCoreServicesServerPort = MACH_PORT_NULL;
 static mach_port_t gServerCheckinReplyPort = MACH_PORT_NULL;
@@ -146,6 +175,218 @@ get_u32(const unsigned char *p)
     memcpy(&value, p, sizeof(value));
     return value;
 }
+
+#ifdef PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION
+static uint32_t
+swap_u32(uint32_t value)
+{
+    return ((value & 0x000000ffU) << 24) |
+           ((value & 0x0000ff00U) << 8) |
+           ((value & 0x00ff0000U) >> 8) |
+           ((value & 0xff000000U) >> 24);
+}
+
+static int
+cgs_server_version_reply_is_swapped(const unsigned char *message)
+{
+    const unsigned char *local_ndr = (const unsigned char *)&NDR_record;
+
+    return message[CGS_SERVER_VERSION_REPLY_NDR_OFF + 4U] !=
+           local_ndr[4];
+}
+
+static uint32_t
+decode_cgs_server_version_u32(const unsigned char *message, uint32_t off)
+{
+    uint32_t value = get_u32(message + off);
+
+    if (cgs_server_version_reply_is_swapped(message))
+        value = swap_u32(value);
+    return value;
+}
+
+static void
+encode_cgs_server_version_u32(unsigned char *message,
+                              uint32_t off,
+                              uint32_t value)
+{
+    if (cgs_server_version_reply_is_swapped(message))
+        value = swap_u32(value);
+    put_u32(message + off, value);
+}
+
+static void
+maybe_normalize_cgs_server_version_reply(unsigned char *message,
+                                         uint32_t request_id,
+                                         mach_msg_return_t mr,
+                                         uint32_t reply_bits,
+                                         uint32_t reply_size,
+                                         uint32_t reply_id)
+{
+    const char *mode;
+    unsigned char before[CGS_SERVER_VERSION_REPLY_SIZE];
+    uint32_t descriptor_count;
+    mach_port_t descriptor_port;
+    uint32_t disposition;
+    uint32_t descriptor_type;
+    uint32_t major;
+    uint32_t minor;
+    uint32_t aux;
+    uint32_t flags;
+    unsigned int changed = 0;
+    unsigned int outside_changed = 0;
+    unsigned int off;
+
+    if (request_id != CGS_SERVER_VERSION_REQUEST_ID ||
+        mr != MACH_MSG_SUCCESS)
+        return;
+
+    ++gCGSServerVersionCompatCallCount;
+    mode = getenv(CGS_SERVER_VERSION_COMPAT_ENV);
+
+    descriptor_count =
+        get_u32(message + CGS_SERVER_VERSION_REPLY_DESC_COUNT_OFF);
+    descriptor_port =
+        (mach_port_t)get_u32(message + CGS_SERVER_VERSION_REPLY_PORT_OFF);
+    disposition =
+        (uint32_t)message[CGS_SERVER_VERSION_REPLY_DISPOSITION_OFF];
+    descriptor_type =
+        (uint32_t)message[CGS_SERVER_VERSION_REPLY_TYPE_OFF];
+
+    major = decode_cgs_server_version_u32(
+        message, CGS_SERVER_VERSION_REPLY_MAJOR_OFF);
+    minor = decode_cgs_server_version_u32(
+        message, CGS_SERVER_VERSION_REPLY_MINOR_OFF);
+    aux = decode_cgs_server_version_u32(
+        message, CGS_SERVER_VERSION_REPLY_AUX_OFF);
+    flags = decode_cgs_server_version_u32(
+        message, CGS_SERVER_VERSION_REPLY_FLAGS_OFF);
+
+    fprintf(stderr,
+            "PM_CGS_SERVER_VERSION_COMPAT_CALL:index=%u mode=%s replyBits=0x%08lx replySize=0x%08lx replyId=0x%08lx descriptorCount=%lu descriptorPort=0x%08lx disposition=0x%02lx type=0x%02lx ndrSwapped=%s major=%lu minor=%lu aux=0x%08lx flags=0x%08lx\n",
+            gCGSServerVersionCompatCallCount,
+            mode ? mode : "(unset)",
+            (unsigned long)reply_bits,
+            (unsigned long)reply_size,
+            (unsigned long)reply_id,
+            (unsigned long)descriptor_count,
+            (unsigned long)descriptor_port,
+            (unsigned long)disposition,
+            (unsigned long)descriptor_type,
+            cgs_server_version_reply_is_swapped(message) ? "YES" : "NO",
+            (unsigned long)major,
+            (unsigned long)minor,
+            (unsigned long)aux,
+            (unsigned long)flags);
+    fflush(stderr);
+
+    if (mode != NULL &&
+        strcmp(mode, CGS_SERVER_VERSION_COMPAT_PASSTHROUGH) == 0) {
+        fprintf(stderr,
+                "PM_CGS_SERVER_VERSION_COMPAT_RESULT:PASSTHROUGH major=%lu minor=%lu\n",
+                (unsigned long)major,
+                (unsigned long)minor);
+        fflush(stderr);
+        return;
+    }
+
+    if (mode == NULL ||
+        strcmp(mode, CGS_SERVER_VERSION_COMPAT_LION_V1) != 0) {
+        fprintf(stderr,
+                "PM_CGS_SERVER_VERSION_COMPAT_RESULT:MODE_REJECTED\n");
+        fflush(stderr);
+        return;
+    }
+
+    if (gCGSServerVersionCompatCallCount != 1U ||
+        (reply_bits & MACH_MSGH_BITS_COMPLEX) == 0 ||
+        reply_size != CGS_SERVER_VERSION_REPLY_SIZE ||
+        reply_id != CGS_SERVER_VERSION_REPLY_ID ||
+        descriptor_count != 1U ||
+        descriptor_port == MACH_PORT_NULL ||
+        disposition != CGS_SERVER_VERSION_EXPECTED_DISPOSITION ||
+        descriptor_type != CGS_SERVER_VERSION_EXPECTED_TYPE ||
+        !cgs_server_version_reply_is_swapped(message) ||
+        major != CGS_SERVER_VERSION_LION_MAJOR ||
+        minor != CGS_SERVER_VERSION_LION_MINOR ||
+        aux != CGS_SERVER_VERSION_EXPECTED_AUX ||
+        flags != CGS_SERVER_VERSION_EXPECTED_FLAGS) {
+        fprintf(stderr,
+                "PM_CGS_SERVER_VERSION_COMPAT_RESULT:SHAPE_OR_VALUE_REJECTED\n");
+        fflush(stderr);
+        return;
+    }
+
+    memcpy(before, message, CGS_SERVER_VERSION_REPLY_SIZE);
+
+    encode_cgs_server_version_u32(
+        message,
+        CGS_SERVER_VERSION_REPLY_MAJOR_OFF,
+        CGS_SERVER_VERSION_SNOW_MAJOR);
+    encode_cgs_server_version_u32(
+        message,
+        CGS_SERVER_VERSION_REPLY_MINOR_OFF,
+        CGS_SERVER_VERSION_SNOW_MINOR);
+
+    for (off = 0U; off < CGS_SERVER_VERSION_REPLY_SIZE; ++off) {
+        if (before[off] != message[off]) {
+            ++changed;
+            if (off < CGS_SERVER_VERSION_REPLY_MAJOR_OFF ||
+                off >= CGS_SERVER_VERSION_REPLY_MINOR_OFF + 4U)
+                ++outside_changed;
+        }
+    }
+
+    major = decode_cgs_server_version_u32(
+        message, CGS_SERVER_VERSION_REPLY_MAJOR_OFF);
+    minor = decode_cgs_server_version_u32(
+        message, CGS_SERVER_VERSION_REPLY_MINOR_OFF);
+
+    if (changed == 0U ||
+        outside_changed != 0U ||
+        major != CGS_SERVER_VERSION_SNOW_MAJOR ||
+        minor != CGS_SERVER_VERSION_SNOW_MINOR ||
+        get_u32(message + CGS_SERVER_VERSION_REPLY_DESC_COUNT_OFF) !=
+            get_u32(before + CGS_SERVER_VERSION_REPLY_DESC_COUNT_OFF) ||
+        get_u32(message + CGS_SERVER_VERSION_REPLY_PORT_OFF) !=
+            get_u32(before + CGS_SERVER_VERSION_REPLY_PORT_OFF) ||
+        message[CGS_SERVER_VERSION_REPLY_DISPOSITION_OFF] !=
+            before[CGS_SERVER_VERSION_REPLY_DISPOSITION_OFF] ||
+        message[CGS_SERVER_VERSION_REPLY_TYPE_OFF] !=
+            before[CGS_SERVER_VERSION_REPLY_TYPE_OFF] ||
+        decode_cgs_server_version_u32(
+            message, CGS_SERVER_VERSION_REPLY_AUX_OFF) != aux ||
+        decode_cgs_server_version_u32(
+            message, CGS_SERVER_VERSION_REPLY_FLAGS_OFF) != flags) {
+        memcpy(message, before, CGS_SERVER_VERSION_REPLY_SIZE);
+        fprintf(stderr,
+                "PM_CGS_SERVER_VERSION_COMPAT_RESULT:POSTCHECK_FAILED_RESTORED\n");
+        fflush(stderr);
+        return;
+    }
+
+    fprintf(stderr,
+            "PM_CGS_SERVER_VERSION_COMPAT_ADAPTER:index=%u originalMajor=%lu originalMinor=%lu adaptedMajor=%lu adaptedMinor=%lu changedBytes=%u outsideVersionBytesChanged=%u raw30Before=0x%08lx raw30After=0x%08lx raw34Before=0x%08lx raw34After=0x%08lx\n",
+            gCGSServerVersionCompatCallCount,
+            (unsigned long)CGS_SERVER_VERSION_LION_MAJOR,
+            (unsigned long)CGS_SERVER_VERSION_LION_MINOR,
+            (unsigned long)major,
+            (unsigned long)minor,
+            changed,
+            outside_changed,
+            (unsigned long)get_u32(
+                before + CGS_SERVER_VERSION_REPLY_MAJOR_OFF),
+            (unsigned long)get_u32(
+                message + CGS_SERVER_VERSION_REPLY_MAJOR_OFF),
+            (unsigned long)get_u32(
+                before + CGS_SERVER_VERSION_REPLY_MINOR_OFF),
+            (unsigned long)get_u32(
+                message + CGS_SERVER_VERSION_REPLY_MINOR_OFF));
+    fprintf(stderr,
+            "PM_CGS_SERVER_VERSION_COMPAT_RESULT:ADAPTER_PASS\n");
+    fflush(stderr);
+}
+#endif
 
 static int
 is_lion_compat_mode(const char *mode)
@@ -199,7 +440,7 @@ call_original_mach_msg(mach_msg_header_t *msg,
               rcv_name, timeout, notify);
 }
 
-#ifdef PM_CGS_CONNECTION_TRACE
+#if defined(PM_CGS_CONNECTION_TRACE) || defined(PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION)
 static const char *
 cgs_trace_kind(uint32_t request_id)
 {
@@ -346,6 +587,15 @@ trace_cgs_message(mach_msg_header_t *msg,
     }
     fprintf(stderr, "\n");
     fflush(stderr);
+
+#ifdef PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION
+    maybe_normalize_cgs_server_version_reply(m,
+                                             request_id,
+                                             mr,
+                                             reply_bits,
+                                             reply_size,
+                                             reply_id);
+#endif
 
     return mr;
 }
@@ -877,7 +1127,7 @@ rosetta_mach_msg(mach_msg_header_t *msg,
             return handle_sessioninit(msg, option, send_size,
                                       rcv_size, rcv_name,
                                       timeout, notify);
-#ifdef PM_CGS_CONNECTION_TRACE
+#if defined(PM_CGS_CONNECTION_TRACE) || defined(PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION)
         if (is_cgs_trace_candidate(msg))
             return trace_cgs_message(msg, option, send_size,
                                      rcv_size, rcv_name,
