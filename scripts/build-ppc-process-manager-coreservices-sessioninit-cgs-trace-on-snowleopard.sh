@@ -8,7 +8,7 @@ ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SRC="$ROOT/tests/ppc-process-manager-coreservices-sessioninit-compat-interposer.c"
 INFO="$OUT.info.txt"
 SHA="$OUT.sha256"
-EXPECTED_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-trace-v1"
+EXPECTED_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-trace-v2"
 CC_SELECTED="${CC:-/Developer-3.2.6/usr/bin/gcc-4.2}"
 
 [ -x "$CC_SELECTED" ] || { echo "error: compiler not executable: $CC_SELECTED" >&2; exit 69; }
@@ -71,9 +71,11 @@ echo "$INTERPOSE_SECTION" | /usr/bin/grep -Fq 'size 0x00000010' || {
 }
 for marker in \
     'PM_CGS_CONNECTION_TRACE_REQUEST:' \
+    'PM_CGS_CONNECTION_TRACE_REQUEST_WORDS:' \
     'PM_CGS_CONNECTION_TRACE_MACH_RETURN:' \
     'PM_CGS_CONNECTION_TRACE_REPLY:' \
     'PM_CGS_CONNECTION_TRACE_REPLY_WORDS:' \
+    'SERVER_VERSION' \
     'DEATHWATCH' \
     'NEW_CONNECTION'; do
     /usr/bin/strings "$OUT" | /usr/bin/grep -Fq "$marker" || {
