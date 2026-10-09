@@ -66,6 +66,28 @@ Current analyzer **version 2** fixes the escaping error, accepts both `__mh_dyli
 
 After pulling current `main`, rerun **Snow Phase B only** and require `analyzer_version=2`, all six Mach-envelope observations to be `YES`, and `RESULT: PASS`. Do not proceed to Lion Phase C from the analyzer-v1 report.
 
+## Reviewed analyzer-v2 result
+
+Both returned analyzer-v2 reports pass. The Snow Mach-envelope correction is confirmed in both directions, and the Lion report confirms the selected `@Uv3` path remains XPC-only at the `distnoted` boundary.
+
+The combined PPC Snow client/server evidence and Lion i386 client/server evidence now grounds the essential stateful translation model:
+
+- Snow `register` carries `counter`, `entry`, `behavior`, `name`, and optional `object`; Lion `register` carries `options` plus a client-supplied uint64 `token`.
+- Snow `unregister` carries an `entries` array selected by the unchanged Snow client; Lion `unregister` carries a `tokens` array.
+- Lion callbacks are `method=post_token, version=1` and return that token with `name/object/userinfo`; the Snow callback consumer requires `counter` and `entry`. A bridge can therefore keep a private `token -> (entry,counter)` map per translated client.
+- Snow suspension is a boolean `state`; Lion chooses `method=suspend` or `method=unsuspend`.
+- Snow `session_reset` is not directly equivalent to Lion's reset path. Lion restricts `__CFXNotificationResetSessionForTask` to `loginwindow`, sends `i_am_loginwindow`, and may receive a `registrations` array. The first ordinary-client proof must reject legacy `session_reset`.
+
+A live bridge is still premature for two reasons. First, the exact `behavior -> options`, post-option/all-session, and legacy `sux` semantics must be normalized. Second, the translated client is PPC while Lion's v3 endpoint is XPC, so the implementation architecture depends on whether any PPC-callable XPC provider actually exists on Lion.
+
+Current `main` advances to:
+
+```text
+docs/distributed-notifications-bridge-preflight-audit.md
+```
+
+That stage is static/read-only. It resolves the remaining option callsites and determines whether the first proof can be in-process or must use a native i386 broker/helper.
+
 ## Prepared implementation
 
 Current runtime `main` provides:
@@ -310,7 +332,7 @@ The next review must answer all of these before implementation:
 5. Can Snow callback dictionaries be generated losslessly from Lion `post_token` callbacks using only state maintained inside one process-local bridge?
 6. Can every Snow operation observed at the current CreateNewWindow boundary be mapped without fabricating server-global state or altering another process?
 
-Only if all required request and callback semantics are statically closed should the following stage build a standalone proof-only bridge.
+Only if all required request and callback semantics are statically closed should the following stage build a standalone proof-only bridge. The reviewed analyzer-v2 result advances first to `docs/distributed-notifications-bridge-preflight-audit.md` to choose the executable XPC bridge architecture and close the remaining option semantics.
 
 ## Result interpretation
 
@@ -332,7 +354,7 @@ Lion callback                                  -> method=post_token, version=1
 Lion distnoted Mach/bootstrap imports           -> none in schema-v1 report
 name-only translation                          -> rejected
 live bridge                                    -> not yet authorized
-next step                                      -> static v2/v3 protocol ABI/field-semantics audit
+next step                                      -> static bridge architecture/option preflight
 ```
 
 No XNU change is indicated.
