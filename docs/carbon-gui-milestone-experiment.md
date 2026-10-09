@@ -360,3 +360,8 @@ This result does not justify another XNU change. The next controlled variable is
 The historical Lion localization in this document stopped at `GetCurrentProcess` before window creation. That boundary is now closed under the accepted registration/session/CoreGraphics/SetFront compatibility stack: `GetCurrentProcess` returns success and the exact expected PSN with `LSDONOTABORTIFNOASN` unset.
 
 Do not rerun this older milestone subject as the current gate. The authoritative next procedure is `docs/process-manager-createwindow-validation-experiment.md`, which preserves the complete restored stack and advances only through `CreateNewWindow` plus immediate `DisposeWindow`, stopping before show/select/visibility and event-loop work.
+
+
+## Current-path note after restored-stack CreateNewWindow localization
+
+The restored Process Manager stack now reaches the historical window-creation call, but the first live failure occurs before CreateNewWindow returns: the Snow PPC bootstrap lookup for com.apple.distributed_notifications.2 (pid 0, flags 8) succeeds on Snow and returns -304/null on Lion, after which HIToolbox reports theme/resource damage and aborts. The current authoritative procedure is docs/distributed-notifications-bootstrap-compat-protocol-experiment.md. Do not use the older Carbon milestone subject to infer a CreateNewWindow/WindowServer RPC mismatch and do not add a window adapter before the standalone distributed-notifications lookup proof is reviewed.
