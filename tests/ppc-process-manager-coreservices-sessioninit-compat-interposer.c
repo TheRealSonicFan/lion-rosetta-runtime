@@ -2040,16 +2040,22 @@ rosetta_bootstrap_look_up2(mach_port_t bp,
 
         kr = lion_format_lookup(bp, service_name, service_port,
                                 target_pid, flags);
-        fprintf(stderr,
-                "PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_RESULT:%s kr=%ld hex=0x%08lx servicePort=0x%08lx\n",
-                (kr == KERN_SUCCESS &&
-                 service_port != NULL &&
-                 *service_port != MACH_PORT_NULL) ?
-                    "ADAPTER_PASS" : "ADAPTER_FAILED",
-                (long)kr,
-                (unsigned long)(uint32_t)kr,
-                (unsigned long)((service_port != NULL) ?
-                                *service_port : MACH_PORT_NULL));
+        if (kr == KERN_SUCCESS &&
+            service_port != NULL &&
+            *service_port != MACH_PORT_NULL) {
+            fprintf(stderr,
+                    "PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_RESULT:ADAPTER_PASS kr=%ld hex=0x%08lx servicePort=0x%08lx\n",
+                    (long)kr,
+                    (unsigned long)(uint32_t)kr,
+                    (unsigned long)*service_port);
+        } else {
+            fprintf(stderr,
+                    "PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_RESULT:ADAPTER_FAILED kr=%ld hex=0x%08lx servicePort=0x%08lx\n",
+                    (long)kr,
+                    (unsigned long)(uint32_t)kr,
+                    (unsigned long)((service_port != NULL) ?
+                                    *service_port : MACH_PORT_NULL));
+        }
         fflush(stderr);
         return kr;
     }
