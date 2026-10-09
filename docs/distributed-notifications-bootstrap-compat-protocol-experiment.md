@@ -304,6 +304,16 @@ lion-ppc-distributed-notifications-bootstrap-compat-protocol.raw.log
 
 Stop after Phase G.
 
+## Reviewed Phase F result
+
+The returned Phase F evidence did **not** reach the success branch. Artifact hashes matched, the exact target predicate fired once, and the Lion-format `0x194` request reached launchd with Mach success. launchd returned the expected `0x1f8` reply ID as a non-complex `0x24` error reply and no service port.
+
+The logged result word `0x4e040000` is the PPC-native read of a scalar carried with the opposite NDR integer representation. Byte-order normalization yields `0x0000044e`, decimal 1102: `BOOTSTRAP_UNKNOWN_SERVICE`. This means the current failure is no longer the legacy PPC `-304` wire mismatch. The Lion launchd server accepted the native-format request envelope but could not resolve `com.apple.distributed_notifications.2` in the bootstrap namespace represented by the probe's task bootstrap port.
+
+The Snow control remains important: the exact Snow tuple succeeds and returns a live send right. Earlier read-only Lion evidence also records both `/usr/sbin/distnoted daemon` and a per-user `/usr/sbin/distnoted agent`, so service identity/scope evolution is now the leading boundary.
+
+Do not rerun Phase F and do not integrate this adapter. The authoritative next procedure is `docs/distributed-notifications-service-namespace-audit.md`.
+
 ## Result interpretation
 
 ### `DISTRIBUTED_NOTIFICATIONS_COMPAT_POLICY_PROOF_PASS`
@@ -312,7 +322,7 @@ Lion still publishes the exact Snow-era distributed-notifications service in the
 
 ### `DISTRIBUTED_NOTIFICATIONS_COMPAT_ADAPTER_FAILED`
 
-Do not integrate anything. Preserve the exact native-format launchd reply/result and audit the Lion service identity/namespace before another live lookup.
+This is the observed result. Do not integrate anything and do not repeat the live lookup. The returned simple `0x1f8/0x24` error reply decodes to `BOOTSTRAP_UNKNOWN_SERVICE (1102)`, so the next stage is the prepared read-only Snow/Lion service/namespace comparison at `docs/distributed-notifications-service-namespace-audit.md`.
 
 ### Predicate or provenance failure
 
@@ -333,7 +343,9 @@ GetCurrentProcess                           -> PASS
 CreateNewWindow                             -> aborts before return
 immediate observed failure                  -> legacy bootstrap_look_up2("com.apple.distributed_notifications.2") returns -304
 Snow exact lookup                           -> success / live send right
-next step                                   -> standalone Lion-format lookup proof for this exact service
+Lion native-format request                  -> mach_msg success / reply 0x1f8
+Lion decoded server result                  -> BOOTSTRAP_UNKNOWN_SERVICE (1102)
+next step                                   -> read-only distnoted service/bootstrap namespace audit
 ```
 
 No additional XNU change is indicated.
