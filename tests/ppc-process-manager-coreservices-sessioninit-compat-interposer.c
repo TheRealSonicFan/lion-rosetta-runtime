@@ -15,7 +15,9 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                          uint64_t);
 extern mach_port_t mig_get_reply_port(void);
 
-#if defined(PM_CPS_SETFRONT_COMPAT_INTEGRATION)
+#if defined(PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_PROTOCOL)
+#define COMPAT_BUILD_ID "distributed-notifications-bootstrap-compat-protocol-v1"
+#elif defined(PM_CPS_SETFRONT_COMPAT_INTEGRATION)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-v1"
 #elif defined(PM_CPS_SETFRONT_COMPAT_PROTOCOL)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-protocol-v1"
@@ -37,6 +39,14 @@ extern mach_port_t mig_get_reply_port(void);
 #define COMPAT_MODE_PASSTHROUGH "passthrough"
 #define COMPAT_MODE_LION_DUAL "lion-dual-adapter"
 #define COMPAT_MODE_LION_SESSIONINIT "lion-dual-sessioninit-adapter"
+
+#ifdef PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_PROTOCOL
+#define DISTNOTIFY_COMPAT_ENV "ROSETTA_DISTRIBUTED_NOTIFICATIONS_COMPAT_MODE"
+#define DISTNOTIFY_COMPAT_PASSTHROUGH "passthrough"
+#define DISTNOTIFY_COMPAT_LION_V1 "lion-lookup-v1"
+static const char kDistributedNotificationsName[] =
+    "com.apple.distributed_notifications.2";
+#endif
 
 #if defined(PM_CPS_SETFRONT_COMPAT_INTEGRATION) && !defined(PM_CPS_SETFRONT_COMPAT_PROTOCOL)
 #define PM_CPS_SETFRONT_COMPAT_PROTOCOL 1
@@ -222,6 +232,9 @@ static bootstrap_lookup2_fn gOriginalLookup = NULL;
 static mach_msg_fn gOriginalMachMsg = NULL;
 static unsigned int gBootstrapExactCallCount = 0;
 static unsigned int gBootstrapAdaptedCallCount = 0;
+#ifdef PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_PROTOCOL
+static unsigned int gDistributedNotificationsCompatCallCount = 0;
+#endif
 static unsigned int gServerCheckinExactCallCount = 0;
 static unsigned int gServerCheckinAdaptedCallCount = 0;
 static unsigned int gSessionInitExactCallCount = 0;
@@ -1978,6 +1991,69 @@ rosetta_bootstrap_look_up2(mach_port_t bp,
     const char *mode;
     int exact_match;
     kern_return_t kr;
+
+#ifdef PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_PROTOCOL
+    if (service_name != NULL &&
+        strcmp(service_name, kDistributedNotificationsName) == 0 &&
+        target_pid == (pid_t)0 &&
+        flags == PRIVILEGED_SERVER_FLAG) {
+        ++gDistributedNotificationsCompatCallCount;
+        mode = getenv(DISTNOTIFY_COMPAT_ENV);
+
+        fprintf(stderr, "%s\n", COMPAT_BUILD_MARKER);
+        fprintf(stderr,
+                "PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_CALL:index=%u mode=%s bp=0x%08lx name=%s pid=%ld flags=0x%08lx%08lx\n",
+                gDistributedNotificationsCompatCallCount,
+                mode ? mode : "(unset)",
+                (unsigned long)bp,
+                service_name,
+                (long)target_pid,
+                (unsigned long)(uint32_t)(flags >> 32),
+                (unsigned long)(uint32_t)flags);
+        fflush(stderr);
+
+        if (mode != NULL &&
+            strcmp(mode, DISTNOTIFY_COMPAT_PASSTHROUGH) == 0) {
+            kr = call_original_lookup(bp, service_name, service_port,
+                                      target_pid, flags,
+                                      "DISTNOTIFY_SNOW_CONTROL");
+            fprintf(stderr,
+                    "PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_RESULT:PASSTHROUGH kr=%ld hex=0x%08lx servicePort=0x%08lx\n",
+                    (long)kr,
+                    (unsigned long)(uint32_t)kr,
+                    (unsigned long)((service_port != NULL) ?
+                                    *service_port : MACH_PORT_NULL));
+            fflush(stderr);
+            return kr;
+        }
+
+        if (mode == NULL ||
+            strcmp(mode, DISTNOTIFY_COMPAT_LION_V1) != 0 ||
+            gDistributedNotificationsCompatCallCount != 1U) {
+            if (service_port != NULL)
+                *service_port = MACH_PORT_NULL;
+            fprintf(stderr,
+                    "PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_RESULT:PREDICATE_REJECTED\n");
+            fflush(stderr);
+            return MIG_BAD_ARGUMENTS;
+        }
+
+        kr = lion_format_lookup(bp, service_name, service_port,
+                                target_pid, flags);
+        fprintf(stderr,
+                "PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_RESULT:%s kr=%ld hex=0x%08lx servicePort=0x%08lx\n",
+                (kr == KERN_SUCCESS &&
+                 service_port != NULL &&
+                 *service_port != MACH_PORT_NULL) ?
+                    "ADAPTER_PASS" : "ADAPTER_FAILED",
+                (long)kr,
+                (unsigned long)(uint32_t)kr,
+                (unsigned long)((service_port != NULL) ?
+                                *service_port : MACH_PORT_NULL));
+        fflush(stderr);
+        return kr;
+    }
+#endif
 
     exact_match = (service_name != NULL &&
                    strcmp(service_name, kCoreServicesDName) == 0 &&
