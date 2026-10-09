@@ -195,6 +195,23 @@ git rev-parse HEAD
 
 No kernel rebuild or reboot is part of this stage.
 
+## Phase B validator correction
+
+The first attempted Phase B exposed a build-script validation defect, not a compiler or Mach-O defect. The script successfully compiled the executable and patched `LC_LOAD_DYLINKER` to `/usr/oah/dyld`, but then treated failure of both `lipo -verify_arch` invocation forms as conclusive evidence that the output was not PPC. On that same output, Snow Leopard `file` reported:
+
+```text
+Mach-O executable ppc
+```
+
+Current `main` corrects the validator. Both the Snow builder and the Lion policy-proof runner now use the same architecture predicate already proven in the earlier server-version builder:
+
+1. try both supported `lipo -verify_arch ppc` argument orders;
+2. if neither verifies the file, inspect `/usr/bin/file`;
+3. accept only a tokenized `ppc` or `powerpc` Mach-O description;
+4. explicitly reject `ppc64` / `powerpc64`.
+
+The previously failed Phase B output should not be promoted to later phases because the script exited before producing its normal `.info.txt` and SHA sidecar. Pull current `main`, discard or overwrite that partial output, and rerun Phase B. No source-level policy change is involved.
+
 ## Phase B — build on Snow Leopard
 
 On Snow Leopard 10.6.8:
