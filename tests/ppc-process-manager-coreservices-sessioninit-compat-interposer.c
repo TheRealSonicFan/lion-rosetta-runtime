@@ -15,7 +15,9 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                          uint64_t);
 extern mach_port_t mig_get_reply_port(void);
 
-#if defined(PM_CPS_REGISTRATION_COMPAT_INTEGRATION)
+#if defined(PM_CPS_SETFRONT_TRACE)
+#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-trace-v1"
+#elif defined(PM_CPS_REGISTRATION_COMPAT_INTEGRATION)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-v1"
 #elif defined(PM_CPS_REGISTRATION_TRACE)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-trace-v1"
@@ -92,6 +94,12 @@ extern mach_port_t mig_get_reply_port(void);
 #define CGS_CHECKIN_APPLICATION_REPLY_ID 0x000073d6U
 #define CGS_CREATE_APPLICATION_REQUEST_ID 0x000073c1U
 #define CGS_CREATE_APPLICATION_REPLY_ID 0x00007425U
+#endif
+#ifdef PM_CPS_SETFRONT_TRACE
+#define CGS_SET_FRONT_PROCESS_LEGACY_REQUEST_ID 0x0000729eU
+#define CGS_SET_FRONT_PROCESS_LEGACY_REPLY_ID 0x00007302U
+#define CGS_SET_FRONT_PROCESS_LION_REQUEST_ID 0x000072a1U
+#define CGS_SET_FRONT_PROCESS_LION_REPLY_ID 0x00007305U
 #endif
 #endif
 
@@ -798,6 +806,12 @@ cgs_trace_kind(uint32_t request_id)
     if (request_id == CGS_CREATE_APPLICATION_REQUEST_ID)
         return "CPS_CREATE_APPLICATION";
 #endif
+#ifdef PM_CPS_SETFRONT_TRACE
+    if (request_id == CGS_SET_FRONT_PROCESS_LEGACY_REQUEST_ID)
+        return "CPS_SET_FRONT_PROCESS_LEGACY";
+    if (request_id == CGS_SET_FRONT_PROCESS_LION_REQUEST_ID)
+        return "CPS_SET_FRONT_PROCESS_LION";
+#endif
     return "UNKNOWN";
 }
 
@@ -815,6 +829,12 @@ cgs_trace_expected_reply(uint32_t request_id)
         return CGS_CHECKIN_APPLICATION_REPLY_ID;
     if (request_id == CGS_CREATE_APPLICATION_REQUEST_ID)
         return CGS_CREATE_APPLICATION_REPLY_ID;
+#endif
+#ifdef PM_CPS_SETFRONT_TRACE
+    if (request_id == CGS_SET_FRONT_PROCESS_LEGACY_REQUEST_ID)
+        return CGS_SET_FRONT_PROCESS_LEGACY_REPLY_ID;
+    if (request_id == CGS_SET_FRONT_PROCESS_LION_REQUEST_ID)
+        return CGS_SET_FRONT_PROCESS_LION_REPLY_ID;
 #endif
     return 0U;
 }
@@ -836,6 +856,11 @@ is_cgs_trace_candidate(mach_msg_header_t *msg)
 #ifdef PM_CPS_REGISTRATION_TRACE
     if (request_id == CGS_CHECKIN_APPLICATION_REQUEST_ID ||
         request_id == CGS_CREATE_APPLICATION_REQUEST_ID)
+        return 1;
+#endif
+#ifdef PM_CPS_SETFRONT_TRACE
+    if (request_id == CGS_SET_FRONT_PROCESS_LEGACY_REQUEST_ID ||
+        request_id == CGS_SET_FRONT_PROCESS_LION_REQUEST_ID)
         return 1;
 #endif
     return 0;
