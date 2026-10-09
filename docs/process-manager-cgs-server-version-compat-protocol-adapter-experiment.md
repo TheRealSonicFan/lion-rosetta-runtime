@@ -352,3 +352,56 @@ next step                                   -> standalone byte-level 600/0 -> 54
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — standalone policy proof passed
+
+The returned Snow and Lion evidence fully passed this stage.
+
+Snow Leopard control:
+
+```text
+build ID                               cgs-server-version-compat-protocol-v1
+server-version request/reply           0x7148 -> 0x71ac
+reply                                  complex 0x40
+descriptor disposition/type            0x11 / 0x00
+descriptor right                       live send right
+NDR                                     swapped relative to PPC
+decoded server version                  545 / 0
+local version                           545 / 0
+policy match                            YES
+RESULT                                  PASS
+```
+
+Lion translated PPC:
+
+```text
+active-root lookup 0x194               PASS
+GetSessionPort 0x7151 -> 0x71b5        PASS
+session right                           live send right
+server-version request/reply            0x7148 -> 0x71ac
+original descriptor                     live send right, 0x11 / 0x00
+original decoded version                600 / 0
+local Snow PPC target                   545 / 0
+original mismatch                       YES
+raw major before / after                0x58020000 / 0x21020000
+raw minor before / after                0 / 0
+changed bytes                           1
+changed outside version region          0
+adapted decoded version                 545 / 0
+new diagnostic                          none
+protected hashes                        unchanged
+RESULT                                  CGS_SERVER_VERSION_COMPAT_POLICY_PROOF_PASS
+```
+
+This closes the standalone prerequisite. The exact NDR-aware `600/0 -> 545/0` policy is proven without returning an altered reply to CoreGraphics.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-cgs-server-version-compat-integration-experiment.md
+```
+
+That stage extends the existing CoreServices `mach_msg` interposer without adding another interpose tuple. It applies the normalizer only after the exact successful Lion `0x71ac` reply matches the standalone-proven request, reply, descriptor, NDR, version, auxiliary, and flags predicates. Snow remains passthrough. One registration-only Lion run then determines whether the restored client reaches `0x7469` and publishes a nonzero connection.
+
+Do not rerun this standalone proof unless provenance changes. Do not adapt `0x7469` or `0x729e` before the integration result is reviewed.
