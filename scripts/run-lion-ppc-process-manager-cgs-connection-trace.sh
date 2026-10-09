@@ -34,7 +34,7 @@ EXPECTED_CACHE_SHA="2968123ebb467633929398c692cfa68e8a13925ead683c5b1a04581c0aee
 EXPECTED_CACHE_MAP_SHA="66e8940757eb909ffb1920ac1510134afafbd5d2d649a9cc7d750753333153f9"
 EXPECTED_COREGRAPHICS_SHA="fff91efa5392c007ef4bde715666cc738b69f652f565abfce056ba07273aa192"
 EXPECTED_SUBJECT_BUILD_ID="cgs-session-bootstrap-integration-v1"
-EXPECTED_CORE_TRACE_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-trace-v1"
+EXPECTED_CORE_TRACE_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-trace-v2"
 EXPECTED_SEC_BUILD_ID="security-session-auditinfo-api-v1"
 EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-compat-v1"
 EXPECTED_KERNEL_SHA="${ROSETTA_EXPECTED_KERNEL_SHA256:-}"
@@ -253,6 +253,21 @@ if ! /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$R
     exit 1
 fi
 
+if ! /usr/bin/grep -Fq 'kind=SERVER_VERSION' "$RAW_LOG"; then
+    log "RESULT: CGS_TRACE_NO_SERVER_VERSION_AFTER_SESSION_ADAPTER"
+    exit 0
+fi
+
+if ! /usr/bin/grep -Fq 'kind=SERVER_VERSION kr=0 hex=0x00000000' "$RAW_LOG"; then
+    log "RESULT: CGS_TRACE_SERVER_VERSION_MACH_FAILURE"
+    exit 0
+fi
+
+if ! /usr/bin/grep -Fq 'id=0x000071ac expected=0x000071ac idMatch=YES' "$RAW_LOG"; then
+    log "RESULT: CGS_TRACE_SERVER_VERSION_REPLY_ID_MISMATCH"
+    exit 0
+fi
+
 if /usr/bin/grep -Fq 'kind=DEATHWATCH' "$RAW_LOG"; then
     if /usr/bin/grep -Fq 'kind=DEATHWATCH kr=0 hex=0x00000000' "$RAW_LOG" &&
        /usr/bin/grep -Fq 'id=0x000071b0 expected=0x000071b0 idMatch=YES' "$RAW_LOG"; then
@@ -265,7 +280,11 @@ else
 fi
 
 if ! /usr/bin/grep -Fq 'kind=NEW_CONNECTION' "$RAW_LOG"; then
-    log "RESULT: CGS_TRACE_NO_NEWCONNECTION_AFTER_SESSION_ADAPTER"
+    if [ "$RC" -eq 1 ] && [ "$FOUND" -eq 0 ]; then
+        log "RESULT: CGS_TRACE_SERVER_VERSION_REPLY_OBSERVED_CLEAN_EARLY_EXIT_RC1"
+        exit 0
+    fi
+    log "RESULT: CGS_TRACE_SERVER_VERSION_REPLY_OBSERVED_NO_NEWCONNECTION rc=$RC diagnostics=$FOUND"
     exit 0
 fi
 
