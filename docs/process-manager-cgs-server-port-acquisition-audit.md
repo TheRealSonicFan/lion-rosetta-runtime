@@ -370,3 +370,28 @@ next step                                         -> rerun corrected analyzer v2
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed version-2 result — native session-port acquisition is the compatibility boundary
+
+The corrected version-2 reports passed on Snow Leopard 10.6.8 and Lion 10.7.5 and resolve the duplicate-symbol ambiguity.
+
+The active Snow PPC CoreGraphics path is now exact. The first `_CGSServerPort` acquisition calls the `0x138da8` `_lookupServerPort` copy with arguments `(0, 0)`. That helper obtains task special port 4 and performs ordinary `bootstrap_look_up` for `com.apple.windowserver.session`. If that lookup fails it calls `_CGSLookupServerRootPort(0)`, which first performs ordinary `bootstrap_look_up` for `com.apple.windowserver.active`; only the root/permitted on-demand fallback attempts `com.apple.windowserver`. The `0x3ef` non-root branch is the source of the already-observed “On-demand launch of the Window Server is allowed for root user only.” diagnostic.
+
+Lion native CoreGraphics retains similarly named compatibility helpers but changes the canonical session-port acquisition semantics. Its i386 `_CGSLookupSessionPort` is a thunk to `_getSessionPort(1)`. That function obtains the root WindowServer port through `_CGSLookupServerRootPort(1)`, whose native lookup uses `bootstrap_look_up2` with the active WindowServer service, target PID 0, and privileged-server flag `8`. It then calls `__CGSGetSessionPort` on that root port. The generated client contract is request/reply `0x7151/0x71b5`, send/receive `0x18/0x30`, Mach options `0x3`, and a successful complex `0x28` reply containing one port descriptor with disposition `0x11`. The root port is deallocated after the session port is obtained.
+
+Both families subsequently validate the selected WindowServer port through the unchanged DeathWatch transaction, request/reply `0x714c/0x71b0`. The previously audited `__CGSNewConnectionPort 0x7469/0x74cd` transaction therefore remains downstream and is not the active mismatch.
+
+This satisfies decision gate C, with the concrete mechanism required by gate A: Lion native requires a per-session port lookup absent from the restored Snow PPC lookup path. The smallest candidate bridge is consequently an exact process-local replacement for the legacy `bootstrap_look_up(..., "com.apple.windowserver.session", ...)` result, implemented by obtaining Lion's active root WindowServer port and issuing the native `GetSessionPort` transaction. It must not bypass session ownership or return a fabricated Mach name.
+
+Before building that interposer into the real Process Manager path, the output-right semantics and the complete native sequence must be proven dynamically from PPC code. Current runtime `main` therefore provides the standalone next stage:
+
+```text
+docs/process-manager-cgs-session-port-protocol-adapter-experiment.md
+```
+
+That experiment first proves the legacy session lookup plus DeathWatch on Snow Leopard, then on Lion performs one native-format active-root lookup, one `GetSessionPort 0x7151` transaction, verifies the returned send right and descriptor disposition, performs the unchanged DeathWatch transaction, deallocates all received rights, and exits. It does not call Process Manager, `_CGSDefaultConnection`, `_CGSNewConnection`, or `__CGSNewConnectionPort`, and it installs no interposer.
+
+Do not build the final `com.apple.windowserver.session` interposer or rerun the real Process Manager subject until that standalone protocol result is reviewed.
+
+No additional XNU change is indicated.
