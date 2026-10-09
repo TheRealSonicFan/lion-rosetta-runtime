@@ -331,3 +331,43 @@ GetCurrentProcess                           -> held until this gate is reviewed
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — GetFrontProcess state matches exactly
+
+The returned Snow control and Lion validation fully passed this stage.
+
+Snow:
+
+```text
+SetFrontProcess                         0
+GetFrontProcess                         0
+front PSN                               exact match
+M16_SUCCESS                             reached
+RESULT                                  PASS
+```
+
+Lion:
+
+```text
+registration adapter                    PASS
+SetFront adapter                        PASS
+SetFrontProcess                         0
+GetFrontProcess                         0
+expected PSN                            0x00000000 / 0x00144144
+returned front PSN                      0x00000000 / 0x00144144
+front PSN match                         YES
+new diagnostic                          none
+protected hashes                        unchanged
+RESULT                                  GETFRONTPROCESS_VALIDATION_PASS
+```
+
+This proves the integrated foreground-selection repair is visible through the public Process Manager query and that the selected front process is exactly the current translated PPC process identified earlier by `GetProcessForPID`.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-getcurrentprocess-validation-experiment.md
+```
+
+That stage keeps every accepted compatibility dylib unchanged and rebuilds only the exact-basename subject so the historic `GetCurrentProcess` boundary can be retested after registration, SetFrontProcess, and GetFrontProcess have all succeeded. No abort suppression, PSN synthesis, or GetCurrentProcess-specific adapter is introduced.
