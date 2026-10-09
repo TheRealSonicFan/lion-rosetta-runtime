@@ -43,6 +43,16 @@ The session-bootstrap adapter replaces only the exact legacy bootstrap lookup re
 
 Do not infer a `__CGSNewConnectionPort` mismatch from this result: that transaction was not sent.
 
+## Version-2 correction after the returned version-1 reports
+
+Both returned version-1 reports are valid and end in `RESULT: PASS`, but they expose a scope defect in the analyzer rather than completing the protocol decision.
+
+The exact Snow PPC and Lion i386 `_connectAndCheck` bodies both perform the same leading remote-validation step: obtain the local CoreGraphics version, obtain the process PID, then call `__CGSGetCoreGraphicsServerVersion` on the selected WindowServer port. The Snow PPC path branches on that call's status before it can publish the selected port, and the Lion native path likewise treats a nonzero return as an immediate failure. In the failed translated-PPC trace the session adapter returns a live Lion session right and no `__CGSNewConnectionPort 0x7469` request follows, so this private server-version MIG client is now the first unresolved remote contract inside the localized interval.
+
+Analyzer version 1 exact-targeted `_connectAndCheck` but did **not** exact-target either `_CGSGetCoreGraphicsVersion` or `__CGSGetCoreGraphicsServerVersion`. It therefore proved the call ordering and local return-status behavior, but it did not emit the one helper body needed to answer the audit's own request/reply-ID, message-size, payload, output, and NDR questions. The version-1 reports do not authorize a dynamic adapter.
+
+Analyzer version 2 corrects this omission. It exact-targets both version helpers on every available architecture and requires them in the Snow PPC and Lion i386 validation sets. Pull current `main` and rerun the read-only Snow and Lion audits; no PPC subject, interposer, or Mach request is part of the correction.
+
 ## Why a read-only differential audit comes next
 
 `_connectAndCheck` is an internal CoreGraphics helper executed synchronously inside `_CGSServerPort` after the service-port lookup and before the selected port is published for `_CGSNewConnection`.
@@ -62,7 +72,7 @@ scripts/audit-process-manager-cgs-connect-and-check.py
 Analyzer version:
 
 ```text
-1
+2
 ```
 
 The analyzer exact-targets every available copy of:
@@ -70,6 +80,8 @@ The analyzer exact-targets every available copy of:
 ```text
 _CGSServerPort
 _connectAndCheck
+_CGSGetCoreGraphicsVersion
+__CGSGetCoreGraphicsServerVersion
 _lookupServerPort
 _CGSLookupSessionPort
 _CGSLookupServerRootPort
@@ -108,6 +120,8 @@ Lion i386:
 ```text
 _CGSServerPort
 _connectAndCheck
+_CGSGetCoreGraphicsVersion
+__CGSGetCoreGraphicsServerVersion
 _CGSNewConnection
 __CGSNewConnectionPort
 _getSessionPort
@@ -197,7 +211,7 @@ cd /path/to/lion-rosetta-runtime
 Require:
 
 ```text
-analyzer_version=1
+analyzer_version=2
 product_version=10.6.8
 RESULT: PASS
 ```
@@ -218,7 +232,7 @@ cd /path/to/lion-rosetta-runtime
 Require:
 
 ```text
-analyzer_version=1
+analyzer_version=2
 product_version=10.7.5
 RESULT: PASS
 ```
@@ -269,7 +283,8 @@ new diagnostic                                     -> none
 protected hashes                                   -> unchanged
 active local interval                              -> _CGSServerPort after lookup, before 0x7469
 leading internal helper                            -> _connectAndCheck
-next step                                          -> read-only Snow/Lion helper differential
+version-1 helper audit                             -> PASS, protocol helper body omitted
+next step                                          -> rerun corrected analyzer v2; no dynamic test
 ```
 
 No additional XNU change is indicated.
