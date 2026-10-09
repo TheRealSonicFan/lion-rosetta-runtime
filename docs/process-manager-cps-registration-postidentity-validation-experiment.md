@@ -332,3 +332,42 @@ SetFrontProcess 0x729e/0x72a1                -> held until this gate passes
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — postidentity validation passed
+
+The returned Snow and Lion evidence fully passed this stage.
+
+Snow control:
+
+```text
+CPS registration passthrough             PASS
+GetProcessForPID                         PASS
+GetProcessPID                            exact PID round-trip PASS
+TransformProcessType                     PASS
+RESULT                                   PASS
+```
+
+Lion:
+
+```text
+CPS registration adapter                 PASS
+legacy-facing registration reply         0x73d6 / result 0
+GetProcessForPID                         PASS
+GetProcessPID                            exact PID round-trip PASS
+TransformProcessType                     PASS
+second registration call                 not observed
+new diagnostic                           none
+protected hashes                         unchanged
+RESULT                                   CPS_REGISTRATION_POSTIDENTITY_PASS
+```
+
+This closes the postregistration identity/foreground-conversion gate. The previously latent SetFrontProcess wire difference is active again.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-setfront-transport-trace-experiment.md
+```
+
+That stage calls public SetFrontProcess exactly once under the complete accepted registration stack and passively traces the unchanged Snow PPC 0x729e/0x7302 transaction. It does not rewrite the request or reply. Do not design the 0x729e -> 0x72a1 adapter until the live reply is reviewed.
