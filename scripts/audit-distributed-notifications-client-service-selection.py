@@ -9,7 +9,7 @@ import sys
 import tempfile
 
 DEFAULT_REPORT = "./distributed-notifications-client-service-selection.txt"
-ANALYZER_VERSION = "2"
+ANALYZER_VERSION = "3"
 
 COREFOUNDATION = "/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation"
 FOUNDATION = "/System/Library/Frameworks/Foundation.framework/Versions/C/Foundation"
@@ -104,6 +104,23 @@ def parse_hex_token(token):
         return None
 
 
+def parse_nm_text_symbol_name(line):
+    marker = "(__TEXT,__text)"
+    if marker not in line:
+        return None
+
+    tail = line.split(marker, 1)[1].strip()
+    prefixes = [
+        "non-external (was a private external) ",
+        "non-external ",
+        "external ",
+    ]
+    for prefix in prefixes:
+        if tail.startswith(prefix):
+            return tail[len(prefix):].strip()
+    return tail if tail else None
+
+
 def parse_symbols(text):
     ordered = []
     by_name = {}
@@ -114,8 +131,15 @@ def parse_symbols(text):
         addr = parse_hex_token(parts[0])
         if addr is None:
             continue
-        name = parts[-1]
+
         is_text = "(__TEXT,__text)" in line
+        if is_text:
+            name = parse_nm_text_symbol_name(line)
+            if not name:
+                continue
+        else:
+            name = parts[-1]
+
         ordered.append((addr, name, line, is_text))
         if is_text:
             by_name.setdefault(name, []).append(addr)
