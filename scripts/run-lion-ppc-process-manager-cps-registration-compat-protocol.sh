@@ -46,6 +46,7 @@ is_ppc32_macho() {
     fi
 
     desc="$(/usr/bin/file "$file" 2>/dev/null || true)"
+    echo "$desc" | /usr/bin/grep -Eiq 'Mach-O' || return 1
     echo "$desc" | /usr/bin/grep -Eiq '(^|[^[:alnum:]_])(ppc|powerpc)([^[:alnum:]_]|$)' || return 1
     echo "$desc" | /usr/bin/grep -Eiq 'ppc64|powerpc64' && return 1
     return 0
