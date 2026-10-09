@@ -15,7 +15,9 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                          uint64_t);
 extern mach_port_t mig_get_reply_port(void);
 
-#if defined(PM_CPS_SETFRONT_COMPAT_PROTOCOL)
+#if defined(PM_CPS_SETFRONT_COMPAT_INTEGRATION)
+#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-v1"
+#elif defined(PM_CPS_SETFRONT_COMPAT_PROTOCOL)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-protocol-v1"
 #elif defined(PM_CPS_SETFRONT_TRACE)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-trace-v1"
@@ -35,6 +37,10 @@ extern mach_port_t mig_get_reply_port(void);
 #define COMPAT_MODE_PASSTHROUGH "passthrough"
 #define COMPAT_MODE_LION_DUAL "lion-dual-adapter"
 #define COMPAT_MODE_LION_SESSIONINIT "lion-dual-sessioninit-adapter"
+
+#if defined(PM_CPS_SETFRONT_COMPAT_INTEGRATION) && !defined(PM_CPS_SETFRONT_COMPAT_PROTOCOL)
+#define PM_CPS_SETFRONT_COMPAT_PROTOCOL 1
+#endif
 
 #define LOOKUP_REQUEST_ID 0x00000194U
 #define LOOKUP_REPLY_ID 0x000001f8U
