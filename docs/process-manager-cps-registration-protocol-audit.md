@@ -267,3 +267,36 @@ next step                                   -> read-only CPS registration protoc
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — application-registration protocol evolved
+
+Both returned reports passed analyzer version 1 and expose the complete required client windows.
+
+The release split is exact:
+
+```text
+Snow Leopard i386/x86_64/ppc7400:
+  __CPSRegisterWithServer          present
+  __CGSCheckInApplication         present
+  __CGSCreateApplication          absent
+
+Lion i386/x86_64:
+  __CPSRegisterWithServer          present
+  __CGSCheckInApplication         absent
+  __CGSCreateApplication          present
+```
+
+Snow PPC `__CPSRegisterWithServer` calls `__CGSCheckInApplication`. Its generated helper uses request/reply `0x7372/0x73d6`, request bits `0x1513`, Mach option `0x3`, receive size `0x2c`, variable send size `align(mig_strncpy_length + 3) + 0x40`, and a `0x24` success reply with NDR-aware scalar result handling.
+
+Lion native `__CPSRegisterWithServer` instead calls `__CGSCreateApplication`. Its generated helper uses `0x73c1/0x7425`, the same request bits, Mach option, receive size, and success-reply shape, but its send size is `align(mig_strncpy_length + 3) + 0x4c`. After the aligned string, Lion appends one byte and two 32-bit fields; the observed i386 wrapper passes those tail arguments as `0`, `0`, and `0x10`.
+
+Therefore the protocol is not wire-compatible: both the message ID family and request layout changed.
+
+The prior live integration already showed a nonzero default CoreGraphics connection followed by `_RegisterApplication ... err=-304`, but it did not trace the raw legacy registration transaction. The authoritative next stage is now:
+
+```text
+docs/process-manager-cps-registration-transport-trace-experiment.md
+```
+
+That stage is passive. It observes the unchanged Snow PPC `0x7372` request first on Snow and then once on Lion while retaining the already-proven session and server-version compatibility layers. It does not adapt `0x7372`, synthesize `0x73c1`, or proceed to SetFrontProcess.
