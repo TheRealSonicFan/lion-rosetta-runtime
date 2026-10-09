@@ -34,7 +34,7 @@ Lion native __CGSSetFrontProcess
 
 That difference was formerly latent because translated PPC never had a valid default CoreGraphics connection. The default connection and application registration are now both restored, and GetProcessPID plus TransformProcessType have been revalidated after that repair. The active question is therefore whether the untranslated Snow PPC client now reaches its legacy 0x729e wire call on Lion and what Lion WindowServer returns.
 
-This stage is passive with respect to SetFrontProcess. It does not rewrite 0x729e, synthesize 0x72a1, alter a reply ID, or change the public SetFrontProcess result.
+This stage is passive with respect to SetFrontProcess. It does not rewrite 0x729e to 0x72a1, does not rewrite 0x7305 to 0x7302, does not synthesize a server result, and does not change the public SetFrontProcess result.
 
 ## Prepared implementation
 
