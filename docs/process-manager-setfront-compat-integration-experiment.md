@@ -390,3 +390,49 @@ next step                                   -> integration build validation
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — integrated SetFrontProcess compatibility passed
+
+The returned Snow control and Lion integration fully passed this stage.
+
+Snow:
+
+```text
+registration compatibility               passthrough
+SetFront compatibility                   passthrough
+legacy SetFront request/reply             0x729e -> 0x7302
+SetFrontProcess                           0
+RESULT                                    PASS
+```
+
+Lion:
+
+```text
+registration adapter                     PASS
+GetProcessPID                            exact PID round-trip PASS
+TransformProcessType                     PASS
+SetFront exact predicate                 YES
+private request                          0x729e -> 0x72a1
+request changed bytes                    1
+source changed bytes                     0
+native reply                             0x7305 / 0x24 / result 0
+private reply                            0x7305 -> 0x7302
+reply changed bytes                      1
+SetFront adapter                         PASS
+legacy-facing result                     0
+SetFrontProcess                          0
+new diagnostic                           none
+protected hashes                         unchanged
+RESULT                                   CPS_SETFRONT_COMPAT_INTEGRATION_PASS
+```
+
+This closes the foreground-activation transport boundary for the validated Process Manager sequence using the normal combined compatibility build. No broader SetFrontProcess predicate is required.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-getfrontprocess-validation-experiment.md
+```
+
+That stage keeps the accepted compatibility dylibs unchanged, rebuilds only the PPC subject under the exact registration-sensitive basename, calls `GetFrontProcess` once after successful `SetFrontProcess`, and requires the returned front PSN to match the already-proven current-process PSN exactly. No new GetFrontProcess compatibility behavior is added.
