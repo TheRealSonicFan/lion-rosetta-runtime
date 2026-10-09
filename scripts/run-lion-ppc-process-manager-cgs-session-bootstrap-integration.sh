@@ -256,7 +256,15 @@ log "protected_hashes_unchanged=YES"
 
 if /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M05_BEFORE_GetProcessForPID' "$RAW_LOG" &&
    ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M06_AFTER_GetProcessForPID' "$RAW_LOG"; then
-    log "RESULT: GETPROCESSFORPID_ABORT_OR_CRASH"; exit 1
+    if /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       [ "$RC" -eq 1 ] && [ "$FOUND" -eq 0 ]; then
+        log "RESULT: GETPROCESSFORPID_CLEAN_EARLY_EXIT_AFTER_SESSION_ADAPTER"
+    elif [ "$RC" -ge 128 ] || [ "$FOUND" -eq 1 ]; then
+        log "RESULT: GETPROCESSFORPID_ABORT_OR_CRASH"
+    else
+        log "RESULT: GETPROCESSFORPID_STOPPED_AFTER_SESSION_ADAPTER rc=$RC diagnostics=$FOUND"
+    fi
+    exit 1
 fi
 
 if ! /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_CALL:index=1 mode=lion-session-port-v1' "$RAW_LOG"; then
