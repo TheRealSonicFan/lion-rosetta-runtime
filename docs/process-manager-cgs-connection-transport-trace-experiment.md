@@ -30,6 +30,47 @@ __CGSNewConnectionPort  0x7469 -> 0x74cd
 
 This experiment passively records whether those transactions are reached and their raw replies. It does not adapt either one.
 
+## Corrected registration-path gate after the first Snow control
+
+The first Snow Leopard Phase C run completed the subject successfully but the runner reported `RESULT: FAIL`. The returned control proves that the trace itself was behavior-preserving:
+
+```text
+SessionInit passthrough                         -> PASS
+legacy com.apple.windowserver.session lookup    -> KERN_SUCCESS
+NewConnection request                           -> 0x7469
+NewConnection mach_msg                          -> KERN_SUCCESS
+NewConnection reply                             -> 0x74cd, ID match
+reply size                                      -> 0x3c
+GetProcessForPID                                -> 0
+postidentity CoreGraphics connection            -> nonzero
+subject exit                                    -> 0
+```
+
+No `0x714c` DeathWatch request appeared in that registration run. That is consistent with the already-collected Snow PPC static evidence and exposes a control-harness overconstraint, not a platform failure:
+
+```text
+_CGSNewConnection
+  -> _CGSServerPort
+     -> _lookupServerPort(0, 0)
+  -> __CGSNewConnectionPort
+
+_CGSLookupServerPort
+  -> __CGSSessionDeathWatchPort
+  -> _lookupServerPort(0, 1)
+  -> __CGSSessionDeathWatchPort
+```
+
+The default-connection registration path reaches `_CGSServerPort`, not the separate `_CGSLookupServerPort` validation helper. Therefore DeathWatch is **optional trace evidence** in this experiment and must not be a Phase C or Lion classification gate. The authoritative transport boundary for this registration path is `__CGSNewConnectionPort 0x7469 -> 0x74cd`.
+
+Current `main` corrects both runners accordingly:
+
+- Snow Phase C requires successful `0x7469 -> 0x74cd`, successful `GetProcessForPID`, and a nonzero postidentity connection record;
+- Snow records `deathwatch_observed=YES/NO` without using it as a pass/fail condition;
+- Lion records DeathWatch as optional corroboration if it happens;
+- Lion classification now proceeds directly from the proven session-bootstrap adapter to whether `0x7469` is reached and how `0x74cd` returns.
+
+The trace interposer itself is unchanged and remains build ID `dual-bootstrap-servercheckin-sessioninit-v5-cgs-trace-v1`. The already-built PPC trace dylib with its accepted SHA may be reused. Pull current `main` and repeat **Phase C only**; no Phase B rebuild is required unless the artifact identity differs.
+
 ## Prepared tracing variant
 
 Current runtime `main` adds a compile-time passive trace mode to the already-proven CoreServices SessionInit v5 interposer:
@@ -157,8 +198,6 @@ The control is a hard gate. It must prove that replacing the ordinary v5 CoreSer
 ```text
 SessionInit                            -> passthrough
 legacy WindowServer session lookup    -> passthrough
-DeathWatch request 0x714c             -> observed
-DeathWatch reply 0x71b0               -> Mach success, ID match
 NewConnection request 0x7469          -> observed
 NewConnection reply 0x74cd            -> Mach success, ID match
 GetProcessForPID                      -> returns 0
@@ -166,7 +205,9 @@ postidentity connection slot          -> nonzero
 subject                               -> exits before later Process Manager APIs
 ```
 
-Preserve the complete Snow control; its raw reply words are the positive-control oracle for the Lion trace.
+`DeathWatch 0x714c/0x71b0` may be logged if some path calls `_CGSLookupServerPort`, but its absence is expected for the observed registration path through `_CGSServerPort` and is not a failure.
+
+Preserve the complete Snow control; its `0x74cd` raw reply words are the positive-control oracle for the Lion trace.
 
 If Phase C fails, stop and do not run Lion.
 
@@ -230,7 +271,7 @@ ROSETTA_SECURITY_SESSION_API_COMPAT_MODE=lion-auditinfo-v1
 ROSETTA_CGS_SESSION_BOOTSTRAP_COMPAT_MODE=lion-session-port-v1
 ```
 
-The only behavioral difference is passive logging around `mach_msg` requests `0x714c` and `0x7469`.
+The only behavioral difference is passive logging around `mach_msg` requests `0x714c` and `0x7469`. The registration-path decision gate is `0x7469 -> 0x74cd`; `0x714c -> 0x71b0` is optional corroboration only.
 
 Run Phase F once only.
 
@@ -251,21 +292,15 @@ Also return every new crash/core diagnostic named by the Lion runner.
 
 ## Result interpretation
 
-### `CGS_TRACE_STOPS_AFTER_SESSION_ADAPTER_BEFORE_DEATHWATCH`
+### `CGS_TRACE_NO_NEWCONNECTION_AFTER_SESSION_ADAPTER`
 
-The integrated process accepted the native session port but stopped before the unchanged legacy DeathWatch request. The next audit must remain between the bootstrap return and `__CGSSessionDeathWatchPort`; do not inspect or adapt `0x7469` yet.
+The integrated process accepted the native session port but did not reach `__CGSNewConnectionPort`. Audit the local transition from `_CGSServerPort` back into `_CGSNewConnection`. Absence of DeathWatch is not evidence of failure on this registration path.
 
-### `CGS_TRACE_DEATHWATCH_FAILURE`
-
-The standalone DeathWatch proof does not reproduce in the real registration call path. Compare the exact remote/right state and reply with the Snow control before changing any protocol.
-
-### `CGS_TRACE_DEATHWATCH_PASS_NO_NEWCONNECTION`
-
-The returned session port is accepted by the legacy client, but the path stops before `__CGSNewConnectionPort`. Audit the local transition from `_CGSLookupServerPort` into `_CGSNewConnection`.
+If optional DeathWatch evidence appears, preserve it, but do not use it to override the NewConnection classification.
 
 ### `CGS_TRACE_NEWCONNECTION_MACH_FAILURE`
 
-The legacy client reaches `0x7469), but the Mach transport itself fails. Preserve the raw Mach status; do not adapt the request until the cause is localized.
+The legacy client reaches `0x7469`, but the Mach transport itself fails. Preserve the raw Mach status; do not adapt the request until the cause is localized.
 
 ### `CGS_TRACE_NEWCONNECTION_REPLY_ID_MISMATCH`
 
@@ -273,7 +308,7 @@ The server replies on the connection-creation transaction but not with expected 
 
 ### `CGS_TRACE_NEWCONNECTION_REPLY_OBSERVED_CLEAN_EARLY_EXIT_RC1`
 
-The session port and DeathWatch are accepted, `__CGSNewConnectionPort` reaches the server and receives the expected reply ID, but the Snow PPC client exits during reply interpretation or immediate connection initialization. Compare the Snow/Lion raw reply words first. Do **not** infer compatibility from the reply ID alone and do not patch the connection record.
+The session-bootstrap adapter passed and `__CGSNewConnectionPort` reaches the server and receives the expected reply ID, but the Snow PPC client exits during reply interpretation or immediate connection initialization. Compare the Snow/Lion raw reply words first. Do **not** infer compatibility from the reply ID alone and do not patch the connection record.
 
 ### `CGS_TRACE_CONNECTION_ESTABLISHED`
 
@@ -290,9 +325,10 @@ registration session-bootstrap adapter           -> PASS
 GetProcessForPID after adapter                    -> clean early exit status 1
 new diagnostic                                   -> none
 protected hashes                                 -> unchanged
-DeathWatch in integrated registration             -> not yet observed
-__CGSNewConnectionPort in integrated registration -> not yet observed
-next step                                        -> passive 0x714c / 0x7469 trace
+Snow registration DeathWatch                     -> not observed; optional on this path
+Snow registration __CGSNewConnectionPort         -> 0x7469/0x74cd PASS
+Lion integrated __CGSNewConnectionPort           -> not yet observed
+next step                                        -> passive 0x7469/0x74cd Lion trace
 ```
 
 No additional XNU change is indicated.
