@@ -10,7 +10,7 @@ Lion's corresponding distributed-notification client path instead builds XPC dic
 
 The next question is the exact semantic translation:
 
-- Snow legacy binary-plist request keys and operation values;
+- Snow legacy binary-plist request keys and operation values from the PPC client, cross-checked against the i386 server-side CoreFoundation implementation;
 - Snow callback/reply dictionary keys;
 - Lion client XPC request keys and operation values for register, remove/unregister, and post;
 - Lion `distnoted` XPC request/response keys and callback payloads;
@@ -29,7 +29,9 @@ docs/distributed-notifications-protocol-schema-audit.md
 
 The analyzer is Python-2.6-compatible and static/read-only.
 
-On Snow Leopard it inspects the PPC CoreFoundation implementation and emits complete windows plus resolved constant references for:
+On Snow Leopard it inspects both the PPC CoreFoundation implementation used by the translated client and the i386 CoreFoundation implementation loaded by the native Snow `distnoted` server. It emits the same target family for both slices so request and callback constants can be checked across the actual client/server architectures.
+
+The Snow target family is:
 
 ```text
 ___CFXNotificationSendToServer
@@ -43,7 +45,7 @@ ___CFXNotificationSendToClient
 ___CFXNotificationReceiveFromClient
 ```
 
-On Lion it inspects the i386 CoreFoundation implementation and emits complete windows plus resolved constant references for:
+On Lion it inspects the i386 CoreFoundation client implementation and emits complete windows plus resolved constant references for:
 
 ```text
 __CFXNotificationRegisterObserver
