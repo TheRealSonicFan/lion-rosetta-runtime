@@ -15,7 +15,9 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                          uint64_t);
 extern mach_port_t mig_get_reply_port(void);
 
-#if defined(PM_CPS_REGISTRATION_TRACE)
+#if defined(PM_CPS_REGISTRATION_COMPAT_INTEGRATION)
+#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-v1"
+#elif defined(PM_CPS_REGISTRATION_TRACE)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-trace-v1"
 #elif defined(PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-v1"
@@ -85,12 +87,35 @@ extern mach_port_t mig_get_reply_port(void);
 #define CGS_DEATHWATCH_REPLY_ID 0x000071b0U
 #define CGS_NEW_CONNECTION_REQUEST_ID 0x00007469U
 #define CGS_NEW_CONNECTION_REPLY_ID 0x000074cdU
-#ifdef PM_CPS_REGISTRATION_TRACE
+#if defined(PM_CPS_REGISTRATION_TRACE) || defined(PM_CPS_REGISTRATION_COMPAT_INTEGRATION)
 #define CGS_CHECKIN_APPLICATION_REQUEST_ID 0x00007372U
 #define CGS_CHECKIN_APPLICATION_REPLY_ID 0x000073d6U
 #define CGS_CREATE_APPLICATION_REQUEST_ID 0x000073c1U
 #define CGS_CREATE_APPLICATION_REPLY_ID 0x00007425U
 #endif
+#endif
+
+#ifdef PM_CPS_REGISTRATION_COMPAT_INTEGRATION
+#define CPS_REGISTRATION_COMPAT_ENV "ROSETTA_CPS_REGISTRATION_COMPAT_MODE"
+#define CPS_REGISTRATION_COMPAT_PASSTHROUGH "passthrough"
+#define CPS_REGISTRATION_COMPAT_LION_V1 "lion-create-application-v1"
+#define CPS_REGISTRATION_LEGACY_BITS 0x00001513U
+#define CPS_REGISTRATION_MSG_OPTIONS 0x00000003U
+#define CPS_REGISTRATION_LEGACY_SEND_SIZE 0x00000084U
+#define CPS_REGISTRATION_LION_SEND_SIZE 0x00000090U
+#define CPS_REGISTRATION_RECV_SIZE 0x0000002cU
+#define CPS_REGISTRATION_SUCCESS_REPLY_BITS 0x00001200U
+#define CPS_REGISTRATION_SUCCESS_REPLY_SIZE 0x00000024U
+#define CPS_REGISTRATION_NDR_OFF 0x18U
+#define CPS_REGISTRATION_STRING_LENGTH_OFF 0x3cU
+#define CPS_REGISTRATION_STRING_OFF 0x40U
+#define CPS_REGISTRATION_EXPECTED_STRING_LENGTH 0x00000043U
+#define CPS_REGISTRATION_REPLY_NDR_OFF 0x18U
+#define CPS_REGISTRATION_REPLY_RESULT_OFF 0x20U
+#define CPS_REGISTRATION_PRIVATE_BUFFER_SIZE 0x00000100U
+#define CPS_REGISTRATION_TAIL_BYTE_OFF 0x84U
+#define CPS_REGISTRATION_TAIL_U32_0_OFF 0x88U
+#define CPS_REGISTRATION_TAIL_U32_1_OFF 0x8cU
 #endif
 
 #ifdef PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION
@@ -119,6 +144,10 @@ extern mach_port_t mig_get_reply_port(void);
 
 static const char *kCoreServicesDName =
     "com.apple.CoreServices.coreservicesd";
+#ifdef PM_CPS_REGISTRATION_COMPAT_INTEGRATION
+static const char kCPSRegistrationObservedName[] =
+    "ppc-process-manager-cgs-session-bootstrap-integration-private-dyld";
+#endif
 
 typedef kern_return_t (*bootstrap_lookup2_fn)(mach_port_t,
                                               const char *,
@@ -166,6 +195,9 @@ static unsigned int gCGSTraceCallCount = 0;
 #endif
 #ifdef PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION
 static unsigned int gCGSServerVersionCompatCallCount = 0;
+#endif
+#ifdef PM_CPS_REGISTRATION_COMPAT_INTEGRATION
+static unsigned int gCPSRegistrationCompatCallCount = 0;
 #endif
 static mach_port_t gCoreServicesServerPort = MACH_PORT_NULL;
 static mach_port_t gServerCheckinReplyPort = MACH_PORT_NULL;
@@ -465,6 +497,291 @@ call_original_mach_msg(mach_msg_header_t *msg,
               rcv_name, timeout, notify);
 }
 
+#ifdef PM_CPS_REGISTRATION_COMPAT_INTEGRATION
+static uint32_t
+cps_registration_swap_u32(uint32_t value)
+{
+    return ((value & 0x000000ffU) << 24) |
+           ((value & 0x0000ff00U) << 8) |
+           ((value & 0x00ff0000U) >> 8) |
+           ((value & 0xff000000U) >> 24);
+}
+
+static int
+cps_registration_reply_is_swapped(const unsigned char *message)
+{
+    const unsigned char *local_ndr = (const unsigned char *)&NDR_record;
+
+    return message[CPS_REGISTRATION_REPLY_NDR_OFF + 4U] != local_ndr[4];
+}
+
+static int32_t
+decode_cps_registration_result(const unsigned char *message)
+{
+    uint32_t value = get_u32(message + CPS_REGISTRATION_REPLY_RESULT_OFF);
+
+    if (cps_registration_reply_is_swapped(message))
+        value = cps_registration_swap_u32(value);
+    return (int32_t)value;
+}
+
+static int
+is_exact_legacy_cps_registration_request(mach_msg_header_t *msg,
+                                         mach_msg_option_t option,
+                                         mach_msg_size_t send_size,
+                                         mach_msg_size_t rcv_size,
+                                         mach_port_name_t rcv_name,
+                                         mach_msg_timeout_t timeout,
+                                         mach_port_name_t notify)
+{
+    unsigned char *m = (unsigned char *)msg;
+
+    if (msg == NULL)
+        return 0;
+    if (sizeof(kCPSRegistrationObservedName) !=
+        CPS_REGISTRATION_EXPECTED_STRING_LENGTH)
+        return 0;
+
+    return get_u32(m + 0x00U) == CPS_REGISTRATION_LEGACY_BITS &&
+           get_u32(m + 0x08U) != 0U &&
+           get_u32(m + 0x0cU) == (uint32_t)rcv_name &&
+           rcv_name != MACH_PORT_NULL &&
+           get_u32(m + 0x14U) == CGS_CHECKIN_APPLICATION_REQUEST_ID &&
+           option == (mach_msg_option_t)CPS_REGISTRATION_MSG_OPTIONS &&
+           send_size == (mach_msg_size_t)CPS_REGISTRATION_LEGACY_SEND_SIZE &&
+           rcv_size == (mach_msg_size_t)CPS_REGISTRATION_RECV_SIZE &&
+           timeout == MACH_MSG_TIMEOUT_NONE &&
+           notify == MACH_PORT_NULL &&
+           memcmp(m + CPS_REGISTRATION_NDR_OFF,
+                  &NDR_record, sizeof(NDR_record)) == 0 &&
+           get_u32(m + CPS_REGISTRATION_STRING_LENGTH_OFF) ==
+               CPS_REGISTRATION_EXPECTED_STRING_LENGTH &&
+           memcmp(m + CPS_REGISTRATION_STRING_OFF,
+                  kCPSRegistrationObservedName,
+                  sizeof(kCPSRegistrationObservedName)) == 0;
+}
+
+static mach_msg_return_t
+handle_cps_registration_compat(mach_msg_header_t *msg,
+                               mach_msg_option_t option,
+                               mach_msg_size_t send_size,
+                               mach_msg_size_t rcv_size,
+                               mach_port_name_t rcv_name,
+                               mach_msg_timeout_t timeout,
+                               mach_port_name_t notify)
+{
+    const char *mode;
+    unsigned char *m = (unsigned char *)msg;
+    uint32_t storage[CPS_REGISTRATION_PRIVATE_BUFFER_SIZE / sizeof(uint32_t)];
+    unsigned char *adapted = (unsigned char *)storage;
+    unsigned char source_before[CPS_REGISTRATION_LEGACY_SEND_SIZE];
+    unsigned char native_reply_before[CPS_REGISTRATION_SUCCESS_REPLY_SIZE];
+    mach_msg_return_t mr;
+    uint32_t native_reply_bits;
+    uint32_t native_reply_size;
+    uint32_t native_reply_id;
+    int32_t native_result;
+    unsigned int changed_common = 0U;
+    unsigned int source_changed = 0U;
+    unsigned int reply_changed = 0U;
+    unsigned int off;
+    uint32_t copy_size;
+    int exact;
+
+    ++gCPSRegistrationCompatCallCount;
+    mode = getenv(CPS_REGISTRATION_COMPAT_ENV);
+    exact = is_exact_legacy_cps_registration_request(
+        msg, option, send_size, rcv_size, rcv_name, timeout, notify);
+
+    fprintf(stderr,
+            "PM_CPS_REGISTRATION_COMPAT_CALL:index=%u mode=%s exact=%s bits=0x%08lx id=0x%08lx send=0x%08lx recv=0x%08lx remotePort=0x%08lx replyPort=0x%08lx stringLength=0x%08lx\n",
+            gCPSRegistrationCompatCallCount,
+            mode ? mode : "(unset)",
+            exact ? "YES" : "NO",
+            (unsigned long)get_u32(m + 0x00U),
+            (unsigned long)get_u32(m + 0x14U),
+            (unsigned long)send_size,
+            (unsigned long)rcv_size,
+            (unsigned long)get_u32(m + 0x08U),
+            (unsigned long)rcv_name,
+            (unsigned long)get_u32(m + CPS_REGISTRATION_STRING_LENGTH_OFF));
+    fflush(stderr);
+
+    if (mode != NULL &&
+        strcmp(mode, CPS_REGISTRATION_COMPAT_PASSTHROUGH) == 0) {
+        fprintf(stderr,
+                "PM_CPS_REGISTRATION_COMPAT_RESULT:PASSTHROUGH\n");
+        fflush(stderr);
+        return call_original_mach_msg(msg, option, send_size,
+                                      rcv_size, rcv_name,
+                                      timeout, notify);
+    }
+
+    if (mode == NULL ||
+        strcmp(mode, CPS_REGISTRATION_COMPAT_LION_V1) != 0 ||
+        !exact ||
+        gCPSRegistrationCompatCallCount != 1U) {
+        fprintf(stderr,
+                "PM_CPS_REGISTRATION_COMPAT_RESULT:PREDICATE_REJECTED_PASSTHROUGH\n");
+        fflush(stderr);
+        return call_original_mach_msg(msg, option, send_size,
+                                      rcv_size, rcv_name,
+                                      timeout, notify);
+    }
+
+    memset(storage, 0, sizeof(storage));
+    memcpy(source_before, m, CPS_REGISTRATION_LEGACY_SEND_SIZE);
+    memcpy(adapted, m, CPS_REGISTRATION_LEGACY_SEND_SIZE);
+    put_u32(adapted + 0x14U, CGS_CREATE_APPLICATION_REQUEST_ID);
+    adapted[CPS_REGISTRATION_TAIL_BYTE_OFF] = 0U;
+    adapted[CPS_REGISTRATION_TAIL_BYTE_OFF + 1U] = 0U;
+    adapted[CPS_REGISTRATION_TAIL_BYTE_OFF + 2U] = 0U;
+    adapted[CPS_REGISTRATION_TAIL_BYTE_OFF + 3U] = 0U;
+    put_u32(adapted + CPS_REGISTRATION_TAIL_U32_0_OFF, 0U);
+    put_u32(adapted + CPS_REGISTRATION_TAIL_U32_1_OFF, 0x00000010U);
+
+    for (off = 0U; off < CPS_REGISTRATION_LEGACY_SEND_SIZE; ++off) {
+        if (adapted[off] != source_before[off])
+            ++changed_common;
+        if (m[off] != source_before[off])
+            ++source_changed;
+    }
+
+    fprintf(stderr,
+            "PM_CPS_REGISTRATION_COMPAT_ADAPTED_REQUEST:index=%u legacyId=0x%08lx lionId=0x%08lx legacySend=0x%08lx lionSend=0x%08lx changedCommonBytes=%u sourceChangedBytes=%u tailByte=0x%02x tailU32_0=0x%08lx tailU32_1=0x%08lx\n",
+            gCPSRegistrationCompatCallCount,
+            (unsigned long)get_u32(source_before + 0x14U),
+            (unsigned long)get_u32(adapted + 0x14U),
+            (unsigned long)send_size,
+            (unsigned long)CPS_REGISTRATION_LION_SEND_SIZE,
+            changed_common,
+            source_changed,
+            (unsigned int)adapted[CPS_REGISTRATION_TAIL_BYTE_OFF],
+            (unsigned long)get_u32(
+                adapted + CPS_REGISTRATION_TAIL_U32_0_OFF),
+            (unsigned long)get_u32(
+                adapted + CPS_REGISTRATION_TAIL_U32_1_OFF));
+    fflush(stderr);
+
+    if (changed_common != 1U ||
+        source_changed != 0U ||
+        get_u32(adapted + 0x14U) != CGS_CREATE_APPLICATION_REQUEST_ID ||
+        adapted[CPS_REGISTRATION_TAIL_BYTE_OFF] != 0U ||
+        adapted[CPS_REGISTRATION_TAIL_BYTE_OFF + 1U] != 0U ||
+        adapted[CPS_REGISTRATION_TAIL_BYTE_OFF + 2U] != 0U ||
+        adapted[CPS_REGISTRATION_TAIL_BYTE_OFF + 3U] != 0U ||
+        get_u32(adapted + CPS_REGISTRATION_TAIL_U32_0_OFF) != 0U ||
+        get_u32(adapted + CPS_REGISTRATION_TAIL_U32_1_OFF) != 0x10U) {
+        fprintf(stderr,
+                "PM_CPS_REGISTRATION_COMPAT_RESULT:REQUEST_POSTCHECK_FAILED_PASSTHROUGH\n");
+        fflush(stderr);
+        return call_original_mach_msg(msg, option, send_size,
+                                      rcv_size, rcv_name,
+                                      timeout, notify);
+    }
+
+    mr = call_original_mach_msg(
+        (mach_msg_header_t *)adapted,
+        option,
+        (mach_msg_size_t)CPS_REGISTRATION_LION_SEND_SIZE,
+        rcv_size,
+        rcv_name,
+        timeout,
+        notify);
+
+    fprintf(stderr,
+            "PM_CPS_REGISTRATION_COMPAT_NATIVE_MACH_RETURN:index=%u kr=%ld hex=0x%08lx\n",
+            gCPSRegistrationCompatCallCount,
+            (long)mr,
+            (unsigned long)(uint32_t)mr);
+    fflush(stderr);
+
+    if (mr != MACH_MSG_SUCCESS)
+        return mr;
+
+    native_reply_bits = get_u32(adapted + 0x00U);
+    native_reply_size = get_u32(adapted + 0x04U);
+    native_reply_id = get_u32(adapted + 0x14U);
+    native_result = 0;
+
+    if (native_reply_size >= CPS_REGISTRATION_SUCCESS_REPLY_SIZE &&
+        native_reply_size <= rcv_size) {
+        memcpy(native_reply_before, adapted,
+               CPS_REGISTRATION_SUCCESS_REPLY_SIZE);
+    } else {
+        memset(native_reply_before, 0, sizeof(native_reply_before));
+    }
+
+    if (native_reply_size >= CPS_REGISTRATION_SUCCESS_REPLY_SIZE)
+        native_result = decode_cps_registration_result(adapted);
+
+    fprintf(stderr,
+            "PM_CPS_REGISTRATION_COMPAT_NATIVE_REPLY:index=%u bits=0x%08lx size=0x%08lx id=0x%08lx result=%ld ndrSwapped=%s raw20=0x%08lx\n",
+            gCPSRegistrationCompatCallCount,
+            (unsigned long)native_reply_bits,
+            (unsigned long)native_reply_size,
+            (unsigned long)native_reply_id,
+            (long)native_result,
+            native_reply_size >= CPS_REGISTRATION_SUCCESS_REPLY_SIZE &&
+                cps_registration_reply_is_swapped(adapted) ? "YES" : "NO",
+            native_reply_size >= CPS_REGISTRATION_SUCCESS_REPLY_SIZE ?
+                (unsigned long)get_u32(
+                    adapted + CPS_REGISTRATION_REPLY_RESULT_OFF) : 0UL);
+    fflush(stderr);
+
+    if (native_reply_bits != CPS_REGISTRATION_SUCCESS_REPLY_BITS ||
+        native_reply_size != CPS_REGISTRATION_SUCCESS_REPLY_SIZE ||
+        native_reply_id != CGS_CREATE_APPLICATION_REPLY_ID ||
+        !cps_registration_reply_is_swapped(adapted) ||
+        native_result != 0) {
+        copy_size = native_reply_size;
+        if (copy_size > rcv_size)
+            copy_size = rcv_size;
+        if (copy_size > CPS_REGISTRATION_PRIVATE_BUFFER_SIZE)
+            copy_size = CPS_REGISTRATION_PRIVATE_BUFFER_SIZE;
+        if (copy_size != 0U)
+            memcpy(m, adapted, copy_size);
+        fprintf(stderr,
+                "PM_CPS_REGISTRATION_COMPAT_RESULT:NATIVE_REPLY_REJECTED\n");
+        fflush(stderr);
+        return mr;
+    }
+
+    put_u32(adapted + 0x14U, CGS_CHECKIN_APPLICATION_REPLY_ID);
+    for (off = 0U; off < CPS_REGISTRATION_SUCCESS_REPLY_SIZE; ++off) {
+        if (adapted[off] != native_reply_before[off])
+            ++reply_changed;
+    }
+
+    if (reply_changed != 2U ||
+        get_u32(adapted + 0x14U) != CGS_CHECKIN_APPLICATION_REPLY_ID ||
+        get_u32(adapted + 0x04U) != CPS_REGISTRATION_SUCCESS_REPLY_SIZE ||
+        decode_cps_registration_result(adapted) != 0) {
+        memcpy(m, native_reply_before,
+               CPS_REGISTRATION_SUCCESS_REPLY_SIZE);
+        fprintf(stderr,
+                "PM_CPS_REGISTRATION_COMPAT_RESULT:REPLY_POSTCHECK_FAILED_NATIVE_COPIED\n");
+        fflush(stderr);
+        return mr;
+    }
+
+    memcpy(m, adapted, CPS_REGISTRATION_SUCCESS_REPLY_SIZE);
+
+    fprintf(stderr,
+            "PM_CPS_REGISTRATION_COMPAT_ADAPTED_REPLY:index=%u nativeId=0x%08lx legacyId=0x%08lx size=0x%08lx changedBytes=%u result=%ld\n",
+            gCPSRegistrationCompatCallCount,
+            (unsigned long)CGS_CREATE_APPLICATION_REPLY_ID,
+            (unsigned long)get_u32(m + 0x14U),
+            (unsigned long)get_u32(m + 0x04U),
+            reply_changed,
+            (long)decode_cps_registration_result(m));
+    fprintf(stderr,
+            "PM_CPS_REGISTRATION_COMPAT_RESULT:ADAPTER_PASS\n");
+    fflush(stderr);
+    return mr;
+}
+#endif
+
 #if defined(PM_CGS_CONNECTION_TRACE) || defined(PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION)
 static const char *
 cgs_trace_kind(uint32_t request_id)
@@ -607,9 +924,18 @@ trace_cgs_message(mach_msg_header_t *msg,
     fprintf(stderr, "\n");
     fflush(stderr);
 
-    mr = call_original_mach_msg(msg, option, send_size,
-                                rcv_size, rcv_name,
-                                timeout, notify);
+#ifdef PM_CPS_REGISTRATION_COMPAT_INTEGRATION
+    if (request_id == CGS_CHECKIN_APPLICATION_REQUEST_ID) {
+        mr = handle_cps_registration_compat(msg, option, send_size,
+                                            rcv_size, rcv_name,
+                                            timeout, notify);
+    } else
+#endif
+    {
+        mr = call_original_mach_msg(msg, option, send_size,
+                                    rcv_size, rcv_name,
+                                    timeout, notify);
+    }
 
     fprintf(stderr,
             "PM_CGS_CONNECTION_TRACE_MACH_RETURN:index=%u kind=%s kr=%ld hex=0x%08lx\n",
