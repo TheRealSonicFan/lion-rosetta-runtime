@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <xpc/xpc.h>
 
-#define BUILD_ID "distributed-notifications-native-xpc-trace-v1"
+#define BUILD_ID "distributed-notifications-native-xpc-trace-v2"
 #define BUILD_MARKER \
     "PM_DISTRIBUTED_NOTIFICATIONS_NATIVE_XPC_TRACE_BUILD_ID:" BUILD_ID
 #define SERVICE_PREFIX "com.apple.distributed_notifications"
@@ -61,7 +61,15 @@ replacement_xpc_connection_create(const char *name, dispatch_queue_t targetq)
         static const char failure[] =
             "PM_DISTRIBUTED_NOTIFICATIONS_NATIVE_XPC_TRACE_ERROR:dlsym_failed\n";
         (void)write(STDERR_FILENO, failure, sizeof(failure) - 1);
-        return NULL;
+        _exit(90);
+    }
+
+    if ((void *)(unsigned long)real_xpc_connection_create ==
+        (void *)(unsigned long)replacement_xpc_connection_create) {
+        static const char recursive[] =
+            "PM_DISTRIBUTED_NOTIFICATIONS_NATIVE_XPC_TRACE_ERROR:self_resolution\n";
+        (void)write(STDERR_FILENO, recursive, sizeof(recursive) - 1);
+        _exit(91);
     }
 
     return real_xpc_connection_create(name, targetq);
