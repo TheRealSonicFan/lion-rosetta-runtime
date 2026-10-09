@@ -16,6 +16,26 @@ That leaves one unresolved fact: which service name Lion actually supplies when 
 
 This experiment observes that choice in a native i386 Lion process by interposing only `xpc_connection_create`, logging distributed-notification service names, and forwarding the original call unchanged.
 
+## Reviewed Phase C result
+
+Phase C produced a trace-tool failure after it had already captured the required service-selection evidence.
+
+The report shows the first and every subsequent intercepted distributed-notifications connection name as:
+
+```text
+com.apple.distributed_notifications@Uv3
+```
+
+The trace then emitted the same intercepted call repeatedly until the probe exited with status 139. That repetition is not a native service-selection loop; it is the v1 interposer recursively re-entering its own `xpc_connection_create` forwarding path. Current `main` hardens the retired interposer with a self-resolution guard so an accidental rerun cannot flood the log in the same way, but this experiment does **not** need to be rerun for service selection.
+
+The first intercepted argument is sufficient to close the `@Uv3` versus `@1v3` question for the ordinary CF distributed center. The investigation now advances to:
+
+```text
+docs/distributed-notifications-protocol-differential-audit.md
+```
+
+Do not rerun Phase C unless a later document explicitly requests it.
+
 ## Prepared implementation
 
 Current runtime `main` provides:
@@ -96,7 +116,7 @@ The build script also requires these embedded provenance markers:
 
 ```text
 PM_DISTRIBUTED_NOTIFICATIONS_NATIVE_PROBE_BUILD_ID:distributed-notifications-native-service-selection-probe-v1
-PM_DISTRIBUTED_NOTIFICATIONS_NATIVE_XPC_TRACE_BUILD_ID:distributed-notifications-native-xpc-trace-v1
+PM_DISTRIBUTED_NOTIFICATIONS_NATIVE_XPC_TRACE_BUILD_ID:distributed-notifications-native-xpc-trace-v2
 ```
 
 If Phase B fails, stop and return the terminal output; do not run Phase C.
@@ -158,7 +178,7 @@ Stop after Phase D.
 - If `selected_service=com.apple.distributed_notifications@1v3`, the protocol comparison will target `@1v3` instead.
 - If the runner reports disagreement or no observed service, do not infer a target. The trace mechanism or mode semantics must be refined first.
 
-Even a successful service-selection trace does not establish wire compatibility between Snow v2 and Lion v3.
+The returned Phase C evidence establishes `@Uv3` as the selected Lion service despite the tracer failure. It does not establish wire compatibility between Snow v2 and Lion v3; proceed to `docs/distributed-notifications-protocol-differential-audit.md`.
 
 ## Current boundary
 
@@ -169,7 +189,7 @@ Lion ordinary Foundation center                 -> __CFXNotificationGetHostCente
 Lion CF distributed-center initializer          -> ___CFXNotificationCenterCreate
 Lion client service strings                     -> @Uv3 and @1v3
 static direct cstring references                 -> unresolved / zero
-next step                                       -> native Lion XPC service-selection trace
+next step                                       -> static Snow-v2 / Lion-@Uv3 protocol differential
 ```
 
 No XNU change is indicated.
