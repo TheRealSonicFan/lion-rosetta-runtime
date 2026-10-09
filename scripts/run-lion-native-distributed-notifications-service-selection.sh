@@ -13,7 +13,7 @@ FOUNDATION="/System/Library/Frameworks/Foundation.framework/Versions/C/Foundatio
 DISTNOTED="/usr/sbin/distnoted"
 
 EXPECTED_PROBE_BUILD_ID="distributed-notifications-native-service-selection-probe-v1"
-EXPECTED_TRACE_BUILD_ID="distributed-notifications-native-xpc-trace-v1"
+EXPECTED_TRACE_BUILD_ID="distributed-notifications-native-xpc-trace-v2"
 
 TMP_CF="$REPORT.cf.tmp"
 TMP_FOUNDATION="$REPORT.foundation.tmp"
