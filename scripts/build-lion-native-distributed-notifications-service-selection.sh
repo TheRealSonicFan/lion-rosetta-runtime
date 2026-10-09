@@ -11,7 +11,7 @@ PROBE_OUT="${1:-./native-distributed-notifications-service-selection-probe}"
 INTERPOSER_OUT="${2:-./native-distributed-notifications-xpc-trace.dylib}"
 
 EXPECTED_PROBE_BUILD_ID="distributed-notifications-native-service-selection-probe-v1"
-EXPECTED_TRACE_BUILD_ID="distributed-notifications-native-xpc-trace-v1"
+EXPECTED_TRACE_BUILD_ID="distributed-notifications-native-xpc-trace-v2"
 
 PRODUCT_VERSION="$(/usr/bin/sw_vers -productVersion 2>/dev/null || true)"
 [ "$PRODUCT_VERSION" = "10.7.5" ] || {
