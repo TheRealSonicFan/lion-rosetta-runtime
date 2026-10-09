@@ -42,6 +42,30 @@ msgh_id   = 4
 
 Do not use the superseded statement that `0x1413` is a message ID.
 
+## Reviewed Phase B analyzer-v1 failure
+
+The returned Snow Leopard 10.6.8 Phase B report is a **validator defect, not a protocol contradiction**. The PPC slice, exact protocol constants, and every required target symbol were present, but the four Mach-header checks were reported as `NO` solely because analyzer v1 accidentally stored doubled backslashes in two raw regular expressions. Those expressions therefore searched for literal `\\b`, `\\s`, and `\\d` text instead of regular-expression word boundaries, whitespace, and digits.
+
+The same report contains the exact instructions that the broken validator failed to recognize:
+
+```text
+client -> server:
+0004d34c  li   r0,0x4
+0004d358  stw  r0,0x14(r27)                  # msgh_id = 4
+0004d378  li   r0,0x1413
+0004d38c  stw  r0,__mh_dylib_header(r27)     # offset 0x00, msgh_bits = 0x1413
+
+server -> client:
+0004ee00  li   r0,0x4
+0004ee0c  stw  r0,0x14(r30)                  # msgh_id = 4
+0004ee1c  li   r0,0x13
+0004ee24  stw  r0,__mh_dylib_header(r30)      # offset 0x00, msgh_bits = 0x13
+```
+
+Current analyzer **version 2** fixes the escaping error, accepts both `__mh_dylib_header(...)` and numeric zero spellings for the offset-`0x00` store, and emits the matched load/store instruction pair into the report so this gate is self-auditing. No protocol assumption or compatibility behavior changed.
+
+After pulling current `main`, rerun **Snow Phase B only** and require `analyzer_version=2`, all six Mach-envelope observations to be `YES`, and `RESULT: PASS`. Do not proceed to Lion Phase C from the analyzer-v1 report.
+
 ## Prepared implementation
 
 Current runtime `main` provides:
@@ -51,7 +75,7 @@ scripts/audit-distributed-notifications-protocol-abi.py
 docs/distributed-notifications-protocol-abi-audit.md
 ```
 
-The analyzer is Python-2.6-compatible and performs no dynamic notification, bootstrap, Mach, MIG, or XPC operation.
+The analyzer is Python-2.6-compatible, reports `analyzer_version=2`, and performs no dynamic notification, bootstrap, Mach, MIG, or XPC operation.
 
 ### Snow Leopard coverage
 
@@ -219,6 +243,13 @@ Require:
 Created: ./distributed-notifications-protocol-abi-snowleopard.txt
 No PowerPC application was launched and no system state was modified.
 RESULT: PASS
+```
+
+The generated Snow report must begin with:
+
+```text
+analyzer_version=2
+product_version=10.6.8
 ```
 
 The report must also contain:
