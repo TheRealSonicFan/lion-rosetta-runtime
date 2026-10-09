@@ -688,16 +688,25 @@ def mach_header_observations(fp, by_name, rows, ordered):
     c2s = joined_for("___CFXNotificationSendToServer")
     s2c = joined_for("___CFXNotificationSendToClient")
 
-    c2s_bits = "0x1413" in c2s
-    c2s_id4 = (
-        re.search(r"li\s+r\d+,0x4", c2s) is not None and
-        re.search(r"stw\s+r\d+,0x14\(r\d+\)", c2s) is not None
-    )
-    s2c_bits = re.search(r"li\s+r\d+,0x13\b", s2c) is not None
-    s2c_id4 = (
-        re.search(r"li\s+r\d+,0x4", s2c) is not None and
-        re.search(r"stw\s+r\d+,0x14\(r\d+\)", s2c) is not None
-    )
+    def has_li_store(text, immediate, offset):
+        rows_local = text.splitlines()
+        for i in range(len(rows_local)):
+            m = re.search(r"\\bli\\s+(r\\d+),%s\\b" % re.escape(immediate),
+                          rows_local[i])
+            if not m:
+                continue
+            reg = m.group(1)
+            for j in range(i + 1, min(len(rows_local), i + 14)):
+                pattern = r"\\bstw\\s+%s,%s\\(r\\d+\\)" % (
+                    re.escape(reg), re.escape(offset))
+                if re.search(pattern, rows_local[j]):
+                    return True
+        return False
+
+    c2s_bits = has_li_store(c2s, "0x1413", "__mh_dylib_header")
+    c2s_id4 = has_li_store(c2s, "0x4", "0x14")
+    s2c_bits = has_li_store(s2c, "0x13", "__mh_dylib_header")
+    s2c_id4 = has_li_store(s2c, "0x4", "0x14")
     c2s_len = re.search(r"stw\s+r\d+,0x1c\(r\d+\)", c2s) is not None
     s2c_len = re.search(r"stw\s+r\d+,0x1c\(r\d+\)", s2c) is not None
 
