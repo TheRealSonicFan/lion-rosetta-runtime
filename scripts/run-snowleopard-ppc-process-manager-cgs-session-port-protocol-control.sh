@@ -51,7 +51,7 @@ OT="$(/usr/bin/otool -l "$EXE" | /usr/bin/grep -A3 LC_LOAD_DYLINKER || true)"
 echo "$OT" | /usr/bin/tee -a "$LOG"
 echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || fail "LC_LOAD_DYLINKER is not /usr/oah/dyld"
 
-/usr/bin/strings "$EXE" | /usr/bin/grep -Fq 'PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v2' || fail "build marker missing"
+/usr/bin/strings "$EXE" | /usr/bin/grep -Fq 'PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v3' || fail "build marker missing"
 
 echo "== Snow Leopard PPC CGS session-port positive control ==" | /usr/bin/tee -a "$LOG"
 DYLD_PRINT_LIBRARIES=1 "$EXE" snow-control >> "$LOG" 2>&1
@@ -64,7 +64,7 @@ if [ "$RC" -eq 0 ] &&
    /usr/bin/grep -Eq 'sessionPort=0x0*[1-9a-fA-F][0-9a-fA-F]*' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CGS_SESSION_PORT_DEATHWATCH_MACH_RETURN:kr=0 ' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CGS_SESSION_PORT_DEATHWATCH_REPLY:' "$LOG" &&
-   /usr/bin/grep -Fq 'disposition=0x11' "$LOG" &&
+   /usr/bin/grep -Eq 'PM_CGS_SESSION_PORT_DEATHWATCH_COMPLEX_REPLY:descriptor_count=1 .* disposition=0x11 type=0x00' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CGS_SESSION_PORT_RESULT:SNOW_CONTROL_PASS' "$LOG"; then
     echo "RESULT: PASS" | /usr/bin/tee -a "$LOG"
     exit 0
