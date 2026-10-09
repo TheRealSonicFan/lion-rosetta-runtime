@@ -642,6 +642,17 @@ def validate(product, evidence, targets, issues):
         if not evidence.get("target:" + target, False):
             issues.append("required CoreFoundation target missing: %s" % target)
 
+    if product == "10.6.8":
+        if not evidence.get("snow_server_i386_slice", False):
+            issues.append("Snow i386 CoreFoundation server slice missing")
+        if not evidence.get("snow_server_i386_cstring_map", False):
+            issues.append("Snow i386 CoreFoundation __cstring map missing")
+        if not evidence.get("snow_server_i386_cfstring_map", False):
+            issues.append("Snow i386 CoreFoundation __cfstring map missing")
+        for target in targets:
+            if not evidence.get("snow_server_i386_target:" + target, False):
+                issues.append("Snow i386 CoreFoundation target missing: %s" % target)
+
     if product == "10.7.5":
         if not evidence.get("distnoted_slice", False):
             issues.append("Lion distnoted i386 slice missing")
@@ -688,6 +699,15 @@ def main():
                 write_line(fp, "corefoundation_sha256=%s" % sha256(COREFOUNDATION))
                 analyze_corefoundation(fp, COREFOUNDATION, arch, tempdir,
                                        targets, evidence)
+                if product == "10.6.8":
+                    snow_server_evidence = {}
+                    analyze_corefoundation(fp, COREFOUNDATION, "i386", tempdir,
+                                           targets, snow_server_evidence)
+                    evidence["snow_server_i386_slice"] = snow_server_evidence.get("cf_slice", False)
+                    evidence["snow_server_i386_cstring_map"] = snow_server_evidence.get("cstring_map", False)
+                    evidence["snow_server_i386_cfstring_map"] = snow_server_evidence.get("cfstring_map", False)
+                    for target in targets:
+                        evidence["snow_server_i386_target:" + target] = snow_server_evidence.get("target:" + target, False)
             else:
                 issues.append("CoreFoundation binary missing")
 
