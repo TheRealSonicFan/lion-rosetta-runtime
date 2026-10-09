@@ -109,7 +109,7 @@ OT="$(/usr/bin/otool -l "$EXE" | /usr/bin/grep -A3 LC_LOAD_DYLINKER || true)"
 echo "$OT" | /usr/bin/tee -a "$REPORT"
 echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || die 68 "LC_LOAD_DYLINKER is not /usr/oah/dyld"
 
-/usr/bin/strings "$EXE" | /usr/bin/grep -Fq 'PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v2' || die 68 "build marker missing"
+/usr/bin/strings "$EXE" | /usr/bin/grep -Fq 'PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v3' || die 68 "build marker missing"
 /usr/bin/grep -Fq "$COREGRAPHICS" "$ROSETTA_CACHE_MAP" || die 68 "CoreGraphics absent from Rosetta cache map"
 
 log ""
@@ -176,10 +176,9 @@ if [ "$RC" -eq 0 ] &&
    /usr/bin/grep -Fq 'serverEuid=0' "$RAW_LOG" &&
    /usr/bin/grep -Fq 'PM_CGS_SESSION_PORT_GETSESSIONPORT_MACH_RETURN:kr=0 ' "$RAW_LOG" &&
    /usr/bin/grep -Fq 'PM_CGS_SESSION_PORT_GETSESSIONPORT_REPLY:' "$RAW_LOG" &&
-   /usr/bin/grep -Fq 'PM_CGS_SESSION_PORT_GETSESSIONPORT_COMPLEX_REPLY:descriptor_count=1 ' "$RAW_LOG" &&
-   /usr/bin/grep -Fq 'disposition=0x11' "$RAW_LOG" &&
+   /usr/bin/grep -Eq 'PM_CGS_SESSION_PORT_GETSESSIONPORT_COMPLEX_REPLY:descriptor_count=1 .* disposition=0x11 type=0x00' "$RAW_LOG" &&
    /usr/bin/grep -Fq 'PM_CGS_SESSION_PORT_DEATHWATCH_MACH_RETURN:kr=0 ' "$RAW_LOG" &&
-   /usr/bin/grep -Fq 'PM_CGS_SESSION_PORT_DEATHWATCH_COMPLEX_REPLY:descriptor_count=1 ' "$RAW_LOG" &&
+   /usr/bin/grep -Eq 'PM_CGS_SESSION_PORT_DEATHWATCH_COMPLEX_REPLY:descriptor_count=1 .* disposition=0x11 type=0x00' "$RAW_LOG" &&
    /usr/bin/grep -Fq 'PM_CGS_SESSION_PORT_RESULT:LION_NATIVE_SESSION_PROTOCOL_PASS' "$RAW_LOG"; then
     log "RESULT: CGS_SESSION_PORT_PROTOCOL_ADAPTER_PASS"
     exit 0
