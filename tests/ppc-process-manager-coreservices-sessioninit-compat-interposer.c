@@ -15,7 +15,11 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                          uint64_t);
 extern mach_port_t mig_get_reply_port(void);
 
+#ifdef PM_CGS_CONNECTION_TRACE
+#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-trace-v1"
+#else
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5"
+#endif
 #define COMPAT_BUILD_MARKER "PM_CORESERVICES_COMPAT_BUILD_ID:" COMPAT_BUILD_ID
 #define COMPAT_MODE_ENV "ROSETTA_CORESERVICES_COMPAT_MODE"
 #define COMPAT_MODE_PASSTHROUGH "passthrough"
@@ -70,6 +74,13 @@ extern mach_port_t mig_get_reply_port(void);
 
 #define PRIVILEGED_SERVER_FLAG 0x0000000000000008ULL
 
+#ifdef PM_CGS_CONNECTION_TRACE
+#define CGS_DEATHWATCH_REQUEST_ID 0x0000714cU
+#define CGS_DEATHWATCH_REPLY_ID 0x000071b0U
+#define CGS_NEW_CONNECTION_REQUEST_ID 0x00007469U
+#define CGS_NEW_CONNECTION_REPLY_ID 0x000074cdU
+#endif
+
 static const char *kCoreServicesDName =
     "com.apple.CoreServices.coreservicesd";
 
@@ -114,6 +125,9 @@ static unsigned int gServerCheckinExactCallCount = 0;
 static unsigned int gServerCheckinAdaptedCallCount = 0;
 static unsigned int gSessionInitExactCallCount = 0;
 static unsigned int gSessionInitAdaptedCallCount = 0;
+#ifdef PM_CGS_CONNECTION_TRACE
+static unsigned int gCGSTraceCallCount = 0;
+#endif
 static mach_port_t gCoreServicesServerPort = MACH_PORT_NULL;
 static mach_port_t gServerCheckinReplyPort = MACH_PORT_NULL;
 
@@ -182,6 +196,136 @@ call_original_mach_msg(mach_msg_header_t *msg,
     return fn(msg, option, send_size, rcv_size,
               rcv_name, timeout, notify);
 }
+
+#ifdef PM_CGS_CONNECTION_TRACE
+static const char *
+cgs_trace_kind(uint32_t request_id)
+{
+    if (request_id == CGS_DEATHWATCH_REQUEST_ID)
+        return "DEATHWATCH";
+    if (request_id == CGS_NEW_CONNECTION_REQUEST_ID)
+        return "NEW_CONNECTION";
+    return "UNKNOWN";
+}
+
+static uint32_t
+cgs_trace_expected_reply(uint32_t request_id)
+{
+    if (request_id == CGS_DEATHWATCH_REQUEST_ID)
+        return CGS_DEATHWATCH_REPLY_ID;
+    if (request_id == CGS_NEW_CONNECTION_REQUEST_ID)
+        return CGS_NEW_CONNECTION_REPLY_ID;
+    return 0U;
+}
+
+static int
+is_cgs_trace_candidate(mach_msg_header_t *msg)
+{
+    unsigned char *m = (unsigned char *)msg;
+    uint32_t request_id;
+
+    if (msg == NULL)
+        return 0;
+
+    request_id = get_u32(m + 0x14);
+    return request_id == CGS_DEATHWATCH_REQUEST_ID ||
+           request_id == CGS_NEW_CONNECTION_REQUEST_ID;
+}
+
+static mach_msg_return_t
+trace_cgs_message(mach_msg_header_t *msg,
+                  mach_msg_option_t option,
+                  mach_msg_size_t send_size,
+                  mach_msg_size_t rcv_size,
+                  mach_port_name_t rcv_name,
+                  mach_msg_timeout_t timeout,
+                  mach_port_name_t notify)
+{
+    unsigned char *m = (unsigned char *)msg;
+    mach_msg_return_t mr;
+    uint32_t request_id;
+    uint32_t expected_reply;
+    uint32_t reply_bits;
+    uint32_t reply_size;
+    uint32_t reply_id;
+    uint32_t limit;
+    uint32_t off;
+
+    request_id = get_u32(m + 0x14);
+    expected_reply = cgs_trace_expected_reply(request_id);
+    ++gCGSTraceCallCount;
+
+    fprintf(stderr, "%s\n", COMPAT_BUILD_MARKER);
+    fprintf(stderr,
+            "PM_CGS_CONNECTION_TRACE_REQUEST:index=%u kind=%s bits=0x%08lx headerSizeObserved=0x%08lx id=0x%08lx expectedReply=0x%08lx option=0x%08lx send=0x%08lx recv=0x%08lx remotePort=0x%08lx headerReplyPort=0x%08lx receivePort=0x%08lx timeout=0x%08lx notify=0x%08lx\n",
+            gCGSTraceCallCount,
+            cgs_trace_kind(request_id),
+            (unsigned long)get_u32(m + 0x00),
+            (unsigned long)get_u32(m + 0x04),
+            (unsigned long)request_id,
+            (unsigned long)expected_reply,
+            (unsigned long)(uint32_t)option,
+            (unsigned long)send_size,
+            (unsigned long)rcv_size,
+            (unsigned long)get_u32(m + 0x08),
+            (unsigned long)get_u32(m + 0x0c),
+            (unsigned long)rcv_name,
+            (unsigned long)timeout,
+            (unsigned long)notify);
+    fflush(stderr);
+
+    mr = call_original_mach_msg(msg, option, send_size,
+                                rcv_size, rcv_name,
+                                timeout, notify);
+
+    fprintf(stderr,
+            "PM_CGS_CONNECTION_TRACE_MACH_RETURN:index=%u kind=%s kr=%ld hex=0x%08lx\n",
+            gCGSTraceCallCount,
+            cgs_trace_kind(request_id),
+            (long)mr,
+            (unsigned long)(uint32_t)mr);
+    fflush(stderr);
+
+    if (mr != MACH_MSG_SUCCESS)
+        return mr;
+
+    reply_bits = get_u32(m + 0x00);
+    reply_size = get_u32(m + 0x04);
+    reply_id = get_u32(m + 0x14);
+
+    fprintf(stderr,
+            "PM_CGS_CONNECTION_TRACE_REPLY:index=%u kind=%s bits=0x%08lx size=0x%08lx id=0x%08lx expected=0x%08lx idMatch=%s\n",
+            gCGSTraceCallCount,
+            cgs_trace_kind(request_id),
+            (unsigned long)reply_bits,
+            (unsigned long)reply_size,
+            (unsigned long)reply_id,
+            (unsigned long)expected_reply,
+            reply_id == expected_reply ? "YES" : "NO");
+    fflush(stderr);
+
+    limit = reply_size;
+    if (limit > (uint32_t)rcv_size)
+        limit = (uint32_t)rcv_size;
+    if (limit > 0x44U)
+        limit = 0x44U;
+
+    fprintf(stderr,
+            "PM_CGS_CONNECTION_TRACE_REPLY_WORDS:index=%u kind=%s",
+            gCGSTraceCallCount,
+            cgs_trace_kind(request_id));
+    for (off = 0x18U; off + 4U <= limit; off += 4U) {
+        fprintf(stderr,
+                " off%02lx=0x%08lx",
+                (unsigned long)off,
+                (unsigned long)get_u32(m + off));
+    }
+    fprintf(stderr, "\n");
+    fflush(stderr);
+
+    return mr;
+}
+#endif
 
 static kern_return_t
 call_original_lookup(mach_port_t bp,
@@ -709,6 +853,12 @@ rosetta_mach_msg(mach_msg_header_t *msg,
             return handle_sessioninit(msg, option, send_size,
                                       rcv_size, rcv_name,
                                       timeout, notify);
+#ifdef PM_CGS_CONNECTION_TRACE
+        if (is_cgs_trace_candidate(msg))
+            return trace_cgs_message(msg, option, send_size,
+                                     rcv_size, rcv_name,
+                                     timeout, notify);
+#endif
         return call_original_mach_msg(msg, option, send_size,
                                       rcv_size, rcv_name,
                                       timeout, notify);
