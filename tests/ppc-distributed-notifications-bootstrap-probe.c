@@ -10,6 +10,8 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                         uint64_t);
 
 #define BUILD_ID "distributed-notifications-bootstrap-probe-v1"
+#define BUILD_MARKER \
+    "PM_DISTRIBUTED_NOTIFICATIONS_PROBE_BUILD_ID:" BUILD_ID
 #define SERVICE_NAME "com.apple.distributed_notifications.2"
 #define LOOKUP_FLAGS 0x0000000000000008ULL
 
@@ -22,9 +24,7 @@ main(void)
     kern_return_t kr;
     kern_return_t type_kr;
 
-    fprintf(stderr,
-            "PM_DISTRIBUTED_NOTIFICATIONS_PROBE_BUILD_ID:%s\n",
-            BUILD_ID);
+    fprintf(stderr, "%s\n", BUILD_MARKER);
     fflush(stderr);
 
     kr = task_get_bootstrap_port(mach_task_self(), &bp);
