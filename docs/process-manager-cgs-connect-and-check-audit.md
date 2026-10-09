@@ -326,3 +326,26 @@ docs/process-manager-cgs-server-version-transport-trace-experiment.md
 ```
 
 It extends the already-proven passive trace by exactly one request class, `SERVER_VERSION 0x7148 -> 0x71ac`, adds raw request-word logging, requires a Snow positive control, and permits exactly one Lion translated-PPC run before review. Do not rerun analyzer v2 unless provenance changes.
+
+
+## Dynamic closure after analyzer v2
+
+The subsequent passive server-version trace has now supplied the dynamic value comparison that analyzer v2 could not.
+
+Snow PPC and Lion translated PPC receive the same `0x7148 -> 0x71ac` complex reply shape, but the first decoded version output differs:
+
+```text
+Snow raw 0x21020000 -> NDR-decoded 545
+Lion raw 0x58020000 -> NDR-decoded 600
+second version output -> 0 on both
+```
+
+Lion exits with status 1 immediately after that valid reply and before `0x7469`, exactly matching the `_connectAndCheck -> 0x3f0 -> _CGSServerPort -> exit(1)` branch identified by this audit.
+
+This audit stage is therefore closed. The authoritative next procedure is the standalone copied-buffer compatibility proof in:
+
+```text
+docs/process-manager-cgs-server-version-compat-protocol-adapter-experiment.md
+```
+
+Do not rerun analyzer v2 unless CoreGraphics or Rosetta-cache provenance changes.
