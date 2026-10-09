@@ -1,5 +1,8 @@
 # Process Manager CGS connection-transport passive trace experiment
 
+> **Completed historical stage.** Do not execute the trace-v1 build/run phases below against current `main`. The completed result is `CGS_TRACE_NO_NEWCONNECTION_AFTER_SESSION_ADAPTER`. Current `main` has advanced the same trace implementation to build ID `dual-bootstrap-servercheckin-sessioninit-v5-cgs-trace-v2` so it can observe the newly localized `SERVER_VERSION 0x7148 -> 0x71ac` boundary. The authoritative next procedure is `docs/process-manager-cgs-server-version-transport-trace-experiment.md`.
+
+
 ## Objective
 
 Localize the first failure **after** the now-proven Lion session-bootstrap compatibility adapter without changing any CGS request or reply.
