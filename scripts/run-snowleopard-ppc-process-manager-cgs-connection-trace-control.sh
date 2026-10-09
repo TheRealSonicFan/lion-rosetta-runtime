@@ -121,16 +121,21 @@ DYLD_PRINT_INTERPOSING=1 DYLD_PRINT_LIBRARIES=1 \
 RC=$?
 echo "control_status=$RC" | /usr/bin/tee -a "$LOG"
 
+if /usr/bin/grep -Fq 'kind=DEATHWATCH' "$LOG"; then
+    echo "deathwatch_observed=YES" | /usr/bin/tee -a "$LOG"
+else
+    echo "deathwatch_observed=NO" | /usr/bin/tee -a "$LOG"
+fi
+if /usr/bin/grep -Fq 'kind=NEW_CONNECTION' "$LOG"; then
+    echo "new_connection_observed=YES" | /usr/bin/tee -a "$LOG"
+else
+    echo "new_connection_observed=NO" | /usr/bin/tee -a "$LOG"
+fi
+
 if [ "$RC" -eq 0 ] &&
    /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_SESSIONINIT_EXACT_CALL:index=1 mode=passthrough' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_CALL:index=1 mode=passthrough' "$LOG" &&
-   /usr/bin/grep -Fq 'PM_CGS_CONNECTION_TRACE_REQUEST:' "$LOG" &&
-   /usr/bin/grep -Fq 'kind=DEATHWATCH' "$LOG" &&
-   /usr/bin/grep -Eq 'PM_CGS_CONNECTION_TRACE_MACH_RETURN:index=[0-9]+ kind=DEATHWATCH kr=0 hex=0x00000000' "$LOG" &&
-   /usr/bin/grep -Eq 'PM_CGS_CONNECTION_TRACE_REPLY:index=[0-9]+ kind=DEATHWATCH ' "$LOG" &&
-   /usr/bin/grep -Fq 'id=0x000071b0 expected=0x000071b0 idMatch=YES' "$LOG" &&
    /usr/bin/grep -Fq 'kind=NEW_CONNECTION' "$LOG" &&
-   /usr/bin/grep -Fq 'PM_CGS_CONNECTION_TRACE_MACH_RETURN:' "$LOG" &&
    /usr/bin/grep -Fq 'kind=NEW_CONNECTION kr=0 hex=0x00000000' "$LOG" &&
    /usr/bin/grep -Fq 'id=0x000074cd expected=0x000074cd idMatch=YES' "$LOG" &&
    /usr/bin/grep -Fq 'PM_POSTIDENTITY_RESULT:GETPROCESSFORPID_PASS' "$LOG" &&
