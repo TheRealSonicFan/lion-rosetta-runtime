@@ -31,6 +31,12 @@
 #define CG_EXPECTED_PROLOGUE_WORD 0x7c0802a6UL
 #define CG_CPS_NO_CONNECTION_STATUS 0x000003ebUL
 
+#ifdef PM_CGS_SESSION_BOOTSTRAP_INTEGRATION
+#define PM_CGS_SESSION_BOOTSTRAP_SUBJECT_BUILD_ID "cgs-session-bootstrap-integration-v1"
+#define PM_CGS_SESSION_BOOTSTRAP_SUBJECT_BUILD_MARKER \
+    "PM_CGS_SESSION_BOOTSTRAP_SUBJECT_BUILD_ID:" PM_CGS_SESSION_BOOTSTRAP_SUBJECT_BUILD_ID
+#endif
+
 typedef const void *(*get_dispatch_table_fn_t)(void);
 typedef mach_port_t (*get_server_port_fn_t)(void);
 typedef int32_t (*cps_set_front_process_fn_t)(const ProcessSerialNumber *);
@@ -226,6 +232,9 @@ main(void)
     int32_t cps_status;
 
     marker("PM_POSTIDENTITY_MILESTONE:M00_MAIN_ENTER");
+#ifdef PM_CGS_SESSION_BOOTSTRAP_INTEGRATION
+    marker(PM_CGS_SESSION_BOOTSTRAP_SUBJECT_BUILD_MARKER);
+#endif
 
     noasn = getenv("LSDONOTABORTIFNOASN");
     fprintf(stderr,
@@ -466,6 +475,15 @@ main(void)
     marker("PM_POSTIDENTITY_RESULT:GETPROCESSFORPID_PASS");
     log_connection_state("postidentity", connection_slot_addr);
 
+#ifdef PM_CGS_SESSION_BOOTSTRAP_INTEGRATION
+    if (read_u32(connection_slot_addr) == 0U) {
+        marker("PM_CGS_SESSION_BOOTSTRAP_INTEGRATION_RESULT:CONNECTION_NULL");
+        return 43;
+    }
+    marker("PM_CGS_SESSION_BOOTSTRAP_INTEGRATION_RESULT:CONNECTION_NONZERO");
+    marker("PM_CGS_SESSION_BOOTSTRAP_INTEGRATION_MILESTONE:M07_SUCCESS");
+    return 0;
+#else
     marker("PM_POSTIDENTITY_MILESTONE:M07_BEFORE_GetProcessPID");
     status = GetProcessPID(&psn, &roundtrip_pid);
     marker("PM_POSTIDENTITY_MILESTONE:M08_AFTER_GetProcessPID");
@@ -533,4 +551,5 @@ main(void)
 
     marker("PM_CPS_DISCRIMINATOR_RESULT:CPS_RAW_OTHER");
     return 33;
+#endif
 }
