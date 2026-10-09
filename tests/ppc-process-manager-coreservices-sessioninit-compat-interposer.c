@@ -218,6 +218,8 @@ encode_cgs_server_version_u32(unsigned char *message,
 static void
 maybe_normalize_cgs_server_version_reply(unsigned char *message,
                                          uint32_t request_id,
+                                         int request_exact,
+                                         mach_msg_size_t rcv_size,
                                          mach_msg_return_t mr,
                                          uint32_t reply_bits,
                                          uint32_t reply_size,
@@ -243,6 +245,24 @@ maybe_normalize_cgs_server_version_reply(unsigned char *message,
 
     ++gCGSServerVersionCompatCallCount;
     mode = getenv(CGS_SERVER_VERSION_COMPAT_ENV);
+
+    if (!request_exact ||
+        rcv_size < CGS_SERVER_VERSION_REPLY_SIZE ||
+        (reply_bits & MACH_MSGH_BITS_COMPLEX) == 0 ||
+        reply_size != CGS_SERVER_VERSION_REPLY_SIZE ||
+        reply_id != CGS_SERVER_VERSION_REPLY_ID) {
+        fprintf(stderr,
+                "PM_CGS_SERVER_VERSION_COMPAT_RESULT:REQUEST_OR_REPLY_ENVELOPE_REJECTED index=%u mode=%s requestExact=%s replyBits=0x%08lx replySize=0x%08lx replyId=0x%08lx recv=0x%08lx\n",
+                gCGSServerVersionCompatCallCount,
+                mode ? mode : "(unset)",
+                request_exact ? "YES" : "NO",
+                (unsigned long)reply_bits,
+                (unsigned long)reply_size,
+                (unsigned long)reply_id,
+                (unsigned long)rcv_size);
+        fflush(stderr);
+        return;
+    }
 
     descriptor_count =
         get_u32(message + CGS_SERVER_VERSION_REPLY_DESC_COUNT_OFF);
@@ -299,9 +319,6 @@ maybe_normalize_cgs_server_version_reply(unsigned char *message,
     }
 
     if (gCGSServerVersionCompatCallCount != 1U ||
-        (reply_bits & MACH_MSGH_BITS_COMPLEX) == 0 ||
-        reply_size != CGS_SERVER_VERSION_REPLY_SIZE ||
-        reply_id != CGS_SERVER_VERSION_REPLY_ID ||
         descriptor_count != 1U ||
         descriptor_port == MACH_PORT_NULL ||
         disposition != CGS_SERVER_VERSION_EXPECTED_DISPOSITION ||
@@ -498,9 +515,27 @@ trace_cgs_message(mach_msg_header_t *msg,
     uint32_t reply_id;
     uint32_t limit;
     uint32_t off;
+#ifdef PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION
+    int server_version_request_exact = 0;
+#endif
 
     request_id = get_u32(m + 0x14);
     expected_reply = cgs_trace_expected_reply(request_id);
+#ifdef PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION
+    if (request_id == CGS_SERVER_VERSION_REQUEST_ID) {
+        server_version_request_exact =
+            get_u32(m + 0x00) == 0x00001513U &&
+            get_u32(m + 0x04) == 0x00000024U &&
+            get_u32(m + 0x08) != 0U &&
+            get_u32(m + 0x0c) != 0U &&
+            option == (mach_msg_option_t)0x00000003U &&
+            send_size == (mach_msg_size_t)0x00000024U &&
+            rcv_size == (mach_msg_size_t)0x00000048U &&
+            rcv_name != MACH_PORT_NULL &&
+            timeout == MACH_MSG_TIMEOUT_NONE &&
+            notify == MACH_PORT_NULL;
+    }
+#endif
     ++gCGSTraceCallCount;
 
     fprintf(stderr, "%s\n", COMPAT_BUILD_MARKER);
@@ -591,6 +626,8 @@ trace_cgs_message(mach_msg_header_t *msg,
 #ifdef PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION
     maybe_normalize_cgs_server_version_reply(m,
                                              request_id,
+                                             server_version_request_exact,
+                                             rcv_size,
                                              mr,
                                              reply_bits,
                                              reply_size,
