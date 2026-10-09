@@ -9,7 +9,7 @@ import sys
 import tempfile
 
 DEFAULT_REPORT = "./distributed-notifications-client-service-selection.txt"
-ANALYZER_VERSION = "1"
+ANALYZER_VERSION = "2"
 
 COREFOUNDATION = "/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation"
 FOUNDATION = "/System/Library/Frameworks/Foundation.framework/Versions/C/Foundation"
@@ -22,11 +22,17 @@ LION_DAEMON_SERVICE = "com.apple.distributed_notifications@0v3"
 
 CF_EXACT_TARGETS = [
     "_CFNotificationCenterGetDistributedCenter",
+    "___CFNotificationCenterGetDistributedCenter_block_invoke_1",
     "_CFNotificationCenterAddObserver",
     "_CFNotificationCenterRemoveObserver",
     "_CFNotificationCenterRemoveEveryObserver",
     "_CFNotificationCenterPostNotification",
     "_CFNotificationCenterPostNotificationWithOptions",
+]
+
+FOUNDATION_EXACT_TARGETS = [
+    "+[NSDistributedNotificationCenter defaultCenter]",
+    "+[NSDistributedNotificationCenter notificationCenterForType:]",
 ]
 
 FOCUS_RE = re.compile(
@@ -290,6 +296,10 @@ def analyze_slice(fp, label, path, arch, tempdir, required, evidence):
         for target in CF_EXACT_TARGETS:
             if by_name.get(target):
                 evidence[(label, arch, "symbol:" + target)] = True
+    elif label == "Foundation":
+        for target in FOUNDATION_EXACT_TARGETS:
+            if by_name.get(target):
+                evidence[(label, arch, "symbol:" + target)] = True
 
     rc, dis_out = run(["/usr/bin/otool", "-tvV", thin])
     write_line(fp, "-- disassembly summary --")
@@ -317,13 +327,19 @@ def analyze_slice(fp, label, path, arch, tempdir, required, evidence):
                    (len(focused_dis) - 1800))
 
     if label == "CoreFoundation":
-        for target in CF_EXACT_TARGETS:
-            addrs = sorted(by_name.get(target, []))
-            write_line(fp)
-            write_line(fp, "-- exact target: %s count=%d --" %
-                       (target, len(addrs)))
-            for addr in addrs:
-                emit_symbol_window(fp, rows, ordered_text, target, addr)
+        exact_targets = CF_EXACT_TARGETS
+    elif label == "Foundation":
+        exact_targets = FOUNDATION_EXACT_TARGETS
+    else:
+        exact_targets = []
+
+    for target in exact_targets:
+        addrs = sorted(by_name.get(target, []))
+        write_line(fp)
+        write_line(fp, "-- exact target: %s count=%d --" %
+                   (target, len(addrs)))
+        for addr in addrs:
+            emit_symbol_window(fp, rows, ordered_text, target, addr)
 
 
 def validate(product, evidence, issues):
@@ -342,6 +358,10 @@ def validate(product, evidence, issues):
         if not evidence.get(("Foundation", arch,
                              "foundation_type_selector"), False):
             issues.append("Snow Foundation notificationCenterForType selector missing")
+        for target in FOUNDATION_EXACT_TARGETS:
+            if not evidence.get(("Foundation", arch,
+                                 "symbol:" + target), False):
+                issues.append("Snow Foundation exact target missing: %s" % target)
     elif product == "10.7.5":
         arch = "i386"
         if not evidence.get(("CoreFoundation", arch, "slice"), False):
@@ -356,9 +376,16 @@ def validate(product, evidence, issues):
         if not evidence.get(("CoreFoundation", arch,
                              "symbol:_CFNotificationCenterGetDistributedCenter"), False):
             issues.append("Lion CFNotificationCenterGetDistributedCenter symbol missing")
+        if not evidence.get(("CoreFoundation", arch,
+                             "symbol:___CFNotificationCenterGetDistributedCenter_block_invoke_1"), False):
+            issues.append("Lion distributed-center initializer block missing")
         if not evidence.get(("Foundation", arch,
                              "foundation_type_selector"), False):
             issues.append("Lion Foundation notificationCenterForType selector missing")
+        for target in FOUNDATION_EXACT_TARGETS:
+            if not evidence.get(("Foundation", arch,
+                                 "symbol:" + target), False):
+                issues.append("Lion Foundation exact target missing: %s" % target)
     else:
         issues.append("unsupported OS baseline: %s" % product)
 
