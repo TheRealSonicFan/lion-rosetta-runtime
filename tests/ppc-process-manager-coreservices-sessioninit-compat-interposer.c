@@ -525,9 +525,8 @@ trace_cgs_message(mach_msg_header_t *msg,
     if (request_id == CGS_SERVER_VERSION_REQUEST_ID) {
         server_version_request_exact =
             get_u32(m + 0x00) == 0x00001513U &&
-            get_u32(m + 0x04) == 0x00000024U &&
             get_u32(m + 0x08) != 0U &&
-            get_u32(m + 0x0c) != 0U &&
+            get_u32(m + 0x0c) == (uint32_t)rcv_name &&
             option == (mach_msg_option_t)0x00000003U &&
             send_size == (mach_msg_size_t)0x00000024U &&
             rcv_size == (mach_msg_size_t)0x00000048U &&
