@@ -104,6 +104,35 @@ Version 2 fixes only that tooling defect:
 
 The version-1 executable, SHA sidecar, info file, and failed control log are provenance only. Do **not** transfer or run that executable on Lion. Pull current `main`, rebuild on Snow Leopard, and repeat Phase C with the version-2 artifact.
 
+### Second Phase-C tooling correction after the version-2 control
+
+The rebuilt version-2 Snow Leopard control passed the lookup-layout self-check and then reached the real legacy WindowServer path successfully:
+
+```text
+PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v2
+PM_CGS_SESSION_PORT_LAYOUT:PASS
+PM_CGS_SESSION_PORT_BOOTSTRAP_SPECIAL_PORT:kr=0 ... port=0x0000070b global=0x0000070b
+PM_CGS_SESSION_PORT_SNOW_LOOKUP_RETURN:kr=0 ... sessionPort=0x00001e03
+PM_CGS_SESSION_PORT_RIGHT:... send=YES
+PM_CGS_SESSION_PORT_DEATHWATCH_MACH_RETURN:kr=0
+PM_CGS_SESSION_PORT_DEATHWATCH_REPLY:bits=0x80001200 size=0x00000028 id=0x000071b0
+PM_CGS_SESSION_PORT_DEATHWATCH_COMPLEX_REPLY:descriptor_count=1 port=0x00001f03 descriptorWord=0x00001100 disposition=0x00
+control_status=22
+RESULT: FAIL
+```
+
+This failure is also in the probe, but at a later point. The legacy session lookup and the DeathWatch transaction both succeeded. The reply is the expected complex `0x28` / `0x71b0` shape with one nonzero port descriptor. Version 2 incorrectly derived the descriptor disposition by treating the four bytes beginning at offset `0x24` as an integer and shifting that integer by 16 bits. On big-endian PPC the observed word `0x00001100` has byte `0x11` at the ABI-defined port-descriptor disposition offset `0x26`; integer shifting therefore decoded the correct descriptor as disposition zero.
+
+Version 3 fixes that second endian-sensitive parser defect:
+
+- the port descriptor disposition is read directly from message byte offset `0x26`;
+- the descriptor type is read directly from byte offset `0x27` and must be `0x00`;
+- the full 32-bit descriptor word remains logged only as diagnostic context and is no longer used to infer byte fields;
+- the build ID is now `cgs-session-port-protocol-v3`;
+- both Snow and Lion runners require v3, and their success gates require `disposition=0x11 type=0x00` on the relevant complex replies.
+
+The byte offsets match the already-proven descriptor parsing used elsewhere in this repository for ServerCheckin and LaunchServices replies. The version-2 artifact and failed log are therefore provenance, not evidence of a protocol incompatibility. Do **not** transfer the v2 executable to Lion. Pull current `main`, rebuild on Snow Leopard, and repeat Phase C with the v3 artifact. The remaining Snow control requirement is to prove that the returned DeathWatch port is itself a live send right and that the control reaches `SNOW_CONTROL_PASS`.
+
 ### `snow-control`
 
 It performs:
@@ -213,7 +242,7 @@ ppc-process-manager-cgs-session-port-protocol-private-dyld.sha256
 Require:
 
 - a 32-bit PPC executable;
-- build marker `PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v2`;
+- build marker `PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v3`;
 - `LC_LOAD_DYLINKER=/usr/oah/dyld`;
 - imports for `bootstrap_look_up`, `bootstrap_port`, `mig_get_reply_port`, `mach_msg`, `task_get_special_port`, `mach_port_type`, and `mach_port_deallocate`.
 
@@ -240,7 +269,7 @@ PM_CGS_SESSION_PORT_RESULT:SNOW_CONTROL_PASS
 RESULT: PASS
 ```
 
-Phase C is a hard gate. If it fails, stop and do not run Lion. For the corrected pass, confirm the log contains `PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v2`; a version-1 log is not eligible to advance.
+Phase C is a hard gate. If it fails, stop and do not run Lion. For the corrected pass, confirm the log contains `PM_CGS_SESSION_PORT_BUILD_ID:cgs-session-port-protocol-v3`; version-1 and version-2 logs are not eligible to advance.
 
 ## Phase D — transfer exact artifacts to Lion
 
@@ -255,7 +284,7 @@ ppc-process-manager-cgs-session-port-protocol-snowleopard-control.log
 
 Place the executable and SHA sidecar under runtime `payload/`, or pass explicit paths.
 
-Before transfer, confirm the info file contains `build_id=cgs-session-port-protocol-v2` and the control log contains both the v2 build marker and `RESULT: PASS`. Do not transfer the failed version-1 artifact.
+Before transfer, confirm the info file contains `build_id=cgs-session-port-protocol-v3` and the control log contains both the v3 build marker and `RESULT: PASS`. Do not transfer either failed version-1 or version-2 artifact.
 
 Do not rebuild on Lion.
 
