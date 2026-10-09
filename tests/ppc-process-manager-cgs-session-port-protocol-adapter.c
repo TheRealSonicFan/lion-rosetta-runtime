@@ -14,7 +14,7 @@ extern kern_return_t bootstrap_look_up(mach_port_t,
                                        mach_port_t *);
 extern mach_port_t mig_get_reply_port(void);
 
-#define BUILD_ID "cgs-session-port-protocol-v2"
+#define BUILD_ID "cgs-session-port-protocol-v3"
 #define BUILD_MARKER "PM_CGS_SESSION_PORT_BUILD_ID:" BUILD_ID
 
 #define BOOTSTRAP_SPECIAL_PORT 4
@@ -50,7 +50,10 @@ extern mach_port_t mig_get_reply_port(void);
 #define CGS_REPLY_PORT_OFF 0x1cU
 #define CGS_REPLY_RETCODE_OFF 0x20U
 #define CGS_REPLY_DESCRIPTOR_WORD_OFF 0x24U
+#define CGS_REPLY_DESCRIPTOR_DISPOSITION_OFF 0x26U
+#define CGS_REPLY_DESCRIPTOR_TYPE_OFF 0x27U
 #define CGS_EXPECTED_PORT_DISPOSITION 0x11U
+#define CGS_EXPECTED_PORT_TYPE 0x00U
 
 static const char *kSessionServiceName = "com.apple.windowserver.session";
 static const char *kActiveServiceName = "com.apple.windowserver.active";
@@ -309,6 +312,7 @@ cgs_port_rpc(mach_port_t remote_port,
     uint32_t descriptor_count;
     uint32_t descriptor_word;
     uint32_t disposition;
+    uint32_t descriptor_type;
     mach_port_t out_port;
     int32_t retcode;
 
@@ -390,22 +394,24 @@ cgs_port_rpc(mach_port_t remote_port,
     descriptor_count = get_u32(message + CGS_REPLY_DESC_COUNT_OFF);
     out_port = (mach_port_t)get_u32(message + CGS_REPLY_PORT_OFF);
     descriptor_word = get_u32(message + CGS_REPLY_DESCRIPTOR_WORD_OFF);
-    disposition = (descriptor_word >> 16) & 0xffU;
+    disposition = (uint32_t)message[CGS_REPLY_DESCRIPTOR_DISPOSITION_OFF];
+    descriptor_type = (uint32_t)message[CGS_REPLY_DESCRIPTOR_TYPE_OFF];
 
     fprintf(stderr,
-            "PM_CGS_SESSION_PORT_%s_COMPLEX_REPLY:descriptor_count=%lu port=0x%08lx descriptorWord=0x%08lx disposition=0x%02lx\n",
+            "PM_CGS_SESSION_PORT_%s_COMPLEX_REPLY:descriptor_count=%lu port=0x%08lx descriptorWord=0x%08lx disposition=0x%02lx type=0x%02lx\n",
             label,
             (unsigned long)descriptor_count,
             (unsigned long)out_port,
             (unsigned long)descriptor_word,
-            (unsigned long)disposition);
+            (unsigned long)disposition,
+            (unsigned long)descriptor_type);
     fflush(stderr);
 
     if (reply_size != CGS_SUCCESS_SIZE ||
         descriptor_count != 1U ||
         out_port == MACH_PORT_NULL ||
-        (descriptor_word & 0xff000000U) != 0U ||
-        disposition != CGS_EXPECTED_PORT_DISPOSITION) {
+        disposition != CGS_EXPECTED_PORT_DISPOSITION ||
+        descriptor_type != CGS_EXPECTED_PORT_TYPE) {
         if (out_port != MACH_PORT_NULL)
             (void)mach_port_deallocate(mach_task_self(), out_port);
         return MIG_TYPE_ERROR;
