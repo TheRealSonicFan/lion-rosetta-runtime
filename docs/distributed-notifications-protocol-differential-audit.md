@@ -22,7 +22,7 @@ Snow PPC CoreFoundation's `___CFXNotificationSendToServer`:
 
 - obtains the bootstrap port and calls `bootstrap_look_up2` with flags `8`;
 - serializes the request dictionary with `___CFBinaryPlistWriteToStream`;
-- builds the legacy Mach envelope with message ID `0x1413`;
+- builds the legacy Mach envelope with `msgh_bits = 0x1413` with `msgh_id = 4`;
 - sends it with `mach_msg`;
 - retains explicit `SendToServer`, `ReceiveFromServer`, `SendToClient`, and `ReceiveFromClient` protocol functions.
 
