@@ -37,6 +37,19 @@ die() {
     exit "$code"
 }
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
+is_ppc32_macho() {
+    file="$1"
+
+    if [ -x /usr/bin/lipo ]; then
+        /usr/bin/lipo -verify_arch ppc "$file" >/dev/null 2>&1 && return 0
+        /usr/bin/lipo "$file" -verify_arch ppc >/dev/null 2>&1 && return 0
+    fi
+
+    desc="$(/usr/bin/file "$file" 2>/dev/null || true)"
+    echo "$desc" | /usr/bin/grep -Eiq '(^|[^[:alnum:]_])(ppc|powerpc)([^[:alnum:]_]|$)' || return 1
+    echo "$desc" | /usr/bin/grep -Eiq 'ppc64|powerpc64' && return 1
+    return 0
+}
 
 log "== Lion PPC CPS registration compatibility policy proof =="
 log "date=$(/bin/date '+%Y-%m-%d %H:%M:%S %z')"
@@ -91,7 +104,11 @@ HANDLER="$(/usr/sbin/sysctl -n kern.exec.archhandler.powerpc 2>/dev/null || true
 log "powerpc_archhandler=$HANDLER"
 [ "$HANDLER" = "$TRANSLATOR" ] || die 68 "PowerPC handler mismatch"
 
-/usr/bin/lipo -verify_arch ppc "$EXE" >/dev/null 2>&1 || /usr/bin/lipo "$EXE" -verify_arch ppc >/dev/null 2>&1 || die 67 "probe is not 32-bit PPC"
+is_ppc32_macho "$EXE" || {
+    /usr/bin/file "$EXE" | /usr/bin/tee -a "$REPORT"
+    /usr/bin/lipo -info "$EXE" 2>&1 | /usr/bin/tee -a "$REPORT" || true
+    die 67 "probe is not a 32-bit PowerPC Mach-O executable"
+}
 
 OT="$(/usr/bin/otool -l "$EXE" | /usr/bin/grep -A3 LC_LOAD_DYLINKER || true)"
 echo "$OT" | /usr/bin/tee -a "$REPORT"
