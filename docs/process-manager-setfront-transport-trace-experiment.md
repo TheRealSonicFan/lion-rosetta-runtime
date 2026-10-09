@@ -402,3 +402,46 @@ SetFrontProcess adaptation                   -> not yet authorized
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — legacy SetFrontProcess is rejected by Lion
+
+The returned Snow and Lion evidence completes this passive trace stage.
+
+Snow control:
+
+```text
+legacy request                         0x729e
+legacy reply                           0x7302
+send / receive                         0x30 / 0x2c
+reply result                           0
+SetFrontProcess                        0
+RESULT                                 PASS
+```
+
+Lion:
+
+```text
+registration adapter                   PASS
+GetProcessPID                          exact PID round-trip PASS
+TransformProcessType                   PASS
+legacy request                         0x729e
+Mach result                            0
+reply ID                               0x7302
+reply size                             0x24
+reply result                           -304
+SetFrontProcess                        -304
+new diagnostic                         none
+protected hashes                       unchanged
+RESULT                                 SETFRONT_TRACE_LEGACY_REPLY_OBSERVED_PUBLIC_ERROR
+```
+
+This dynamically proves that the restored translated process now reaches the formerly latent Snow PPC SetFrontProcess transaction and that Lion rejects that legacy routine while still returning a normal MIG reply envelope. The failure is no longer pre-transport.
+
+The prior static audit shows the corresponding Lion-native routine is 0x72a1/0x7305 with the same 0x30/0x2c envelope and the same NDR-plus-four-u32 request shape. The authoritative next stage is:
+
+```text
+docs/process-manager-setfront-compat-protocol-adapter-experiment.md
+```
+
+That stage performs an exact copied-buffer policy proof: on Lion it changes only private request ID 0x729e to 0x72a1, requires native 0x7305/result 0, changes only the private reply ID back to 0x7302, and returns the legacy-facing success reply. Snow remains strict passthrough. Do not broaden the predicate or normalize a nonzero native server result.
