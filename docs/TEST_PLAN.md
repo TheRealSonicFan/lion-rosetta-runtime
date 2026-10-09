@@ -243,3 +243,16 @@ docs/process-manager-cgs-server-port-acquisition-audit.md
 Pull current runtime `main` and rerun the read-only audit on Snow Leopard first and Lion second. The corrected script now reports `analyzer_version=2`, preserves every same-name symbol address, emits every `_lookupServerPort` window, exact-targets Snow `_CGSLookupSessionPort`, and requires Lion `__CGSGetSessionPort`. Return only the two regenerated version-2 reports. Do not rerun the PPC subject, perform a live bootstrap lookup, add a CoreGraphics/WindowServer interposer, or change XNU until the corrected reports are reviewed.
 
 No additional XNU change is indicated.
+
+
+The corrected CGS server-port acquisition audit has now passed on both Snow Leopard and Lion and resolves the exact active compatibility boundary. Snow PPC initially enters `_lookupServerPort(0,0)`, obtains task special port 4, and performs ordinary `bootstrap_look_up("com.apple.windowserver.session")`; failure falls through the legacy active/root lookup path and can produce the observed non-root on-demand-launch error. Lion native `_CGSLookupSessionPort` instead routes through `_getSessionPort(1)`: it obtains the active root WindowServer service through Lion's `bootstrap_look_up2` path with target PID 0 and flags 8, then issues `__CGSGetSessionPort` request/reply `0x7151/0x71b5` with `0x18/0x30` sizing and returns a one-descriptor `0x11` send right. The unchanged DeathWatch transaction remains `0x714c/0x71b0`, and `__CGSNewConnectionPort 0x7469/0x74cd` remains downstream.
+
+The authoritative next step is:
+
+```text
+docs/process-manager-cgs-session-port-protocol-adapter-experiment.md
+```
+
+Build the prepared 32-bit PPC standalone probe on Snow Leopard and require the legacy session-lookup/DeathWatch positive control to pass. Then run Lion exactly once after the established native safety gates. The Lion probe performs only the native-format active-root lookup, one `GetSessionPort` transaction, send-right validation, one unchanged DeathWatch transaction, and port deallocation. Return the files listed by the experiment. Do not install a CGS interposer, rerun Process Manager registration, adapt `0x7469` or `0x729e`, or change XNU until this standalone protocol proof is reviewed.
+
+No additional XNU change is indicated.
