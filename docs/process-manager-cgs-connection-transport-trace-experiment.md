@@ -332,3 +332,60 @@ next step                                        -> passive 0x7469/0x74cd Lion t
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed Lion Phase F result — no NewConnection after the proven session adapter
+
+The corrected Snow control passed with the expected registration-path transport:
+
+```text
+__CGSNewConnectionPort request 0x7469            -> observed
+mach_msg                                           -> KERN_SUCCESS
+reply ID 0x74cd                                    -> matched
+reply size                                         -> 0x3c
+GetProcessForPID                                   -> 0
+postidentity CoreGraphics connection               -> nonzero
+DeathWatch                                         -> not observed, optional
+RESULT                                             -> PASS
+```
+
+The corresponding Lion trace advanced through every established compatibility layer and through the complete session-bootstrap adapter:
+
+```text
+SessionInit v5                                     -> PASS
+active-root lookup                                 -> PASS
+GetSessionPort 0x7151/0x71b5                      -> PASS
+returned session right                            -> live send right
+session-bootstrap adapter                          -> ADAPTER_PASS
+DeathWatch                                         -> not observed
+__CGSNewConnectionPort 0x7469                     -> not observed
+process exit status                               -> 1
+new crash/core diagnostic                         -> none
+protected hashes                                  -> unchanged
+RESULT                                             -> CGS_TRACE_NO_NEWCONNECTION_AFTER_SESSION_ADAPTER
+```
+
+This is a real boundary result, not a runner defect. The restored Snow PPC client receives a valid Lion session port but stops inside the local server-port path before `__CGSNewConnectionPort` is called.
+
+The already-collected Snow PPC disassembly identifies the immediate local helper:
+
+```text
+_CGSNewConnection
+  -> _CGSServerPort
+     -> _lookupServerPort(0, 0)
+     -> _connectAndCheck(...)
+     -> selected-port publication/cache
+  -> __CGSNewConnectionPort
+```
+
+Therefore this transport-trace stage is complete. Do not broaden the `mach_msg` trace and do not adapt `0x7469`.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-cgs-connect-and-check-audit.md
+```
+
+It is a read-only Snow/Lion CoreGraphics differential that exact-targets `_connectAndCheck`, its `_CGSServerPort` call sites, and the immediately adjacent lookup/NewConnection helpers to determine whether the internal helper ABI, Mach contract, reply semantics, or local output state evolved between Snow Leopard PPC and Lion native CoreGraphics.
+
+Do not rerun the PPC subject until those two static reports are reviewed. No additional XNU change is indicated.
