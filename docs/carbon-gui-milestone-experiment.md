@@ -353,3 +353,10 @@ and then terminated with SIGABRT/status 134. `M02_AFTER_GetCurrentProcess` was n
 The new crash report repeats the previously decoded guest self-SIGABRT pattern at Rosetta's host syscall wrapper. Therefore the immediate observed Carbon boundary is now `GetCurrentProcess`, not pre-main framework initialization.
 
 This result does not justify another XNU change. The next controlled variable is launch context: package a near-identical milestone executable as a real application bundle and launch it through LaunchServices. Follow `docs/carbon-launchservices-experiment.md`.
+
+
+## Current-path note after Process Manager restoration
+
+The historical Lion localization in this document stopped at `GetCurrentProcess` before window creation. That boundary is now closed under the accepted registration/session/CoreGraphics/SetFront compatibility stack: `GetCurrentProcess` returns success and the exact expected PSN with `LSDONOTABORTIFNOASN` unset.
+
+Do not rerun this older milestone subject as the current gate. The authoritative next procedure is `docs/process-manager-createwindow-validation-experiment.md`, which preserves the complete restored stack and advances only through `CreateNewWindow` plus immediate `DisposeWindow`, stopping before show/select/visibility and event-loop work.
