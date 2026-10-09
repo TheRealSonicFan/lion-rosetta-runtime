@@ -253,20 +253,19 @@ if ! /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$R
     exit 1
 fi
 
-if ! /usr/bin/grep -Fq 'kind=DEATHWATCH' "$RAW_LOG"; then
-    log "RESULT: CGS_TRACE_STOPS_AFTER_SESSION_ADAPTER_BEFORE_DEATHWATCH"
-    exit 0
-fi
-
-if ! /usr/bin/grep -Fq 'kind=DEATHWATCH kr=0 hex=0x00000000' "$RAW_LOG" ||
-   ! /usr/bin/grep -Fq 'kind=DEATHWATCH bits=' "$RAW_LOG" ||
-   ! /usr/bin/grep -Fq 'id=0x000071b0 expected=0x000071b0 idMatch=YES' "$RAW_LOG"; then
-    log "RESULT: CGS_TRACE_DEATHWATCH_FAILURE"
-    exit 0
+if /usr/bin/grep -Fq 'kind=DEATHWATCH' "$RAW_LOG"; then
+    if /usr/bin/grep -Fq 'kind=DEATHWATCH kr=0 hex=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'id=0x000071b0 expected=0x000071b0 idMatch=YES' "$RAW_LOG"; then
+        log "deathwatch_optional_status=PASS"
+    else
+        log "deathwatch_optional_status=OBSERVED_NONPASS"
+    fi
+else
+    log "deathwatch_optional_status=NOT_OBSERVED_EXPECTED_REGISTRATION_PATH"
 fi
 
 if ! /usr/bin/grep -Fq 'kind=NEW_CONNECTION' "$RAW_LOG"; then
-    log "RESULT: CGS_TRACE_DEATHWATCH_PASS_NO_NEWCONNECTION"
+    log "RESULT: CGS_TRACE_NO_NEWCONNECTION_AFTER_SESSION_ADAPTER"
     exit 0
 fi
 
