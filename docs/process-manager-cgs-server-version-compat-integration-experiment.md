@@ -361,3 +361,52 @@ later known CPS mismatch                    -> 0x729e vs 0x72a1, still out of sc
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — default connection established, CPS registration still rejects
+
+The returned Lion integration reached the intended success result:
+
+```text
+RESULT: CGS_SERVER_VERSION_COMPAT_CONNECTION_ESTABLISHED
+```
+
+The detailed evidence confirms:
+
+```text
+session-port adapter                         PASS
+server-version original                      600 / 0
+server-version adapted                       545 / 0
+changed bytes                                1
+changed outside version region               0
+__CGSNewConnectionPort request               0x7469
+__CGSNewConnectionPort reply                 0x74cd
+NewConnection Mach result                    0
+GetProcessForPID                             0
+postidentity connection-record slot          nonzero
+new diagnostic                               none
+protected hashes                             unchanged
+```
+
+The Snow positive control remains behavior-preserving: the version reply passed through as `545/0`, `0x7469/0x74cd` succeeded, and the connection slot became nonzero.
+
+This closes the default-connection creation boundary. The `0x7469/0x74cd` Lion reply has the same accepted high-level shape as Snow—complex `0x3c`, one port descriptor, disposition/type bytes `0x11/0x00`, expected reply ID—and the restored client publishes a live nonzero connection record. The server-assigned port/value words naturally differ between runs and did not prevent client acceptance.
+
+However, the same successful Lion run also emitted:
+
+```text
+_RegisterApplication(), FAILED TO REGISTER PROCESS WITH CPS/CoreGraphics in WindowServer, err=-304
+```
+
+That message occurs after the successful NewConnection reply and before `GetProcessForPID` returns. Therefore `CGS_SERVER_VERSION_COMPAT_CONNECTION_ESTABLISHED` is a **narrow CoreGraphics connection success**, not proof that CPS application registration is complete.
+
+Do not proceed directly to SetFrontProcess. Earlier static evidence shows that Snow PPC `__CPSRegisterWithServer` calls legacy `__CGSCheckInApplication`, while Lion native `__CPSRegisterWithServer` calls `__CGSCreateApplication`. The surviving `-304` makes that application-registration protocol the next active boundary.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-cps-registration-protocol-audit.md
+scripts/audit-process-manager-cps-registration-protocol.py
+```
+
+Run that read-only audit on Snow Leopard first and Lion second, return only the two reports, and do not rerun the PPC foreground/CPS subject or adapt `0x729e` until the registration protocol is reviewed.
