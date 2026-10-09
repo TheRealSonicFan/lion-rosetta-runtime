@@ -62,6 +62,7 @@ For this stage:
 - do not change any distributed-notification service name;
 - do not synthesize a Mach port or XPC connection;
 - do not restart, signal, unload, load, or modify `distnoted` or `launchd`;
+- the existing Lion `distnoted daemon` and per-user `distnoted agent` must already be running; the runner refuses to use this trace to launch either one and requires the same distnoted PID/role set before and after;
 - do not edit launchd plists;
 - do not patch Foundation, CoreFoundation, HIToolbox, Rosetta, dyld, libSystem, the Rosetta cache, or any system binary;
 - do not broaden the accepted Rosetta compatibility interposer;
@@ -102,6 +103,8 @@ If Phase B fails, stop and return the terminal output; do not run Phase C.
 
 ## Phase C — run the native service-selection trace
 
+Before running, confirm you are in the same logged-in Aqua session used for the namespace audit. The runner will verify that both the existing `distnoted daemon` and `distnoted agent` are already active and will fail rather than trigger this experiment when either is absent.
+
 Ensure these variables are unset before the runner:
 
 ```sh
@@ -135,7 +138,7 @@ selected_service=...
 RESULT: PASS
 ```
 
-The runner fails rather than guessing if no service is observed, more than one distinct service is observed in either mode, the two modes disagree, or a service outside the two statically established Lion candidates appears.
+The runner fails rather than guessing if the pre-existing distnoted daemon/agent are absent or change PID/role set, no service is observed, more than one distinct service is observed in either mode, the two modes disagree, or a service outside the two statically established Lion candidates appears.
 
 Do not run the PPC subject or another lookup after this trace.
 
