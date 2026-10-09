@@ -45,9 +45,26 @@ The useful v1 evidence is:
 
 A PASS from analyzer v1 therefore means only that the intended binaries and broad targets were captured. It is insufficient to choose `@Uv3` or `@1v3`.
 
-Current `main` upgrades the analyzer to version 2. Version 2 emits the complete Lion private distributed-center initializer and the complete Foundation `defaultCenter` / `notificationCenterForType:` windows, and makes those exact targets part of the required evidence. This is still a static/read-only audit; no live lookup is added.
+The previously reviewed `main` upgraded the analyzer to version 2. Version 2 emits the complete Lion private distributed-center initializer and the complete Foundation `defaultCenter` / `notificationCenterForType:` windows, and makes those exact targets part of the required evidence. This is still a static/read-only audit; no live lookup is added.
 
 Discard or overwrite the v1 reports and rerun the documented Snow and Lion phases with current `main`.
+
+## Reviewed analyzer-v2 Phase B failure
+
+The Snow Leopard analyzer-v2 failure is a parser false negative, not missing Foundation functionality.
+
+The v2 report itself contains the PPC text symbols:
+
+```text
++[NSDistributedNotificationCenter defaultCenter]
++[NSDistributedNotificationCenter notificationCenterForType:]
+```
+
+but the analyzer reported both exact-target counts as zero and failed validation. The cause was `parse_symbols()`: it used the final whitespace-delimited token from each `nm -nm` row as the symbol name. That works for ordinary C symbols, but truncates Objective-C method names containing spaces; for example `+[NSDistributedNotificationCenter defaultCenter]` was recorded only as `defaultCenter]`.
+
+Current `main` fixes that parser by preserving the complete symbol name following the `(__TEXT,__text)` scope/type fields and advances the analyzer marker to version 3. The evidence requirements are unchanged; only symbol-name parsing is corrected. Snow still runs first, and Lion must not be run unless the corrected Snow report passes.
+
+Discard or overwrite the analyzer-v2 Snow report and rerun Phase B with current `main`.
 
 ## Prepared implementation
 
@@ -58,7 +75,7 @@ scripts/audit-distributed-notifications-client-service-selection.py
 docs/distributed-notifications-client-service-selection-audit.md
 ```
 
-The analyzer is Python 2.6-compatible, read-only, and currently reports `analyzer_version=2`. It examines CoreFoundation and Foundation on Snow Leopard and Lion, including:
+The analyzer is Python 2.6-compatible, read-only, and currently reports `analyzer_version=3`. It examines CoreFoundation and Foundation on Snow Leopard and Lion, including:
 
 - binary and architecture provenance;
 - addressed distributed-notifications service cstrings;
@@ -111,10 +128,10 @@ docs/distributed-notifications-client-service-selection-audit.md
 The regenerated reports must begin with:
 
 ```text
-analyzer_version=2
+analyzer_version=3
 ```
 
-Do not submit analyzer-v1 reports for this rerun.
+Do not submit analyzer-v1 or analyzer-v2 reports for this corrected rerun.
 
 ## Phase B — Snow Leopard static client audit
 
@@ -182,7 +199,7 @@ Lion current-user launchd job                   -> com.apple.distnoted.xpc.agent
 Snow CoreFoundation client string               -> .2
 Lion CoreFoundation client strings              -> @Uv3 and @1v3
 failed Lion .2 native-format lookup              -> BOOTSTRAP_UNKNOWN_SERVICE (1102)
-next step                                       -> rerun expanded static client-selection audit v2
+next step                                       -> rerun corrected static client-selection audit v3
 ```
 
 No additional XNU change is indicated.
