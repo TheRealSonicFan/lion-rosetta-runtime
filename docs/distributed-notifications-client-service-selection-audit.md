@@ -29,6 +29,26 @@ The Lion user's launchctl namespace contains `com.apple.distnoted.xpc.agent`. Li
 
 This is enough to reject a blind `.2 -> arbitrary v3 name` rewrite. The next step must prove the native client selection path first.
 
+## Reviewed analyzer-v1 result
+
+Both returned analyzer-v1 reports passed their structural validation, but they do **not** yet prove which Lion v3 service is selected.
+
+The useful v1 evidence is:
+
+- Snow PPC `CFNotificationCenterGetDistributedCenter` remains the legacy path and returns through `__CFXNotificationGetHostCenter`;
+- Lion `CFNotificationCenterGetDistributedCenter` instead uses `dispatch_once`;
+- Lion contains a private `___CFNotificationCenterGetDistributedCenter_block_invoke_1` initializer that calls `xpc_connection_create`, `xpc_connection_set_legacy`, and `xpc_connection_set_privileged`;
+- Lion contains both `com.apple.distributed_notifications@1v3` and `com.apple.distributed_notifications@Uv3`;
+- however the v1 cstring-reference scan reports zero direct references for both Lion service strings;
+- v1 emitted only the public getter window, not the complete private initializer block that actually creates the Lion connection;
+- v1 also listed Foundation's `defaultCenter` and `notificationCenterForType:` symbols without emitting their complete bodies.
+
+A PASS from analyzer v1 therefore means only that the intended binaries and broad targets were captured. It is insufficient to choose `@Uv3` or `@1v3`.
+
+Current `main` upgrades the analyzer to version 2. Version 2 emits the complete Lion private distributed-center initializer and the complete Foundation `defaultCenter` / `notificationCenterForType:` windows, and makes those exact targets part of the required evidence. This is still a static/read-only audit; no live lookup is added.
+
+Discard or overwrite the v1 reports and rerun the documented Snow and Lion phases with current `main`.
+
 ## Prepared implementation
 
 Current runtime `main` provides:
@@ -38,7 +58,7 @@ scripts/audit-distributed-notifications-client-service-selection.py
 docs/distributed-notifications-client-service-selection-audit.md
 ```
 
-The analyzer is Python 2.6-compatible and read-only. It examines CoreFoundation and Foundation on Snow Leopard and Lion, including:
+The analyzer is Python 2.6-compatible, read-only, and currently reports `analyzer_version=2`. It examines CoreFoundation and Foundation on Snow Leopard and Lion, including:
 
 - binary and architecture provenance;
 - addressed distributed-notifications service cstrings;
@@ -46,9 +66,10 @@ The analyzer is Python 2.6-compatible and read-only. It examines CoreFoundation 
 - imports and symbols involving distributed notifications, bootstrap lookup, Mach messaging, XPC, and notification-center APIs;
 - complete symbol windows, when available, for:
   - `CFNotificationCenterGetDistributedCenter`;
+  - Lion's private `___CFNotificationCenterGetDistributedCenter_block_invoke_1` initializer when present;
   - observer add/remove operations;
   - notification posting operations;
-- Foundation evidence around `NSDistributedNotificationCenter` and `notificationCenterForType:`.
+- complete Foundation windows for `+[NSDistributedNotificationCenter defaultCenter]` and `+[NSDistributedNotificationCenter notificationCenterForType:]`.
 
 The report is intended to identify whether ordinary per-user distributed-center construction selects `@Uv3`, whether `@1v3` is reserved for all-session behavior or another path, and whether native Lion client initialization has already moved beyond the Snow `.2` service contract.
 
@@ -87,6 +108,14 @@ scripts/audit-distributed-notifications-client-service-selection.py
 docs/distributed-notifications-client-service-selection-audit.md
 ```
 
+The regenerated reports must begin with:
+
+```text
+analyzer_version=2
+```
+
+Do not submit analyzer-v1 reports for this rerun.
+
 ## Phase B — Snow Leopard static client audit
 
 On the validated Snow Leopard 10.6.8 system:
@@ -105,7 +134,7 @@ No PowerPC application was launched and no system state was modified.
 RESULT: PASS
 ```
 
-If Phase B reports `RESULT: FAIL`, stop.
+If Phase B reports `RESULT: FAIL`, stop. Otherwise confirm `analyzer_version=2` before continuing.
 
 ## Phase C — Lion static client audit
 
@@ -117,7 +146,7 @@ cd /path/to/lion-rosetta-runtime
   ./distributed-notifications-client-service-selection-lion.txt
 ```
 
-Require the same completion messages and `RESULT: PASS`.
+Require `analyzer_version=2`, the same completion messages, and `RESULT: PASS`.
 
 Do not run a live lookup after the static audit.
 
@@ -153,7 +182,7 @@ Lion current-user launchd job                   -> com.apple.distnoted.xpc.agent
 Snow CoreFoundation client string               -> .2
 Lion CoreFoundation client strings              -> @Uv3 and @1v3
 failed Lion .2 native-format lookup              -> BOOTSTRAP_UNKNOWN_SERVICE (1102)
-next step                                       -> static Snow/Lion client service-selection differential audit
+next step                                       -> rerun expanded static client-selection audit v2
 ```
 
 No additional XNU change is indicated.
