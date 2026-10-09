@@ -360,3 +360,51 @@ ShowWindow / visibility / event loop        -> held until this gate is reviewed
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — CreateNewWindow now reaches a distributed-notifications bootstrap failure
+
+The returned Snow control and Lion validation localize the first post-Process-Manager failure.
+
+Snow:
+
+```text
+legacy bootstrap lookup                   com.apple.distributed_notifications.2
+pid / flags                               0 / 8
+lookup result                             0
+service port                              nonzero
+CreateNewWindow                           0
+WindowRef                                 nonzero
+DisposeWindow                             returned
+RESULT                                    PASS
+```
+
+Lion:
+
+```text
+registration / identity / SetFront path   PASS through GetCurrentProcess
+M20_BEFORE_CreateNewWindow                reached
+legacy bootstrap lookup                   com.apple.distributed_notifications.2
+pid / flags                               0 / 8
+lookup result                             -304
+service port                              0
+HIToolbox diagnostic                      failed to copy resource URL
+HIToolbox damage code                     -4960
+TTheme instance                           0
+process termination                       SIGABRT / exit 134
+M21_AFTER_CreateNewWindow                 not reached
+protected hashes                          unchanged
+RESULT                                    CREATENEWWINDOW_NO_RETURN
+```
+
+The latest crash report confirms an `EXC_CRASH (SIGABRT)` on the main thread. The visible HIToolbox abort occurs after the exact distributed-notifications bootstrap lookup fails and before `CreateNewWindow` can return.
+
+This changes the active boundary: do not audit or adapt a window-server CreateNewWindow RPC yet. Snow proves the exact old service-name lookup is valid there, while Lion's unchanged PPC `bootstrap_look_up2` path returns the same `-304` class already encountered at the earlier CoreServices launchd lookup boundary.
+
+The authoritative next stage is:
+
+```text
+docs/distributed-notifications-bootstrap-compat-protocol-experiment.md
+```
+
+That stage does not call `CreateNewWindow`. It uses a standalone PPC lookup probe and the already-proven Lion-format launchd `0x194/0x1f8` formatter to test exactly `com.apple.distributed_notifications.2`, pid 0, flags 8. Only if that standalone policy proof succeeds may the service tuple be integrated into the normal compatibility build and window creation retried.
