@@ -6,6 +6,18 @@ Resolve the exact WindowServer service-port acquisition contract used by restore
 
 The completed default-connection audit passed on both systems and narrows the active failure from the broad default-connection path to the server-port acquisition layer immediately before the existing `__CGSNewConnectionPort` transaction.
 
+## Version-2 correction after the first returned reports
+
+The first Snow Leopard/Lion reports both returned `RESULT: PASS`, but review exposed an analyzer-coverage defect that prevents those version-1 reports from selecting the exact active helper body safely.
+
+`CoreGraphics` contains more than one local static symbol named `_lookupServerPort` in the relevant slices. In the returned Snow PPC report the symbol table contains `_lookupServerPort` at `0x138da8` and `0x169138`; in the returned Lion i386 report it contains `_lookupServerPort` at `0xcd010` and `0x25b290`. Version 1 stored text symbols in a one-address-per-name dictionary, so the later same-name symbol replaced the earlier address before symbol-window emission. The reports therefore prove that the helper family exists, but the emitted `_lookupServerPort` body is not guaranteed to be the copy reached by the default-connection path.
+
+The same review also shows that Snow PPC has `_CGSLookupSessionPort` at `0x138b3c`, immediately adjacent to the `0x138c4c` `_CGSLookupServerRootPort` / `0x138da8` `_lookupServerPort` cluster, but version 1 did not select `_CGSLookupSessionPort` for a complete window. Lion i386, by contrast, exposes `_getSessionPort` and `__CGSGetSessionPort`, and the version-1 report already shows the latter issuing the session-port MIG transaction.
+
+Analyzer version 2 corrects both gaps. It preserves every text-symbol address for duplicate names, emits a duplicate-target inventory plus a complete window for every matching address, exact-targets Snow `_CGSLookupSessionPort`, and requires Lion `__CGSGetSessionPort` evidence. The version-1 reports remain useful provenance and broad-structure evidence, but they do **not** authorize a lookup adapter.
+
+After pulling current `main`, rerun Phases B through D on both systems. The returned reports must contain `analyzer_version=2` and `RESULT: PASS`. Do not run a PPC subject while collecting them.
+
 ## What the completed default-connection audit proves
 
 ### The WindowServer itself is present on both systems
@@ -131,7 +143,7 @@ scripts/audit-process-manager-cgs-server-port-acquisition.py
 docs/process-manager-cgs-server-port-acquisition-audit.md
 ```
 
-The analyzer is read-only and Python-2-compatible.
+The analyzer is read-only and Python-2-compatible. The authoritative analyzer version for this gate is **2**.
 
 It records:
 
@@ -281,7 +293,7 @@ No PowerPC application was launched and no system file was modified.
 RESULT: PASS
 ```
 
-Phase B is a hard gate. If it returns `RESULT: FAIL`, stop and return that report unchanged. Do not run Lion until the analyzer is corrected.
+Phase B is a hard gate. Confirm the generated report contains `analyzer_version=2`. If it returns `RESULT: FAIL`, stop and return that report unchanged. Do not run Lion until the analyzer is corrected.
 
 ## Phase C — Lion server-port acquisition audit
 
@@ -302,7 +314,7 @@ No PowerPC application was launched and no system file was modified.
 RESULT: PASS
 ```
 
-If it fails, stop. Do not compensate by running another PPC subject.
+Confirm the generated report contains `analyzer_version=2`. If it fails, stop. Do not compensate by running another PPC subject.
 
 ## Phase D — return evidence
 
@@ -351,9 +363,10 @@ Snow PPC CoreGraphics default connection          -> established
 Lion translated-PPC default connection            -> NULL
 raw CPSSetFrontProcess on Lion                    -> 0x3eb pre-transport
 Snow/Lion __CGSNewConnectionPort IDs              -> both 0x7469 / 0x74cd
-Snow PPC server-port lookup family                -> _lookupServerPort
-Lion native server-port lookup family             -> _getSessionPort + _CGSLookupServerRootPort
-next step                                         -> exact server-port acquisition helper audit
+Snow PPC server-port lookup family                -> _CGSLookupSessionPort / _lookupServerPort / root fallback
+Lion native server-port lookup family             -> _getSessionPort / __CGSGetSessionPort / root fallback
+v1 analyzer exact-window status                    -> INSUFFICIENT (duplicate _lookupServerPort names collapsed)
+next step                                         -> rerun corrected analyzer v2; no adapter yet
 ```
 
 No additional XNU change is indicated.
