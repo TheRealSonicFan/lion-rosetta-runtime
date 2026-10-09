@@ -15,7 +15,9 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                          uint64_t);
 extern mach_port_t mig_get_reply_port(void);
 
-#if defined(PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION)
+#if defined(PM_CPS_REGISTRATION_TRACE)
+#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-trace-v1"
+#elif defined(PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-v1"
 #elif defined(PM_CGS_CONNECTION_TRACE)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-trace-v2"
@@ -83,6 +85,12 @@ extern mach_port_t mig_get_reply_port(void);
 #define CGS_DEATHWATCH_REPLY_ID 0x000071b0U
 #define CGS_NEW_CONNECTION_REQUEST_ID 0x00007469U
 #define CGS_NEW_CONNECTION_REPLY_ID 0x000074cdU
+#ifdef PM_CPS_REGISTRATION_TRACE
+#define CGS_CHECKIN_APPLICATION_REQUEST_ID 0x00007372U
+#define CGS_CHECKIN_APPLICATION_REPLY_ID 0x000073d6U
+#define CGS_CREATE_APPLICATION_REQUEST_ID 0x000073c1U
+#define CGS_CREATE_APPLICATION_REPLY_ID 0x00007425U
+#endif
 #endif
 
 #ifdef PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION
@@ -467,6 +475,12 @@ cgs_trace_kind(uint32_t request_id)
         return "DEATHWATCH";
     if (request_id == CGS_NEW_CONNECTION_REQUEST_ID)
         return "NEW_CONNECTION";
+#ifdef PM_CPS_REGISTRATION_TRACE
+    if (request_id == CGS_CHECKIN_APPLICATION_REQUEST_ID)
+        return "CPS_CHECKIN_APPLICATION";
+    if (request_id == CGS_CREATE_APPLICATION_REQUEST_ID)
+        return "CPS_CREATE_APPLICATION";
+#endif
     return "UNKNOWN";
 }
 
@@ -479,6 +493,12 @@ cgs_trace_expected_reply(uint32_t request_id)
         return CGS_DEATHWATCH_REPLY_ID;
     if (request_id == CGS_NEW_CONNECTION_REQUEST_ID)
         return CGS_NEW_CONNECTION_REPLY_ID;
+#ifdef PM_CPS_REGISTRATION_TRACE
+    if (request_id == CGS_CHECKIN_APPLICATION_REQUEST_ID)
+        return CGS_CHECKIN_APPLICATION_REPLY_ID;
+    if (request_id == CGS_CREATE_APPLICATION_REQUEST_ID)
+        return CGS_CREATE_APPLICATION_REPLY_ID;
+#endif
     return 0U;
 }
 
@@ -492,9 +512,16 @@ is_cgs_trace_candidate(mach_msg_header_t *msg)
         return 0;
 
     request_id = get_u32(m + 0x14);
-    return request_id == CGS_SERVER_VERSION_REQUEST_ID ||
-           request_id == CGS_DEATHWATCH_REQUEST_ID ||
-           request_id == CGS_NEW_CONNECTION_REQUEST_ID;
+    if (request_id == CGS_SERVER_VERSION_REQUEST_ID ||
+        request_id == CGS_DEATHWATCH_REQUEST_ID ||
+        request_id == CGS_NEW_CONNECTION_REQUEST_ID)
+        return 1;
+#ifdef PM_CPS_REGISTRATION_TRACE
+    if (request_id == CGS_CHECKIN_APPLICATION_REQUEST_ID ||
+        request_id == CGS_CREATE_APPLICATION_REQUEST_ID)
+        return 1;
+#endif
+    return 0;
 }
 
 static mach_msg_return_t
@@ -557,6 +584,13 @@ trace_cgs_message(mach_msg_header_t *msg,
     fflush(stderr);
 
     limit = (uint32_t)send_size;
+#ifdef PM_CPS_REGISTRATION_TRACE
+    if ((request_id == CGS_CHECKIN_APPLICATION_REQUEST_ID ||
+         request_id == CGS_CREATE_APPLICATION_REQUEST_ID) &&
+        limit > 0x80U)
+        limit = 0x80U;
+    else
+#endif
     if (limit > 0x44U)
         limit = 0x44U;
 
