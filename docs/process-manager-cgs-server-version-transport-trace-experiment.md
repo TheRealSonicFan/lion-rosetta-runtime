@@ -1,5 +1,8 @@
 # Process Manager CGS server-version passive trace experiment
 
+> **Completed historical stage.** The returned trace-v2 result is `CGS_TRACE_SERVER_VERSION_REPLY_OBSERVED_CLEAN_EARLY_EXIT_RC1`, and the Snow/Lion reply differential confirms server-version skew. Do not rerun this integrated trace before the standalone policy proof. The authoritative next procedure is `docs/process-manager-cgs-server-version-compat-protocol-adapter-experiment.md`.
+
+
 ## Objective
 
 Resolve the exact dynamic outcome of the private CoreGraphics server-version validation that runs after the proven Lion session-port bridge and before `__CGSNewConnectionPort`.
@@ -269,3 +272,55 @@ next step                                   -> passive SERVER_VERSION trace-v2; 
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed trace-v2 result — version skew confirmed dynamically
+
+The Snow control passed and established the exact positive-control reply:
+
+```text
+SERVER_VERSION request                    0x7148
+SERVER_VERSION reply                      0x71ac
+reply bits / size                         0x80001200 / 0x40
+raw word 0x30                             0x21020000
+decoded first version field               545
+raw word 0x34                             0x00000000
+decoded second version field              0
+NewConnection 0x7469/0x74cd              PASS
+registration                             PASS
+```
+
+The Lion translated-PPC run reached the same server-version transaction after the proven session-bootstrap adapter:
+
+```text
+SERVER_VERSION request                    0x7148
+SERVER_VERSION reply                      0x71ac
+reply bits / size                         0x80001200 / 0x40
+raw word 0x30                             0x58020000
+decoded first version field               600
+raw word 0x34                             0x00000000
+decoded second version field              0
+NewConnection 0x7469                      NOT REACHED
+process exit                              1
+new diagnostic                            none
+protected hashes                          unchanged
+```
+
+The request envelope, complex reply shape, descriptor disposition/type bytes, NDR representation, auxiliary word at `0x38`, and flags word at `0x3c` match the Snow oracle. The expected Mach port names and request PID naturally differ. The only compatibility-significant server-version field difference is the first decoded version value: Snow returns `545`, Lion returns `600`.
+
+Because the reply's NDR integer representation differs from the PPC client's native representation, the raw words decode by byte swap:
+
+```text
+Snow 0x21020000 -> 0x00000221 -> 545
+Lion 0x58020000 -> 0x00000258 -> 600
+```
+
+This closes the previous hypothesis. The clean Lion status-1 exit is the already-audited Snow PPC version-mismatch path: `_connectAndCheck` sees a server version different from its local Snow PPC CoreGraphics version, returns `0x3f0`, and `_CGSServerPort` calls `exit(1)` before `__CGSNewConnectionPort`.
+
+Do not patch the integrated reply yet. Current `main` prepares the standalone NDR-aware compatibility proof:
+
+```text
+docs/process-manager-cgs-server-version-compat-protocol-adapter-experiment.md
+```
+
+That proof first reproduces Snow `545/0`, then on Lion reproduces original `600/0` and normalizes only a copied standalone reply buffer to `545/0`, requiring zero changes outside the version-word region. No CoreGraphics consumer sees the adapted buffer during that stage.
