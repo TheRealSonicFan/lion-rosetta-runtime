@@ -10,7 +10,7 @@ import sys
 import tempfile
 
 DEFAULT_REPORT = "./distributed-notifications-protocol-abi.txt"
-ANALYZER_VERSION = "1"
+ANALYZER_VERSION = "2"
 
 COREFOUNDATION = "/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation"
 DISTNOTED = "/usr/sbin/distnoted"
@@ -688,33 +688,54 @@ def mach_header_observations(fp, by_name, rows, ordered):
     c2s = joined_for("___CFXNotificationSendToServer")
     s2c = joined_for("___CFXNotificationSendToClient")
 
-    def has_li_store(text, immediate, offset):
+    def find_li_store(text, immediate, offset):
         rows_local = text.splitlines()
+        if offset == "0x0":
+            offset_pattern = r"(?:__mh_dylib_header|0x0|0)"
+        else:
+            offset_pattern = re.escape(offset)
         for i in range(len(rows_local)):
-            m = re.search(r"\\bli\\s+(r\\d+),%s\\b" % re.escape(immediate),
+            m = re.search(r"\bli\s+(r\d+),%s\b" % re.escape(immediate),
                           rows_local[i])
             if not m:
                 continue
             reg = m.group(1)
             for j in range(i + 1, min(len(rows_local), i + 14)):
-                pattern = r"\\bstw\\s+%s,%s\\(r\\d+\\)" % (
-                    re.escape(reg), re.escape(offset))
+                pattern = r"\bstw\s+%s,%s\(r\d+\)" % (
+                    re.escape(reg), offset_pattern)
                 if re.search(pattern, rows_local[j]):
-                    return True
-        return False
+                    return (rows_local[i], rows_local[j])
+        return None
 
-    c2s_bits = has_li_store(c2s, "0x1413", "__mh_dylib_header")
-    c2s_id4 = has_li_store(c2s, "0x4", "0x14")
-    s2c_bits = has_li_store(s2c, "0x13", "__mh_dylib_header")
-    s2c_id4 = has_li_store(s2c, "0x4", "0x14")
+    c2s_bits_match = find_li_store(c2s, "0x1413", "0x0")
+    c2s_id4_match = find_li_store(c2s, "0x4", "0x14")
+    s2c_bits_match = find_li_store(s2c, "0x13", "0x0")
+    s2c_id4_match = find_li_store(s2c, "0x4", "0x14")
+
+    c2s_bits = c2s_bits_match is not None
+    c2s_id4 = c2s_id4_match is not None
+    s2c_bits = s2c_bits_match is not None
+    s2c_id4 = s2c_id4_match is not None
     c2s_len = re.search(r"stw\s+r\d+,0x1c\(r\d+\)", c2s) is not None
     s2c_len = re.search(r"stw\s+r\d+,0x1c\(r\d+\)", s2c) is not None
 
     line(fp, "client_to_server_msgh_bits_0x1413=%s" % ("YES" if c2s_bits else "NO"))
+    if c2s_bits_match:
+        line(fp, "client_to_server_msgh_bits_load=%s" % c2s_bits_match[0])
+        line(fp, "client_to_server_msgh_bits_store=%s" % c2s_bits_match[1])
     line(fp, "client_to_server_msgh_id_4_at_0x14=%s" % ("YES" if c2s_id4 else "NO"))
+    if c2s_id4_match:
+        line(fp, "client_to_server_msgh_id_load=%s" % c2s_id4_match[0])
+        line(fp, "client_to_server_msgh_id_store=%s" % c2s_id4_match[1])
     line(fp, "client_to_server_payload_length_at_0x1c=%s" % ("YES" if c2s_len else "NO"))
     line(fp, "server_to_client_msgh_bits_0x13=%s" % ("YES" if s2c_bits else "NO"))
+    if s2c_bits_match:
+        line(fp, "server_to_client_msgh_bits_load=%s" % s2c_bits_match[0])
+        line(fp, "server_to_client_msgh_bits_store=%s" % s2c_bits_match[1])
     line(fp, "server_to_client_msgh_id_4_at_0x14=%s" % ("YES" if s2c_id4 else "NO"))
+    if s2c_id4_match:
+        line(fp, "server_to_client_msgh_id_load=%s" % s2c_id4_match[0])
+        line(fp, "server_to_client_msgh_id_store=%s" % s2c_id4_match[1])
     line(fp, "server_to_client_payload_length_at_0x1c=%s" % ("YES" if s2c_len else "NO"))
     line(fp, "corrected_interpretation=0x1413_is_msgh_bits_not_msgh_id")
 
