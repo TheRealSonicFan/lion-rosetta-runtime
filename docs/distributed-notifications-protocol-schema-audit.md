@@ -4,7 +4,7 @@
 
 Resolve the exact field/key mapping needed for a narrow process-local compatibility bridge between the Snow Leopard distributed-notifications v2 client protocol and Lion's selected current-user `@Uv3` v3 XPC service.
 
-The completed protocol differential closes the name-only branch. Snow PPC CoreFoundation does not merely look up a differently named service: its private `___CFXNotificationSendToServer` path serializes a CF property-list dictionary, constructs a Mach message with legacy message ID `0x1413`, and sends it with `mach_msg`. The Snow implementation also contains explicit `SendToServer`, `ReceiveFromServer`, `SendToClient`, and `ReceiveFromClient` protocol functions.
+The completed protocol differential closes the name-only branch. Snow PPC CoreFoundation does not merely look up a differently named service: its private `___CFXNotificationSendToServer` path serializes a CF property-list dictionary, constructs a legacy Mach envelope with `msgh_bits = 0x1413` and `msgh_id = 4`, and sends it with `mach_msg`. The Snow implementation also contains explicit `SendToServer`, `ReceiveFromServer`, `SendToClient`, and `ReceiveFromClient` protocol functions.
 
 Lion's corresponding distributed-notification client path instead builds XPC dictionaries and sends them through an XPC connection. The Lion `distnoted` executable imports XPC dictionary/array and connection send primitives; its stripped i386 executable does not expose the Snow private Mach server entry-point symbol family. Therefore a process-local `.2 -> @Uv3` bootstrap service-name rewrite by itself cannot preserve the Snow wire contract.
 
