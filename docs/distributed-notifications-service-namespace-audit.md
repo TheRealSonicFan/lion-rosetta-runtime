@@ -118,6 +118,16 @@ distributed-notifications-service-namespace-lion.txt
 
 Stop after Phase D.
 
+## Reviewed result
+
+Both reports passed and establish a concrete Snow-to-Lion service-model change.
+
+Snow Leopard 10.6.8 runs one system `/usr/sbin/distnoted` and its launch daemon publishes exactly `com.apple.distributed_notifications.2`. Snow CoreFoundation carries that same legacy client service string.
+
+Lion 10.7.5 splits the service. The system `distnoted daemon` publishes `com.apple.distributed_notifications@0v3` and `com.apple.distributed_notifications@1v3`; a UID-501 `distnoted agent` under the user's launchd publishes `com.apple.distributed_notifications@Uv3`; and the current user namespace lists `com.apple.distnoted.xpc.agent`. Lion CoreFoundation carries `@Uv3` and `@1v3`, while `distnoted` itself carries all three v3 names.
+
+Therefore the failed `.2` lookup is explained by service identity evolution, not by a hidden copy of the old service in another obvious Lion launchd domain. Do not choose a replacement name from suffix intuition alone. The authoritative next step is `docs/distributed-notifications-client-service-selection-audit.md`, which statically identifies the native Lion client selection path before any further live lookup or compatibility rewrite.
+
 ## Result interpretation
 
 The comparison will determine which branch to take next:
@@ -139,7 +149,7 @@ Lion raw result                                  -> 0x4e040000
 NDR-decoded bootstrap result                     -> 0x0000044e / 1102 / BOOTSTRAP_UNKNOWN_SERVICE
 service port                                     -> null
 protected hashes                                 -> unchanged
-next step                                        -> Snow/Lion distnoted service + bootstrap namespace audit
+next step                                        -> static Snow/Lion client service-selection differential audit
 ```
 
 No additional XNU change is indicated.
