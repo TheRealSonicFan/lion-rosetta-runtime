@@ -376,3 +376,6 @@ docs/process-manager-setfront-compat-integration-experiment.md
 ```
 
 That stage promotes the same exact copied-buffer policy to the normal combined compatibility build under `PM_CPS_SETFRONT_COMPAT_INTEGRATION`, reuses the accepted subject unchanged, requires Snow passthrough, and performs exactly one Lion integration run. Do not broaden the predicate.
+
+
+The subsequent normal combined SetFrontProcess compatibility integration has now passed completely. The exact ID-only policy remains unchanged in the integration build and public SetFrontProcess returns success. The current authoritative next procedure is `docs/process-manager-getfrontprocess-validation-experiment.md`; do not rerun this protocol proof unless SetFrontProcess message provenance changes.
