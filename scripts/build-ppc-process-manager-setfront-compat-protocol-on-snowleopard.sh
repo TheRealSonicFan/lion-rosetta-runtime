@@ -53,7 +53,7 @@ trap cleanup_on_exit EXIT
 /bin/chmod +x "$SUBJECT_OUT"
 /usr/bin/python "$PATCH_DYLINKER" "$SUBJECT_OUT" /usr/oah/dyld
 
-"$CC_SELECTED" -arch ppc -mmacosx-version-min=10.5 -dynamiclib     -DPM_CGS_CONNECTION_TRACE=1     -DPM_CGS_SERVER_VERSION_COMPAT_INTEGRATION=1     -DPM_CPS_REGISTRATION_TRACE=1     -DPM_CPS_REGISTRATION_COMPAT_INTEGRATION=1     -DPM_CPS_SETFRONT_TRACE=1     "$TRACE_SRC"     -install_name "@loader_path/$(/usr/bin/basename "$TRACE_OUT")"     -o "$TRACE_OUT"
+"$CC_SELECTED" -arch ppc -mmacosx-version-min=10.5 -dynamiclib     -DPM_CGS_CONNECTION_TRACE=1     -DPM_CGS_SERVER_VERSION_COMPAT_INTEGRATION=1     -DPM_CPS_REGISTRATION_TRACE=1     -DPM_CPS_REGISTRATION_COMPAT_INTEGRATION=1     -DPM_CPS_SETFRONT_TRACE=1     -DPM_CPS_SETFRONT_COMPAT_PROTOCOL=1     "$TRACE_SRC"     -install_name "@loader_path/$(/usr/bin/basename "$TRACE_OUT")"     -o "$TRACE_OUT"
 /bin/chmod 755 "$TRACE_OUT"
 
 is_ppc32_macho() {
