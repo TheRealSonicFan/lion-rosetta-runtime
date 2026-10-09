@@ -354,3 +354,8 @@ docs/process-manager-postidentity-setfrontprocess-experiment.md
 That experiment keeps the accepted v5 CoreServices and v1 Security adapters unchanged, re-proves identity and foreground conversion, then calls exactly one `SetFrontProcess` using the same PSN and stops before any window operation or event loop. The Snow Leopard direct-execution result remains a hard gate.
 
 No additional XNU change is indicated.
+
+
+## Current-path note after CPS registration repair
+
+The historical TransformProcessType pass above predates the now-completed CPS application-registration repair. Because the accepted registration adapter changes the live registration state before these identity/foreground checkpoints, current main does not jump directly from that historical result to SetFrontProcess. The authoritative current procedure is docs/process-manager-cps-registration-postidentity-validation-experiment.md, which re-proves GetProcessPID and TransformProcessType with the full accepted registration stack active and the exact registration predicate preserved. The older TransformProcessType result remains valid historical evidence but is not the current execution gate.
