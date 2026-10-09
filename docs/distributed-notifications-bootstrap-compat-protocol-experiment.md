@@ -130,6 +130,25 @@ git rev-parse HEAD
 
 No kernel rebuild or reboot is part of this stage.
 
+## Phase B build-marker correction
+
+The first Phase B attempt exposed a probe-build validation defect, not a compiler, architecture, or dylinker failure. The probe printed its build ID at runtime with a format string plus a separate `BUILD_ID` argument:
+
+```text
+PM_DISTRIBUTED_NOTIFICATIONS_PROBE_BUILD_ID:%s
+distributed-notifications-bootstrap-probe-v1
+```
+
+That runtime output is correct, but `strings` sees those as separate literals, so the builder could not find the single concatenated marker it intentionally requires:
+
+```text
+PM_DISTRIBUTED_NOTIFICATIONS_PROBE_BUILD_ID:distributed-notifications-bootstrap-probe-v1
+```
+
+Current `main` corrects the probe source by defining that full build marker as one compile-time concatenated literal and printing the marker directly. This preserves the exact runtime output while making the provenance marker visible to `strings`, so the builder and both Snow/Lion runners can validate the artifact before execution.
+
+No bootstrap protocol, lookup predicate, service name, Mach message format, or runtime compatibility behavior changed. Pull current `main`, discard or overwrite the partial Phase B outputs from the failed attempt, and rerun Phase B from the beginning.
+
 ## Phase B — build the standalone probe and protocol interposer on Snow Leopard
 
 ```sh
