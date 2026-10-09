@@ -230,3 +230,16 @@ Run the new read-only helper analyzer first on Snow Leopard as the hard gate, th
 Do not rerun the PPC discriminator or SetFrontProcess subject, dynamically call private CGS helpers, perform a bootstrap lookup, add a WindowServer/CoreGraphics interposer, fabricate a connection record, adapt `0x7469` or `0x729e`, broaden v5, or change XNU until those two reports are reviewed.
 
 No additional XNU change is indicated.
+
+
+The first returned CGS server-port acquisition reports both passed analyzer version 1, but they exposed a tooling ambiguity rather than an adapter-ready result. In the relevant Snow PPC and Lion i386 CoreGraphics slices, `_lookupServerPort` is a duplicated local static symbol; version 1 retained only the last address for same-name symbol-window emission. It also omitted a complete Snow PPC `_CGSLookupSessionPort` window even though that helper sits in the candidate session/root lookup cluster. The broad result still stands: the failure remains before `__CGSNewConnectionPort`, and no new XNU change is indicated, but the exact active session-port helper contract is not yet proven.
+
+The authoritative next step remains:
+
+```text
+docs/process-manager-cgs-server-port-acquisition-audit.md
+```
+
+Pull current runtime `main` and rerun the read-only audit on Snow Leopard first and Lion second. The corrected script now reports `analyzer_version=2`, preserves every same-name symbol address, emits every `_lookupServerPort` window, exact-targets Snow `_CGSLookupSessionPort`, and requires Lion `__CGSGetSessionPort`. Return only the two regenerated version-2 reports. Do not rerun the PPC subject, perform a live bootstrap lookup, add a CoreGraphics/WindowServer interposer, or change XNU until the corrected reports are reviewed.
+
+No additional XNU change is indicated.
