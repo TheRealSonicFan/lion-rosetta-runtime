@@ -275,3 +275,16 @@ docs/process-manager-cgs-session-bootstrap-compat-integration-experiment.md
 Current runtime `main` now provides a one-tuple process-local `bootstrap_look_up` adapter that targets only `com.apple.windowserver.session`, plus a registration-only subject mode and Snow/Lion runners. First require the Snow passthrough integration control. Then, after the established Lion native safety gates, run exactly one Lion registration integration with the proven CoreServices v5 and Security v1 adapters plus the new CGS session-bootstrap adapter. The subject exits immediately after `GetProcessForPID` and the read-only CoreGraphics connection-slot check; it does not call `GetProcessPID`, `TransformProcessType`, SetFrontProcess/CPS, create a window, or enter an event loop. Do not adapt `0x729e` until that result is reviewed.
 
 No additional XNU change is indicated.
+
+
+The first Lion CGS session-bootstrap registration integration reached and passed the new compatibility bridge: the active-root lookup returned a root-owned send right, `GetSessionPort 0x7151/0x71b5` returned a live session send right, and the CGS adapter logged `ADAPTER_PASS`. `GetProcessForPID` nevertheless did not reach its post-call marker. The process exited with status 1, no new crash/core diagnostic was generated, and protected hashes were unchanged. The original runner's `GETPROCESSFORPID_ABORT_OR_CRASH` label was therefore overbroad; current `main` classifies that exact pattern as a clean early exit after the session adapter.
+
+The authoritative next step is:
+
+```text
+docs/process-manager-cgs-connection-transport-trace-experiment.md
+```
+
+Build only the new `dual-bootstrap-servercheckin-sessioninit-v5-cgs-trace-v1` CoreServices trace interposer on Snow Leopard and require the passive Snow control to observe successful `0x714c -> 0x71b0` DeathWatch and `0x7469 -> 0x74cd` NewConnection transactions while registration still succeeds. Then run exactly one guarded Lion trace with the already accepted registration subject, Security v1 adapter, and CGS session-bootstrap v1 adapter. The trace changes no message fields; it records request/reply headers and raw reply words only. Do not adapt `0x714c`, `0x7469`, or `0x729e` before review.
+
+No additional XNU change is indicated.
