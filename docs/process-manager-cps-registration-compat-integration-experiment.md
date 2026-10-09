@@ -414,3 +414,10 @@ later SetFrontProcess 0x729e/0x72a1          -> still out of scope
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result
+
+The returned Snow control and Lion integration both passed. On Lion, the exact legacy registration request was copied to the native Lion form, the native reply returned result zero, the reply was converted back to the legacy ID, the registration adapter reported PASS, the previous registration error did not recur, GetProcessForPID remained successful, no new diagnostic was detected, protected hashes were unchanged, and the final result was CPS_REGISTRATION_COMPAT_REGISTRATION_ACCEPTED.
+
+This closes the CPS application-registration boundary for the exact validated subject and compatibility stack. The authoritative next stage is docs/process-manager-cps-registration-postidentity-validation-experiment.md. That stage keeps the accepted registration adapter unchanged, rebuilds only the subject with the same exact executable basename, revalidates GetProcessPID and TransformProcessType, and stops before the foreground activation call.
