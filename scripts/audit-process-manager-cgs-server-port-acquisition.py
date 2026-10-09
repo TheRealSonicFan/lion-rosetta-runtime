@@ -9,7 +9,7 @@ import sys
 import tempfile
 
 DEFAULT_REPORT = "./process-manager-cgs-server-port-acquisition.txt"
-ANALYZER_VERSION = "1"
+ANALYZER_VERSION = "2"
 
 ROSETTA_CACHE = "/private/var/db/dyld/dyld_shared_cache_rosetta"
 ROSETTA_MAP = "/private/var/db/dyld/dyld_shared_cache_rosetta.map"
@@ -19,7 +19,7 @@ COREGRAPHICS = "/System/Library/Frameworks/ApplicationServices.framework/Version
 ARCHES = ["i386", "x86_64", "ppc7400"]
 
 TARGET_RE = re.compile(
-    r"(CGSServerPort|lookupServerPort|getSessionPort|CGSLookupServerRootPort|"
+    r"(CGSServerPort|lookupServerPort|CGSLookupSessionPort|getSessionPort|CGSLookupServerRootPort|"
     r"CGSessionGetWindowServerPort|CGSSessionDeathWatchPort|"
     r"CGX(?:Active|Root|WindowServer|Enable).*WindowServerPort|"
     r"current_session_set_bootstrap_port|CGSLookupServerPort|"
@@ -44,16 +44,18 @@ BASE_REQUIRED = [
     "_CGSNewConnection",
     "__CGSNewConnectionPort",
     "__CGSDefaultConnection",
+    "_CGSServerPort",
+    "_lookupServerPort",
+    "_CGSLookupServerRootPort",
 ]
 
 SNOW_HELPER_EVIDENCE = [
-    "_lookupServerPort",
-    "_CGSServerPort",
+    "_CGSLookupSessionPort",
 ]
 
 LION_HELPER_EVIDENCE = [
     "_getSessionPort",
-    "_CGSLookupServerRootPort",
+    "__CGSGetSessionPort",
     "_CGSessionGetWindowServerPort",
 ]
 
@@ -125,7 +127,7 @@ def parse_symbols(text):
         is_text = "(__TEXT,__text)" in line
         ordered.append((addr, name, line, is_text))
         if is_text:
-            by_name[name] = addr
+            by_name.setdefault(name, []).append(addr)
     ordered.sort()
     return ordered, by_name
 
@@ -175,9 +177,12 @@ def emit_symbol_window(fp, rows, ordered_text, name, start, max_bytes=0x5000):
     write_line(fp, "instruction_lines=%d" % count)
 
 
-def emit_references(fp, dis_lines, name, address):
+def emit_references(fp, dis_lines, name, address, duplicate_count):
     write_line(fp)
-    write_line(fp, "-- references to %s --" % name)
+    write_line(fp, "-- references to %s @ 0x%x --" % (name, address))
+    if duplicate_count > 1:
+        write_line(fp, "duplicate_symbol_name_count=%d" % duplicate_count)
+        write_line(fp, "reference_scope=name-wide; correlate each call with the emitted same-name windows")
     refs = []
     forms = [
         "0x%x" % address,
@@ -309,9 +314,10 @@ def analyze_slice(fp, product, path, arch, tempdir, issues, evidence):
     dis_lines = dis_out.splitlines()
 
     selected = []
-    for name, addr in by_name.items():
+    for name, addrs in by_name.items():
         if TARGET_RE.search(name):
-            selected.append((addr, name))
+            for addr in addrs:
+                selected.append((addr, name))
     selected.sort()
 
     write_line(fp, "parsed_text_symbols=%d" % len(ordered_text))
@@ -319,12 +325,25 @@ def analyze_slice(fp, product, path, arch, tempdir, issues, evidence):
     write_line(fp, "selected_symbol_windows=%d" % len(selected))
 
     for name in BASE_REQUIRED:
-        if name in by_name:
+        if by_name.get(name):
             evidence[(arch, name)] = True
 
     for name in SNOW_HELPER_EVIDENCE + LION_HELPER_EVIDENCE:
-        if name in by_name or name in dis_out:
+        if by_name.get(name) or name in dis_out:
             evidence[(arch, name)] = True
+
+    write_line(fp)
+    write_line(fp, "-- duplicate target symbols --")
+    duplicates = []
+    for name, addrs in by_name.items():
+        if TARGET_RE.search(name) and len(addrs) > 1:
+            duplicates.append((name, sorted(addrs)))
+    duplicates.sort()
+    if not duplicates:
+        write_line(fp, "NONE")
+    for name, addrs in duplicates:
+        write_line(fp, "%s count=%d addresses=%s" %
+                   (name, len(addrs), ",".join("0x%x" % addr for addr in addrs)))
 
     write_line(fp)
     write_line(fp, "-- focused helper call/reference lines --")
@@ -338,7 +357,7 @@ def analyze_slice(fp, product, path, arch, tempdir, issues, evidence):
 
     for addr, name in selected:
         emit_symbol_window(fp, rows, ordered_text, name, addr)
-        emit_references(fp, dis_lines, name, addr)
+        emit_references(fp, dis_lines, name, addr, len(by_name.get(name, [])))
 
 
 def validate_evidence(product, evidence, issues):
