@@ -396,3 +396,50 @@ next step                                         -> standalone PPC native-sessi
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — standalone protocol proof passed
+
+The corrected version-3 experiment has now passed completely on both systems.
+
+Snow Leopard 10.6.8 control:
+
+```text
+build_id                                      = cgs-session-port-protocol-v3
+legacy com.apple.windowserver.session lookup = KERN_SUCCESS
+returned session right                       = send right
+DeathWatch 0x714c -> 0x71b0                  = PASS
+descriptor disposition/type                  = 0x11 / 0x00
+RESULT                                        = PASS
+```
+
+Lion 10.7.5 translated PPC:
+
+```text
+active WindowServer lookup 0x194             = PASS
+target PID / UUID / flags                    = 0 / zero / 8
+root reply server EUID                       = 0
+root port                                    = send right
+GetSessionPort 0x7151 -> 0x71b5              = PASS
+session descriptor disposition/type          = 0x11 / 0x00
+session port                                 = send right
+DeathWatch 0x714c -> 0x71b0                  = PASS
+death-watch returned port                    = send right
+new crash/core diagnostic                    = none
+protected hashes unchanged                   = YES
+RESULT: CGS_SESSION_PORT_PROTOCOL_ADAPTER_PASS
+```
+
+The standalone prerequisite is therefore closed. The exact native Lion session-port acquisition sequence is callable from translated PPC and returns the ownership/type semantics required by the Snow PPC caller.
+
+The authoritative next stage is now:
+
+```text
+docs/process-manager-cgs-session-bootstrap-compat-integration-experiment.md
+```
+
+That stage installs a one-tuple process-local adapter for only `bootstrap_look_up("com.apple.windowserver.session")`. On Snow Leopard it is passthrough. On Lion it substitutes the proven active-root plus `GetSessionPort` sequence, then performs exactly one Process Manager registration request and reads the already-audited CoreGraphics connection-record slot. The subject stops before `GetProcessPID`, `TransformProcessType`, public/private SetFrontProcess, window creation, or an event loop.
+
+Do not adapt `0x729e -> 0x72a1` yet. The next question is only whether the repaired session lookup is sufficient for the unchanged Snow PPC `_CGSNewConnection` path to publish a valid default connection.
+
+No additional XNU change is indicated.
