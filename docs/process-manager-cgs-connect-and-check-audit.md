@@ -349,3 +349,6 @@ docs/process-manager-cgs-server-version-compat-protocol-adapter-experiment.md
 ```
 
 Do not rerun analyzer v2 unless CoreGraphics or Rosetta-cache provenance changes.
+
+
+The subsequent standalone copied-buffer normalization proof has now passed as well, so the current authoritative next stage is `docs/process-manager-cgs-server-version-compat-integration-experiment.md`. The read-only audit itself remains closed.
