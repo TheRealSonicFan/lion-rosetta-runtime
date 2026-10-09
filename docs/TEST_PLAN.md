@@ -262,3 +262,16 @@ The first Snow Leopard control for the CGS session-port protocol proof stopped a
 
 
 The rebuilt version-2 CGS session-port Snow control advanced past the lookup self-check and successfully exercised the real legacy path: `com.apple.windowserver.session` returned a nonzero send right, and DeathWatch returned Mach success with the expected complex `0x28` / reply-ID-`0x71b0` message and one nonzero descriptor. The remaining failure was another probe-only endian bug: v2 decoded the descriptor disposition by shifting a native 32-bit word, yielding `0x00` from the big-endian PPC word `0x00001100`, even though the ABI byte at descriptor offset `0x26` was `0x11`. Runtime `main` now uses `cgs-session-port-protocol-v3`, reads disposition/type directly from bytes `0x26/0x27`, requires `0x11/0x00`, and rejects stale v1/v2 artifacts. Rebuild on Snow Leopard and repeat Phase C only. Do not transfer the v2 executable or run Lion until the v3 control reaches `SNOW_CONTROL_PASS` and `RESULT: PASS`.
+
+
+The corrected version-3 standalone CGS session-port protocol experiment has now passed completely. Snow Leopard resolved the legacy `com.apple.windowserver.session` service, validated the returned send right, and completed DeathWatch `0x714c -> 0x71b0`. On Lion 10.7.5, translated PPC successfully issued the native-format active WindowServer lookup `0x194` with target PID 0, zero UUID, and flags 8, received a root-owned service port, completed `GetSessionPort 0x7151 -> 0x71b5`, validated the returned `0x11/0x00` port descriptor and send right, and completed unchanged DeathWatch. The runner produced no new crash/core diagnostic, protected hashes were unchanged, and ended `RESULT: CGS_SESSION_PORT_PROTOCOL_ADAPTER_PASS`.
+
+The authoritative next step is:
+
+```text
+docs/process-manager-cgs-session-bootstrap-compat-integration-experiment.md
+```
+
+Current runtime `main` now provides a one-tuple process-local `bootstrap_look_up` adapter that targets only `com.apple.windowserver.session`, plus a registration-only subject mode and Snow/Lion runners. First require the Snow passthrough integration control. Then, after the established Lion native safety gates, run exactly one Lion registration integration with the proven CoreServices v5 and Security v1 adapters plus the new CGS session-bootstrap adapter. The subject exits immediately after `GetProcessForPID` and the read-only CoreGraphics connection-slot check; it does not call `GetProcessPID`, `TransformProcessType`, SetFrontProcess/CPS, create a window, or enter an event loop. Do not adapt `0x729e` until that result is reviewed.
+
+No additional XNU change is indicated.
