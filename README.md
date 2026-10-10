@@ -348,3 +348,6 @@ The third Snow Leopard Phase B PPC-ingress build stopped at another validator-on
 
 
 The fourth Snow Leopard Phase B PPC-ingress build reached the interposer import gate and failed only because the builder required the literal undefined symbol `_socketpair`. Snow's SDK declares `socketpair` through Darwin symbol aliasing, so this PPC UNIX03 build may correctly import `_socketpair$UNIX2003` instead. Current `main` now accepts exactly one of the two supported spellings, records the detected socketpair import in the interposer info file, and retains exact checks for the other required imports. No IPC or protocol behavior changed. Pull current `main`, discard the partial outputs, and rerun Phase B from the beginning.
+
+
+The first Lion Phase F PPC-ingress/native-broker attempt hit a shell syntax error in the runner's post-run marker-validation loop. The malformed `for marker in` list appears after the live proof command, raw-log capture, exit-status record, and protected-hash comparison, so the attempt may already have executed the intended live proof. Current `main` fixes the loop syntax and adds a read-only recovery validator for the preserved Lion report/raw log. Do not automatically rerun Phase F; first validate the existing artifacts with `scripts/validate-lion-ppc-distributed-notifications-ingress-existing.sh`.
