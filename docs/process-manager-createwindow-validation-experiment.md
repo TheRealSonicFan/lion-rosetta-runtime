@@ -408,3 +408,16 @@ docs/distributed-notifications-bootstrap-compat-protocol-experiment.md
 ```
 
 That stage does not call `CreateNewWindow`. It uses a standalone PPC lookup probe and the already-proven Lion-format launchd `0x194/0x1f8` formatter to test exactly `com.apple.distributed_notifications.2`, pid 0, flags 8. Only if that standalone policy proof succeeds may the service tuple be integrated into the normal compatibility build and window creation retried.
+
+
+## Follow-on status — distributed-notifications bridge proven
+
+The standalone distributed-notifications investigation that followed the original CreateNewWindow abort is now complete. The exact Snow PPC legacy lookup/protocol, the native Lion public-CF broker boundary, the process-local PPC ingress bridge, and the legacy callback path have all passed independently.
+
+Current `main` therefore returns to the real CreateNewWindow subject through:
+
+```text
+docs/process-manager-createwindow-distributed-notifications-integration-experiment.md
+```
+
+The integration uses a combined CoreServices compatibility dylib so the existing CoreServices `bootstrap_look_up2` adaptation and the proven distributed-notifications ingress do not compete as separate dyld interposers. The standalone ingress dylib must not be loaded beside the combined build.
