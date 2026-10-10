@@ -58,19 +58,21 @@ The broker should translate the proven Snow v2 request into Lion's **public** di
 Snow's public API encodes suspension behavior into the private v2 `behavior` field as:
 
 ```text
-public DeliverImmediately (1) -> legacy internal 2
-public Drop               (2) -> legacy internal 4
-public Coalesce           (3) -> legacy internal 8
-public Hold               (4) -> legacy internal 1
+public Drop               (1) -> legacy internal 2
+public Coalesce           (2) -> legacy internal 4
+public Hold               (3) -> legacy internal 8
+public DeliverImmediately (4) -> legacy internal 1
 ```
+
+The numeric mapping above is what analyzer v2 proved from the Snow PPC implementation. The public enum names are resolved from the CoreFoundation header contract: Drop=1, Coalesce=2, Hold=3, DeliverImmediately=4. An earlier draft of this document attached the wrong names to those four numeric values; the numbers were correct, the labels were not.
 
 The broker can invert that mapping:
 
 ```text
-legacy internal 1 -> public Hold               (4)
-legacy internal 2 -> public DeliverImmediately (1)
-legacy internal 4 -> public Drop               (2)
-legacy internal 8 -> public Coalesce           (3)
+legacy internal 1 -> public DeliverImmediately (4)
+legacy internal 2 -> public Drop               (1)
+legacy internal 4 -> public Coalesce           (2)
+legacy internal 8 -> public Hold               (3)
 ```
 
 The broker then calls Lion's native `CFNotificationCenterAddObserver`. Lion CoreFoundation converts the public suspension behavior into whatever private XPC `options` representation Lion requires and owns the native registration token internally.
