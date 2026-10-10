@@ -449,3 +449,6 @@ The second Phase B PPC-ingress build failure is a validator false negative: the 
 
 
 The third PPC-ingress Phase B failure is another architecture-validator false negative: Snow's `lipo -info` reported the `-arch ppc` probe as concrete subtype `ppc7400`, while `file` confirmed it is a PPC Mach-O. Current `main` now normalizes the documented 32-bit cctools PowerPC subtype names into the generic PPC32 family and explicitly excludes `ppc64`. The same family-aware matcher is used by the Snow control and Lion proof runners so transferred `ppc7400` artifacts are accepted consistently. Pull current `main`, discard partial outputs, and rerun Phase B from the beginning; Phase C remains blocked until the complete build succeeds.
+
+
+The fourth PPC-ingress Phase B failure is a Darwin symbol-versioning validator defect: the interposer calls `socketpair()`, but Snow's UNIX03 headers can emit the undefined symbol `_socketpair$UNIX2003` rather than unversioned `_socketpair`. Current `main` requires exactly one supported socketpair import (`_socketpair` or `_socketpair$UNIX2003`), records it in the interposer info file, and leaves all other import, architecture, and interposer-v2 checks intact. Pull current `main`, discard partial artifacts, and rerun Phase B from the beginning; Phase C remains blocked until the complete build succeeds.
