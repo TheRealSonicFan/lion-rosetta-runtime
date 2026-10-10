@@ -4,33 +4,34 @@ from __future__ import print_function
 import os
 import re
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
 
 DEFAULT_REPORT = "./distributed-notifications-bridge-preflight.txt"
-ANALYZER_VERSION = "1"
+ANALYZER_VERSION = "2"
 
 COREFOUNDATION = "/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation"
-LIBSYSTEM_CANDIDATES = [
-    "/usr/lib/libSystem.B.dylib",
-    "/usr/lib/libSystem.dylib",
-]
-LIBXPC_CANDIDATES = [
-    "/usr/lib/system/libxpc.dylib",
-    "/usr/lib/libxpc.dylib",
+
+LIBRARY_CANDIDATES = [
+    ("/usr/lib/libSystem.B.dylib", "libSystem.B"),
+    ("/usr/lib/libSystem.dylib", "libSystem"),
+    ("/usr/lib/system/libxpc.dylib", "libxpc.system"),
+    ("/usr/lib/libxpc.dylib", "libxpc"),
 ]
 
-SNOW_TARGETS = [
+SNOW_CLIENT_TARGETS = [
     "_CFNotificationCenterAddObserver",
     "_CFNotificationCenterPostNotificationWithOptions",
     "__CFXNotificationPostNotification",
     "__CFXNotificationRegister",
     "__CFXNotificationUnregister",
-    "__CFXNotificationSetSuspended",
-    "__CFXNotificationResetSessionForTask",
-    "___CFXNotificationHandleMessage",
+]
+
+SNOW_SERVER_TARGETS = [
     "___CFXNotificationReceiveFromClient",
+    "___CFXNotificationHandleMessage",
 ]
 
 LION_TARGETS = [
@@ -38,19 +39,41 @@ LION_TARGETS = [
     "_CFNotificationCenterPostNotificationWithOptions",
     "__CFXNotificationRegisterObserver",
     "__CFXNotificationPost",
-    "__CFXNotificationRemoveObservers",
-    "__CFXNotificationSetSuspended",
-    "__CFXNotificationResetSessionForTask",
-    "_____CFXNotificationCenterSetupConnection_block_invoke_1",
+    "___checkDelivImmed",
 ]
 
-FOCUS_RE = re.compile(
-    r"(message_type|post_token|register|unregister|suspend|unsuspend|"
-    r"session_reset|i_am_loginwindow|registrations|immediately|sux|"
-    r"behavior|counter|entry|entries|method|version|options|token|tokens|"
-    r"name|object|userinfo|sessionid|CFDictionary|CFNumber|xpc_|mach_msg)",
-    re.I,
-)
+SNOW_PROTOCOL_VALUES = [
+    "message_type",
+    "post",
+    "name",
+    "object",
+    "userinfo",
+    "client",
+    "sessionid",
+    "immediately",
+    "sux",
+    "counter",
+    "entry",
+    "behavior",
+    "entries",
+    "register",
+    "unregister",
+]
+
+LION_PROTOCOL_VALUES = [
+    "method",
+    "version",
+    "post",
+    "options",
+    "token",
+    "tokens",
+    "name",
+    "object",
+    "userinfo",
+    "register",
+    "unregister",
+    "post_token",
+]
 
 
 def run(cmd):
@@ -104,6 +127,20 @@ def parse_hex_token(token):
         return int(token, 16)
     except ValueError:
         return None
+
+
+def signed16(value):
+    value &= 0xffff
+    if value & 0x8000:
+        return value - 0x10000
+    return value
+
+
+def signed32(value):
+    value &= 0xffffffff
+    if value & 0x80000000:
+        return value - 0x100000000
+    return value
 
 
 def parse_nm_text_symbol_name(raw):
@@ -173,69 +210,433 @@ def window_rows(rows, ordered, start, max_bytes=0x9000):
     return result
 
 
-def emit_target_windows(fp, thin, targets, evidence):
+def parse_sections(path):
+    rc, out = run(["/usr/bin/otool", "-l", path])
+    sections = {}
+    if rc != 0:
+        return sections
+
+    current = None
+    for raw in out.splitlines():
+        s = raw.strip()
+        if s.startswith("Load command "):
+            if current and current.get("sectname") and current.get("segname"):
+                sections[(current["segname"], current["sectname"])] = current
+            current = None
+            continue
+        if s == "Section":
+            if current and current.get("sectname") and current.get("segname"):
+                sections[(current["segname"], current["sectname"])] = current
+            current = {}
+            continue
+        if current is None:
+            continue
+        parts = s.split(None, 1)
+        if len(parts) != 2:
+            continue
+        key, value = parts
+        if key in ("sectname", "segname"):
+            current[key] = value.strip()
+        elif key in ("addr", "size"):
+            try:
+                current[key] = int(value.strip(), 0)
+            except ValueError:
+                pass
+        elif key == "offset":
+            try:
+                current[key] = int(value.strip(), 0)
+            except ValueError:
+                try:
+                    current[key] = int(value.strip())
+                except ValueError:
+                    pass
+
+    if current and current.get("sectname") and current.get("segname"):
+        sections[(current["segname"], current["sectname"])] = current
+    return sections
+
+
+def read_section(path, sections, segname, sectname):
+    info = sections.get((segname, sectname))
+    if not info:
+        return None, None
+    for key in ("addr", "size", "offset"):
+        if key not in info:
+            return None, None
+    try:
+        f = open(path, "rb")
+        try:
+            f.seek(info["offset"])
+            blob = f.read(info["size"])
+        finally:
+            f.close()
+    except IOError:
+        return None, None
+    return info, blob
+
+
+def decode_bytes(raw):
+    if isinstance(raw, str):
+        return raw
+    return raw.decode("utf-8", "replace")
+
+
+def make_cstring_map(path, sections):
+    info, blob = read_section(path, sections, "__TEXT", "__cstring")
+    result = {}
+    if info is None or blob is None:
+        return result
+    zero = b"\x00" if not isinstance(blob, str) else "\x00"
+    pos = 0
+    while pos < len(blob):
+        end = blob.find(zero, pos)
+        if end < 0:
+            end = len(blob)
+        raw = blob[pos:end]
+        if raw:
+            result[info["addr"] + pos] = decode_bytes(raw)
+        pos = end + 1
+    return result
+
+
+def make_cfstring_map(path, sections, arch, cstrings):
+    info, blob = read_section(path, sections, "__DATA", "__cfstring")
+    result = {}
+    if info is None or blob is None:
+        return result
+    endian = ">" if arch.startswith("ppc") else "<"
+    entry_size = 16
+    off = 0
+    while off + entry_size <= len(blob):
+        chunk = blob[off:off + entry_size]
+        try:
+            words = struct.unpack(endian + "IIII", chunk)
+        except Exception:
+            off += entry_size
+            continue
+        value = None
+        for word in words:
+            if word in cstrings:
+                value = cstrings[word]
+                break
+        if value is not None:
+            result[info["addr"] + off] = value
+        off += entry_size
+    return result
+
+
+def constant_at(addr, cstrings, cfstrings):
+    if addr in cstrings:
+        return ("cstring", cstrings[addr])
+    if addr in cfstrings:
+        return ("cfstring", cfstrings[addr])
+    return None
+
+
+def parse_i386_mem(operand):
+    m = re.match(r"^([+-]?(?:0x[0-9a-fA-F]+|\d+))?\(%(ebp|esp)\)$", operand)
+    if not m:
+        return None
+    disp_text = m.group(1)
+    base = m.group(2)
+    if disp_text is None or disp_text == "":
+        disp = 0
+    else:
+        try:
+            if disp_text.startswith("-0x"):
+                disp = -int(disp_text[3:], 16)
+            elif disp_text.startswith("+0x"):
+                disp = int(disp_text[3:], 16)
+            else:
+                disp = int(disp_text, 0)
+        except ValueError:
+            return None
+    return (base, disp)
+
+
+def resolve_i386(rows, cstrings, cfstrings):
+    refs = []
+    regs = {}
+    slots = {}
+    pending_call_target = None
+
+    for addr, raw in rows:
+        asm = raw.split("\t", 1)[1] if "\t" in raw else raw
+        asm = asm.strip()
+
+        m = re.search(r"\bcalll\s+0x([0-9a-fA-F]+)", asm)
+        if m:
+            call_target = int(m.group(1), 16)
+            if call_target == addr + 5:
+                pending_call_target = call_target
+            else:
+                pending_call_target = None
+                regs.pop("eax", None)
+                regs.pop("ecx", None)
+                regs.pop("edx", None)
+
+        m = re.match(r"popl\s+%(e[a-z]{2})$", asm)
+        if m and pending_call_target is not None:
+            regs[m.group(1)] = pending_call_target
+            pending_call_target = None
+            continue
+
+        m = re.match(r"movl\s+%(e[a-z]{2}),%(e[a-z]{2})$", asm)
+        if m:
+            src, dst = m.group(1), m.group(2)
+            if src in regs:
+                regs[dst] = regs[src]
+            else:
+                regs.pop(dst, None)
+            continue
+
+        m = re.match(r"movl\s+%(e[a-z]{2}),([^,]+)$", asm)
+        if m:
+            src = m.group(1)
+            slot = parse_i386_mem(m.group(2).strip())
+            if slot:
+                if src in regs:
+                    slots[slot] = regs[src]
+                else:
+                    slots.pop(slot, None)
+            continue
+
+        m = re.match(r"movl\s+([^,]+),%(e[a-z]{2})$", asm)
+        if m:
+            slot = parse_i386_mem(m.group(1).strip())
+            dst = m.group(2)
+            if slot:
+                if slot in slots:
+                    regs[dst] = slots[slot]
+                else:
+                    regs.pop(dst, None)
+                continue
+
+        m = re.match(r"leal\s+0x([0-9a-fA-F]+)\(%(e[a-z]{2})\),%(e[a-z]{2})$", asm)
+        if m:
+            disp = signed32(int(m.group(1), 16))
+            src, dst = m.group(2), m.group(3)
+            if src in regs:
+                value = (regs[src] + disp) & 0xffffffff
+                regs[dst] = value
+                hit = constant_at(value, cstrings, cfstrings)
+                if hit:
+                    refs.append((addr, raw, value, hit[0], hit[1]))
+            else:
+                regs.pop(dst, None)
+            continue
+
+        m = re.match(r"leal\s+(-0x[0-9a-fA-F]+)\(%(e[a-z]{2})\),%(e[a-z]{2})$", asm)
+        if m:
+            disp = -int(m.group(1)[3:], 16)
+            src, dst = m.group(2), m.group(3)
+            if src in regs:
+                value = (regs[src] + disp) & 0xffffffff
+                regs[dst] = value
+                hit = constant_at(value, cstrings, cfstrings)
+                if hit:
+                    refs.append((addr, raw, value, hit[0], hit[1]))
+            else:
+                regs.pop(dst, None)
+            continue
+
+        m = re.match(r"movl\s+\$0x([0-9a-fA-F]+),%(e[a-z]{2})$", asm)
+        if m:
+            value = int(m.group(1), 16) & 0xffffffff
+            dst = m.group(2)
+            regs[dst] = value
+            hit = constant_at(value, cstrings, cfstrings)
+            if hit:
+                refs.append((addr, raw, value, hit[0], hit[1]))
+            continue
+
+        m = re.search(r"%(e[a-z]{2})\s*$", asm)
+        if m and re.match(r"(?:addl|subl|xorl|andl|orl|shll|shrl|imull)\b", asm):
+            regs.pop(m.group(1), None)
+
+        if re.search(r"\bret\b", asm):
+            regs = {}
+            slots = {}
+            pending_call_target = None
+
+    return refs
+
+
+def resolve_ppc(rows, cstrings, cfstrings):
+    refs = []
+    regs = {}
+    slots = {}
+    lr_value = None
+
+    for addr, raw in rows:
+        asm = raw.split("\t", 1)[1] if "\t" in raw else raw
+        asm = asm.strip()
+
+        m = re.search(r"\bbcl\s+[^,]+,[^,]+,0x([0-9a-fA-F]+)", asm)
+        if m:
+            lr_value = int(m.group(1), 16)
+
+        m = re.match(r"mfspr\s+(r\d+),lr$", asm)
+        if m and lr_value is not None:
+            regs[m.group(1)] = lr_value
+            continue
+
+        m = re.match(r"or\s+(r\d+),(r\d+),\2$", asm)
+        if m:
+            dst, src = m.group(1), m.group(2)
+            if src in regs:
+                regs[dst] = regs[src]
+            else:
+                regs.pop(dst, None)
+            continue
+
+        m = re.match(r"addis\s+(r\d+),(r\d+),0x([0-9a-fA-F]+)$", asm)
+        if m:
+            dst, src = m.group(1), m.group(2)
+            if src in regs:
+                regs[dst] = (regs[src] + (signed16(int(m.group(3), 16)) << 16)) & 0xffffffff
+            else:
+                regs.pop(dst, None)
+            continue
+
+        m = re.match(r"addi\s+(r\d+),(r\d+),0x([0-9a-fA-F]+)$", asm)
+        if m:
+            dst, src = m.group(1), m.group(2)
+            if src in regs:
+                value = (regs[src] + signed16(int(m.group(3), 16))) & 0xffffffff
+                regs[dst] = value
+                hit = constant_at(value, cstrings, cfstrings)
+                if hit:
+                    refs.append((addr, raw, value, hit[0], hit[1]))
+            else:
+                regs.pop(dst, None)
+            continue
+
+        m = re.match(r"stw\s+(r\d+),([+-]?(?:0x[0-9a-fA-F]+|\d+))\(r1\)$", asm)
+        if m:
+            src = m.group(1)
+            try:
+                disp = int(m.group(2), 0)
+            except ValueError:
+                disp = None
+            if disp is not None:
+                if src in regs:
+                    slots[disp] = regs[src]
+                else:
+                    slots.pop(disp, None)
+            continue
+
+        m = re.match(r"lwz\s+(r\d+),([+-]?(?:0x[0-9a-fA-F]+|\d+))\(r1\)$", asm)
+        if m:
+            dst = m.group(1)
+            try:
+                disp = int(m.group(2), 0)
+            except ValueError:
+                disp = None
+            if disp is not None and disp in slots:
+                regs[dst] = slots[disp]
+            else:
+                regs.pop(dst, None)
+            continue
+
+        if re.search(r"\bblr\b", asm):
+            regs = {}
+            slots = {}
+            lr_value = None
+
+    return refs
+
+
+def resolve_constants(rows, arch, cstrings, cfstrings):
+    if arch.startswith("ppc"):
+        return resolve_ppc(rows, cstrings, cfstrings)
+    return resolve_i386(rows, cstrings, cfstrings)
+
+
+def joined(window):
+    return "\n".join([raw for addr, raw in window])
+
+
+def count_ref_value(refs, value):
+    count = 0
+    for addr, raw, value_addr, kind, found in refs:
+        if found == value:
+            count += 1
+    return count
+
+
+def inspect_cf_slice(fp, arch, targets, label, tempdir):
+    evidence = {}
+    thin = os.path.join(tempdir, re.sub(r"[^A-Za-z0-9_.-]", "_", label) + "." + arch)
+
+    line(fp)
+    line(fp, "============================================================")
+    line(fp, "== %s: %s ==" % (label, arch))
+
+    ok = os.path.isfile(COREFOUNDATION) and thin_arch(COREFOUNDATION, arch, thin)
+    line(fp, "thin=%s" % ("YES" if ok else "NO"))
+    evidence["slice"] = ok
+    if not ok:
+        return evidence
+
+    line(fp, "slice_sha256=%s" % sha256(thin))
+    sections = parse_sections(thin)
+    cstrings = make_cstring_map(thin, sections)
+    cfstrings = make_cfstring_map(thin, sections, arch, cstrings)
+    evidence["cstrings"] = cstrings
+    evidence["cfstrings"] = cfstrings
+
     rc, nm_out = run(["/usr/bin/nm", "-nm", thin])
     if rc != 0:
         line(fp, "nm_failed")
-        return
+        return evidence
     ordered, by_name = parse_text_symbols(nm_out)
+    evidence["by_name"] = by_name
 
     rc, dis_out = run(["/usr/bin/otool", "-tvV", thin])
     if rc != 0:
         line(fp, "disassembly_failed")
-        return
+        return evidence
     rows = parse_instructions(dis_out)
+    evidence["rows"] = rows
+    evidence["ordered"] = ordered
+    evidence["thin_path"] = thin
 
-    line(fp)
-    line(fp, "-- bridge-preflight target inventory --")
+    line(fp, "-- semantic target inventory --")
+    windows = {}
+    refs_by_target = {}
     for target in targets:
-        count = len(by_name.get(target, []))
-        line(fp, "%s count=%d" % (target, count))
-        evidence["target:" + target] = count > 0
+        addrs = sorted(by_name.get(target, []))
+        line(fp, "%s count=%d" % (target, len(addrs)))
+        evidence["target:" + target] = bool(addrs)
+        if not addrs:
+            continue
+        window = window_rows(rows, ordered, addrs[0])
+        refs = resolve_constants(window, arch, cstrings, cfstrings)
+        windows[target] = window
+        refs_by_target[target] = refs
 
-    for target in targets:
-        for start in sorted(by_name.get(target, [])):
-            window = window_rows(rows, ordered, start)
-            line(fp)
-            line(fp, "-- exact target: %s --" % target)
-            line(fp, "symbol_address=0x%x" % start)
-            line(fp, "instruction_lines=%d" % len(window))
-            for addr, raw in window:
-                line(fp, raw)
-            line(fp, "-- focused bridge-semantics lines: %s --" % target)
-            hits = 0
-            for idx, pair in enumerate(window):
-                addr, raw = pair
-                if FOCUS_RE.search(raw):
-                    lo = max(0, idx - 8)
-                    hi = min(len(window), idx + 9)
-                    line(fp, "focus_hit_address=0x%x" % addr)
-                    for j in range(lo, hi):
-                        line(fp, window[j][1])
-                    hits += 1
-                    if hits >= 80:
-                        break
-            line(fp, "focus_hit_count=%d" % hits)
+        line(fp)
+        line(fp, "-- exact target: %s --" % target)
+        line(fp, "symbol_address=0x%x" % addrs[0])
+        line(fp, "instruction_lines=%d" % len(window))
+        for addr, raw in window:
+            line(fp, raw)
+            for raddr, rraw, value_addr, kind, value in refs:
+                if raddr == addr and value in (SNOW_PROTOCOL_VALUES + LION_PROTOCOL_VALUES):
+                    line(fp, "resolved_protocol_constant address=0x%x kind=%s value=%s" %
+                         (value_addr, kind, value))
 
+        line(fp, "-- protocol constant xref counts: %s --" % target)
+        values = SNOW_PROTOCOL_VALUES if arch.startswith("ppc") or label.startswith("Snow") else LION_PROTOCOL_VALUES
+        for value in values:
+            count = count_ref_value(refs, value)
+            if count:
+                line(fp, "xref[%s]=%d" % (value, count))
 
-def focused_nm_symbols(path):
-    rc, out = run(["/usr/bin/nm", "-g", path])
-    if rc != 0:
-        rc, out = run(["/usr/bin/nm", path])
-    if rc != 0:
-        return "", False, False
-    rows = []
-    create = False
-    send = False
-    for raw in out.splitlines():
-        if "_xpc_" in raw or "_mach_msg" in raw or "bootstrap_" in raw:
-            rows.append(raw)
-        if "_xpc_connection_create" in raw:
-            create = True
-        if ("_xpc_connection_send_message" in raw or
-                "_xpc_connection_send_message_with_reply" in raw):
-            send = True
-    return "\n".join(rows), create, send
+    evidence["windows"] = windows
+    evidence["refs_by_target"] = refs_by_target
+    return evidence
 
 
 def inspect_library(fp, path, label, tempdir, evidence):
@@ -255,63 +656,32 @@ def inspect_library(fp, path, label, tempdir, evidence):
 
     for arch in ("ppc7400", "i386", "x86_64"):
         present = verify_arch(path, arch)
-        line(fp, "arch_%s=%s" % (arch, "YES" if present else "NO"))
         evidence[(label, arch, "present")] = present
+        line(fp, "arch_%s=%s" % (arch, "YES" if present else "NO"))
         if not present:
             continue
 
-        thin = os.path.join(
-            tempdir,
-            re.sub(r"[^A-Za-z0-9_.-]", "_", label) + "." + arch)
+        thin = os.path.join(tempdir, "lib." + label.replace("/", "_") + "." + arch)
         if not thin_arch(path, arch, thin):
-            line(fp, "thin_%s=FAIL" % arch)
             continue
-        line(fp, "thin_%s=YES" % arch)
-        symbols, has_create, has_send = focused_nm_symbols(thin)
+
+        rc, nm_out = run(["/usr/bin/nm", "-g", thin])
+        if rc != 0:
+            rc, nm_out = run(["/usr/bin/nm", thin])
+        has_create = "_xpc_connection_create" in nm_out
+        has_send = (
+            "_xpc_connection_send_message" in nm_out or
+            "_xpc_connection_send_message_with_reply" in nm_out
+        )
+        evidence[(label, arch, "xpc_create")] = has_create
+        evidence[(label, arch, "xpc_send")] = has_send
         line(fp, "xpc_connection_create_%s=%s" %
              (arch, "YES" if has_create else "NO"))
         line(fp, "xpc_connection_send_%s=%s" %
              (arch, "YES" if has_send else "NO"))
-        evidence[(label, arch, "xpc_create")] = has_create
-        evidence[(label, arch, "xpc_send")] = has_send
-        if symbols:
-            line(fp, "-- focused exports/imports: %s %s --" % (label, arch))
-            for raw in symbols.splitlines():
-                line(fp, raw)
 
 
-def inspect_corefoundation(fp, arch, tempdir, targets, evidence):
-    line(fp)
-    line(fp, "== CoreFoundation bridge-preflight slice: %s ==" % arch)
-    ok = os.path.isfile(COREFOUNDATION) and verify_arch(COREFOUNDATION, arch)
-    line(fp, "slice_present=%s" % ("YES" if ok else "NO"))
-    evidence["cf_slice"] = ok
-    if not ok:
-        return
-
-    thin = os.path.join(tempdir, "CoreFoundation." + arch)
-    if not thin_arch(COREFOUNDATION, arch, thin):
-        line(fp, "thin=FAIL")
-        return
-    line(fp, "thin=YES")
-    line(fp, "slice_sha256=%s" % sha256(thin))
-
-    symbols, has_create, has_send = focused_nm_symbols(thin)
-    evidence["cf_xpc_create"] = has_create
-    evidence["cf_xpc_send"] = has_send
-    line(fp, "corefoundation_xpc_connection_create=%s" %
-         ("YES" if has_create else "NO"))
-    line(fp, "corefoundation_xpc_connection_send=%s" %
-         ("YES" if has_send else "NO"))
-    if symbols:
-        line(fp, "-- CoreFoundation focused imports --")
-        for raw in symbols.splitlines():
-            line(fp, raw)
-
-    emit_target_windows(fp, thin, targets, evidence)
-
-
-def candidate_xpc_surface(evidence):
+def ppc_callable_xpc_surface(evidence):
     for label in ("libSystem.B", "libSystem", "libxpc.system", "libxpc"):
         if (evidence.get((label, "ppc7400", "present"), False) and
                 evidence.get((label, "ppc7400", "xpc_create"), False) and
@@ -320,25 +690,129 @@ def candidate_xpc_surface(evidence):
     return False
 
 
-def validate(product, evidence, targets, issues):
-    if not evidence.get("cf_slice", False):
-        issues.append("required CoreFoundation slice missing")
+def check_snow_semantics(ppc, server_i386, fp, issues):
+    windows = ppc.get("windows", {})
+    add = joined(windows.get("_CFNotificationCenterAddObserver", []))
+    post = joined(windows.get("__CFXNotificationPostNotification", []))
+
+    behavior_3_to_8 = (
+        re.search(r"cmpwi\s+cr7,r27,0x3", add) is not None and
+        re.search(r"li\s+r9,0x8", add) is not None
+    )
+    behavior_4_to_1 = (
+        re.search(r"cmpwi\s+cr7,r27,0x4", add) is not None and
+        re.search(r"li\s+r9,0x1", add) is not None
+    )
+    behavior_1_to_2 = (
+        re.search(r"cmpwi\s+cr7,r27,0x1", add) is not None and
+        re.search(r"li\s+r9,0x2", add) is not None
+    )
+    behavior_2_to_4 = re.search(r"li\s+r9,0x4", add) is not None
+
+    post_bit_all = re.search(r"andi\.\s+r0,r24,0x2", post) is not None
+    post_bit_immediate = re.search(r"andi\.\s+r0,r24,0x1", post) is not None
+    public_tail = joined(windows.get("_CFNotificationCenterPostNotificationWithOptions", []))
+    public_pass = (
+        "__CFXNotificationPostNotification" in public_tail and
+        re.search(r"li\s+r8,(?:__mh_dylib_header|0x0|0)\b", public_tail) is not None
+    )
+
+    post_refs = ppc.get("refs_by_target", {}).get("__CFXNotificationPostNotification", [])
+    server_refs = server_i386.get("refs_by_target", {}).get("___CFXNotificationReceiveFromClient", [])
+    post_sux_refs = count_ref_value(post_refs, "sux")
+    server_sux_refs = count_ref_value(server_refs, "sux")
+
+    line(fp)
+    line(fp, "== Snow public-API reconstruction semantics ==")
+    line(fp, "public_behavior_1_to_legacy_internal_2=%s" %
+         ("YES" if behavior_1_to_2 else "NO"))
+    line(fp, "public_behavior_2_to_legacy_internal_4=%s" %
+         ("YES" if behavior_2_to_4 else "NO"))
+    line(fp, "public_behavior_3_to_legacy_internal_8=%s" %
+         ("YES" if behavior_3_to_8 else "NO"))
+    line(fp, "public_behavior_4_to_legacy_internal_1=%s" %
+         ("YES" if behavior_4_to_1 else "NO"))
+    line(fp, "legacy_internal_to_public_behavior=1->4,2->1,4->2,8->3")
+    line(fp, "public_post_options_passed_to_private_sender=%s" %
+         ("YES" if public_pass else "NO"))
+    line(fp, "post_option_bit_0_controls_immediately=%s" %
+         ("YES" if post_bit_immediate else "NO"))
+    line(fp, "post_option_bit_1_controls_session_scope=%s" %
+         ("YES" if post_bit_all else "NO"))
+    line(fp, "ppc_post_sux_constant_xrefs=%d" % post_sux_refs)
+    line(fp, "i386_server_receive_sux_constant_xrefs=%d" % server_sux_refs)
+    line(fp, "first_proof_sux_policy=require_false; reject true/unknown")
+    line(fp, "first_proof_post_scope=current-session only; reject all-session")
+    line(fp, "first_proof_public_post_options=immediately?1:0")
+
+    for name, ok in (
+            ("behavior 1->2", behavior_1_to_2),
+            ("behavior 2->4", behavior_2_to_4),
+            ("behavior 3->8", behavior_3_to_8),
+            ("behavior 4->1", behavior_4_to_1),
+            ("public post wrapper", public_pass),
+            ("post immediate bit", post_bit_immediate),
+            ("post all-session bit", post_bit_all)):
+        if not ok:
+            issues.append("Snow semantic observation missing: %s" % name)
+
+
+def check_lion_public_routes(lion, fp, issues):
+    by_name = lion.get("by_name", {})
+    windows = lion.get("windows", {})
+
+    add_addrs = by_name.get("__CFXNotificationRegisterObserver", [])
+    post_addrs = by_name.get("__CFXNotificationPost", [])
+    add_text = joined(windows.get("_CFNotificationCenterAddObserver", []))
+    post_text = joined(windows.get("_CFNotificationCenterPostNotificationWithOptions", []))
+
+    add_route = False
+    for addr in add_addrs:
+        if ("calll\t0x%08x" % addr) in add_text or ("calll\t0x%x" % addr) in add_text:
+            add_route = True
+    post_route = False
+    for addr in post_addrs:
+        if ("calll\t0x%08x" % addr) in post_text or ("calll\t0x%x" % addr) in post_text:
+            post_route = True
+
+    check_present = bool(by_name.get("___checkDelivImmed", []))
+
+    line(fp)
+    line(fp, "== Lion public-API broker boundary ==")
+    line(fp, "public_addobserver_routes_to_native_register=%s" %
+         ("YES" if add_route else "NO"))
+    line(fp, "public_post_with_options_routes_to_native_post=%s" %
+         ("YES" if post_route else "NO"))
+    line(fp, "native_checkDelivImmed_present=%s" %
+         ("YES" if check_present else "NO"))
+    line(fp, "broker_translation_layer=Snow-v2 dictionary -> Lion public CFNotificationCenter API")
+    line(fp, "raw_lion_xpc_dictionary_synthesis=NO")
+    line(fp, "native_corefoundation_owns_xpc_option_quirks=YES")
+    line(fp, "first_proof_operations=register,post_current_session,callback,unregister")
+    line(fp, "first_proof_reject=suspend,session_reset,post_all_sessions,sux_true")
+
+    if not add_route:
+        issues.append("Lion public AddObserver route to __CFXNotificationRegisterObserver missing")
+    if not post_route:
+        issues.append("Lion public PostNotificationWithOptions route to __CFXNotificationPost missing")
+    if not check_present:
+        issues.append("Lion ___checkDelivImmed symbol missing")
+
+
+def validate_targets(evidence, targets, label, issues):
+    if not evidence.get("slice", False):
+        issues.append("%s slice missing" % label)
+        return
     for target in targets:
         if not evidence.get("target:" + target, False):
-            issues.append("required CoreFoundation target missing: %s" % target)
-
-    if product == "10.7.5":
-        if not evidence.get("cf_xpc_create", False):
-            issues.append("Lion CoreFoundation XPC create import missing")
-        if not evidence.get("cf_xpc_send", False):
-            issues.append("Lion CoreFoundation XPC send import missing")
+            issues.append("%s target missing: %s" % (label, target))
 
 
 def main():
     report = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_REPORT
     tempdir = tempfile.mkdtemp(prefix="distnotify-bridge-preflight.")
     issues = []
-    evidence = {}
+    library_evidence = {}
 
     try:
         _, product_out = run(["/usr/bin/sw_vers", "-productVersion"])
@@ -346,52 +820,67 @@ def main():
         product = product_out.strip()
         build = build_out.strip()
 
-        if product == "10.6.8":
-            cf_arch = "ppc7400"
-            targets = SNOW_TARGETS
-        elif product == "10.7.5":
-            cf_arch = "i386"
-            targets = LION_TARGETS
-        else:
-            cf_arch = "i386"
-            targets = []
-            issues.append("unsupported OS baseline: %s" % product)
-
         with open(report, "w") as fp:
             line(fp, "== Distributed notifications bridge preflight audit ==")
             line(fp, "analyzer_version=%s" % ANALYZER_VERSION)
             line(fp, "product_version=%s" % product)
             line(fp, "build_version=%s" % build)
             line(fp, "selected_lion_service=com.apple.distributed_notifications@Uv3")
-            line(fp, "abi_provenance=protocol-abi analyzer-v2 PASS on Snow and Lion")
-            line(fp, "objective=choose callable XPC bridge architecture and close option/token semantics")
+            line(fp, "v1_result=architecture closed: no PPC-callable XPC provider on Lion")
+            line(fp, "objective=prove public-API reconstruction boundary for native i386 broker")
 
-            inspect_corefoundation(fp, cf_arch, tempdir, targets, evidence)
+            if product == "10.6.8":
+                ppc = inspect_cf_slice(
+                    fp, "ppc7400", SNOW_CLIENT_TARGETS,
+                    "Snow client CoreFoundation", tempdir)
+                server_i386 = inspect_cf_slice(
+                    fp, "i386", SNOW_SERVER_TARGETS,
+                    "Snow server CoreFoundation", tempdir)
+                validate_targets(ppc, SNOW_CLIENT_TARGETS, "Snow PPC client", issues)
+                validate_targets(server_i386, SNOW_SERVER_TARGETS, "Snow i386 server", issues)
+                check_snow_semantics(ppc, server_i386, fp, issues)
+                lion = {}
+            elif product == "10.7.5":
+                lion = inspect_cf_slice(
+                    fp, "i386", LION_TARGETS,
+                    "Lion client CoreFoundation", tempdir)
+                validate_targets(lion, LION_TARGETS, "Lion i386 client", issues)
+                ppc = {}
+                server_i386 = {}
+                check_lion_public_routes(lion, fp, issues)
+            else:
+                ppc = {}
+                server_i386 = {}
+                lion = {}
+                issues.append("unsupported OS baseline: %s" % product)
 
-            for path, label in (
-                    (LIBSYSTEM_CANDIDATES[0], "libSystem.B"),
-                    (LIBSYSTEM_CANDIDATES[1], "libSystem"),
-                    (LIBXPC_CANDIDATES[0], "libxpc.system"),
-                    (LIBXPC_CANDIDATES[1], "libxpc")):
-                inspect_library(fp, path, label, tempdir, evidence)
+            for path, label in LIBRARY_CANDIDATES:
+                inspect_library(fp, path, label, tempdir, library_evidence)
 
-            ppc_xpc = candidate_xpc_surface(evidence)
+            ppc_xpc = ppc_callable_xpc_surface(library_evidence)
             line(fp)
             line(fp, "== Bridge architecture discriminator ==")
             line(fp, "ppc_callable_xpc_surface=%s" %
                  ("YES" if ppc_xpc else "NO"))
             if ppc_xpc:
-                line(fp, "candidate_bridge_architecture=in-process PPC bridge may be linkable; review exact provider before implementation")
+                line(fp, "selected_bridge_architecture=UNEXPECTED_PPC_XPC_SURFACE_REVIEW_REQUIRED")
             else:
-                line(fp, "candidate_bridge_architecture=no demonstrated PPC XPC provider; native i386 broker/helper is the leading architecture")
-            line(fp, "session_reset_scope=Lion native path is loginwindow-specific; ordinary-client proof must reject rather than fabricate it")
-            line(fp, "token_mapping_candidate=legacy entry/counter state <-> bridge-owned v3 token")
-            line(fp, "unregister_mapping_candidate=legacy entries array -> stored v3 tokens array")
-            line(fp, "callback_mapping_candidate=v3 post_token -> legacy post dictionary using stored counter/entry")
-            line(fp, "remaining_semantic_checks=register behavior->options, post immediately/all-session->options, legacy sux handling")
-            line(fp, "mapping_status=PREFLIGHT_ONLY_DO_NOT_BUILD_BRIDGE_YET")
+                line(fp, "selected_bridge_architecture=native_i386_broker_using_Lion_public_CFNotificationCenter_API")
+            line(fp, "raw_xpc_bridge=REJECTED")
+            line(fp, "first_proof_scope=register -> current-session post -> callback -> unregister")
+            line(fp, "first_proof_guardrails=reject suspend,session_reset,post_all_sessions,sux_true")
+            line(fp, "next_after_pass=standalone native i386 broker proof; still no CreateNewWindow integration")
 
-            validate(product, evidence, targets, issues)
+            if product == "10.7.5":
+                libxpc_i386 = (
+                    library_evidence.get(("libxpc.system", "i386", "present"), False) and
+                    library_evidence.get(("libxpc.system", "i386", "xpc_create"), False) and
+                    library_evidence.get(("libxpc.system", "i386", "xpc_send"), False)
+                )
+                if not libxpc_i386:
+                    issues.append("Lion native i386 libxpc create/send surface missing")
+                if ppc_xpc:
+                    issues.append("unexpected PPC-callable XPC surface appeared on Lion")
 
             line(fp)
             line(fp, "== Audit validation ==")
@@ -405,6 +894,7 @@ def main():
             line(fp)
             line(fp, "== Audit integrity ==")
             line(fp, "No PowerPC application was launched by this audit.")
+            line(fp, "No notification-center API was called dynamically.")
             line(fp, "No XPC connection or message was created or sent.")
             line(fp, "No bootstrap lookup or Mach request was issued.")
             line(fp, "No distributed notification was registered, posted, removed, suspended, or delivered.")
