@@ -45,8 +45,24 @@ sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 has_arch() {
     arch="$1"
     file="$2"
-    /usr/bin/lipo -verify_arch "$arch" "$file" >/dev/null 2>&1 && return 0
-    /usr/bin/lipo "$file" -verify_arch "$arch" >/dev/null 2>&1 && return 0
+    info="$(/usr/bin/lipo -info "$file" 2>/dev/null || true)"
+    archs=""
+
+    case "$info" in
+        *" is architecture: "*)
+            archs="$(echo "$info" | /usr/bin/sed 's/^.* is architecture: //')"
+            ;;
+        *" are: "*)
+            archs="$(echo "$info" | /usr/bin/sed 's/^.* are: //')"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+
+    for present in $archs; do
+        [ "$present" = "$arch" ] && return 0
+    done
     return 1
 }
 
