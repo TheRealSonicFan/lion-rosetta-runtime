@@ -546,6 +546,7 @@ static int run_poster(const char *name_c,
         goto done;
     }
 
+    printf("poster_api_call_count=%d\n", api_calls);
     printf("poster_result=PASS\n");
     fflush(stdout);
     status = 0;
