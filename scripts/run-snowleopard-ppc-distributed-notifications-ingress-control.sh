@@ -24,6 +24,29 @@ for file in "$PROBE" "$PROBE.sha256" "$INTERPOSER" "$INTERPOSER.sha256"; do
     }
 done
 
+is_ppc32_arch_name() {
+    case "$1" in
+        ppc|ppc601|ppc603|ppc603e|ppc603ev|ppc604|ppc604e|ppc750|ppc7400|ppc7450|ppc970)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+arch_matches() {
+    wanted="$1"
+    present="$2"
+
+    if [ "$wanted" = "ppc" ]; then
+        is_ppc32_arch_name "$present"
+        return $?
+    fi
+
+    [ "$present" = "$wanted" ]
+}
+
 has_arch() {
     arch="$1"
     file="$2"
@@ -43,7 +66,7 @@ has_arch() {
     esac
 
     for present in $archs; do
-        [ "$present" = "$arch" ] && return 0
+        arch_matches "$arch" "$present" && return 0
     done
     return 1
 }
