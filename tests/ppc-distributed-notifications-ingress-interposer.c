@@ -161,6 +161,53 @@ send_frame(uint32_t type, const void *payload, uint32_t length)
            write_full(gIpcFd, payload, length);
 }
 
+static int
+broker_env_skip(const char *entry)
+{
+    static const char *const prefixes[] = {
+        "DYLD_INSERT_LIBRARIES=",
+        "DYLD_LIBRARY_PATH=",
+        "DYLD_FRAMEWORK_PATH=",
+        "DYLD_SHARED_CACHE_DONT_VALIDATE=",
+        "ROSETTA_DISTRIBUTED_NOTIFICATIONS_INGRESS_MODE=",
+        "ROSETTA_DISTRIBUTED_NOTIFICATIONS_BROKER_PATH="
+    };
+    size_t i;
+
+    if (entry == NULL)
+        return 1;
+
+    for (i = 0; i < sizeof(prefixes) / sizeof(prefixes[0]); ++i) {
+        size_t n = strlen(prefixes[i]);
+        if (strncmp(entry, prefixes[i], n) == 0)
+            return 1;
+    }
+    return 0;
+}
+
+static char **
+build_broker_env(void)
+{
+    size_t count = 0;
+    size_t kept = 0;
+    size_t i;
+    char **result;
+
+    while (environ[count] != NULL)
+        ++count;
+
+    result = (char **)calloc(count + 1U, sizeof(char *));
+    if (result == NULL)
+        return NULL;
+
+    for (i = 0; i < count; ++i) {
+        if (!broker_env_skip(environ[i]))
+            result[kept++] = environ[i];
+    }
+    result[kept] = NULL;
+    return result;
+}
+
 static bootstrap_lookup2_fn
 original_lookup(void)
 {
@@ -475,6 +522,7 @@ start_bridge(void)
     posix_spawn_file_actions_t actions;
     char fd_text[32];
     char *argv[4];
+    char **broker_env = NULL;
     int spawn_status;
     kern_return_t kr;
 
@@ -511,7 +559,17 @@ start_bridge(void)
     argv[2] = fd_text;
     argv[3] = NULL;
 
+    broker_env = build_broker_env();
+    if (broker_env == NULL) {
+        close(sv[0]);
+        close(sv[1]);
+        mach_port_destroy(mach_task_self(), gServiceReceivePort);
+        gServiceReceivePort = MACH_PORT_NULL;
+        return 0;
+    }
+
     if (posix_spawn_file_actions_init(&actions) != 0) {
+        free(broker_env);
         close(sv[0]);
         close(sv[1]);
         mach_port_destroy(mach_task_self(), gServiceReceivePort);
@@ -526,8 +584,9 @@ start_bridge(void)
         &actions,
         NULL,
         argv,
-        environ);
+        broker_env);
     posix_spawn_file_actions_destroy(&actions);
+    free(broker_env);
 
     if (spawn_status != 0) {
         fprintf(stderr,
