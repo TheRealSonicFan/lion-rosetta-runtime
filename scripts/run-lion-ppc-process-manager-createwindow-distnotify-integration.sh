@@ -74,7 +74,7 @@ has_ppc32_arch() {
     return 0
 }
 
-log "== Lion PPC restored-stack CreateNewWindow validation =="
+log "== Lion PPC restored-stack CreateNewWindow distributed-notifications integration =="
 log "date=$(/bin/date '+%Y-%m-%d %H:%M:%S %z')"
 log "host=$(/bin/hostname)"
 
@@ -96,7 +96,7 @@ for v in CORESERVICESD_SERVICE_NAME SCDontUseServer LSDONOTABORTIFNOASN \
          ROSETTA_CGS_SESSION_BOOTSTRAP_COMPAT_MODE ROSETTA_CGS_SERVER_VERSION_COMPAT_MODE \
          ROSETTA_CPS_REGISTRATION_COMPAT_MODE ROSETTA_CPS_SETFRONT_COMPAT_MODE \
          ROSETTA_DISTRIBUTED_NOTIFICATIONS_INGRESS_MODE ROSETTA_DISTRIBUTED_NOTIFICATIONS_BROKER_PATH \
-         DYLD_INSERT_LIBRARIES; do
+         ROSETTA_DISTRIBUTED_NOTIFICATIONS_COMPAT_MODE DYLD_INSERT_LIBRARIES; do
     eval "present=\${$v+x}"
     [ -z "$present" ] || die 68 "$v must be unset before the runner"
 done
@@ -146,6 +146,8 @@ log "system_dyld_sha256_before=$SYSTEM_BEFORE"
 log "rosetta_cache_sha256_before=$CACHE_BEFORE"
 log "rosetta_cache_map_sha256=$CACHE_MAP_SHA"
 log "coregraphics_sha256_before=$CG_BEFORE"
+log "distnoted_sha256_before=$DISTNOTED_BEFORE"
+log "libxpc_sha256_before=$LIBXPC_BEFORE"
 log "expected_subject_sha256=$EXPECTED_SUBJECT_SHA"
 log "actual_subject_sha256=$SUBJECT_BEFORE"
 log "expected_coreservices_cps_registration_compat_sha256=$EXPECTED_CORE_COMPAT_SHA"
