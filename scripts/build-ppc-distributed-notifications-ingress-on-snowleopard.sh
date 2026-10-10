@@ -29,14 +29,24 @@ for file in "$PROBE_SRC" "$INTERPOSER_SRC" "$PATCH_DYLINKER"; do
     }
 done
 
-/bin/rm -f     "$PROBE_OUT" "$PROBE_OUT.sha256" "$PROBE_OUT.info.txt"     "$INTERPOSER_OUT" "$INTERPOSER_OUT.sha256" "$INTERPOSER_OUT.info.txt"
+/bin/rm -f \
+    "$PROBE_OUT" "$PROBE_OUT.sha256" "$PROBE_OUT.info.txt" \
+    "$INTERPOSER_OUT" "$INTERPOSER_OUT.sha256" "$INTERPOSER_OUT.info.txt"
 
-"$CC_SELECTED" -arch ppc -std=gnu99 -Wall -Wextra     -mmacosx-version-min=10.5     "$PROBE_SRC"     -framework CoreFoundation     -o "$PROBE_OUT"
+"$CC_SELECTED" -arch ppc -std=gnu99 -Wall -Wextra \
+    -mmacosx-version-min=10.5 \
+    "$PROBE_SRC" \
+    -framework CoreFoundation \
+    -o "$PROBE_OUT"
 
 /bin/chmod 755 "$PROBE_OUT"
 /usr/bin/python "$PATCH_DYLINKER" "$PROBE_OUT" /usr/oah/dyld
 
-"$CC_SELECTED" -arch ppc -std=gnu99 -Wall -Wextra     -mmacosx-version-min=10.5 -dynamiclib     "$INTERPOSER_SRC"     -install_name "@loader_path/$(/usr/bin/basename "$INTERPOSER_OUT")"     -o "$INTERPOSER_OUT"
+"$CC_SELECTED" -arch ppc -std=gnu99 -Wall -Wextra \
+    -mmacosx-version-min=10.5 -dynamiclib \
+    "$INTERPOSER_SRC" \
+    -install_name "@loader_path/$(/usr/bin/basename "$INTERPOSER_OUT")" \
+    -o "$INTERPOSER_OUT"
 
 /bin/chmod 755 "$INTERPOSER_OUT"
 
@@ -94,6 +104,7 @@ has_arch() {
 is_thin_ppc32_macho() {
     file="$1"
     info="$(/usr/bin/lipo -info "$file" 2>/dev/null || true)"
+    file_info="$(/usr/bin/file "$file" 2>/dev/null || true)"
     arch=""
 
     case "$info" in
@@ -107,7 +118,11 @@ is_thin_ppc32_macho() {
 
     is_ppc32_arch_name "$arch" || return 1
 
-    /usr/bin/file "$file" | /usr/bin/grep -Eq         'Mach-O .* ppc
+    echo "$file_info" | /usr/bin/grep -Fq 'Mach-O' || return 1
+    echo "$file_info" | /usr/bin/grep -Fq ' ppc' || return 1
+
+    return 0
+}
 
 for file in "$PROBE_OUT" "$INTERPOSER_OUT"; do
     is_thin_ppc32_macho "$file" || {
@@ -118,7 +133,8 @@ for file in "$PROBE_OUT" "$INTERPOSER_OUT"; do
     }
 done
 
-# Keep a generic architecture parser exercised as a second independent check.
+# Exercise the family-aware parser independently.  Snow cctools may report a
+# concrete 32-bit PowerPC CPU subtype such as ppc7400 for an -arch ppc build.
 for file in "$PROBE_OUT" "$INTERPOSER_OUT"; do
     has_arch "$file" ppc || {
         echo "error: 32-bit PPC architecture family not reported by lipo -info: $file" >&2
@@ -133,38 +149,54 @@ echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || {
     exit 71
 }
 
-/usr/bin/strings "$PROBE_OUT" | /usr/bin/grep -Fq     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_PROBE_BUILD_ID:$EXPECTED_PROBE_BUILD_ID" || {
+/usr/bin/strings "$PROBE_OUT" | /usr/bin/grep -Fq \
+    "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_PROBE_BUILD_ID:$EXPECTED_PROBE_BUILD_ID" || {
     echo "error: probe build marker missing" >&2
     exit 71
 }
 
-/usr/bin/strings "$INTERPOSER_OUT" | /usr/bin/grep -Fq     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_BUILD_ID:$EXPECTED_INTERPOSER_BUILD_ID" || {
+/usr/bin/strings "$INTERPOSER_OUT" | /usr/bin/grep -Fq \
+    "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_BUILD_ID:$EXPECTED_INTERPOSER_BUILD_ID" || {
     echo "error: interposer build marker missing" >&2
     exit 71
 }
 
-for sym in     _CFNotificationCenterGetDistributedCenter     _CFNotificationCenterAddObserver     _CFNotificationCenterPostNotificationWithOptions     _CFNotificationCenterRemoveObserver
+for sym in \
+    _CFNotificationCenterGetDistributedCenter \
+    _CFNotificationCenterAddObserver \
+    _CFNotificationCenterPostNotificationWithOptions \
+    _CFNotificationCenterRemoveObserver
 do
-    /usr/bin/nm -u "$PROBE_OUT" | /usr/bin/grep -Eq         "(^|[[:space:]])$sym$" || {
+    /usr/bin/nm -u "$PROBE_OUT" | /usr/bin/grep -Eq \
+        "(^|[[:space:]])$sym$" || {
         echo "error: probe missing import $sym" >&2
         exit 72
     }
 done
 
-for sym in     _bootstrap_look_up2     _mach_msg     _posix_spawn     _pthread_create     _socketpair     __NSGetEnviron
+for sym in \
+    _bootstrap_look_up2 \
+    _mach_msg \
+    _posix_spawn \
+    _pthread_create \
+    _socketpair \
+    __NSGetEnviron
 do
-    /usr/bin/nm -u "$INTERPOSER_OUT" | /usr/bin/grep -Eq         "(^|[[:space:]])$sym$" || {
+    /usr/bin/nm -u "$INTERPOSER_OUT" | /usr/bin/grep -Eq \
+        "(^|[[:space:]])$sym$" || {
         echo "error: interposer missing import $sym" >&2
         exit 72
     }
 done
 
-if /usr/bin/nm -u "$INTERPOSER_OUT" | /usr/bin/grep -Eq     '(^|[[:space:]])_environ$'; then
+if /usr/bin/nm -u "$INTERPOSER_OUT" | /usr/bin/grep -Eq \
+    '(^|[[:space:]])_environ$'; then
     echo "error: interposer must not contain a direct _environ import; use _NSGetEnviron" >&2
     exit 72
 fi
 
-INTERPOSE_SECTION="$(/usr/bin/otool -l "$INTERPOSER_OUT" |     /usr/bin/grep -A10 -B2 '__interpose' || true)"
+INTERPOSE_SECTION="$(/usr/bin/otool -l "$INTERPOSER_OUT" | \
+    /usr/bin/grep -A10 -B2 '__interpose' || true)"
 echo "$INTERPOSE_SECTION" | /usr/bin/grep -Fq "__interpose" || {
     echo "error: interpose section missing" >&2
     exit 72
@@ -174,7 +206,13 @@ echo "$INTERPOSE_SECTION" | /usr/bin/grep -Fq 'size 0x00000008' || {
     exit 72
 }
 
-for marker in     'com.apple.distributed_notifications.2'     'lion-ppc-ingress-v1'     'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BRIDGE_READY:'     'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:'     'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_CALLBACK:'     'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_LOOKUP_RESULT:LOCAL_SERVICE_PASS'
+for marker in \
+    'com.apple.distributed_notifications.2' \
+    'lion-ppc-ingress-v1' \
+    'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BRIDGE_READY:' \
+    'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:' \
+    'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_CALLBACK:' \
+    'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_LOOKUP_RESULT:LOCAL_SERVICE_PASS'
 do
     /usr/bin/strings "$INTERPOSER_OUT" | /usr/bin/grep -Fq "$marker" || {
         echo "error: interposer marker missing: $marker" >&2
@@ -182,129 +220,10 @@ do
     }
 done
 
-RUNTIME_GIT_HEAD="$(cd "$ROOT" 2>/dev/null &&     /usr/bin/git rev-parse HEAD 2>/dev/null || true)"
-[ -n "$RUNTIME_GIT_HEAD" ] ||     RUNTIME_GIT_HEAD="UNAVAILABLE_NON_GIT_CHECKOUT"
-
-{
-    echo "== PPC distributed-notifications ingress probe =="
-    echo "runtime_git_head=$RUNTIME_GIT_HEAD"
-    echo "compiler=$CC_SELECTED"
-    echo "build_id=$EXPECTED_PROBE_BUILD_ID"
-    /usr/bin/file "$PROBE_OUT"
-    /usr/bin/lipo -info "$PROBE_OUT" 2>/dev/null || true
-    echo
-    echo "== LC_LOAD_DYLINKER =="
-    echo "$OT"
-    echo
-    echo "== SHA-256 =="
-    /usr/bin/shasum -a 256 "$PROBE_OUT"
-} > "$PROBE_OUT.info.txt"
-
-{
-    echo "== PPC distributed-notifications ingress interposer =="
-    echo "runtime_git_head=$RUNTIME_GIT_HEAD"
-    echo "compiler=$CC_SELECTED"
-    echo "build_id=$EXPECTED_INTERPOSER_BUILD_ID"
-    /usr/bin/file "$INTERPOSER_OUT"
-    /usr/bin/lipo -info "$INTERPOSER_OUT" 2>/dev/null || true
-    echo
-    echo "== __interpose =="
-    echo "$INTERPOSE_SECTION"
-    echo
-    echo "== SHA-256 =="
-    /usr/bin/shasum -a 256 "$INTERPOSER_OUT"
-} > "$INTERPOSER_OUT.info.txt"
-
-/usr/bin/shasum -a 256 "$PROBE_OUT" > "$PROBE_OUT.sha256"
-/usr/bin/shasum -a 256 "$INTERPOSER_OUT" > "$INTERPOSER_OUT.sha256"
-
-echo "Created:"
-echo "  $PROBE_OUT"
-echo "  $PROBE_OUT.info.txt"
-echo "  $PROBE_OUT.sha256"
-echo "  $INTERPOSER_OUT"
-echo "  $INTERPOSER_OUT.info.txt"
-echo "  $INTERPOSER_OUT.sha256"
- || return 1
-
-    return 0
-}
-
-for file in "$PROBE_OUT" "$INTERPOSER_OUT"; do
-    is_thin_ppc32_macho "$file" || {
-        echo "error: expected a thin 32-bit PPC Mach-O: $file" >&2
-        /usr/bin/file "$file" >&2 || true
-        /usr/bin/lipo -info "$file" >&2 || true
-        exit 70
-    }
-done
-
-# Keep a generic architecture parser exercised as a second independent check.
-for file in "$PROBE_OUT" "$INTERPOSER_OUT"; do
-    has_exact_arch "$file" ppc || {
-        echo "error: PPC architecture not reported by lipo -info: $file" >&2
-        /usr/bin/lipo -info "$file" >&2 || true
-        exit 70
-    }
-done
-
-OT="$(/usr/bin/otool -l "$PROBE_OUT" | /usr/bin/grep -A3 LC_LOAD_DYLINKER || true)"
-echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || {
-    echo "error: probe LC_LOAD_DYLINKER is not /usr/oah/dyld" >&2
-    exit 71
-}
-
-/usr/bin/strings "$PROBE_OUT" | /usr/bin/grep -Fq     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_PROBE_BUILD_ID:$EXPECTED_PROBE_BUILD_ID" || {
-    echo "error: probe build marker missing" >&2
-    exit 71
-}
-
-/usr/bin/strings "$INTERPOSER_OUT" | /usr/bin/grep -Fq     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_BUILD_ID:$EXPECTED_INTERPOSER_BUILD_ID" || {
-    echo "error: interposer build marker missing" >&2
-    exit 71
-}
-
-for sym in     _CFNotificationCenterGetDistributedCenter     _CFNotificationCenterAddObserver     _CFNotificationCenterPostNotificationWithOptions     _CFNotificationCenterRemoveObserver
-do
-    /usr/bin/nm -u "$PROBE_OUT" | /usr/bin/grep -Eq         "(^|[[:space:]])$sym$" || {
-        echo "error: probe missing import $sym" >&2
-        exit 72
-    }
-done
-
-for sym in     _bootstrap_look_up2     _mach_msg     _posix_spawn     _pthread_create     _socketpair     __NSGetEnviron
-do
-    /usr/bin/nm -u "$INTERPOSER_OUT" | /usr/bin/grep -Eq         "(^|[[:space:]])$sym$" || {
-        echo "error: interposer missing import $sym" >&2
-        exit 72
-    }
-done
-
-if /usr/bin/nm -u "$INTERPOSER_OUT" | /usr/bin/grep -Eq     '(^|[[:space:]])_environ$'; then
-    echo "error: interposer must not contain a direct _environ import; use _NSGetEnviron" >&2
-    exit 72
-fi
-
-INTERPOSE_SECTION="$(/usr/bin/otool -l "$INTERPOSER_OUT" |     /usr/bin/grep -A10 -B2 '__interpose' || true)"
-echo "$INTERPOSE_SECTION" | /usr/bin/grep -Fq "__interpose" || {
-    echo "error: interpose section missing" >&2
-    exit 72
-}
-echo "$INTERPOSE_SECTION" | /usr/bin/grep -Fq 'size 0x00000008' || {
-    echo "error: interposer must contain exactly one PPC interpose tuple" >&2
-    exit 72
-}
-
-for marker in     'com.apple.distributed_notifications.2'     'lion-ppc-ingress-v1'     'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BRIDGE_READY:'     'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:'     'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_CALLBACK:'     'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_LOOKUP_RESULT:LOCAL_SERVICE_PASS'
-do
-    /usr/bin/strings "$INTERPOSER_OUT" | /usr/bin/grep -Fq "$marker" || {
-        echo "error: interposer marker missing: $marker" >&2
-        exit 72
-    }
-done
-
-RUNTIME_GIT_HEAD="$(cd "$ROOT" 2>/dev/null &&     /usr/bin/git rev-parse HEAD 2>/dev/null || true)"
-[ -n "$RUNTIME_GIT_HEAD" ] ||     RUNTIME_GIT_HEAD="UNAVAILABLE_NON_GIT_CHECKOUT"
+RUNTIME_GIT_HEAD="$(cd "$ROOT" 2>/dev/null && \
+    /usr/bin/git rev-parse HEAD 2>/dev/null || true)"
+[ -n "$RUNTIME_GIT_HEAD" ] || \
+    RUNTIME_GIT_HEAD="UNAVAILABLE_NON_GIT_CHECKOUT"
 
 {
     echo "== PPC distributed-notifications ingress probe =="
