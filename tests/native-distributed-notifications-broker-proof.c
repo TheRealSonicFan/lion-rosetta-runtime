@@ -620,6 +620,15 @@ static int run_positive_proof(const char *exe_path) {
 
     reg.expected_nonce = CFRetain(nonce);
 
+    /*
+     * Give the native distributed center a short run-loop turn after
+     * registration before the independent poster process is started.  This
+     * avoids turning a server-registration scheduling race into a protocol
+     * failure on the older Snow/Lion implementations.
+     */
+    CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.25, false);
+    usleep(50000);
+
     if (!cfstring_to_cstring(name, name_c, sizeof(name_c)) ||
         !cfstring_to_cstring(object, object_c, sizeof(object_c)) ||
         !cfstring_to_cstring(nonce, nonce_c, sizeof(nonce_c))) {
