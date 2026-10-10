@@ -172,6 +172,23 @@ Current `main` corrects only the child-environment acquisition path:
 
 Do not preserve or transfer artifacts from the failed Phase B attempt. Pull current `main` and rerun Phase B from the beginning; the build script removes/recreates the partial outputs. Do not proceed to Phase C unless the corrected interposer links and all build-time validation passes.
 
+## Reviewed Phase B architecture-validator failure
+
+The second Phase B attempt built the PPC probe and interposer far enough to reach the artifact architecture gate, then stopped with:
+
+```text
+error: not a 32-bit PPC Mach-O: ./ppc-distributed-notifications-ingress-probe-private-dyld
+./ppc-distributed-notifications-ingress-probe-private-dyld: Mach-O executable ppc
+```
+
+This is another build-validator defect, not an artifact-architecture or distributed-notification failure. The compiler was invoked with `-arch ppc`, and `file` independently identified the resulting probe as a PPC Mach-O. The failing helper relied on `lipo -verify_arch`; on this Snow Leopard toolchain/run it returned failure for the thin PPC artifact even though the artifact is PPC.
+
+Current `main` replaces that gate with explicit `lipo -info` parsing. For the Snow-built artifacts the builder now requires the thin-file form to report exactly `architecture: ppc`, corroborates it with `file`, and separately exercises a generic `lipo -info` architecture parser. The Lion runner uses the same parser for the transferred PPC probe/interposer and native i386 broker, so this false negative cannot reappear during Phase F.
+
+During review of the failed path, a separate latent shell-structure defect was also found in the previous builder revision: the direct-`_environ` rejection block had been inserted with a malformed quote and duplicated the remainder of the script. The user run stopped at the earlier architecture check before reaching that block. Current `main` reconstructs the builder cleanly, preserving the version-2 `_NSGetEnviron` fix and all prior build-time checks.
+
+No protocol, Mach-envelope, bootstrap predicate, IPC framing, callback translation, or broker logic changed. Discard the partial artifacts from this failed attempt, pull current `main`, and rerun Phase B from the beginning.
+
 ## Safety constraints
 
 For this stage:
@@ -215,9 +232,9 @@ cd /path/to/lion-rosetta-runtime
   ./ppc-distributed-notifications-ingress-interposer.dylib
 ```
 
-Require creation of the two PPC binaries plus their `.sha256` and `.info.txt` files. The interposer must carry build ID version 2, import `__NSGetEnviron`, and contain no direct `_environ` import; the build script enforces all three conditions.
+Require creation of the two PPC binaries plus their `.sha256` and `.info.txt` files. The builder must report each artifact as a thin PPC Mach-O using `lipo -info`/`file`; it must not reject a probe merely because `lipo -verify_arch` behaves differently on this Snow Leopard toolchain. The interposer must carry build ID version 2, import `__NSGetEnviron`, and contain no direct `_environ` import; the build script enforces these conditions.
 
-If the linker still reports `_environ`, stop: current source was not used or stale build inputs remain. Do not continue to Phase C.
+If the linker still reports `_environ`, or if the rebuilt artifact is not reported by `lipo -info` as `architecture: ppc`, stop and return the exact Phase B output. Do not continue to Phase C.
 
 Do not rebuild the PPC artifacts on Lion.
 
