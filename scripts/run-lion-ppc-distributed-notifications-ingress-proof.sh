@@ -31,7 +31,7 @@ EXPECTED_CACHE_MAP_SHA="66e8940757eb909ffb1920ac1510134afafbd5d2d649a9cc7d750753
 EXPECTED_KERNEL_SHA="${ROSETTA_EXPECTED_KERNEL_SHA256:-}"
 
 EXPECTED_PROBE_BUILD_ID="distributed-notifications-ppc-ingress-probe-v1"
-EXPECTED_INTERPOSER_BUILD_ID="distributed-notifications-ppc-ingress-interposer-v1"
+EXPECTED_INTERPOSER_BUILD_ID="distributed-notifications-ppc-ingress-interposer-v2"
 EXPECTED_BROKER_BUILD_ID="distributed-notifications-ppc-ingress-broker-v1"
 
 mkdir -p "$(/usr/bin/dirname "$REPORT")" || exit 73
