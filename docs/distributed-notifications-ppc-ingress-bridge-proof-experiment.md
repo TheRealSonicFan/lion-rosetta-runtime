@@ -248,6 +248,58 @@ It requires **exactly one** of those imports, records the selected symbol in the
 
 No source-level IPC behavior changed: the interposer still creates the same AF_UNIX/SOCK_STREAM socket pair and passes one endpoint to the native broker. No protocol, bootstrap predicate, Mach envelope, callback path, or broker behavior changed. Discard the partial artifacts from this attempt, pull current `main`, and rerun Phase B from the beginning.
 
+## Reviewed Phase F runner-syntax failure
+
+The first Lion Phase F attempt stopped at the report-validation loop with:
+
+```text
+./scripts/run-lion-ppc-distributed-notifications-ingress-proof.sh: line 231:
+syntax error near unexpected token
+"PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_LOOKUP:..."
+```
+
+The defect is a shell-list syntax error in the runner, not a PPC ingress or broker result. The marker loop was written as `for marker in` followed by newline-separated quoted words without continuation backslashes. Bash therefore treated the first marker as an unexpected token.
+
+Importantly, this error is **after** the live proof command, raw-log append, exit-status capture, protected-hash recomputation, and `protected_hashes_unchanged` record in the script. Bash executes earlier complete top-level commands before it reaches this later syntax error. Therefore this failed Phase F may already have performed the one intended live PPC ingress/native-broker proof. Do **not** automatically rerun Phase F.
+
+Current `main` makes two corrections:
+
+- the Lion runner's required-marker loop is syntactically valid;
+- a new read-only recovery validator, `scripts/validate-lion-ppc-distributed-notifications-ingress-existing.sh`, checks the existing Lion `.txt` and `.raw.log` artifacts without launching the PPC probe or broker again.
+
+After pulling current `main`, first syntax-check both scripts:
+
+```sh
+/bin/bash -n ./scripts/run-lion-ppc-distributed-notifications-ingress-proof.sh
+/bin/bash -n ./scripts/validate-lion-ppc-distributed-notifications-ingress-existing.sh
+```
+
+Both commands must return status 0 with no output.
+
+For the already-attempted Phase F, preserve the existing files and run only:
+
+```sh
+/bin/bash ./scripts/validate-lion-ppc-distributed-notifications-ingress-existing.sh \
+  ./distributed-notifications-ppc-ingress-lion.txt \
+  ./distributed-notifications-ppc-ingress-lion.txt.raw.log \
+  ./distributed-notifications-ppc-ingress-lion-recovery-validation.txt
+```
+
+Require:
+
+```text
+validation_mode=existing_artifacts_only
+live_proof_rerun=NO
+probe_exit_status=0                  # checked in the original report
+protected_hashes_unchanged=YES       # checked in the original report
+legacy_mach_request_count=3
+legacy_mach_callback_count=1
+RESULT: DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BRIDGE_PROOF_RECOVERY_PASS
+RESULT: PASS
+```
+
+If either existing artifact is missing, or the recovery validator reports FAIL, stop and return the existing report/raw log plus the recovery-validation file. Do not rerun the live proof yet; review the preserved evidence first.
+
 ## Safety constraints
 
 For this stage:
@@ -375,7 +427,15 @@ As with the prior Rosetta proof runners, set the already-established expected Li
 export ROSETTA_EXPECTED_KERNEL_SHA256='<your established Lion kernel SHA-256>'
 ```
 
-Then run:
+Before any fresh Phase F run, require:
+
+```sh
+/bin/bash -n ./scripts/run-lion-ppc-distributed-notifications-ingress-proof.sh
+```
+
+to return status 0 with no output.
+
+Then run only if there is no preserved prior Phase F live-run evidence:
 
 ```sh
 /bin/bash ./scripts/run-lion-ppc-distributed-notifications-ingress-proof.sh \
@@ -416,7 +476,7 @@ protected hashes unchanged
 probe exit = 0
 ```
 
-If Lion fails, stop. Do not broaden the broker, retry the Process Manager subject, or add any launchd registration.
+If Lion fails, stop. Do not broaden the broker, retry the Process Manager subject, or add any launchd registration. If the failure is the documented post-run marker-loop syntax error, use the existing-artifact recovery validator above instead of rerunning the live proof.
 
 ## Phase G — return evidence and stop
 
