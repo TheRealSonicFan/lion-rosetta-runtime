@@ -16,7 +16,7 @@ BROKER="${9:-$ROOT/native-distributed-notifications-ppc-ingress-broker}"
 BROKER_SHA_FILE="${10:-$BROKER.sha256}"
 REPORT="${11:-$ROOT/payload/lion-ppc-process-manager-createwindow-distnotify-integration.log}"
 REPORT_DIR="$(/usr/bin/dirname "$REPORT")"
-RAW_LOG="$REPORT_DIR/lion-ppc-process-manager-createwindow-distnotify-integration.raw.log"
+RAW_LOG="${REPORT%.log}.raw.log"
 
 TRANSLATOR="/usr/libexec/oah/translate"
 PRIVATE_DYLD="/usr/oah/dyld"
@@ -41,7 +41,12 @@ EXPECTED_SUBJECT_BUILD_ID="cps-createwindow-validation-v1"
 EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-v1"
 EXPECTED_SEC_BUILD_ID="security-session-auditinfo-api-v1"
 EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-compat-v1"
-EXPECTED_BROKER_BUILD_ID="distributed-notifications-ppc-ingress-broker-v1"
+SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_SCHEMA_AUDIT_REPORT:-}"
+if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
+    EXPECTED_BROKER_BUILD_ID="distributed-notifications-createwindow-schema-audit-broker-v1"
+else
+    EXPECTED_BROKER_BUILD_ID="distributed-notifications-ppc-ingress-broker-v1"
+fi
 EXPECTED_KERNEL_SHA="${ROSETTA_EXPECTED_KERNEL_SHA256:-}"
 
 mkdir -p "$REPORT_DIR" || exit 73
@@ -217,6 +222,10 @@ log "coreservices_cps_registration_compat_absolute_path=$CORE_ABS"
 log "security_interposer_absolute_path=$SEC_ABS"
 log "cgs_interposer_absolute_path=$CGS_ABS"
 log "distributed_notifications_broker_absolute_path=$BROKER_ABS"
+if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
+    : > "$SCHEMA_AUDIT_REPORT" || die 73 "could not initialize schema audit report: $SCHEMA_AUDIT_REPORT"
+    log "distributed_notifications_schema_audit_report=$SCHEMA_AUDIT_REPORT"
+fi
 
 MARKER="$(/usr/bin/mktemp /tmp/lion-createwindow-validation-marker.XXXXXX)" || die 73 "could not create diagnostic marker"
 if ulimit -c unlimited 2>/dev/null; then
@@ -534,10 +543,47 @@ if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:GetCurrentProcess=0' "$RAW_LOG" |
 fi
 
 if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_LOOKUP:index=1 mode=lion-ppc-ingress-v1 name=com.apple.distributed_notifications.2 pid=0 flags=0x0000000000000008' "$RAW_LOG" ||
-   ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_LOOKUP_RESULT:LOCAL_SERVICE_PASS' "$RAW_LOG" ||
    ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BRIDGE_READY:' "$RAW_LOG" ||
-   ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_READY:' "$RAW_LOG"; then
+   ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_READY:' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=1' "$RAW_LOG"; then
     log "RESULT: CREATENEWWINDOW_DISTNOTIFY_INGRESS_NOT_ESTABLISHED"
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_LOOKUP_RESULT:LOCAL_SERVICE_PASS' "$RAW_LOG"; then
+    log "distributed_notifications_lookup_result_marker_status=PASS"
+else
+    log "distributed_notifications_lookup_result_marker_status=NOT_OBSERVED_OR_INTERLEAVED"
+fi
+
+if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
+    CAPTURE_COUNT="$(/usr/bin/grep -c 'PM_DISTRIBUTED_NOTIFICATIONS_REAL_SCHEMA_AUDIT_CAPTURE:' "$RAW_LOG" 2>/dev/null || true)"
+    REQUEST_COUNT="$(/usr/bin/grep -c 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:' "$RAW_LOG" 2>/dev/null || true)"
+    log "schema_audit_capture_count=$CAPTURE_COUNT"
+    log "legacy_mach_request_count=$REQUEST_COUNT"
+    if [ -s "$SCHEMA_AUDIT_REPORT" ] &&
+       [ "$CAPTURE_COUNT" -eq 3 ] &&
+       [ "$REQUEST_COUNT" -eq 3 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_REAL_SCHEMA_AUDIT_SUMMARY:requests=3 failures=0' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:AUDIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG"; then
+        log "schema_audit_output_sha256=$(sha256 "$SCHEMA_AUDIT_REPORT")"
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_SCHEMA_AUDIT_PASS"
+        exit 0
+    fi
+    log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_SCHEMA_AUDIT_INCOMPLETE"
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REJECT:' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_REQUEST:FAIL' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_CALLBACK:REJECT' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:status=20' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_BROKER_SCHEMA_REJECTED"
+    else
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_PROTOCOL_REJECTED"
+    fi
     exit 0
 fi
 
@@ -577,14 +623,6 @@ fi
 
 if /usr/bin/grep -Fq 'PM_CPS_SETFRONT_COMPAT_CALL:index=2' "$RAW_LOG"; then
     log "RESULT: CREATENEWWINDOW_SECOND_SETFRONT_CALL"
-    exit 0
-fi
-
-if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REJECT:' "$RAW_LOG" ||
-   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_REQUEST:FAIL' "$RAW_LOG" ||
-   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_CALLBACK:REJECT' "$RAW_LOG" ||
-   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
-    log "RESULT: CREATENEWWINDOW_DISTNOTIFY_PROTOCOL_REJECTED"
     exit 0
 fi
 
