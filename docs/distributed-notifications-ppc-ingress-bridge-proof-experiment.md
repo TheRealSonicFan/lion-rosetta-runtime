@@ -189,6 +189,38 @@ During review of the failed path, a separate latent shell-structure defect was a
 
 No protocol, Mach-envelope, bootstrap predicate, IPC framing, callback translation, or broker logic changed. Discard the partial artifacts from this failed attempt, pull current `main`, and rerun Phase B from the beginning.
 
+## Reviewed Phase B PPC-subtype naming failure
+
+The third Phase B attempt again reached only the artifact validator:
+
+```text
+error: expected a thin 32-bit PPC Mach-O: ./ppc-distributed-notifications-ingress-probe-private-dyld
+./ppc-distributed-notifications-ingress-probe-private-dyld: Mach-O executable ppc
+Non-fat file: ./ppc-distributed-notifications-ingress-probe-private-dyld is architecture: ppc7400
+```
+
+This is a naming/subtype mismatch in the validator, not an architecture failure. Snow Leopard's cctools may report a concrete PowerPC CPU subtype such as `ppc7400` for a binary produced with `-arch ppc`. The artifact is still a 32-bit `CPU_TYPE_POWERPC` Mach-O; `ppc7400` is not `ppc64`.
+
+Current `main` now treats the known 32-bit cctools PowerPC names as one PPC32 family:
+
+```text
+ppc
+ppc601
+ppc603
+ppc603e
+ppc603ev
+ppc604
+ppc604e
+ppc750
+ppc7400
+ppc7450
+ppc970
+```
+
+The builder still requires a **thin** Mach-O and corroborates it with `file`; it explicitly does not accept `ppc64`. The Snow control runner and Lion proof runner use the same family-aware matcher, so a transferred `ppc7400` artifact will not be rejected later merely because the caller asked for the generic `ppc` family.
+
+No compiler flags, Mach-O patching, protocol logic, bootstrap predicate, Mach envelope, IPC framing, callback translation, or broker behavior changed. Discard the partial artifacts from this attempt, pull current `main`, and rerun Phase B from the beginning.
+
 ## Safety constraints
 
 For this stage:
@@ -232,9 +264,9 @@ cd /path/to/lion-rosetta-runtime
   ./ppc-distributed-notifications-ingress-interposer.dylib
 ```
 
-Require creation of the two PPC binaries plus their `.sha256` and `.info.txt` files. The builder must report each artifact as a thin PPC Mach-O using `lipo -info`/`file`; it must not reject a probe merely because `lipo -verify_arch` behaves differently on this Snow Leopard toolchain. The interposer must carry build ID version 2, import `__NSGetEnviron`, and contain no direct `_environ` import; the build script enforces these conditions.
+Require creation of the two PPC binaries plus their `.sha256` and `.info.txt` files. The builder must report each artifact as a thin 32-bit PPC-family Mach-O using `lipo -info`/`file`. `ppc7400` and the other documented 32-bit PowerPC subtype names are valid family members and must not be confused with `ppc64`; the builder normalizes this distinction explicitly. The interposer must carry build ID version 2, import `__NSGetEnviron`, and contain no direct `_environ` import; the build script enforces these conditions.
 
-If the linker still reports `_environ`, or if the rebuilt artifact is not reported by `lipo -info` as `architecture: ppc`, stop and return the exact Phase B output. Do not continue to Phase C.
+If the linker still reports `_environ`, or if the rebuilt artifact is not reported by `lipo -info` as a recognized 32-bit PowerPC family member (for example `ppc` or `ppc7400`), stop and return the exact Phase B output. Do not continue to Phase C.
 
 Do not rebuild the PPC artifacts on Lion.
 
