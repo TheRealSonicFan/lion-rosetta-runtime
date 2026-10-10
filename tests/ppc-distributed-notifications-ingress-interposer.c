@@ -542,6 +542,16 @@ start_bridge(void)
         return 0;
     }
 
+#ifdef SO_NOSIGPIPE
+    {
+        int one = 1;
+        (void)setsockopt(
+            sv[0], SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one));
+        (void)setsockopt(
+            sv[1], SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one));
+    }
+#endif
+
     kr = mach_port_allocate(
         mach_task_self(),
         MACH_PORT_RIGHT_RECEIVE,
