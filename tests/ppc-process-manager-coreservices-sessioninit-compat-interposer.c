@@ -15,7 +15,9 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                          uint64_t);
 extern mach_port_t mig_get_reply_port(void);
 
-#if defined(PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_PROTOCOL)
+#if defined(PM_DISTRIBUTED_NOTIFICATIONS_INGRESS_INTEGRATION)
+#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-v1"
+#elif defined(PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_PROTOCOL)
 #define COMPAT_BUILD_ID "distributed-notifications-bootstrap-compat-protocol-v1"
 #elif defined(PM_CPS_SETFRONT_COMPAT_INTEGRATION)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-v1"
@@ -40,12 +42,16 @@ extern mach_port_t mig_get_reply_port(void);
 #define COMPAT_MODE_LION_DUAL "lion-dual-adapter"
 #define COMPAT_MODE_LION_SESSIONINIT "lion-dual-sessioninit-adapter"
 
+#if defined(PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_PROTOCOL) || \
+    defined(PM_DISTRIBUTED_NOTIFICATIONS_INGRESS_INTEGRATION)
+static const char kDistributedNotificationsName[] =
+    "com.apple.distributed_notifications.2";
+#endif
+
 #ifdef PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_PROTOCOL
 #define DISTNOTIFY_COMPAT_ENV "ROSETTA_DISTRIBUTED_NOTIFICATIONS_COMPAT_MODE"
 #define DISTNOTIFY_COMPAT_PASSTHROUGH "passthrough"
 #define DISTNOTIFY_COMPAT_LION_V1 "lion-lookup-v1"
-static const char kDistributedNotificationsName[] =
-    "com.apple.distributed_notifications.2";
 #endif
 
 #if defined(PM_CPS_SETFRONT_COMPAT_INTEGRATION) && !defined(PM_CPS_SETFRONT_COMPAT_PROTOCOL)
@@ -207,6 +213,16 @@ typedef mach_msg_return_t (*mach_msg_fn)(mach_msg_header_t *,
                                          mach_port_name_t,
                                          mach_msg_timeout_t,
                                          mach_port_name_t);
+
+#ifdef PM_DISTRIBUTED_NOTIFICATIONS_INGRESS_INTEGRATION
+extern kern_return_t rosetta_distnotify_handle_lookup2(
+    bootstrap_lookup2_fn,
+    mach_port_t,
+    const char *,
+    mach_port_t *,
+    pid_t,
+    uint64_t);
+#endif
 
 struct interpose_tuple {
     const void *replacement;
@@ -1991,6 +2007,21 @@ rosetta_bootstrap_look_up2(mach_port_t bp,
     const char *mode;
     int exact_match;
     kern_return_t kr;
+
+#ifdef PM_DISTRIBUTED_NOTIFICATIONS_INGRESS_INTEGRATION
+    if (service_name != NULL &&
+        strcmp(service_name, kDistributedNotificationsName) == 0 &&
+        target_pid == (pid_t)0 &&
+        flags == PRIVILEGED_SERVER_FLAG) {
+        return rosetta_distnotify_handle_lookup2(
+            original_lookup(),
+            bp,
+            service_name,
+            service_port,
+            target_pid,
+            flags);
+    }
+#endif
 
 #ifdef PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_PROTOCOL
     if (service_name != NULL &&
