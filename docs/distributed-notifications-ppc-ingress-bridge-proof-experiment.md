@@ -221,6 +221,33 @@ The builder still requires a **thin** Mach-O and corroborates it with `file`; it
 
 No compiler flags, Mach-O patching, protocol logic, bootstrap predicate, Mach envelope, IPC framing, callback translation, or broker behavior changed. Discard the partial artifacts from this attempt, pull current `main`, and rerun Phase B from the beginning.
 
+## Reviewed Phase B Darwin symbol-versioning failure
+
+The fourth Phase B attempt built both PPC artifacts and reached the interposer import gate, then stopped with:
+
+```text
+error: interposer missing import _socketpair
+```
+
+This is an import-name validation defect, not a missing `socketpair()` call. The interposer source calls `socketpair(AF_UNIX, SOCK_STREAM, 0, ...)`, and Snow Leopard's SDK declares `socketpair` with Darwin symbol aliasing. In a UNIX03 build that source-level call is emitted as the versioned undefined symbol:
+
+```text
+_socketpair$UNIX2003
+```
+
+rather than the unversioned `_socketpair`. The prior validator required only the unversioned spelling and therefore rejected a correctly linked interposer.
+
+Current `main` now validates the exact Darwin-supported pair of spellings:
+
+```text
+_socketpair
+_socketpair$UNIX2003
+```
+
+It requires **exactly one** of those imports, records the selected symbol in the interposer `.info.txt` as `socketpair_import=...`, and still rejects unrelated or unexpected `socketpair` spellings. The remaining required imports (`bootstrap_look_up2`, `mach_msg`, `posix_spawn`, `pthread_create`, and `_NSGetEnviron`) remain exact-name checks.
+
+No source-level IPC behavior changed: the interposer still creates the same AF_UNIX/SOCK_STREAM socket pair and passes one endpoint to the native broker. No protocol, bootstrap predicate, Mach envelope, callback path, or broker behavior changed. Discard the partial artifacts from this attempt, pull current `main`, and rerun Phase B from the beginning.
+
 ## Safety constraints
 
 For this stage:
@@ -264,9 +291,9 @@ cd /path/to/lion-rosetta-runtime
   ./ppc-distributed-notifications-ingress-interposer.dylib
 ```
 
-Require creation of the two PPC binaries plus their `.sha256` and `.info.txt` files. The builder must report each artifact as a thin 32-bit PPC-family Mach-O using `lipo -info`/`file`. `ppc7400` and the other documented 32-bit PowerPC subtype names are valid family members and must not be confused with `ppc64`; the builder normalizes this distinction explicitly. The interposer must carry build ID version 2, import `__NSGetEnviron`, and contain no direct `_environ` import; the build script enforces these conditions.
+Require creation of the two PPC binaries plus their `.sha256` and `.info.txt` files. The builder must report each artifact as a thin 32-bit PPC-family Mach-O using `lipo -info`/`file`. `ppc7400` and the other documented 32-bit PowerPC subtype names are valid family members and must not be confused with `ppc64`; the builder normalizes this distinction explicitly. The interposer must carry build ID version 2, import `__NSGetEnviron`, contain no direct `_environ` import, and import exactly one supported Darwin socketpair symbol (`_socketpair` or `_socketpair$UNIX2003`); the build script enforces these conditions and records the selected socketpair symbol in the interposer `.info.txt`.
 
-If the linker still reports `_environ`, or if the rebuilt artifact is not reported by `lipo -info` as a recognized 32-bit PowerPC family member (for example `ppc` or `ppc7400`), stop and return the exact Phase B output. Do not continue to Phase C.
+If the linker still reports `_environ`, if the rebuilt artifact is not reported by `lipo -info` as a recognized 32-bit PowerPC family member (for example `ppc` or `ppc7400`), or if the builder reports an unsupported/missing socketpair import, stop and return the exact Phase B output. Do not continue to Phase C.
 
 Do not rebuild the PPC artifacts on Lion.
 
