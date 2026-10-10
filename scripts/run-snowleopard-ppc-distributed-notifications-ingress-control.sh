@@ -10,7 +10,7 @@ REPORT="${3:-$ROOT/distributed-notifications-ppc-ingress-snowleopard-control.txt
 RAW="$REPORT.raw.log"
 
 EXPECTED_PROBE_BUILD_ID="distributed-notifications-ppc-ingress-probe-v1"
-EXPECTED_INTERPOSER_BUILD_ID="distributed-notifications-ppc-ingress-interposer-v1"
+EXPECTED_INTERPOSER_BUILD_ID="distributed-notifications-ppc-ingress-interposer-v2"
 
 [ "$(/usr/bin/sw_vers -productVersion)" = "10.6.8" ] || {
     echo "error: Snow Leopard 10.6.8 required" >&2
