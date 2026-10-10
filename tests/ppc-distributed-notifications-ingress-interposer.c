@@ -60,6 +60,7 @@ typedef struct FrameHeader {
     uint32_t length;
 } FrameHeader;
 
+#ifndef PM_DISTRIBUTED_NOTIFICATIONS_INGRESS_EMBEDDED
 struct interpose_tuple {
     const void *replacement;
     const void *replacee;
@@ -80,6 +81,7 @@ __attribute__((section("__DATA,__interpose"))) = {
         (const void *)(uintptr_t)&bootstrap_look_up2
     }
 };
+#endif
 
 static bootstrap_lookup2_fn gOriginalLookup = NULL;
 static mach_port_t gServiceReceivePort = MACH_PORT_NULL;
@@ -218,10 +220,12 @@ build_broker_env(void)
 static bootstrap_lookup2_fn
 original_lookup(void)
 {
+#ifndef PM_DISTRIBUTED_NOTIFICATIONS_INGRESS_EMBEDDED
     if (gOriginalLookup == NULL) {
         gOriginalLookup = (bootstrap_lookup2_fn)
             (uintptr_t)sInterposes[0].replacee;
     }
+#endif
     return gOriginalLookup;
 }
 
@@ -650,13 +654,16 @@ start_bridge(void)
     return 1;
 }
 
-static kern_return_t
-rosetta_distnotify_bootstrap_look_up2(mach_port_t bp,
-                                      const char *service_name,
-                                      mach_port_t *service_port,
-                                      pid_t target_pid,
-                                      uint64_t flags)
+kern_return_t
+rosetta_distnotify_handle_lookup2(bootstrap_lookup2_fn original,
+                                  mach_port_t bp,
+                                  const char *service_name,
+                                  mach_port_t *service_port,
+                                  pid_t target_pid,
+                                  uint64_t flags)
 {
+    if (original != NULL)
+        gOriginalLookup = original;
     const char *mode;
     int exact;
     kern_return_t kr;
@@ -737,3 +744,19 @@ rosetta_distnotify_bootstrap_look_up2(mach_port_t bp,
     fflush(stderr);
     return KERN_SUCCESS;
 }
+
+#ifndef PM_DISTRIBUTED_NOTIFICATIONS_INGRESS_EMBEDDED
+static kern_return_t
+rosetta_distnotify_bootstrap_look_up2(mach_port_t bp,
+                                      const char *service_name,
+                                      mach_port_t *service_port,
+                                      pid_t target_pid,
+                                      uint64_t flags)
+{
+    bootstrap_lookup2_fn original =
+        (bootstrap_lookup2_fn)(uintptr_t)sInterposes[0].replacee;
+
+    return rosetta_distnotify_handle_lookup2(
+        original, bp, service_name, service_port, target_pid, flags);
+}
+#endif
