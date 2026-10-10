@@ -145,6 +145,33 @@ entry   = stored Snow entry
 
 and serializes it as a binary property list for the PPC side.
 
+## Reviewed Phase B linker failure
+
+The first Phase B attempt stopped while linking the PPC ingress interposer:
+
+```text
+Undefined symbols:
+  "_environ", referenced from:
+      _environ$non_lazy_ptr
+ld: symbol(s) not found
+```
+
+This is a build-tooling failure, not a distributed-notification protocol result. The PPC probe had already linked and its `LC_LOAD_DYLINKER` had been patched, but the interposer dylib never linked, so Phase C was never reached.
+
+The cause is the interposer's direct `extern char **environ` reference. In this PPC dynamic-library build, that produces an unresolved `_environ` data import. Darwin's dynamic-library-safe interface is `_NSGetEnviron()` from `<crt_externs.h>`; the Snow Leopard SDK declares that accessor for this purpose.
+
+Current `main` corrects only the child-environment acquisition path:
+
+- the interposer now reads the process environment through `_NSGetEnviron()`;
+- the environment filtering policy is unchanged;
+- the broker is still launched with `posix_spawn`;
+- the proof's bootstrap predicate, Mach envelope handling, socketpair framing, and callback path are unchanged;
+- the interposer build ID is bumped to version 2;
+- the Snow builder requires the `__NSGetEnviron` import and rejects any direct `_environ` import;
+- both Snow and Lion runners reject stale version-1 interposers.
+
+Do not preserve or transfer artifacts from the failed Phase B attempt. Pull current `main` and rerun Phase B from the beginning; the build script removes/recreates the partial outputs. Do not proceed to Phase C unless the corrected interposer links and all build-time validation passes.
+
 ## Safety constraints
 
 For this stage:
@@ -188,13 +215,15 @@ cd /path/to/lion-rosetta-runtime
   ./ppc-distributed-notifications-ingress-interposer.dylib
 ```
 
-Require creation of the two PPC binaries plus their `.sha256` and `.info.txt` files.
+Require creation of the two PPC binaries plus their `.sha256` and `.info.txt` files. The interposer must carry build ID version 2, import `__NSGetEnviron`, and contain no direct `_environ` import; the build script enforces all three conditions.
+
+If the linker still reports `_environ`, stop: current source was not used or stale build inputs remain. Do not continue to Phase C.
 
 Do not rebuild the PPC artifacts on Lion.
 
 ## Phase C — Snow Leopard passthrough control
 
-Still on Snow Leopard:
+Still on Snow Leopard, using the newly rebuilt version-2 interposer:
 
 ```sh
 /bin/bash ./scripts/run-snowleopard-ppc-distributed-notifications-ingress-control.sh \
