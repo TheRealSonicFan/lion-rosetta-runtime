@@ -238,8 +238,11 @@ call_original_lookup(mach_port_t bp,
 {
     bootstrap_lookup2_fn fn = original_lookup();
 
-    if (fn == NULL ||
-        fn == (bootstrap_lookup2_fn)&rosetta_distnotify_bootstrap_look_up2) {
+    if (fn == NULL
+#ifndef PM_DISTRIBUTED_NOTIFICATIONS_INGRESS_EMBEDDED
+        || fn == (bootstrap_lookup2_fn)&rosetta_distnotify_bootstrap_look_up2
+#endif
+        ) {
         if (service_port != NULL)
             *service_port = MACH_PORT_NULL;
         return KERN_FAILURE;
