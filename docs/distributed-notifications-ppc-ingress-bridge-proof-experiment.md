@@ -489,6 +489,44 @@ distributed-notifications-ppc-ingress-lion.txt
 
 Stop after Phase G.
 
+## Reviewed completed result
+
+The Snow Leopard control and Lion proof now both pass.
+
+Snow Leopard preserved native passthrough for the exact `.2`, pid 0, flags 8 lookup, delivered the callback exactly once, exited 0, and left all protected hashes unchanged.
+
+Lion proved the complete process-local compatibility chain:
+
+```text
+exact .2 / pid 0 / flags 8 lookup          -> intercepted once
+local process-only receive port             -> returned
+native i386 broker                           -> spawned
+legacy register                              -> translated
+legacy behavior 1                            -> public behavior 4
+legacy current-session immediate post        -> translated
+native Lion callback                         -> received
+legacy callback Mach envelope                -> reconstructed
+unchanged PPC callback                       -> valid
+legacy unregister                            -> translated
+broker rejects                               -> 0
+legacy Mach requests                         -> 3
+legacy Mach callbacks                        -> 1
+broker exit                                  -> 0
+PPC probe exit                               -> 0
+protected hashes                             -> unchanged
+RESULT                                       -> PASS
+```
+
+The live bridge received the three client requests with receive-side `msgh_bits=0x1111`, while the static Snow client audit proved sender-side construction with `msgh_bits=0x1413`. Integration must not incorrectly require the sender-side disposition bits at the receive boundary.
+
+The standalone distributed-notifications compatibility chain is therefore closed. Current `main` advances to:
+
+```text
+docs/process-manager-createwindow-distributed-notifications-integration-experiment.md
+```
+
+That stage merges the proven ingress implementation into the existing CoreServices `bootstrap_look_up2` interposer rather than loading two competing interposers for the same symbol, then performs a Snow passthrough control followed by exactly one Lion `CreateNewWindow` retry.
+
 ## Decision gate after this proof
 
 If both reports pass, the entire distributed-notification compatibility chain will have been proven independently:
@@ -506,7 +544,7 @@ Snow PPC legacy request generation
 -> unchanged Snow PPC callback handler
 ```
 
-Only after that result is reviewed should the adapter be merged into the normal Process Manager compatibility stack and `CreateNewWindow` retried.
+The result is now reviewed. Current `main` merges the adapter through `docs/process-manager-createwindow-distributed-notifications-integration-experiment.md`; do not load the standalone ingress dylib beside the combined CoreServices interposer.
 
 That later integration must preserve the same exact service predicate and proof-name-independent protocol guards, and it must remain process-local. It must not create a system-wide `.2` service.
 
@@ -522,7 +560,7 @@ cross-architecture IPC                         -> prepared via inherited socketp
 global legacy service                          -> not used
 raw Lion XPC synthesis                         -> not used
 real PPC Process Manager subject               -> not used
-current next step                              -> standalone PPC ingress/native broker proof
+current next step                              -> Process Manager CreateNewWindow integration
 CreateNewWindow integration                    -> not yet authorized
 XNU                                            -> unchanged
 ```
