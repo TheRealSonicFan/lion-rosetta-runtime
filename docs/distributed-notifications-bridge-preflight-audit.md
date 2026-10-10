@@ -331,9 +331,25 @@ distributed-notifications-bridge-preflight-lion.txt
 
 Stop after Phase D.
 
+## Reviewed analyzer-v2 result
+
+Both regenerated analyzer-v2 reports pass.
+
+Snow proves all four numeric suspension-behavior conversions, direct passage of public post options into the private sender, bit 0 as immediate delivery, bit 1 as session scope, and the conservative first-proof guards. It also confirms that the PPC post constructor contains one `sux` key reference while the selected Snow i386 server receive target has no resolved `sux` reference; the first proof therefore continues to reject `sux=true` rather than assigning it an unproven Lion meaning.
+
+Lion proves that public `CFNotificationCenterAddObserver` reaches the native registration path, public `CFNotificationCenterPostNotificationWithOptions` reaches the native post path, and `___checkDelivImmed` is present. The architecture discriminator remains `ppc_callable_xpc_surface=NO`, with native i386 libxpc available and the selected bridge architecture `native_i386_broker_using_Lion_public_CFNotificationCenter_API`.
+
+The static preflight is therefore complete. Current `main` advances to:
+
+```text
+docs/distributed-notifications-native-broker-proof-experiment.md
+```
+
+That experiment is the first live broker-boundary proof. It remains native i386 only and does not connect the real PPC subject, publish a legacy service, synthesize private XPC dictionaries, or call `CreateNewWindow`.
+
 ## Decision gate after analyzer v2
 
-If both reports pass with the required markers, the following stage may prepare a **standalone native i386 broker proof**. That proof may exercise only:
+If both reports pass with the required markers, the following stage is the **standalone native i386 broker proof** in `docs/distributed-notifications-native-broker-proof-experiment.md`. That proof may exercise only:
 
 ```text
 legacy register
@@ -362,7 +378,7 @@ all-session post                              -> reject in first proof
 legacy sux                                    -> require ordinary/false; reject true/unknown
 session_reset                                 -> reject in first proof
 suspend/unsuspend                             -> defer from first proof
-next step                                     -> rerun static bridge preflight analyzer v2
+next step                                     -> standalone native i386 broker lifecycle proof
 ```
 
 No XNU change is indicated.
