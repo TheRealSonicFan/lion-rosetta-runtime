@@ -196,6 +196,48 @@ do
     fi
 done
 
+if ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_CALLBACK:index=1 .* result=PASSCALLBACK_COUNT="$(/usr/bin/grep -c 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_CALLBACK:index=' "$RAW" 2>/dev/null || true)"
+log "legacy_mach_request_count=$REQUEST_COUNT"
+log "legacy_mach_callback_count=$CALLBACK_COUNT"
+
+[ "$REQUEST_COUNT" = "3" ] || PASS=0
+[ "$CALLBACK_COUNT" = "1" ] || PASS=0
+
+if [ "$PASS" -eq 1 ]; then
+    log "RESULT: DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BRIDGE_PROOF_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+log "RESULT: DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BRIDGE_PROOF_FAIL"
+log "RESULT: FAIL"
+exit 1
+ "$RAW"; then
+    log "missing_required_marker=exact Mach callback PASS line"
+    PASS=0
+fi
+
+if ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_WAIT:pid=[0-9]+ exit=0CALLBACK_COUNT="$(/usr/bin/grep -c 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_CALLBACK:index=' "$RAW" 2>/dev/null || true)"
+log "legacy_mach_request_count=$REQUEST_COUNT"
+log "legacy_mach_callback_count=$CALLBACK_COUNT"
+
+[ "$REQUEST_COUNT" = "3" ] || PASS=0
+[ "$CALLBACK_COUNT" = "1" ] || PASS=0
+
+if [ "$PASS" -eq 1 ]; then
+    log "RESULT: DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BRIDGE_PROOF_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+log "RESULT: DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BRIDGE_PROOF_FAIL"
+log "RESULT: FAIL"
+exit 1
+ "$RAW"; then
+    log "missing_required_marker=broker wait exit 0"
+    PASS=0
+fi
+
 REQUEST_COUNT="$(/usr/bin/grep -c 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:' "$RAW" 2>/dev/null || true)"
 CALLBACK_COUNT="$(/usr/bin/grep -c 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_CALLBACK:index=' "$RAW" 2>/dev/null || true)"
 log "legacy_mach_request_count=$REQUEST_COUNT"
