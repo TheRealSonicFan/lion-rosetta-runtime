@@ -1,4 +1,5 @@
 #include <arpa/inet.h>
+#include <crt_externs.h>
 #include <errno.h>
 #include <mach/mach.h>
 #include <pthread.h>
@@ -13,14 +14,13 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-extern char **environ;
 extern kern_return_t bootstrap_look_up2(mach_port_t,
                                         const char *,
                                         mach_port_t *,
                                         pid_t,
                                         uint64_t);
 
-#define BUILD_ID "distributed-notifications-ppc-ingress-interposer-v1"
+#define BUILD_ID "distributed-notifications-ppc-ingress-interposer-v2"
 #define BUILD_MARKER \
     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_BUILD_ID:" BUILD_ID
 
@@ -191,9 +191,16 @@ build_broker_env(void)
     size_t count = 0;
     size_t kept = 0;
     size_t i;
+    char ***environment_slot;
+    char **environment;
     char **result;
 
-    while (environ[count] != NULL)
+    environment_slot = _NSGetEnviron();
+    if (environment_slot == NULL || *environment_slot == NULL)
+        return NULL;
+    environment = *environment_slot;
+
+    while (environment[count] != NULL)
         ++count;
 
     result = (char **)calloc(count + 1U, sizeof(char *));
@@ -201,8 +208,8 @@ build_broker_env(void)
         return NULL;
 
     for (i = 0; i < count; ++i) {
-        if (!broker_env_skip(environ[i]))
-            result[kept++] = environ[i];
+        if (!broker_env_skip(environment[i]))
+            result[kept++] = environment[i];
     }
     result[kept] = NULL;
     return result;
