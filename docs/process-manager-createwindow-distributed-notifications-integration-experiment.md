@@ -331,3 +331,20 @@ XNU                                              -> unchanged
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed Phase F result — ingress established, broker schema rejected
+
+The returned integrated run does not support the literal runner label `CREATENEWWINDOW_DISTNOTIFY_INGRESS_NOT_ESTABLISHED`. The intact evidence shows that the exact `.2` lookup was intercepted, the process-local bridge was created, the native broker reached READY, and three legacy Mach requests crossed the ingress boundary. The local-service result line itself was corrupted by concurrent stderr interleaving with dyld output, which caused the old runner's exact-string gate to fail.
+
+All three real legacy requests reached the broker and returned status 20. In the native broker, status 20 is `BROKER_REJECT_SCHEMA`; lifecycle counts remained `register=0 post=0 callback=0 unregister=0 rejects=3`. The subject then reached `M20_BEFORE_CreateNewWindow`, did not reach M21, emitted the known HIToolbox damage -4960 abort, exited 134, and left protected hashes unchanged.
+
+The standalone proof broker still contains a proof-only notification-name predicate, so real HIToolbox/CoreServices request names cannot be accepted by that broker as written. The existing evidence does not establish whether name gating is the only schema difference.
+
+Current `main` therefore fixes the runner's failure classification and advances to:
+
+```text
+docs/process-manager-createwindow-distributed-notifications-real-schema-audit.md
+```
+
+That audit captures the exact three real binary-property-list dictionaries without performing notification operations. Do not broaden the normal broker before the capture is reviewed.
