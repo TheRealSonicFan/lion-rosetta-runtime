@@ -270,6 +270,34 @@ distributed-notifications-native-broker-proof-lion.txt
 
 Stop after Phase D.
 
+## Reviewed proof result
+
+Both standalone native-broker reports pass.
+
+Snow Leopard 10.6.8 and Lion 10.7.5 each prove the same synthetic Snow-v2 -> public CoreFoundation lifecycle:
+
+```text
+register_translation=PASS legacy_behavior=1 public_behavior=4
+post_translation=PASS public_options=0x1 current_session=YES
+callback_translation=PASS
+callback_count=1
+callback_valid=YES
+unregister_translation=PASS
+negative_api_call_count=0
+RESULT: DISTRIBUTED_NOTIFICATIONS_NATIVE_BROKER_PROOF_PASS
+RESULT: PASS
+```
+
+The protected CoreFoundation, distnoted, launchd, and Lion libxpc binaries remained unchanged. The native broker boundary is therefore closed.
+
+Current `main` advances to:
+
+```text
+docs/distributed-notifications-ppc-ingress-bridge-proof-experiment.md
+```
+
+That stage connects an isolated Snow PPC proof subject to the proven native broker through a process-local Mach ingress and inherited socketpair. It still does not run the Process Manager subject or `CreateNewWindow`.
+
 ## Decision gate after this proof
 
 If both reports pass, the native public-API broker boundary is proven. The following stage should then prepare a **process-local PPC ingress/IPC proof**, still separate from `CreateNewWindow`.
@@ -306,7 +334,7 @@ post immediate                                -> kCFNotificationDeliverImmediate
 post all sessions                             -> excluded from proof
 sux=true                                      -> excluded from proof
 suspend/session_reset                         -> excluded from proof
-current next step                             -> standalone native i386 broker lifecycle proof
+current next step                             -> standalone PPC ingress/native broker bridge proof
 CreateNewWindow integration                   -> not yet authorized
 XNU                                           -> unchanged
 ```
