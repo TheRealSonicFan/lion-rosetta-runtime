@@ -1,6 +1,7 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include <pthread.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -57,6 +58,7 @@ static unsigned int gRegisterCount = 0;
 static unsigned int gPostCount = 0;
 static unsigned int gUnregisterCount = 0;
 static unsigned int gRejectCount = 0;
+static pthread_mutex_t gRegistrationLock = PTHREAD_MUTEX_INITIALIZER;
 
 static int
 write_full(int fd, const void *buffer, size_t length)
@@ -264,8 +266,14 @@ broker_callback(CFNotificationCenterRef center,
 
     (void)center;
 
-    if (reg == NULL || !reg->active)
+    if (reg == NULL)
         return;
+
+    (void)pthread_mutex_lock(&gRegistrationLock);
+    if (!reg->active) {
+        (void)pthread_mutex_unlock(&gRegistrationLock);
+        return;
+    }
 
     reg->callback_count += 1;
 
@@ -333,6 +341,7 @@ done:
     if (counter_number != NULL) CFRelease(counter_number);
     if (entry_number != NULL) CFRelease(entry_number);
     if (dict != NULL) CFRelease(dict);
+    (void)pthread_mutex_unlock(&gRegistrationLock);
 }
 
 static int
@@ -487,13 +496,20 @@ static int
 handle_unregister(CFDictionaryRef dict)
 {
     CFTypeRef entries;
+    int result = BROKER_OK;
 
-    if (!gRegistration.active)
-        return BROKER_REJECT_STATE;
+    (void)pthread_mutex_lock(&gRegistrationLock);
+
+    if (!gRegistration.active) {
+        result = BROKER_REJECT_STATE;
+        goto done;
+    }
 
     entries = CFDictionaryGetValue(dict, CFSTR("entries"));
-    if (!array_contains_entry((CFArrayRef)entries, gRegistration.entry))
-        return BROKER_REJECT_SCHEMA;
+    if (!array_contains_entry((CFArrayRef)entries, gRegistration.entry)) {
+        result = BROKER_REJECT_SCHEMA;
+        goto done;
+    }
 
     CFNotificationCenterRemoveObserver(
         gRegistration.center,
@@ -509,7 +525,10 @@ handle_unregister(CFDictionaryRef dict)
     fflush(stderr);
 
     release_registration();
-    return BROKER_OK;
+
+done:
+    (void)pthread_mutex_unlock(&gRegistrationLock);
+    return result;
 }
 
 static int
@@ -690,6 +709,7 @@ main(int argc, char **argv)
         CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.01, true);
     }
 
+    (void)pthread_mutex_lock(&gRegistrationLock);
     if (gRegistration.active) {
         CFNotificationCenterRemoveObserver(
             gRegistration.center,
@@ -698,6 +718,7 @@ main(int argc, char **argv)
             gRegistration.object);
         release_registration();
     }
+    (void)pthread_mutex_unlock(&gRegistrationLock);
 
     fprintf(stderr,
             "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_EXIT:register=%u post=%u callback=%d unregister=%u rejects=%u\n",
