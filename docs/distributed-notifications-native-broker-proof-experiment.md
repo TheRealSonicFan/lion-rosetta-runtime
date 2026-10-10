@@ -217,12 +217,14 @@ enum_contract=PASS
 negative_controls=PASS
 negative_api_call_count=0
 register_translation=PASS
+poster_api_call_count=1
 poster_result=PASS
 post_translation=PASS
 callback_translation=PASS
 callback_count=1
 callback_valid=YES
 unregister_translation=PASS
+positive_api_call_count=2
 protected_hashes_unchanged=PASS
 RESULT: DISTRIBUTED_NOTIFICATIONS_NATIVE_BROKER_PROOF_PASS
 RESULT: PASS
