@@ -183,7 +183,7 @@ error: not a 32-bit PPC Mach-O: ./ppc-distributed-notifications-ingress-probe-pr
 
 This is another build-validator defect, not an artifact-architecture or distributed-notification failure. The compiler was invoked with `-arch ppc`, and `file` independently identified the resulting probe as a PPC Mach-O. The failing helper relied on `lipo -verify_arch`; on this Snow Leopard toolchain/run it returned failure for the thin PPC artifact even though the artifact is PPC.
 
-Current `main` replaces that gate with explicit `lipo -info` parsing. For the Snow-built artifacts the builder now requires the thin-file form to report exactly `architecture: ppc`, corroborates it with `file`, and separately exercises a generic `lipo -info` architecture parser. The Lion runner uses the same parser for the transferred PPC probe/interposer and native i386 broker, so this false negative cannot reappear during Phase F.
+The first correction replaced that gate with explicit `lipo -info` parsing, but it was still too strict because it required the literal generic name `ppc`. The next run showed that Snow cctools reports the concrete subtype `ppc7400` for this valid 32-bit artifact. Current `main` therefore uses the PPC32-family normalization documented below in both the builder and later runners.
 
 During review of the failed path, a separate latent shell-structure defect was also found in the previous builder revision: the direct-`_environ` rejection block had been inserted with a malformed quote and duplicated the remainder of the script. The user run stopped at the earlier architecture check before reaching that block. Current `main` reconstructs the builder cleanly, preserving the version-2 `_NSGetEnviron` fix and all prior build-time checks.
 
