@@ -1,4 +1,5 @@
 #include <CoreFoundation/CoreFoundation.h>
+#include <spawn.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -14,6 +15,8 @@
     "PM_DISTRIBUTED_NOTIFICATIONS_NATIVE_BROKER_PROOF_BUILD_ID:" BUILD_ID
 
 #define PROOF_TIMEOUT_SECONDS 10.0
+
+extern char **environ;
 
 enum {
     BROKER_OK = 0,
@@ -636,16 +639,24 @@ static int run_positive_proof(const char *exe_path) {
         goto cleanup_registration;
     }
 
-    child = fork();
-    if (child < 0) {
-        perror("fork");
-        goto cleanup_registration;
-    }
-    if (child == 0) {
-        execl(exe_path, exe_path, "--poster", name_c, object_c, nonce_c,
-              (char *)NULL);
-        perror("execl");
-        _exit(127);
+    {
+        char *child_argv[6];
+        int spawn_status;
+
+        child_argv[0] = (char *)exe_path;
+        child_argv[1] = (char *)"--poster";
+        child_argv[2] = name_c;
+        child_argv[3] = object_c;
+        child_argv[4] = nonce_c;
+        child_argv[5] = NULL;
+
+        spawn_status = posix_spawn(
+            &child, exe_path, NULL, NULL, child_argv, environ);
+        if (spawn_status != 0) {
+            fprintf(stderr, "posix_spawn failed: %d\n", spawn_status);
+            child = -1;
+            goto cleanup_registration;
+        }
     }
 
     deadline = CFAbsoluteTimeGetCurrent() + PROOF_TIMEOUT_SECONDS;
