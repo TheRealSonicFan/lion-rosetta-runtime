@@ -106,7 +106,7 @@ synthetic Snow-v2 callback dictionary
 CFNotificationCenterRemoveObserver
 ```
 
-The child poster is created with `fork` followed immediately by `exec`; it does not use CoreFoundation in the post-fork pre-exec interval. This makes the notification cross a process boundary rather than relying on same-process callback behavior.
+The child poster is created with `posix_spawn`, avoiding a post-fork CoreFoundation process state entirely. This makes the notification cross a process boundary rather than relying on same-process callback behavior.
 
 ## Negative controls
 
