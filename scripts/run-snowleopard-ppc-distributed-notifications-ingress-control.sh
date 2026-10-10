@@ -24,6 +24,41 @@ for file in "$PROBE" "$PROBE.sha256" "$INTERPOSER" "$INTERPOSER.sha256"; do
     }
 done
 
+has_arch() {
+    arch="$1"
+    file="$2"
+    info="$(/usr/bin/lipo -info "$file" 2>/dev/null || true)"
+    archs=""
+
+    case "$info" in
+        *" is architecture: "*)
+            archs="$(echo "$info" | /usr/bin/sed 's/^.* is architecture: //')"
+            ;;
+        *" are: "*)
+            archs="$(echo "$info" | /usr/bin/sed 's/^.* are: //')"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+
+    for present in $archs; do
+        [ "$present" = "$arch" ] && return 0
+    done
+    return 1
+}
+
+has_arch ppc "$PROBE" || {
+    echo "error: probe does not contain ppc according to lipo -info" >&2
+    /usr/bin/lipo -info "$PROBE" >&2 || true
+    exit 67
+}
+has_arch ppc "$INTERPOSER" || {
+    echo "error: interposer does not contain ppc according to lipo -info" >&2
+    /usr/bin/lipo -info "$INTERPOSER" >&2 || true
+    exit 67
+}
+
 EXPECTED_PROBE_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$PROBE.sha256")"
 EXPECTED_INTERPOSER_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$INTERPOSER.sha256")"
 ACTUAL_PROBE_SHA="$(/usr/bin/shasum -a 256 "$PROBE" | /usr/bin/awk '{print $1}')"
