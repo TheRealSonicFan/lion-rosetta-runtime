@@ -2,160 +2,130 @@
 
 ## Objective
 
-Choose the executable architecture for the first standalone distributed-notifications bridge proof and close the last option/token semantics before any compatibility code is run.
+Close the final static gate before a standalone distributed-notifications compatibility proof.
 
-The completed analyzer-v2 ABI reports now provide enough structure to define the bridge state model, but they expose one implementation question that must be answered before writing the live proof: the translated Snow Leopard client is PowerPC, while Lion's selected `com.apple.distributed_notifications@Uv3` endpoint is reached through XPC. An in-process bridge is only viable if the translated PPC address space has a callable PPC XPC provider. If Lion's XPC implementation is i386/x86_64-only, the proof must instead use a deliberately narrow native i386 broker/helper and a separate local IPC contract to the translated PPC side.
+Analyzer v1 has now passed on Snow Leopard and Lion. Its decisive result is architectural: Lion's XPC implementation is available to native i386/x86_64 code, but no inspected Lion library exposes a PowerPC slice with the required XPC connection-create/send surface. A translated PPC process therefore must not attempt to synthesize Lion XPC messages in-process.
 
-This audit is static/read-only. It also emits the exact public/private CoreFoundation windows needed to finish the remaining option mappings.
+The selected design is a **native i386 broker**, but the broker should also avoid reimplementing Lion's private XPC dictionary contract. Instead it should reconstruct the equivalent **public CoreFoundation distributed-notification API calls** in native i386 code and let Lion CoreFoundation own its private XPC protocol, option quirks, connection lifecycle, and callback dispatch.
 
-## Reviewed ABI result
+Analyzer v2 remains static/read-only. It proves that this public-API reconstruction boundary is valid and constrains the first proof to the subset whose semantics are already grounded.
 
-Both analyzer-v2 reports pass.
+## Reviewed analyzer-v1 result
 
-### Snow legacy envelope
+Both v1 reports passed.
 
-The Snow PPC client uses:
+### Architecture is closed
+
+Snow Leopard:
+
+- PPC CoreFoundation has no XPC create/send imports.
+- Snow libSystem provides PPC code but no XPC connection-create/send surface.
+- no standalone libxpc exists at the inspected Snow paths.
+
+Lion:
+
+- native i386 CoreFoundation imports XPC connection-create/send.
+- `/usr/lib/system/libxpc.dylib` is i386/x86_64 and provides native XPC create/send.
+- Lion libSystem and libxpc expose no PPC slice.
+- `ppc_callable_xpc_surface=NO`.
+
+Therefore:
 
 ```text
-client -> server:
-  msgh_bits = 0x1413
-  msgh_id   = 4
-  payload length at +0x1c
-  binary-plist payload at +0x20
-
-server -> client:
-  msgh_bits = 0x13
-  msgh_id   = 4
-  payload length at +0x1c
-  binary-plist payload at +0x20
+in-process PPC raw-XPC bridge          -> rejected
+native i386 broker/helper              -> required
+raw private Lion XPC synthesis         -> unnecessary for first proof
+native Lion public CF notification API -> selected broker boundary
 ```
 
-### Snow request state that is now grounded
+### Why the v1 semantic warning did not authorize a bridge yet
 
-Static construction and server-side parsing together establish the following legacy dictionaries.
+The v1 report printed the relevant disassembly, but it did not resolve enough addressed protocol constants or cross-check the Snow i386 server path to turn these observations into explicit gates:
+
+- public `CFNotificationSuspensionBehavior` -> Snow internal `behavior` mapping;
+- public post option bits -> Snow `immediately` and session scope;
+- how the first proof should treat the legacy `sux` field;
+- whether Lion's public AddObserver/PostWithOptions paths really feed the native private distributed-notification implementation.
+
+Analyzer v2 adds those checks.
+
+## Selected translation strategy
+
+The broker should translate the proven Snow v2 request into Lion's **public** distributed notification API rather than constructing the Lion XPC dictionary itself.
+
+### Registration
+
+Snow's public API encodes suspension behavior into the private v2 `behavior` field as:
 
 ```text
-post:
-  message_type = post
-  client       = process name
-  sessionid    = current-session identifier, or all-session sentinel
-  immediately  = boolean derived from post option bit 0
-  sux          = legacy compatibility boolean
-  name         = notification name
-  object       = optional object string
-  userinfo     = optional property-list dictionary
-
-register:
-  message_type = register
-  client       = process name
-  sessionid    = session identifier
-  counter      = 32-bit registration counter
-  entry        = 64-bit representation of the client registration entry identity
-  behavior     = 32-bit internal suspension-behavior flags
-  name         = notification name / any-name sentinel
-  object       = optional object string / any-object sentinel
-
-unregister:
-  message_type = unregister
-  client       = process name
-  sessionid    = session identifier
-  entries      = array of the legacy registration-entry identities selected locally
-  behavior     = selection behavior flags
-  name         = selection name
-  object       = selection object
-
-suspend:
-  message_type = suspend
-  client       = process name
-  sessionid    = session identifier
-  state        = boolean suspended state
-
-session_reset:
-  message_type = session_reset
-  client       = process name
-  sessionid    = replacement session identifier
+public DeliverImmediately (1) -> legacy internal 2
+public Drop               (2) -> legacy internal 4
+public Coalesce           (3) -> legacy internal 8
+public Hold               (4) -> legacy internal 1
 ```
 
-The Snow callback consumer `___CFXNotificationHandleMessage` accepts a `message_type=post` dictionary containing `name`, `object`, optional `userinfo`, plus `counter` and `entry`. Those two registration identifiers are therefore the information a bridge must restore when translating a Lion callback back to the unchanged Snow PPC client.
-
-### Lion v3 request/callback state that is now grounded
-
-The Lion i386 implementation sends XPC dictionaries with `version=1`.
+The broker can invert that mapping:
 
 ```text
-register:
-  method  = register
-  version = 1
-  name    = string
-  object  = string
-  options = uint64
-  token   = uint64
-
-post:
-  method   = post
-  version  = 1
-  name     = string
-  object   = string
-  userinfo = optional XPC data containing serialized property-list data
-  options  = uint64
-
-unregister:
-  method  = unregister
-  version = 1
-  tokens  = XPC array of uint64 registration tokens
-
-suspend / unsuspend:
-  method  = suspend or unsuspend
-  version = 1
-
-callback:
-  method   = post_token
-  version  = 1
-  token    = uint64
-  name     = string
-  object   = optional string
-  userinfo = optional XPC data
+legacy internal 1 -> public Hold               (4)
+legacy internal 2 -> public DeliverImmediately (1)
+legacy internal 4 -> public Drop               (2)
+legacy internal 8 -> public Coalesce           (3)
 ```
 
-Lion's `__CFXNotificationResetSessionForTask` is not a general v3 equivalent of Snow's `session_reset`: it verifies the executable is `loginwindow`, sends `method=i_am_loginwindow`, waits for a reply, and may consume a `registrations` array. The first ordinary-client bridge proof must therefore reject `session_reset` rather than invent an unproven translation.
+The broker then calls Lion's native `CFNotificationCenterAddObserver`. Lion CoreFoundation converts the public suspension behavior into whatever private XPC `options` representation Lion requires and owns the native registration token internally.
 
-### Candidate bridge state model
+The bridge must separately retain the Snow `entry/counter` identity so a Lion callback can be reconstructed as the unchanged Snow callback dictionary.
 
-The ABI evidence supports this stateful translation model, subject to the remaining option checks:
+### Posting
+
+Snow's private post path derives:
 
 ```text
-Snow register
-  (entry, counter, behavior, name, object)
-        |
-        | allocate one bridge-owned uint64 token
-        v
-Lion register
-  (token, options, name, object)
+public option bit 0 (0x1) -> immediately
+public option bit 1 (0x2) -> all-session scope
+```
+
+The first proof is deliberately narrower:
+
+- current-session posts only;
+- preserve only public option bit 0 as the immediate-delivery option;
+- reject all-session posts (bit 1) rather than guessing a cross-session Lion mapping;
+- require the legacy `sux` condition to be false/ordinary; reject true or unrecognized `sux` semantics.
+
+The broker then calls Lion's native `CFNotificationCenterPostNotificationWithOptions`.
+
+### Callback and unregister state
+
+The previously reviewed ABI still supplies the bridge state model:
+
+```text
+Snow register (entry,counter)
+       -> broker registration record
+       -> Lion public CF observer
+
+Lion public CF callback
+       -> look up broker record
+       -> Snow post callback dictionary with stored entry/counter
 
 Snow unregister entries[]
-        |
-        | look up stored tokens
-        v
-Lion unregister tokens[]
-
-Lion post_token callback
-  (token, name, object, userinfo)
-        |
-        | look up stored Snow entry + counter
-        v
-Snow callback post
-  (entry, counter, name, object, userinfo)
+       -> remove the corresponding broker observer records
+       -> Lion public CF remove-observer operation
 ```
 
-This means no server-global registration identity needs to be fabricated. The bridge only needs state for registrations originating inside the translated client it serves.
+The first proof therefore does not need to fabricate Lion private XPC tokens or copy the `tokens[]` wire format itself.
 
-Three points remain to be closed before implementation:
+### Operations intentionally excluded from the first proof
 
-- whether Snow's internal `behavior` bit mask can be passed directly as Lion `options`, or requires a small deterministic conversion;
-- how Snow `immediately` plus all-session `sessionid` semantics map to Lion post `options` bits, and whether the legacy `sux` field has any semantic effect that must survive translation;
-- whether PPC code on Lion has any callable XPC provider at all. If not, the proof architecture must use a native i386 broker/helper.
+Reject and log, without forwarding:
 
-## Prepared implementation
+- `session_reset` — Lion's analogous reset path is loginwindow-only;
+- `suspend` / `unsuspend` — not needed for the minimum register/post/callback/unregister proof;
+- all-session posts;
+- `sux=true` or any unknown `sux` form;
+- unknown legacy `message_type` values.
+
+## Prepared analyzer v2
 
 Current runtime `main` provides:
 
@@ -164,22 +134,85 @@ scripts/audit-distributed-notifications-bridge-preflight.py
 docs/distributed-notifications-bridge-preflight-audit.md
 ```
 
-The analyzer is Python-2.6-compatible and static/read-only.
+The analyzer reports:
 
-It inspects:
+```text
+analyzer_version=2
+```
 
-- the relevant Snow PPC or Lion i386 CoreFoundation slice;
-- public `CFNotificationCenterAddObserver` and `CFNotificationCenterPostNotificationWithOptions` paths;
-- the private request, suspension, reset, callback, and registration functions that feed the v2/v3 protocols;
-- `/usr/lib/libSystem.B.dylib`, `/usr/lib/libSystem.dylib`, and known `libxpc` locations;
-- architecture slices for PPC, i386, and x86_64;
-- whether a PPC slice, if present, exports a usable `xpc_connection_create` plus XPC send surface.
+It is Python-2.6-compatible and performs no live notification, bootstrap, Mach, MIG, or XPC operation.
 
-The report does not create an XPC connection. Symbol presence and architecture compatibility are the only XPC tests in this stage.
+### Snow Leopard coverage
+
+It analyzes both:
+
+- PPC CoreFoundation — actual translated client semantics;
+- i386 CoreFoundation — native Snow server-side parsing/callback semantics.
+
+Required PPC targets:
+
+```text
+_CFNotificationCenterAddObserver
+_CFNotificationCenterPostNotificationWithOptions
+__CFXNotificationPostNotification
+__CFXNotificationRegister
+__CFXNotificationUnregister
+```
+
+Required Snow i386 server targets:
+
+```text
+___CFXNotificationReceiveFromClient
+___CFXNotificationHandleMessage
+```
+
+It resolves addressed `__cstring` / `__cfstring` references and validates:
+
+```text
+public_behavior_1_to_legacy_internal_2=YES
+public_behavior_2_to_legacy_internal_4=YES
+public_behavior_3_to_legacy_internal_8=YES
+public_behavior_4_to_legacy_internal_1=YES
+public_post_options_passed_to_private_sender=YES
+post_option_bit_0_controls_immediately=YES
+post_option_bit_1_controls_session_scope=YES
+```
+
+The report also prints `sux` reference counts and the conservative first-proof policy.
+
+### Lion coverage
+
+Required Lion i386 CoreFoundation targets:
+
+```text
+_CFNotificationCenterAddObserver
+_CFNotificationCenterPostNotificationWithOptions
+__CFXNotificationRegisterObserver
+__CFXNotificationPost
+___checkDelivImmed
+```
+
+The analyzer validates:
+
+```text
+public_addobserver_routes_to_native_register=YES
+public_post_with_options_routes_to_native_post=YES
+native_checkDelivImmed_present=YES
+broker_translation_layer=Snow-v2 dictionary -> Lion public CFNotificationCenter API
+raw_lion_xpc_dictionary_synthesis=NO
+native_corefoundation_owns_xpc_option_quirks=YES
+```
+
+It retains the library architecture matrix and must still show on Lion:
+
+```text
+ppc_callable_xpc_surface=NO
+selected_bridge_architecture=native_i386_broker_using_Lion_public_CFNotificationCenter_API
+```
 
 ## Safety constraints
 
-For this stage:
+For analyzer v2:
 
 - do not launch any PowerPC application;
 - do not run the Rosetta subject;
@@ -187,14 +220,14 @@ For this stage:
 - do not create or send an XPC message;
 - do not issue a bootstrap lookup or Mach request;
 - do not register, post, remove, suspend, or deliver a notification;
-- do not create the synthetic legacy notification port yet;
-- do not build or launch a native broker/helper yet;
-- do not rerun the failed legacy `.2` lookup;
+- do not create a synthetic legacy notification port;
+- do not build or launch the native broker yet;
+- do not rerun the failed standalone `.2` lookup;
 - do not rerun the retired native service-selection tracer;
 - do not load a compatibility dylib into the real PPC subject;
 - do not retry `CreateNewWindow`;
 - do not restart, signal, unload, load, or modify `distnoted` or `launchd`;
-- do not patch CoreFoundation, Foundation, HIToolbox, libSystem, Rosetta, dyld, a shared cache, or XNU.
+- do not patch CoreFoundation, Foundation, HIToolbox, libSystem, Rosetta, dyld, any shared cache, or XNU.
 
 Temporary architecture slices are created only under the system temporary directory and removed on exit.
 
@@ -215,7 +248,7 @@ scripts/audit-distributed-notifications-bridge-preflight.py
 docs/distributed-notifications-bridge-preflight-audit.md
 ```
 
-## Phase B — Snow Leopard preflight
+## Phase B — Snow Leopard analyzer-v2 preflight
 
 On Snow Leopard 10.6.8:
 
@@ -233,16 +266,25 @@ No PowerPC application was launched and no system state was modified.
 RESULT: PASS
 ```
 
-The report must begin with:
+The report must contain:
 
 ```text
-analyzer_version=1
+analyzer_version=2
 product_version=10.6.8
+public_behavior_1_to_legacy_internal_2=YES
+public_behavior_2_to_legacy_internal_4=YES
+public_behavior_3_to_legacy_internal_8=YES
+public_behavior_4_to_legacy_internal_1=YES
+public_post_options_passed_to_private_sender=YES
+post_option_bit_0_controls_immediately=YES
+post_option_bit_1_controls_session_scope=YES
+first_proof_sux_policy=require_false; reject true/unknown
+first_proof_post_scope=current-session only; reject all-session
 ```
 
 If Phase B fails, stop and return only the Snow report.
 
-## Phase C — Lion preflight
+## Phase C — Lion analyzer-v2 preflight
 
 Only after Snow passes, on Lion 10.7.5:
 
@@ -260,21 +302,25 @@ No PowerPC application was launched and no system state was modified.
 RESULT: PASS
 ```
 
-The Lion report will include:
+The report must contain:
 
 ```text
-== Bridge architecture discriminator ==
-ppc_callable_xpc_surface=YES|NO
-candidate_bridge_architecture=...
-remaining_semantic_checks=...
-mapping_status=PREFLIGHT_ONLY_DO_NOT_BUILD_BRIDGE_YET
+analyzer_version=2
+product_version=10.7.5
+public_addobserver_routes_to_native_register=YES
+public_post_with_options_routes_to_native_post=YES
+native_checkDelivImmed_present=YES
+ppc_callable_xpc_surface=NO
+selected_bridge_architecture=native_i386_broker_using_Lion_public_CFNotificationCenter_API
+raw_xpc_bridge=REJECTED
+first_proof_scope=register -> current-session post -> callback -> unregister
 ```
 
-Do not interpret `ppc_callable_xpc_surface=NO` as a failure. It is the main architecture discriminator.
+If an unexpected PPC XPC surface appears, stop and return the report; do not change architecture automatically.
 
 ## Phase D — return evidence and stop
 
-Return only:
+Return only the regenerated analyzer-v2 reports:
 
 ```text
 distributed-notifications-bridge-preflight-snowleopard.txt
@@ -283,28 +329,38 @@ distributed-notifications-bridge-preflight-lion.txt
 
 Stop after Phase D.
 
-## Decision gate
+## Decision gate after analyzer v2
 
-After the two reports are reviewed:
+If both reports pass with the required markers, the following stage may prepare a **standalone native i386 broker proof**. That proof may exercise only:
 
-- If Lion exposes a real PPC-callable XPC create/send surface and the option mapping is exact, prepare an **in-process standalone bridge proof**.
-- If Lion has no PPC-callable XPC provider, prepare a **native i386 broker proof** with one minimal local IPC channel to the PPC side. The broker may translate only the proven register/post/unregister/suspend/callback schema and must reject `session_reset`.
-- If `behavior/options`, post option bits, or `sux` remain ambiguous, refine only those exact static callsites before any bridge is executed.
-- Do not integrate either bridge architecture with `CreateNewWindow` until a standalone register -> post -> callback -> unregister proof passes with strict negative controls.
+```text
+legacy register
+-> native Lion CF registration
+-> current-session post
+-> callback translation
+-> unregister
+```
+
+It must have strict negative controls for the excluded operations and remain separate from `CreateNewWindow` and the real PPC application.
+
+Do not integrate the broker into the Process Manager/window-system path until the standalone proof passes and its artifacts are reviewed.
 
 ## Current boundary
 
 ```text
-Snow v2 wire                                  -> binary plist in Mach envelope
-Lion v3 wire                                  -> XPC dictionaries/arrays
-register identity bridge candidate            -> Snow (entry,counter) <-> bridge token
-unregister bridge candidate                   -> Snow entries[] -> Lion tokens[]
-callback bridge candidate                     -> Lion post_token -> Snow post + stored entry/counter
-Snow session_reset                            -> no ordinary Lion v3 equivalent; reject in first proof
-Lion native reset path                        -> loginwindow-only i_am_loginwindow handshake
-remaining semantic gate                       -> behavior/options + post options + sux
-remaining implementation gate                 -> PPC-callable XPC surface vs native i386 broker
-next step                                     -> static bridge preflight audit
+Snow v2 wire                                  -> binary plist in legacy Mach envelope
+Lion private wire                             -> XPC, owned by native Lion CoreFoundation
+PPC-callable XPC on Lion                      -> none found
+selected bridge architecture                  -> native i386 broker
+selected translation boundary                 -> Lion public CFNotificationCenter APIs
+raw private-XPC synthesis                     -> rejected
+registration behavior mapping                 -> deterministic public-enum inversion
+post immediate bit                            -> public option bit 0
+all-session post                              -> reject in first proof
+legacy sux                                    -> require ordinary/false; reject true/unknown
+session_reset                                 -> reject in first proof
+suspend/unsuspend                             -> defer from first proof
+next step                                     -> rerun static bridge preflight analyzer v2
 ```
 
 No XNU change is indicated.
