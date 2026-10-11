@@ -507,3 +507,12 @@ Follow `docs/process-manager-post-createwindow-windowtitle-fifth-distributed-not
 The fifth legacy distributed-notification request exposed after live FontServer compatibility is now fully audited. It is an eight-key `register` dictionary for exact name `com_apple_CoreText_FontManagerChangedNotification`, object `kCFNotificationAnyObject`, legacy behavior `1`, counter `1`, the established client and session scope, and a positive per-process entry. The audit accepted the first four reviewed registrations, captured exactly one fifth request, intentionally returned status 25, reported zero audit failures/unexpected rejects, preserved protected hashes, and passed.
 
 Current `main` advances to `docs/process-manager-post-createwindow-windowtitle-fifth-distributed-notification-registration-experiment.md`. Build only the new native exact-five broker on Lion, repeat syscall 295, and perform one unchanged window-title run with `lion-windowtitle-fontserver-register-v1`. Accept only the reviewed fifth name/object/behavior tuple. If a sixth request appears, reject it and stop for a new schema audit; if the title returns successfully, close the title gate and advance only to `ShowWindow`. No XNU change is indicated.
+
+
+## Fifth notification accepted; FontServer RPC trace next
+
+The exact fifth title-path distributed-notification registration now passes under the reviewed exact-five broker. The live run accepted `com_apple_CoreText_FontManagerChangedNotification` with `kCFNotificationAnyObject`, legacy behavior 1, counter 1, and the established session scope; the broker ended `register=5 callback=0 rejects=0 exact=YES`. The accepted FontServer bootstrap lookup also returned a valid send right.
+
+The title call still did not return. CoreText immediately produced repeated `CopyFontForName ... FFFFFED0` errors from FontServer, plus `CopyPropertiesForFontsMatchingRequest ... FFFFFED0`, and T03 was not reached. This makes the first actual FontServer RPC the next unresolved boundary; the current log does not contain its Mach request/reply schema.
+
+Follow `docs/process-manager-post-createwindow-windowtitle-fontserver-rpc-transport-trace-experiment.md`. Build only the passive v4 CGS/FontServer trace interposer on Snow, prove the full Snow title path still passes, then perform one Lion exact-five title run and capture the exact FontServer-port `mach_msg` request/reply sequence. Do not adapt FontServer RPC traffic, widen notification policy, or change XNU before that trace is reviewed.
