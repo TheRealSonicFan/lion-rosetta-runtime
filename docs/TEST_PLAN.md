@@ -628,3 +628,10 @@ Current `main` advances to `docs/process-manager-post-createwindow-windowtitle-f
 The reviewed fifth distributed-notification registration is no longer the blocker. The exact-five broker accepted `com_apple_CoreText_FontManagerChangedNotification` with `kCFNotificationAnyObject`, legacy behavior 1, counter 1, and the established session scope; it exited with `register=5 callback=0 rejects=0 exact=YES`. FontServer bootstrap compatibility also remained successful.
 
 `SetWindowTitleWithCFString` still failed to reach T03. Repeated CoreText `CopyFontForName` and `CopyPropertiesForFontsMatchingRequest` operations reported `FFFFFED0` from FontServer. The next test is therefore not another notification change: use `docs/process-manager-post-createwindow-windowtitle-fontserver-rpc-transport-trace-experiment.md` to capture the exact first FontServer-port Mach request and reply on Snow and Lion with a passive two-tuple trace build. No FontServer RPC translation or XNU change is authorized until that differential is reviewed.
+
+
+## FontServer first RPC static audit
+
+The passive transport trace resolves the first FontServer divergence beneath the title call. Snow PPC sends `0x32c8` with authoritative `mach_msg` send/receive sizes `0x18/0x3c`, receives a complex `0x34` reply `0x332c`, and completes the title operation. Lion translated PPC sends the same first request but receives a simple `0x24` reply `0x332c` with raw status bytes `65 fd ff ff`, which correlate to `0xfffffd65` / signed `-667` under the same byte-order interpretation that turns later `d0 fe ff ff` into CoreText's reported `FFFFFED0`. Later `0x32d9` and `0x32db` requests return `-304`, but they are downstream.
+
+The next stage is `docs/process-manager-post-createwindow-windowtitle-fontserver-first-rpc-protocol-audit.md`. Run the read-only analyzer on Snow Leopard and Lion and return the two reports. The audit must identify the Snow `0x32c8` routine, the Lion-native equivalent or setup precondition, and any binary evidence for `-667`. No live title rerun, FontServer RPC adaptation, broker widening, or XNU change is authorized before review.
