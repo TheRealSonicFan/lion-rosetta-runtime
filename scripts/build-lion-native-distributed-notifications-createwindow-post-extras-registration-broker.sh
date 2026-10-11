@@ -8,7 +8,7 @@ OUT="${1:-./native-distributed-notifications-createwindow-post-extras-registrati
 EXPECTED_BUILD_ID="distributed-notifications-createwindow-post-extras-registration-broker-v1"
 
 [ "$(/usr/bin/sw_vers -productVersion)" = "10.7.5" ] || {
-    echo "error: build CreateNewWindow post-Extras post-Extras registration broker on Lion 10.7.5" >&2
+    echo "error: build CreateNewWindow post-Extras registration broker on Lion 10.7.5" >&2
     exit 65
 }
 
@@ -107,7 +107,7 @@ RUNTIME_GIT_HEAD="$(cd "$ROOT" 2>/dev/null && /usr/bin/git rev-parse HEAD 2>/dev
 [ -n "$RUNTIME_GIT_HEAD" ] || RUNTIME_GIT_HEAD="UNAVAILABLE_NON_GIT_CHECKOUT"
 
 {
-    echo "== Native distributed-notifications CreateNewWindow post-Extras post-Extras registration broker =="
+    echo "== Native distributed-notifications CreateNewWindow post-Extras registration broker =="
     echo "runtime_git_head=$RUNTIME_GIT_HEAD"
     echo "compiler=$CC_SELECTED"
     echo "build_id=$EXPECTED_BUILD_ID"
