@@ -42,8 +42,11 @@ EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-s
 EXPECTED_SEC_BUILD_ID="security-session-auditinfo-api-v1"
 EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-compat-v1"
 SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_SCHEMA_AUDIT_REPORT:-}"
+REAL_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE:-}"
 if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-createwindow-schema-audit-broker-v1"
+elif [ -n "$REAL_REGISTRATION_MODE" ]; then
+    EXPECTED_BROKER_BUILD_ID="distributed-notifications-createwindow-registration-broker-v1"
 else
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-ppc-ingress-broker-v1"
 fi
@@ -61,6 +64,15 @@ die() {
     exit "$code"
 }
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
+
+if [ -n "$SCHEMA_AUDIT_REPORT" ] && [ -n "$REAL_REGISTRATION_MODE" ]; then
+    die 64 "schema-audit and real-registration modes are mutually exclusive"
+fi
+if [ -n "$REAL_REGISTRATION_MODE" ] &&
+   [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-register-v1" ]; then
+    die 64 "unsupported ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE: $REAL_REGISTRATION_MODE"
+fi
+
 abspath() {
     file="$1"
     dir="$(/usr/bin/dirname "$file")"
@@ -225,6 +237,9 @@ log "distributed_notifications_broker_absolute_path=$BROKER_ABS"
 if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
     : > "$SCHEMA_AUDIT_REPORT" || die 73 "could not initialize schema audit report: $SCHEMA_AUDIT_REPORT"
     log "distributed_notifications_schema_audit_report=$SCHEMA_AUDIT_REPORT"
+fi
+if [ -n "$REAL_REGISTRATION_MODE" ]; then
+    log "distributed_notifications_real_registration_mode=$REAL_REGISTRATION_MODE"
 fi
 
 MARKER="$(/usr/bin/mktemp /tmp/lion-createwindow-validation-marker.XXXXXX)" || die 73 "could not create diagnostic marker"
@@ -579,7 +594,9 @@ if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REJECT:' "$R
    /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_REQUEST:FAIL' "$RAW_LOG" ||
    /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_CALLBACK:REJECT' "$RAW_LOG" ||
    /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
-    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:status=20' "$RAW_LOG"; then
+    if [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_PROTOCOL_REJECTED"
+    elif /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:status=20' "$RAW_LOG"; then
         log "RESULT: CREATENEWWINDOW_DISTNOTIFY_BROKER_SCHEMA_REJECTED"
     else
         log "RESULT: CREATENEWWINDOW_DISTNOTIFY_PROTOCOL_REJECTED"
@@ -589,7 +606,11 @@ fi
 
 if /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG" &&
    ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M21_AFTER_CreateNewWindow' "$RAW_LOG"; then
-    log "RESULT: CREATENEWWINDOW_NO_RETURN"
+    if [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REGISTRATIONS_ESTABLISHED_CREATEWINDOW_NO_RETURN"
+    else
+        log "RESULT: CREATENEWWINDOW_NO_RETURN"
+    fi
     exit 0
 fi
 
@@ -626,15 +647,33 @@ if /usr/bin/grep -Fq 'PM_CPS_SETFRONT_COMPAT_CALL:index=2' "$RAW_LOG"; then
     exit 0
 fi
 
+if [ -n "$REAL_REGISTRATION_MODE" ] &&
+   ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=3 callback=[0-9]+ rejects=0 exact=YES' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_INCOMPLETE"
+    exit 0
+fi
+
 if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" ||
-   ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_WAIT:pid=[0-9]+ exit=0$' "$RAW_LOG" ||
-   ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_EXIT:lookups=1 requests=[0-9]+ callbacks=[0-9]+$' "$RAW_LOG"; then
+   ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_WAIT:pid=[0-9]+ exit=0
+
+log "RESULT: CREATENEWWINDOW_PROCESS_STATE_UNEXPECTED rc=$RC diagnostics=$FOUND"
+exit 0
+ "$RAW_LOG" ||
+   ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_EXIT:lookups=1 requests=[0-9]+ callbacks=[0-9]+
+
+log "RESULT: CREATENEWWINDOW_PROCESS_STATE_UNEXPECTED rc=$RC diagnostics=$FOUND"
+exit 0
+ "$RAW_LOG"; then
     log "RESULT: CREATENEWWINDOW_DISTNOTIFY_LIFECYCLE_INCOMPLETE"
     exit 0
 fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
-    log "RESULT: CREATENEWWINDOW_DISTNOTIFY_INTEGRATION_PASS"
+    if [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_PASS"
+    else
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_INTEGRATION_PASS"
+    fi
     exit 0
 fi
 
