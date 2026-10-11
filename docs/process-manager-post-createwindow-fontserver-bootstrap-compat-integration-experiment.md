@@ -406,3 +406,30 @@ next step                                             -> exact FontServer live i
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed result — FontServer integration passed; fifth notification is next
+
+The live FontServer integration passed its exact compatibility gate. Lion reached the title stage, made one exact `com.apple.FontServer` compatibility call, sent the proven `0x194 / 0xbc` request with PID 0, zero UUID, and flags 0, received Mach success plus `0x1f8 / 0x28` with one descriptor and a valid send right, and reported `PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS`.
+
+Immediately afterward the PPC ingress received:
+
+```text
+index=5
+bits=0x00001111
+id=4
+size=356
+payload=321
+```
+
+The unchanged exact-four registration broker rejected that request with status 25. The four previously reviewed registrations remained accepted; broker summary became `register=4 ... rejects=1 exact=NO`. `SetWindowTitleWithCFString` did not return, the subject exited 138, and the runner named a crash report plus core. Protected hashes remained unchanged.
+
+This result closes the FontServer bootstrap boundary. The fifth notification request is now the first blocker. Its exact property-list contents are not present in the rejection log, so it must be captured before any allowlist change.
+
+The authoritative next procedure is:
+
+```text
+docs/process-manager-post-createwindow-windowtitle-fifth-distributed-notification-schema-audit.md
+```
+
+That stage keeps the first four registrations and all current compatibility paths unchanged, captures exactly one fifth request as binary plist plus XML, deliberately returns status 25, and stops. Do not accept the fifth registration until that captured schema is reviewed. No XNU change is indicated.
