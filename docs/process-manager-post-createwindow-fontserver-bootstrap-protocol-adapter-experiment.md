@@ -286,3 +286,54 @@ next step                                              -> isolated FontServer lo
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed result — exact Lion FontServer lookup passes
+
+The standalone discriminator completed successfully.
+
+Artifact/control provenance:
+
+```text
+compiler                      /Developer-3.2.6/usr/bin/gcc-4.2
+architecture                  ppc7400
+LC_LOAD_DYLINKER              /usr/oah/dyld
+probe SHA-256                 0424d041c8941c89432c6948053c73e132b7b016639a38bf1182661b63a06ccf
+Snow legacy lookup            kr=0, servicePort=nonzero
+Snow result                   PASS
+syscall 295                   EBADF / no SIGSYS / PASS
+```
+
+The Lion probe sent exactly:
+
+```text
+name                          com.apple.FontServer
+request ID                    0x00000194
+send / receive                0xbc / 0x6c
+target PID                    0
+instance UUID                 ZERO
+flags                         0
+```
+
+and received Mach success plus the expected complex reply:
+
+```text
+reply ID                      0x000001f8
+reply size                    0x28
+descriptor count              1
+service port                  nonzero
+send right                    YES
+RESULT                        FONTSERVER_BOOTSTRAP_PROTOCOL_ADAPTER_PASS
+```
+
+No new crash/core diagnostic was detected and the private/system dyld, kernel, translator, Rosetta cache, and probe hashes remained unchanged.
+
+This proves that the earlier integrated `bootstrap_look_up("com.apple.FontServer") -> -304` result is another exact Snow-Leopard-to-Lion launchd request-layout mismatch. The next stage may integrate only this exact service adaptation into the existing one-tuple CGS bootstrap interposer while preserving the already accepted WindowServer-session and Dock-server behavior.
+
+The authoritative next procedure is:
+
+```text
+docs/process-manager-post-createwindow-fontserver-bootstrap-compat-integration-experiment.md
+```
+
+Keep the exact-four notification broker unchanged. The fifth notification request remains unreviewed and must not be accepted before the FontServer live integration establishes the next first boundary. No XNU change is indicated.
