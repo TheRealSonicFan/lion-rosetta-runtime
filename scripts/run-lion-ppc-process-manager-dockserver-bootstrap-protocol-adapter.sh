@@ -44,16 +44,30 @@ sha256() {
     /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'
 }
 
+macho_archs() {
+    info="$(/usr/bin/lipo -info "$1" 2>/dev/null || true)"
+    case "$info" in
+        *" is architecture: "*) echo "$info" | /usr/bin/sed 's/^.* is architecture: //' ;;
+        *" are: "*) echo "$info" | /usr/bin/sed 's/^.* are: //' ;;
+        *) return 1 ;;
+    esac
+}
+
+is_ppc32_arch_name() {
+    case "$1" in
+        ppc|ppc601|ppc603|ppc603e|ppc603ev|ppc604|ppc604e|ppc750|ppc7400|ppc7450|ppc970)
+            return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 has_ppc32_arch() {
     file="$1"
-    if [ -x /usr/bin/lipo ]; then
-        /usr/bin/lipo "$file" -verify_arch ppc >/dev/null 2>&1 && return 0
-        /usr/bin/lipo -verify_arch ppc "$file" >/dev/null 2>&1 && return 0
-    fi
-    desc="$(/usr/bin/file "$file" 2>/dev/null || true)"
-    echo "$desc" | /usr/bin/grep -Eiq '(^|[^[:alnum:]_])(ppc|powerpc)([^[:alnum:]_]|$)' || return 1
-    echo "$desc" | /usr/bin/grep -Eiq 'ppc64|powerpc64' && return 1
-    return 0
+    archs="$(macho_archs "$file")" || return 1
+    for arch in $archs; do
+        is_ppc32_arch_name "$arch" && return 0
+    done
+    return 1
 }
 
 log "== Lion PPC DockServer bootstrap protocol adapter =="
