@@ -26,6 +26,7 @@ HITOOLBOX_EXTRAS_MODE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE:-}"
 DOCKSERVER_COMPAT_MODE="${ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE:-}"
 NEWWINDOW_TRACE_MODE="${ROSETTA_CGS_NEWWINDOW_TRACE_MODE:-}"
 NEWWINDOW_COMPAT_MODE="${ROSETTA_CGS_NEWWINDOW_COMPAT_MODE:-}"
+RELEASEBACKING_TRACE_MODE="${ROSETTA_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE_MODE:-}"
 
 TRANSLATOR="/usr/libexec/oah/translate"
 PRIVATE_DYLD="/usr/oah/dyld"
@@ -107,6 +108,13 @@ if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
     [ "$HITOOLBOX_EXTRAS_MODE" = "lion-fallback-external-v1" ] ||
         die 64 "CGS NewWindow compatibility integration requires lion-fallback-external-v1"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-v1"
+fi
+if [ -n "$RELEASEBACKING_TRACE_MODE" ]; then
+    [ "$RELEASEBACKING_TRACE_MODE" = "lion-passive-v1" ] ||
+        die 64 "unsupported ROSETTA_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE_MODE: $RELEASEBACKING_TRACE_MODE"
+    [ "$NEWWINDOW_COMPAT_MODE" = "lion-inline-id-v1" ] ||
+        die 64 "post-NewWindow release-backing trace requires lion-inline-id-v1 NewWindow compatibility"
+    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-trace-v1"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 
@@ -356,6 +364,12 @@ if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
         /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
             die 68 "CGS NewWindow compatibility marker missing: $marker"
     done
+fi
+if [ -n "$RELEASEBACKING_TRACE_MODE" ]; then
+    /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_SET_WINDOW_RELEASE_BACKING_LEGACY' ||
+        die 68 "CGS release-backing legacy trace marker missing"
+    /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_SET_WINDOW_RELEASE_BACKING_LION' ||
+        die 68 "CGS release-backing Lion trace marker missing"
 fi
 /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq \
     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_BUILD_ID:$EXPECTED_BROKER_BUILD_ID" || die 68 "broker build marker missing"
@@ -842,6 +856,32 @@ fi
 
 if /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG" &&
    ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M21_AFTER_CreateNewWindow' "$RAW_LOG"; then
+    if [ -n "$RELEASEBACKING_TRACE_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        RELEASEBACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_releasebacking_legacy_trace_count=$RELEASEBACKING_TRACE_COUNT"
+        if [ "$RELEASEBACKING_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REQUEST_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x0000724b expectedReply=0x000072af option=0x00000003 send=0x00000028 recv=0x0000002c' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REQUEST_UNEXPECTED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_MACH_FAILURE"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY bits=' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_LEGACY_REPLY_OBSERVED"
+        else
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REPLY_UNEXPECTED"
+        fi
+        exit 0
+    fi
     if [ -n "$NEWWINDOW_COMPAT_MODE" ] &&
        /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES' "$RAW_LOG" &&
        /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
