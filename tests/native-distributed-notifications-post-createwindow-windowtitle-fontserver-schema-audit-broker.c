@@ -858,6 +858,7 @@ main(int argc, char **argv)
             gAllowedSeen[0] == 1U &&
             gAllowedSeen[1] == 1U &&
             gAllowedSeen[2] == 1U &&
+            gAllowedSeen[3] == 1U &&
             gAuditCaptureCount == 1U &&
             gAuditFailureCount == 0U &&
             gUnexpectedRejectCount == 0U;
