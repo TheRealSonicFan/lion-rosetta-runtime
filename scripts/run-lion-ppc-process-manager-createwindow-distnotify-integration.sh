@@ -820,6 +820,7 @@ if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$
 fi
 
 if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] &&
+   [ "$FOUND" -eq 0 ] &&
    /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=-304' "$RAW_LOG" &&
    /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
    /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
