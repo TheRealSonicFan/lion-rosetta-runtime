@@ -421,3 +421,10 @@ The live CGS NewWindow compatibility integration has now proved the ID-only adap
 The public `CreateNewWindow` call still did not return. Immediately after the successful NewWindow reply, Lion reported `CGSSetWindowToReleaseBackingOnOrderOut` MIG type-check failure, `CGSSetWindowOpacity` receive-too-large, `CGSGetDisplayBounds (display 0)` illegal argument, and `CGSShapeWindow` MIG type-check failure, then terminated with status 138 and produced a crash/core. The previous Dock-oriented no-return result label was too coarse; current runner classification recognizes successful NewWindow adaptation before reporting the post-RPC no-return state.
 
 The next gate is `docs/process-manager-createwindow-cgs-post-newwindow-protocol-audit.md`. Run only its read-only Snow-PPC and Lion-i386 CoreGraphics analyzer and return the two reports. Do not rerun the PPC subject, rebuild the compatibility dylib or native notification broker, broaden the NewWindow predicate, or change XNU before that differential is reviewed.
+
+
+## Post-NewWindow static audit passed; release-backing trace next
+
+The Snow Leopard PPC and Lion i386 post-NewWindow CoreGraphics audit now passes. The first helper named by the live Lion failure sequence, `CGSSetWindowToReleaseBackingOnOrderOut`, is structurally aligned except for generated-MIG IDs: Snow uses `0x724b/0x72af`, Lion uses `0x724c/0x72b0`; both use bits `0x1513`, option `0x3`, send/receive sizes `0x28/0x2c`, and a `0x24` reply with NDR-aware result decoding. The later ShapeWindow clients also show ID movement, but they remain out of scope until the first release-backing transaction is validated live.
+
+Current main therefore advances only to `docs/process-manager-createwindow-cgs-releasebacking-transport-trace-experiment.md`. Build the new combined passive-trace dylib on Snow, require a full Snow CreateNewWindow positive control, then run exactly one Lion trace with the already accepted NewWindow adapter unchanged. No `0x724b -> 0x724c` conversion is authorized yet, and no XNU rebuild or reboot is indicated.
