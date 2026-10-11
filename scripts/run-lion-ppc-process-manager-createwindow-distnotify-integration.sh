@@ -24,6 +24,7 @@ HITOOLBOX_EXTRAS_COMPAT_SHA_FILE="${ROSETTA_HITOOLBOX_EXTRAS_COMPAT_SHA256_FILE:
 HITOOLBOX_EXTRAS_RESOURCE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH:-}"
 HITOOLBOX_EXTRAS_MODE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE:-}"
 DOCKSERVER_COMPAT_MODE="${ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE:-}"
+FONTSERVER_COMPAT_MODE="${ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE:-}"
 NEWWINDOW_TRACE_MODE="${ROSETTA_CGS_NEWWINDOW_TRACE_MODE:-}"
 NEWWINDOW_COMPAT_MODE="${ROSETTA_CGS_NEWWINDOW_COMPAT_MODE:-}"
 RELEASEBACKING_TRACE_MODE="${ROSETTA_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE_MODE:-}"
@@ -92,6 +93,17 @@ if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
     [ "$DOCKSERVER_COMPAT_MODE" = "lion-dockserver-v1" ] ||
         die 64 "unsupported ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE: $DOCKSERVER_COMPAT_MODE"
     EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-compat-v2"
+fi
+if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
+    [ "$FONTSERVER_COMPAT_MODE" = "lion-fontserver-v1" ] ||
+        die 64 "unsupported ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE: $FONTSERVER_COMPAT_MODE"
+    [ "$DOCKSERVER_COMPAT_MODE" = "lion-dockserver-v1" ] ||
+        die 64 "FontServer compatibility requires lion-dockserver-v1"
+    [ "$POST_CREATEWINDOW_TITLE_MODE" = "lion-windowtitle-v1" ] ||
+        die 64 "FontServer compatibility requires the post-CreateNewWindow window-title subject"
+    [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] ||
+        die 64 "FontServer compatibility requires the exact-four notification broker"
+    EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-fontserver-compat-v3"
 fi
 if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
     [ "$NEWWINDOW_TRACE_MODE" = "lion-passive-v1" ] ||
@@ -460,6 +472,12 @@ if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
     /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' ||
         die 68 "DockServer adapter PASS marker missing from CGS interposer"
 fi
+if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
+    /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'com.apple.FontServer' ||
+        die 68 "FontServer service marker missing from CGS interposer"
+    /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' ||
+        die 68 "FontServer adapter PASS marker missing from CGS interposer"
+fi
 if [ -n "$HITOOLBOX_TRACE" ]; then
     /usr/bin/strings "$HITOOLBOX_TRACE" | /usr/bin/grep -Fq \
         "PM_HITOOLBOX_CFBUNDLE_TRACE_BUILD_ID:$EXPECTED_HITOOLBOX_TRACE_BUILD_ID" ||
@@ -535,6 +553,12 @@ if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
     export ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE="$DOCKSERVER_COMPAT_MODE"
 else
     unset ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE
+fi
+if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
+    log "fontserver_bootstrap_compat_mode=$FONTSERVER_COMPAT_MODE"
+    export ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE="$FONTSERVER_COMPAT_MODE"
+else
+    unset ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE
 fi
 if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
     log "cgs_newwindow_compat_mode=$NEWWINDOW_COMPAT_MODE"
@@ -943,11 +967,33 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ] &&
     exit 0
 fi
 
+if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
+    FONT_CALLS="$(/usr/bin/grep -c 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_CALL:' "$RAW_LOG" 2>/dev/null || true)"
+    FONT_PASSES="$(/usr/bin/grep -c 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "fontserver_bootstrap_compat_call_count=$FONT_CALLS"
+    log "fontserver_bootstrap_compat_pass_count=$FONT_PASSES"
+    if [ "$FONT_CALLS" -lt 1 ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_LOOKUP_NOT_REACHED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_FAIL' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_ADAPTER_FAILED"
+        exit 0
+    fi
+    if [ "$FONT_PASSES" -lt 1 ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_ADAPTER_INCOMPLETE"
+        exit 0
+    fi
+fi
+
 if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REJECT:' "$RAW_LOG" ||
    /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_REQUEST:FAIL' "$RAW_LOG" ||
    /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_CALLBACK:REJECT' "$RAW_LOG" ||
    /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
-    if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ]; then
+    if [ -n "$FONTSERVER_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_PASS_NOTIFICATION_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ]; then
         log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATION_PROTOCOL_REJECTED"
     elif [ -n "$REAL_REGISTRATION_MODE" ]; then
         log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_PROTOCOL_REJECTED"
@@ -1461,7 +1507,12 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
         exit 0
     fi
     if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T03_AFTER_SetWindowTitleWithCFString' "$RAW_LOG"; then
-        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_NO_RETURN"
+        if [ -n "$FONTSERVER_COMPAT_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        else
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_NO_RETURN"
+        fi
         exit 0
     fi
     if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_STATUS:SetWindowTitleWithCFString=0' "$RAW_LOG" ||
@@ -1518,7 +1569,9 @@ if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:P
 fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
-    if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+    if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_VALIDATION_PASS"
     elif [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
         log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_INTEGRATION_PASS"
