@@ -480,3 +480,9 @@ The exact Snow `Extras.rsrc` compatibility stage has moved CreateNewWindow beyon
 
 The next gate is `docs/process-manager-createwindow-post-extras-distributed-notification-schema-audit.md`. Build only the new native i386 post-Extras audit broker, retain the proven first three registrations and exact PPC resource fallback unchanged, capture exactly the fourth request's binary plist/XML, and deliberately keep returning status 25 for that unknown name. Do not broaden notification policy or modify the dock-server path in the same experiment. No PPC rebuild, XNU rebuild, or reboot is authorized.
 
+## Exact fourth post-Extras notification registration gate
+
+The post-Extras schema audit captured `AppleAquaColorVariantChanged` as the fourth request with the reviewed eight-key `register` schema, `kCFNotificationAnyObject`, legacy behavior 4, counter 1, and the same session discipline as the accepted first three registrations. The exact Snow HIToolbox resource fallback remained effective and the audit passed with four legacy requests, one intentional capture, zero unexpected rejects, and unchanged protected hashes.
+
+Follow `docs/process-manager-createwindow-post-extras-distributed-notification-registration-experiment.md`. The next run may add only that exact fourth name to the native public-CoreFoundation registration broker. If all four registrations pass and `com.apple.dock.server` still returns `-304`, stop there and treat that bootstrap lookup as the next boundary. No fifth notification policy, dock-server compatibility change, or XNU change is part of this gate.
+
