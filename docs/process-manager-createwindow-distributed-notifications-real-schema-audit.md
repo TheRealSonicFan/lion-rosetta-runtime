@@ -208,3 +208,45 @@ unexpected keys or value types
 Do not remove the proof-only name restriction from the normal broker, add real notification names, or broaden operation support until those exact payloads have been reviewed.
 
 No additional XNU change is indicated.
+
+## Returned Phase D result
+
+The completed Lion Phase D capture returned:
+
+```text
+schema_audit_capture_count=3
+legacy_mach_request_count=3
+PM_DISTRIBUTED_NOTIFICATIONS_REAL_SCHEMA_AUDIT_SUMMARY:requests=3 failures=0
+PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:AUDIT_PASS
+protected_hashes_unchanged=YES
+RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_SCHEMA_AUDIT_PASS
+```
+
+All three captured requests are `register` operations. Their reviewed tuples are:
+
+```text
+1  com.apple.MCX._managementStatusChangedForDomains
+   object=com.apple.MCX
+   behavior=1
+
+2  com.apple.CFPreferences._domainsChangedExternally
+   object=com.apple.CFPreferences
+   behavior=1
+
+3  AppleColorPreferencesChangedNotification
+   object=kCFNotificationAnyObject
+   behavior=4
+```
+
+Each dictionary has the same eight-key register shape, `counter=1`, a positive run-time `entry`, and one common non-empty `sessionid`. This proves that the previous status-20 rejection was not evidence of a different operation or malformed property list. The standalone proof broker's proof-only name predicate rejects the first real registration, and its single-registration state model would be insufficient even if that predicate were removed because the real path installs three registrations.
+
+The serialized `kCFNotificationAnyObject` value in request 3 is a Snow distributed-notification sentinel. It must be normalized to an any-object public registration rather than forwarded as an ordinary literal object filter.
+
+The schema-audit gate is therefore closed. Current `main` advances to:
+
+```text
+docs/process-manager-createwindow-distributed-notifications-real-registration-experiment.md
+```
+
+That experiment uses a dedicated native broker limited to the three reviewed registration tuples, supports the three simultaneous `entry/counter` identities, and leaves post/unregister/suspend/session-reset semantics blocked until observed. No XNU change is indicated.
+
