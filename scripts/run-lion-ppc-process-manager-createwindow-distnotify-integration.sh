@@ -17,6 +17,8 @@ BROKER_SHA_FILE="${10:-$BROKER.sha256}"
 REPORT="${11:-$ROOT/payload/lion-ppc-process-manager-createwindow-distnotify-integration.log}"
 REPORT_DIR="$(/usr/bin/dirname "$REPORT")"
 RAW_LOG="${REPORT%.log}.raw.log"
+HITOOLBOX_TRACE="${ROSETTA_HITOOLBOX_CFBUNDLE_TRACE_PATH:-}"
+HITOOLBOX_TRACE_SHA_FILE="${ROSETTA_HITOOLBOX_CFBUNDLE_TRACE_SHA256_FILE:-}"
 
 TRANSLATOR="/usr/libexec/oah/translate"
 PRIVATE_DYLD="/usr/oah/dyld"
@@ -41,6 +43,7 @@ EXPECTED_SUBJECT_BUILD_ID="cps-createwindow-validation-v1"
 EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-v1"
 EXPECTED_SEC_BUILD_ID="security-session-auditinfo-api-v1"
 EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-compat-v1"
+EXPECTED_HITOOLBOX_TRACE_BUILD_ID="hitoolbox-cfbundle-resource-trace-v1"
 SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_SCHEMA_AUDIT_REPORT:-}"
 REAL_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE:-}"
 if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
@@ -71,6 +74,13 @@ fi
 if [ -n "$REAL_REGISTRATION_MODE" ] &&
    [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-register-v1" ]; then
     die 64 "unsupported ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE: $REAL_REGISTRATION_MODE"
+fi
+if { [ -n "$HITOOLBOX_TRACE" ] && [ -z "$HITOOLBOX_TRACE_SHA_FILE" ]; } ||
+   { [ -z "$HITOOLBOX_TRACE" ] && [ -n "$HITOOLBOX_TRACE_SHA_FILE" ]; }; then
+    die 64 "set both ROSETTA_HITOOLBOX_CFBUNDLE_TRACE_PATH and ROSETTA_HITOOLBOX_CFBUNDLE_TRACE_SHA256_FILE, or neither"
+fi
+if [ -n "$HITOOLBOX_TRACE" ] && [ -z "$REAL_REGISTRATION_MODE" ]; then
+    die 64 "HIToolbox CFBundle trace requires the reviewed real-registration mode"
 fi
 
 abspath() {
@@ -128,12 +138,19 @@ for p in /mach_kernel "$TRANSLATOR" "$PRIVATE_DYLD" "$SYSTEM_DYLD" \
          "$BROKER" "$BROKER_SHA_FILE"; do
     [ -e "$p" ] || die 66 "missing required path: $p"
 done
+if [ -n "$HITOOLBOX_TRACE" ]; then
+    [ -e "$HITOOLBOX_TRACE" ] || die 66 "missing HIToolbox trace dylib: $HITOOLBOX_TRACE"
+    [ -e "$HITOOLBOX_TRACE_SHA_FILE" ] || die 66 "missing HIToolbox trace SHA file: $HITOOLBOX_TRACE_SHA_FILE"
+fi
 
 EXPECTED_SUBJECT_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$SUBJECT_SHA_FILE")"
 EXPECTED_CORE_COMPAT_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$CORE_COMPAT_SHA_FILE")"
 EXPECTED_SEC_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$SEC_SHA_FILE")"
 EXPECTED_CGS_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$CGS_SHA_FILE")"
 EXPECTED_BROKER_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$BROKER_SHA_FILE")"
+if [ -n "$HITOOLBOX_TRACE" ]; then
+    EXPECTED_HITOOLBOX_TRACE_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$HITOOLBOX_TRACE_SHA_FILE")"
+fi
 
 KERNEL_BEFORE="$(sha256 /mach_kernel)"
 TRANSLATOR_BEFORE="$(sha256 "$TRANSLATOR")"
@@ -154,6 +171,9 @@ SUBJECT_BEFORE="$(sha256 "$SUBJECT")"
 CORE_COMPAT_BEFORE="$(sha256 "$CORE_COMPAT")"
 SEC_BEFORE="$(sha256 "$SEC_INTERPOSER")"
 CGS_BEFORE="$(sha256 "$CGS_INTERPOSER")"
+if [ -n "$HITOOLBOX_TRACE" ]; then
+    HITOOLBOX_TRACE_BEFORE="$(sha256 "$HITOOLBOX_TRACE")"
+fi
 
 log "mach_kernel_sha256_before=$KERNEL_BEFORE"
 log "expected_mach_kernel_sha256=$EXPECTED_KERNEL_SHA"
@@ -175,6 +195,10 @@ log "expected_cgs_interposer_sha256=$EXPECTED_CGS_SHA"
 log "actual_cgs_interposer_sha256=$CGS_BEFORE"
 log "expected_broker_sha256=$EXPECTED_BROKER_SHA"
 log "actual_broker_sha256=$BROKER_BEFORE"
+if [ -n "$HITOOLBOX_TRACE" ]; then
+    log "expected_hitoolbox_trace_sha256=$EXPECTED_HITOOLBOX_TRACE_SHA"
+    log "actual_hitoolbox_trace_sha256=$HITOOLBOX_TRACE_BEFORE"
+fi
 
 [ "$KERNEL_BEFORE" = "$EXPECTED_KERNEL_SHA" ] || die 68 "kernel hash mismatch"
 [ "$TRANSLATOR_BEFORE" = "$EXPECTED_TRANSLATOR_SHA" ] || die 68 "translator hash mismatch"
@@ -187,6 +211,10 @@ log "actual_broker_sha256=$BROKER_BEFORE"
 [ "$SEC_BEFORE" = "$EXPECTED_SEC_SHA" ] || die 68 "Security interposer hash mismatch"
 [ "$CGS_BEFORE" = "$EXPECTED_CGS_SHA" ] || die 68 "CGS interposer hash mismatch"
 [ "$BROKER_BEFORE" = "$EXPECTED_BROKER_SHA" ] || die 68 "broker hash mismatch"
+if [ -n "$HITOOLBOX_TRACE" ]; then
+    [ "$HITOOLBOX_TRACE_BEFORE" = "$EXPECTED_HITOOLBOX_TRACE_SHA" ] ||
+        die 68 "HIToolbox trace hash mismatch"
+fi
 
 HANDLER="$(/usr/sbin/sysctl -n kern.exec.archhandler.powerpc 2>/dev/null || true)"
 log "powerpc_archhandler=$HANDLER"
@@ -195,6 +223,9 @@ log "powerpc_archhandler=$HANDLER"
 for p in "$SUBJECT" "$CORE_COMPAT" "$SEC_INTERPOSER" "$CGS_INTERPOSER"; do
     has_ppc32_arch "$p" || die 67 "required artifact is not 32-bit PPC: $p"
 done
+if [ -n "$HITOOLBOX_TRACE" ]; then
+    has_ppc32_arch "$HITOOLBOX_TRACE" || die 67 "HIToolbox trace is not 32-bit PPC"
+fi
 
 BROKER_ARCH="$(/usr/bin/lipo -info "$BROKER" 2>/dev/null || true)"
 echo "$BROKER_ARCH" | /usr/bin/grep -Eq '(^|[[:space:]])i386([[:space:]]|$)' ||
@@ -212,6 +243,13 @@ echo "$BROKER_ARCH" | /usr/bin/grep -Eq '(^|[[:space:]])i386([[:space:]]|$)' ||
     "PM_SECURITY_SESSION_API_COMPAT_BUILD_ID:$EXPECTED_SEC_BUILD_ID" || die 68 "Security build marker missing"
 /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq \
     "PM_CGS_SESSION_BOOTSTRAP_COMPAT_BUILD_ID:$EXPECTED_CGS_BUILD_ID" || die 68 "CGS build marker missing"
+if [ -n "$HITOOLBOX_TRACE" ]; then
+    /usr/bin/strings "$HITOOLBOX_TRACE" | /usr/bin/grep -Fq \
+        "PM_HITOOLBOX_CFBUNDLE_TRACE_BUILD_ID:$EXPECTED_HITOOLBOX_TRACE_BUILD_ID" ||
+        die 68 "HIToolbox trace build marker missing"
+    /usr/bin/nm -u "$HITOOLBOX_TRACE" | /usr/bin/grep -Fq '_dlsym' &&
+        die 68 "HIToolbox trace unexpectedly imports dlsym"
+fi
 
 for image in "$COREGRAPHICS" "$CARBONCORE" "$SECURITY" "$LAUNCHSERVICES" "$HISERVICES" "$LIBSYSTEM"; do
     /usr/bin/grep -Fq "$image" "$ROSETTA_CACHE_MAP" || die 68 "required image absent from Rosetta cache map: $image"
@@ -230,10 +268,18 @@ BROKER_ABS="$(abspath "$BROKER")"
 [ -n "$CGS_ABS" ] || die 68 "could not resolve CGS interposer path"
 [ -n "$BROKER_ABS" ] || die 68 "could not resolve native notification broker path"
 INSERTED="$CORE_ABS:$SEC_ABS:$CGS_ABS"
+if [ -n "$HITOOLBOX_TRACE" ]; then
+    HITOOLBOX_TRACE_ABS="$(abspath "$HITOOLBOX_TRACE")"
+    [ -n "$HITOOLBOX_TRACE_ABS" ] || die 68 "could not resolve HIToolbox trace path"
+    INSERTED="$INSERTED:$HITOOLBOX_TRACE_ABS"
+fi
 log "coreservices_cps_registration_compat_absolute_path=$CORE_ABS"
 log "security_interposer_absolute_path=$SEC_ABS"
 log "cgs_interposer_absolute_path=$CGS_ABS"
 log "distributed_notifications_broker_absolute_path=$BROKER_ABS"
+if [ -n "$HITOOLBOX_TRACE" ]; then
+    log "hitoolbox_cfbundle_trace_absolute_path=$HITOOLBOX_TRACE_ABS"
+fi
 if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
     : > "$SCHEMA_AUDIT_REPORT" || die 73 "could not initialize schema audit report: $SCHEMA_AUDIT_REPORT"
     log "distributed_notifications_schema_audit_report=$SCHEMA_AUDIT_REPORT"
@@ -606,7 +652,19 @@ fi
 
 if /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG" &&
    ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M21_AFTER_CreateNewWindow' "$RAW_LOG"; then
+    if [ -n "$HITOOLBOX_TRACE" ]; then
+        HITOOLBOX_TRACE_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_CFBUNDLE_TRACE_TARGET:.*bundle=com.apple.HIToolbox name=Extras type=rsrc subdir=NULL localization=NULL' "$RAW_LOG" 2>/dev/null || true)"
+        log "hitoolbox_cfbundle_trace_target_count=$HITOOLBOX_TRACE_TARGET_COUNT"
+    fi
     if [ -n "$REAL_REGISTRATION_MODE" ] &&
+       [ -n "$HITOOLBOX_TRACE" ] &&
+       [ "$HITOOLBOX_TRACE_TARGET_COUNT" -eq 1 ] &&
+       /usr/bin/grep -Fq 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:index=1 url=NULL' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'HIToolbox: failed to copy resource URL for framework bundle.' "$RAW_LOG" &&
+       /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=3 callback=[0-9]+ rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_LOOKUP_CONFIRMED_NO_RETURN"
+    elif [ -n "$REAL_REGISTRATION_MODE" ] &&
        /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=3 callback=[0-9]+ rejects=0 exact=YES' "$RAW_LOG" &&
        /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
         log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REGISTRATIONS_ESTABLISHED_CREATEWINDOW_NO_RETURN"
