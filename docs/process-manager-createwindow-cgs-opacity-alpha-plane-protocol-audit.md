@@ -77,7 +77,7 @@ The specific live diagnostic is receive-side `msg too large`, so receive size an
 scripts/audit-process-manager-cgs-opacity-alpha-plane-protocol.py
 ```
 
-Analyzer version: `1`.
+Analyzer version: `2`.
 
 It is static and read-only. It thins only the required CoreGraphics slice for the current OS, locates exactly these symbols, emits their complete symbol windows plus direct calls, MIG transport calls, and immediate-bearing instructions, and validates that the opacity wrapper reaches both alpha-plane helpers and that both helpers are direct generated-MIG clients.
 
@@ -114,7 +114,19 @@ Confirm that runtime contains this document and:
 scripts/audit-process-manager-cgs-opacity-alpha-plane-protocol.py
 ```
 
+Before running either audit, perform a no-write parser preflight with the platform `/usr/bin/python`:
+
+```sh
+/usr/bin/python -c 'compile(open("./scripts/audit-process-manager-cgs-opacity-alpha-plane-protocol.py", "rb").read(), "./scripts/audit-process-manager-cgs-opacity-alpha-plane-protocol.py", "exec")'
+```
+
+The command must return with no output and exit status 0. Stop if it reports any syntax error.
+
 ## Phase B — Snow Leopard 10.6.8 static audit
+
+The first Phase B attempt using analyzer v1 stopped before the audit executed because of an extra closing parenthesis in the target-inventory formatting expression. The Snow `/usr/bin/python` parser reported the error at the closing parenthesis on the `if hits else ""` line. No CoreGraphics analysis, PowerPC launch, Mach IPC, or system-state change occurred in that failed attempt.
+
+Analyzer v2 replaces that expression with an explicit Python-2.6-compatible address-string branch and retains the same audit semantics. After pulling current `main`, run the parser preflight from Phase A and then rerun Phase B from the beginning. Do not reuse or return any partial report from the syntax-failed attempt.
 
 Run:
 
@@ -126,6 +138,7 @@ Run:
 Hard gate:
 
 ```text
+analyzer_version=2
 product_version=10.6.8
 required_arch=ppc7400
 
@@ -159,6 +172,7 @@ Run:
 Hard gate:
 
 ```text
+analyzer_version=2
 product_version=10.7.5
 required_arch=i386
 
@@ -219,3 +233,27 @@ next step                                       -> static create/terminate alpha
 ```
 
 This remains a user-space CoreGraphics/generated-MIG compatibility investigation. No additional XNU change is indicated.
+
+
+## Correction record — analyzer v2
+
+The initial Snow Phase B invocation of analyzer v1 failed at parse time with:
+
+```text
+SyntaxError: invalid syntax
+line 262: if hits else "")))
+```
+
+Root cause: the target-inventory `write_line` expression had one excess closing parenthesis. Because parsing failed before `main()` executed, the failed attempt did not thin CoreGraphics, launch a PPC process, issue Mach IPC, or modify system state.
+
+Analyzer v2 removes the ambiguous nested conditional formatting entirely: it builds the optional address suffix explicitly and then writes the inventory line. The audit scope, target symbols, static-only safety model, structural checks, and decision gate are otherwise unchanged.
+
+Required recovery sequence:
+
+```text
+git pull --ff-only
+confirm analyzer_version=2
+run the Phase A parser preflight with /usr/bin/python
+rerun Snow Phase B once
+continue to Lion Phase C only if Snow returns RESULT: PASS
+```
