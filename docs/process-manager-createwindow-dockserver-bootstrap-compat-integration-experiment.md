@@ -376,6 +376,34 @@ The integrated lookup did not reproduce the standalone proof. Stop and compare t
 
 If a fifth or otherwise unreviewed notification appears, preserve that exact request and stop. Do not broaden the four-name allowlist in the same run.
 
+## Observed completed result — Dock adaptation accepted, CGS NewWindow is next
+
+The guarded integration returned:
+
+```text
+RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_ADAPTER_PASS_CREATEWINDOW_ERROR
+```
+
+The v2 interposer reproduced the standalone Dock proof in the real CreateNewWindow stack: the exact `com.apple.dock.server` Lion-format request completed with Mach success, reply ID `0x1f8`, one nonzero service-port descriptor, a valid send right, and `PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS`. The four reviewed distributed-notification registrations remained exact with zero rejects, the native broker passed, and the exact Snow HIToolbox `Extras.rsrc` fallback remained active.
+
+The first error after those accepted gates is now explicit:
+
+```text
+MIG: server type check failure: CGSNewWindowWithOpaqueShape: Cannot create window
+CreateNewWindow=-304
+WindowRef=NULL
+```
+
+No new crash/core diagnostic appeared and protected hashes remained unchanged. This closes the Dock bootstrap boundary. Do not broaden bootstrap or notification compatibility further.
+
+The authoritative next procedure is:
+
+```text
+docs/process-manager-createwindow-cgs-newwindow-protocol-audit.md
+```
+
+That stage is a static Snow-PPC versus Lion-i386 CoreGraphics differential for the exact NewWindow wrapper/transport helpers. It does not run CreateNewWindow and does not introduce a NewWindow adapter.
+
 ## Current boundary
 
 ```text
@@ -386,8 +414,10 @@ exact Snow HIToolbox Extras.rsrc fallback                    -> PASS
 four reviewed distributed-notification registrations         -> PASS
 Snow com.apple.dock.server ordinary lookup                   -> PASS
 standalone Lion-format com.apple.dock.server lookup          -> PASS, valid send right
-integrated Lion CreateNewWindow Dock lookup                   -> not yet tested
-next step                                                     -> one guarded Dock-aware CreateNewWindow integration
+integrated Lion CreateNewWindow Dock lookup                   -> PASS, valid send right
+CreateNewWindow                                              -> -304 / NULL WindowRef
+CGSNewWindowWithOpaqueShape                                  -> MIG server type-check failure
+next step                                                     -> static Snow-PPC vs Lion-i386 NewWindow protocol differential
 ```
 
 No additional XNU change is indicated.
