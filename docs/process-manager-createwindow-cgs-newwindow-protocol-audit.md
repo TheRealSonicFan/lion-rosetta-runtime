@@ -200,3 +200,38 @@ next step                                                    -> static Snow-PPC 
 ```
 
 No additional XNU change is indicated.
+
+## Observed completed result — inline NewWindow routine IDs evolved
+
+Both returned analyzer-v1 reports pass, and the required Snow PPC and Lion i386 helper families are present.
+
+The generated inline transport differs narrowly and materially:
+
+```text
+Snow PPC __CGSCreateWindowInline
+  request / reply        0x7394 / 0x73f8
+  bits                   0x1513
+  mach_msg option        0x3
+  receive size           0x40
+  send size              0x38 + 4*countA + 4*countB
+  accepted reply sizes   0x38 / 0x24
+
+Lion i386 __CGSCreateWindowInline
+  request / reply        0x739a / 0x73fe
+  bits                   0x1513
+  mach_msg option        0x3
+  receive size           0x40
+  send size              0x38 + 4*countA + 4*countB
+  accepted reply sizes   0x38 / 0x24
+```
+
+The visible generated request construction and NDR-aware reply handling remain structurally aligned; the decisive static delta is the routine-ID pair. Both higher-level wrappers select the inline helper for region counts at or below `0x3fff` and otherwise fall back to `__CGSCreateWindow`.
+
+The authoritative next procedure is now:
+
+```text
+docs/process-manager-createwindow-cgs-newwindow-transport-trace-experiment.md
+```
+
+That stage adds only a passive exact trace for the statically proven inline IDs to the accepted combined CoreServices interposer, requires a full Snow CreateNewWindow control, then performs exactly one Lion trace with the accepted Dock, notification, and Extras compatibility paths unchanged. It does not rewrite the NewWindow request yet.
+
