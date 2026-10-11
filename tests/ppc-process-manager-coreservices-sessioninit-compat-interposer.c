@@ -15,7 +15,9 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                          uint64_t);
 extern mach_port_t mig_get_reply_port(void);
 
-#if defined(PM_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE)
+#if defined(PM_CGS_RELEASEBACKING_COMPAT_INTEGRATION)
+#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-v1"
+#elif defined(PM_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-trace-v1"
 #elif defined(PM_CGS_NEWWINDOW_COMPAT_INTEGRATION)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-v1"
@@ -66,6 +68,10 @@ static const char kDistributedNotificationsName[] =
 
 #if defined(PM_CGS_NEWWINDOW_COMPAT_INTEGRATION) && !defined(PM_CGS_NEWWINDOW_TRACE)
 #define PM_CGS_NEWWINDOW_TRACE 1
+#endif
+
+#if defined(PM_CGS_RELEASEBACKING_COMPAT_INTEGRATION) && !defined(PM_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE)
+#define PM_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE 1
 #endif
 
 #if defined(PM_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE) && !defined(PM_CGS_CONNECTION_TRACE)
@@ -212,6 +218,23 @@ static const char kDistributedNotificationsName[] =
 #define CGS_NEWWINDOW_PRIVATE_BUFFER_SIZE 0x00000080U
 #endif
 
+#ifdef PM_CGS_RELEASEBACKING_COMPAT_INTEGRATION
+#define CGS_RELEASEBACKING_COMPAT_ENV "ROSETTA_CGS_RELEASEBACKING_COMPAT_MODE"
+#define CGS_RELEASEBACKING_COMPAT_PASSTHROUGH "passthrough"
+#define CGS_RELEASEBACKING_COMPAT_LION_V1 "lion-id-v1"
+#define CGS_RELEASEBACKING_LEGACY_BITS 0x00001513U
+#define CGS_RELEASEBACKING_MSG_OPTIONS 0x00000003U
+#define CGS_RELEASEBACKING_SEND_SIZE 0x00000028U
+#define CGS_RELEASEBACKING_RECV_SIZE 0x0000002cU
+#define CGS_RELEASEBACKING_REPLY_BITS 0x00001200U
+#define CGS_RELEASEBACKING_REPLY_SIZE 0x00000024U
+#define CGS_RELEASEBACKING_NDR_OFF 0x18U
+#define CGS_RELEASEBACKING_RESULT_OFF 0x20U
+#define CGS_RELEASEBACKING_WINDOW_ID_OFF 0x20U
+#define CGS_RELEASEBACKING_RELEASE_FLAG_OFF 0x24U
+#define CGS_RELEASEBACKING_PRIVATE_BUFFER_SIZE 0x00000040U
+#endif
+
 #ifdef PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION
 #define CGS_SERVER_VERSION_COMPAT_ENV "ROSETTA_CGS_SERVER_VERSION_COMPAT_MODE"
 #define CGS_SERVER_VERSION_COMPAT_PASSTHROUGH "passthrough"
@@ -311,6 +334,9 @@ static unsigned int gCPSSetFrontCompatCallCount = 0;
 #endif
 #ifdef PM_CGS_NEWWINDOW_COMPAT_INTEGRATION
 static unsigned int gCGSNewWindowCompatCallCount = 0;
+#endif
+#ifdef PM_CGS_RELEASEBACKING_COMPAT_INTEGRATION
+static unsigned int gCGSReleaseBackingCompatCallCount = 0;
 #endif
 static mach_port_t gCoreServicesServerPort = MACH_PORT_NULL;
 static mach_port_t gServerCheckinReplyPort = MACH_PORT_NULL;
@@ -1473,6 +1499,287 @@ handle_cgs_newwindow_compat(mach_msg_header_t *msg,
 }
 #endif
 
+#ifdef PM_CGS_RELEASEBACKING_COMPAT_INTEGRATION
+static uint32_t
+cgs_releasebacking_swap_u32(uint32_t value)
+{
+    return ((value & 0x000000ffU) << 24) |
+           ((value & 0x0000ff00U) << 8) |
+           ((value & 0x00ff0000U) >> 8) |
+           ((value & 0xff000000U) >> 24);
+}
+
+static int
+cgs_releasebacking_reply_is_swapped(const unsigned char *message)
+{
+    const unsigned char *local_ndr = (const unsigned char *)&NDR_record;
+
+    return message[CGS_RELEASEBACKING_NDR_OFF + 4U] != local_ndr[4];
+}
+
+static int32_t
+decode_cgs_releasebacking_result(const unsigned char *message)
+{
+    uint32_t value = get_u32(message + CGS_RELEASEBACKING_RESULT_OFF);
+
+    if (cgs_releasebacking_reply_is_swapped(message))
+        value = cgs_releasebacking_swap_u32(value);
+    return (int32_t)value;
+}
+
+static int
+is_exact_legacy_cgs_releasebacking_request(mach_msg_header_t *msg,
+                                           mach_msg_option_t option,
+                                           mach_msg_size_t send_size,
+                                           mach_msg_size_t rcv_size,
+                                           mach_port_name_t rcv_name,
+                                           mach_msg_timeout_t timeout,
+                                           mach_port_name_t notify)
+{
+    unsigned char *m = (unsigned char *)msg;
+
+    if (msg == NULL)
+        return 0;
+
+    return get_u32(m + 0x00U) == CGS_RELEASEBACKING_LEGACY_BITS &&
+           get_u32(m + 0x08U) != 0U &&
+           get_u32(m + 0x0cU) == (uint32_t)rcv_name &&
+           rcv_name != MACH_PORT_NULL &&
+           get_u32(m + 0x14U) ==
+               CGS_SET_WINDOW_RELEASE_BACKING_LEGACY_REQUEST_ID &&
+           option == (mach_msg_option_t)CGS_RELEASEBACKING_MSG_OPTIONS &&
+           send_size == (mach_msg_size_t)CGS_RELEASEBACKING_SEND_SIZE &&
+           rcv_size == (mach_msg_size_t)CGS_RELEASEBACKING_RECV_SIZE &&
+           timeout == MACH_MSG_TIMEOUT_NONE &&
+           notify == MACH_PORT_NULL &&
+           memcmp(m + CGS_RELEASEBACKING_NDR_OFF,
+                  &NDR_record, sizeof(NDR_record)) == 0 &&
+           get_u32(m + CGS_RELEASEBACKING_WINDOW_ID_OFF) != 0U &&
+           get_u32(m + CGS_RELEASEBACKING_RELEASE_FLAG_OFF) == 1U;
+}
+
+static mach_msg_return_t
+handle_cgs_releasebacking_compat(mach_msg_header_t *msg,
+                                 mach_msg_option_t option,
+                                 mach_msg_size_t send_size,
+                                 mach_msg_size_t rcv_size,
+                                 mach_port_name_t rcv_name,
+                                 mach_msg_timeout_t timeout,
+                                 mach_port_name_t notify)
+{
+    const char *mode;
+    unsigned char *m = (unsigned char *)msg;
+    uint32_t storage[
+        CGS_RELEASEBACKING_PRIVATE_BUFFER_SIZE / sizeof(uint32_t)];
+    unsigned char *adapted = (unsigned char *)storage;
+    unsigned char source_before[CGS_RELEASEBACKING_SEND_SIZE];
+    unsigned char native_reply_before[CGS_RELEASEBACKING_REPLY_SIZE];
+    mach_msg_return_t mr;
+    uint32_t native_reply_bits;
+    uint32_t native_reply_size;
+    uint32_t native_reply_id;
+    uint32_t off;
+    int32_t native_result = 0;
+    int32_t adapted_result = 0;
+    unsigned int request_changed = 0U;
+    unsigned int request_body_changed = 0U;
+    unsigned int source_changed = 0U;
+    unsigned int reply_changed = 0U;
+    unsigned int reply_body_changed = 0U;
+    int exact;
+    int reply_swapped = 0;
+    const char *reply_class = "UNEXPECTED";
+
+    ++gCGSReleaseBackingCompatCallCount;
+    mode = getenv(CGS_RELEASEBACKING_COMPAT_ENV);
+    exact = is_exact_legacy_cgs_releasebacking_request(
+        msg, option, send_size, rcv_size, rcv_name, timeout, notify);
+
+    fprintf(stderr,
+            "PM_CGS_RELEASEBACKING_COMPAT_CALL:index=%u mode=%s exact=%s bits=0x%08lx id=0x%08lx send=0x%08lx recv=0x%08lx remotePort=0x%08lx replyPort=0x%08lx windowId=0x%08lx releaseFlag=0x%08lx newWindowCompatCalls=%u\n",
+            gCGSReleaseBackingCompatCallCount,
+            mode ? mode : "(unset)",
+            exact ? "YES" : "NO",
+            (unsigned long)get_u32(m + 0x00U),
+            (unsigned long)get_u32(m + 0x14U),
+            (unsigned long)send_size,
+            (unsigned long)rcv_size,
+            (unsigned long)get_u32(m + 0x08U),
+            (unsigned long)rcv_name,
+            (unsigned long)get_u32(m + CGS_RELEASEBACKING_WINDOW_ID_OFF),
+            (unsigned long)get_u32(m + CGS_RELEASEBACKING_RELEASE_FLAG_OFF),
+            gCGSNewWindowCompatCallCount);
+    fflush(stderr);
+
+    if (mode != NULL &&
+        strcmp(mode, CGS_RELEASEBACKING_COMPAT_PASSTHROUGH) == 0) {
+        fprintf(stderr,
+                "PM_CGS_RELEASEBACKING_COMPAT_RESULT:PASSTHROUGH\n");
+        fflush(stderr);
+        return call_original_mach_msg(msg, option, send_size,
+                                      rcv_size, rcv_name,
+                                      timeout, notify);
+    }
+
+    if (mode == NULL ||
+        strcmp(mode, CGS_RELEASEBACKING_COMPAT_LION_V1) != 0 ||
+        !exact ||
+        gCGSReleaseBackingCompatCallCount != 1U ||
+        gCGSNewWindowCompatCallCount != 1U) {
+        fprintf(stderr,
+                "PM_CGS_RELEASEBACKING_COMPAT_RESULT:PREDICATE_REJECTED_PASSTHROUGH\n");
+        fflush(stderr);
+        return call_original_mach_msg(msg, option, send_size,
+                                      rcv_size, rcv_name,
+                                      timeout, notify);
+    }
+
+    memset(storage, 0, sizeof(storage));
+    memcpy(source_before, m, CGS_RELEASEBACKING_SEND_SIZE);
+    memcpy(adapted, m, CGS_RELEASEBACKING_SEND_SIZE);
+    put_u32(adapted + 0x14U,
+            CGS_SET_WINDOW_RELEASE_BACKING_LION_REQUEST_ID);
+
+    for (off = 0U; off < CGS_RELEASEBACKING_SEND_SIZE; ++off) {
+        if (adapted[off] != source_before[off]) {
+            ++request_changed;
+            if (off < 0x14U || off >= 0x18U)
+                ++request_body_changed;
+        }
+        if (m[off] != source_before[off])
+            ++source_changed;
+    }
+
+    fprintf(stderr,
+            "PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REQUEST:index=%u legacyId=0x%08lx lionId=0x%08lx send=0x%08lx recv=0x%08lx changedBytes=%u bodyChangedBytes=%u sourceChangedBytes=%u windowId=0x%08lx releaseFlag=0x%08lx\n",
+            gCGSReleaseBackingCompatCallCount,
+            (unsigned long)get_u32(source_before + 0x14U),
+            (unsigned long)get_u32(adapted + 0x14U),
+            (unsigned long)send_size,
+            (unsigned long)rcv_size,
+            request_changed,
+            request_body_changed,
+            source_changed,
+            (unsigned long)get_u32(adapted + CGS_RELEASEBACKING_WINDOW_ID_OFF),
+            (unsigned long)get_u32(adapted + CGS_RELEASEBACKING_RELEASE_FLAG_OFF));
+    fflush(stderr);
+
+    if (request_changed != 1U ||
+        request_body_changed != 0U ||
+        source_changed != 0U ||
+        get_u32(adapted + 0x14U) !=
+            CGS_SET_WINDOW_RELEASE_BACKING_LION_REQUEST_ID) {
+        fprintf(stderr,
+                "PM_CGS_RELEASEBACKING_COMPAT_RESULT:REQUEST_POSTCHECK_FAILED_PASSTHROUGH\n");
+        fflush(stderr);
+        return call_original_mach_msg(msg, option, send_size,
+                                      rcv_size, rcv_name,
+                                      timeout, notify);
+    }
+
+    mr = call_original_mach_msg((mach_msg_header_t *)adapted,
+                                option,
+                                send_size,
+                                rcv_size,
+                                rcv_name,
+                                timeout,
+                                notify);
+
+    fprintf(stderr,
+            "PM_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_RETURN:index=%u kr=%ld hex=0x%08lx\n",
+            gCGSReleaseBackingCompatCallCount,
+            (long)mr,
+            (unsigned long)(uint32_t)mr);
+    fflush(stderr);
+
+    if (mr != MACH_MSG_SUCCESS)
+        return mr;
+
+    native_reply_bits = get_u32(adapted + 0x00U);
+    native_reply_size = get_u32(adapted + 0x04U);
+    native_reply_id = get_u32(adapted + 0x14U);
+
+    if (native_reply_size == CGS_RELEASEBACKING_REPLY_SIZE) {
+        reply_swapped = cgs_releasebacking_reply_is_swapped(adapted);
+        native_result = decode_cgs_releasebacking_result(adapted);
+    }
+
+    if (native_result == 0)
+        reply_class = "SUCCESS";
+    else
+        reply_class = "ERROR";
+
+    fprintf(stderr,
+            "PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=%u bits=0x%08lx size=0x%08lx id=0x%08lx result=%ld ndrSwapped=%s replyClass=%s raw20=0x%08lx\n",
+            gCGSReleaseBackingCompatCallCount,
+            (unsigned long)native_reply_bits,
+            (unsigned long)native_reply_size,
+            (unsigned long)native_reply_id,
+            (long)native_result,
+            reply_swapped ? "YES" : "NO",
+            reply_class,
+            native_reply_size >= CGS_RELEASEBACKING_REPLY_SIZE ?
+                (unsigned long)get_u32(adapted + CGS_RELEASEBACKING_RESULT_OFF) :
+                0UL);
+    fflush(stderr);
+
+    if (native_reply_bits != CGS_RELEASEBACKING_REPLY_BITS ||
+        native_reply_size != CGS_RELEASEBACKING_REPLY_SIZE ||
+        native_reply_id != CGS_SET_WINDOW_RELEASE_BACKING_LION_REPLY_ID ||
+        !reply_swapped) {
+        if (native_reply_size > 0U &&
+            native_reply_size <= CGS_RELEASEBACKING_PRIVATE_BUFFER_SIZE)
+            memcpy(m, adapted, native_reply_size);
+        fprintf(stderr,
+                "PM_CGS_RELEASEBACKING_COMPAT_RESULT:NATIVE_REPLY_REJECTED\n");
+        fflush(stderr);
+        return mr;
+    }
+
+    memcpy(native_reply_before, adapted, CGS_RELEASEBACKING_REPLY_SIZE);
+    put_u32(adapted + 0x14U,
+            CGS_SET_WINDOW_RELEASE_BACKING_LEGACY_REPLY_ID);
+
+    for (off = 0U; off < CGS_RELEASEBACKING_REPLY_SIZE; ++off) {
+        if (adapted[off] != native_reply_before[off]) {
+            ++reply_changed;
+            if (off < 0x14U || off >= 0x18U)
+                ++reply_body_changed;
+        }
+    }
+
+    adapted_result = decode_cgs_releasebacking_result(adapted);
+
+    if (reply_changed != 1U ||
+        reply_body_changed != 0U ||
+        get_u32(adapted + 0x14U) !=
+            CGS_SET_WINDOW_RELEASE_BACKING_LEGACY_REPLY_ID ||
+        adapted_result != native_result) {
+        memcpy(m, native_reply_before, CGS_RELEASEBACKING_REPLY_SIZE);
+        fprintf(stderr,
+                "PM_CGS_RELEASEBACKING_COMPAT_RESULT:REPLY_POSTCHECK_FAILED_NATIVE_COPIED\n");
+        fflush(stderr);
+        return mr;
+    }
+
+    memcpy(m, adapted, CGS_RELEASEBACKING_REPLY_SIZE);
+    fprintf(stderr,
+            "PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=%u nativeId=0x%08lx legacyId=0x%08lx size=0x%08lx changedBytes=%u bodyChangedBytes=%u result=%ld replyClass=%s\n",
+            gCGSReleaseBackingCompatCallCount,
+            (unsigned long)CGS_SET_WINDOW_RELEASE_BACKING_LION_REPLY_ID,
+            (unsigned long)get_u32(m + 0x14U),
+            (unsigned long)get_u32(m + 0x04U),
+            reply_changed,
+            reply_body_changed,
+            (long)adapted_result,
+            reply_class);
+    fprintf(stderr,
+            "PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS\n");
+    fflush(stderr);
+    return mr;
+}
+#endif
+
 #if defined(PM_CGS_CONNECTION_TRACE) || defined(PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION)
 static const char *
 cgs_trace_kind(uint32_t request_id)
@@ -1685,6 +1992,13 @@ trace_cgs_message(mach_msg_header_t *msg,
         mr = handle_cgs_newwindow_compat(msg, option, send_size,
                                          rcv_size, rcv_name,
                                          timeout, notify);
+    } else
+#endif
+#ifdef PM_CGS_RELEASEBACKING_COMPAT_INTEGRATION
+    if (request_id == CGS_SET_WINDOW_RELEASE_BACKING_LEGACY_REQUEST_ID) {
+        mr = handle_cgs_releasebacking_compat(msg, option, send_size,
+                                              rcv_size, rcv_name,
+                                              timeout, notify);
     } else
 #endif
     {
