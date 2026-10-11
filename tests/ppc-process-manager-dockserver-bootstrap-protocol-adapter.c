@@ -168,6 +168,28 @@ run_snow_control(void)
 }
 
 static int
+has_send_right(mach_port_t port)
+{
+    mach_port_type_t type = 0;
+    kern_return_t kr;
+
+    if (port == MACH_PORT_NULL)
+        return 0;
+
+    kr = mach_port_type(mach_task_self(), port, &type);
+    fprintf(stderr,
+            "PM_DOCKSERVER_BOOTSTRAP_ADAPTER_RIGHT:port=0x%08lx kr=%ld type=0x%08lx send=%s\n",
+            (unsigned long)port,
+            (long)kr,
+            (unsigned long)type,
+            (kr == KERN_SUCCESS && (type & MACH_PORT_TYPE_SEND) != 0) ?
+                "YES" : "NO");
+    fflush(stderr);
+
+    return kr == KERN_SUCCESS && (type & MACH_PORT_TYPE_SEND) != 0;
+}
+
+static int
 run_lion_adapter(void)
 {
     uint32_t storage[LION_LOOKUP_SEND_SIZE / sizeof(uint32_t)];
@@ -259,6 +281,11 @@ run_lion_adapter(void)
             marker("PM_DOCKSERVER_BOOTSTRAP_ADAPTER_RESULT:ADAPTER_ZERO_PORT");
             return 27;
         }
+        if (!has_send_right(service_port)) {
+            (void)mach_port_deallocate(mach_task_self(), service_port);
+            marker("PM_DOCKSERVER_BOOTSTRAP_ADAPTER_RESULT:ADAPTER_PORT_RIGHT_ERROR");
+            return 28;
+        }
 
         (void)mach_port_deallocate(mach_task_self(), service_port);
         marker("PM_DOCKSERVER_BOOTSTRAP_ADAPTER_RESULT:ADAPTER_LOOKUP_PASS");
@@ -278,11 +305,11 @@ run_lion_adapter(void)
             marker("PM_DOCKSERVER_BOOTSTRAP_ADAPTER_RESULT:ADAPTER_MIG_BAD_ARGUMENTS");
         else
             marker("PM_DOCKSERVER_BOOTSTRAP_ADAPTER_RESULT:ADAPTER_SERVER_ERROR");
-        return 28;
+        return 29;
     }
 
     marker("PM_DOCKSERVER_BOOTSTRAP_ADAPTER_RESULT:REPLY_SHAPE_ERROR");
-    return 29;
+    return 30;
 }
 
 int
