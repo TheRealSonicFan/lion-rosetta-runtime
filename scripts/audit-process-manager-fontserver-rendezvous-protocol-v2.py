@@ -171,6 +171,22 @@ def extract_hex_values(raw):
     return vals
 
 
+def protocol_immediate_values(raw):
+    lower = raw.lower()
+
+    x86_immediate = "$0x" in lower
+    ppc_immediate = re.search(
+        r"\b(li|lis|cmpwi|cmplwi|addi|addis|ori|oris)\b[^\n]*0x",
+        lower,
+    ) is not None
+
+    if not x86_immediate and not ppc_immediate:
+        return []
+
+    return [v for v in extract_hex_values(raw)
+            if PROTO_MIN <= v <= PROTO_MAX]
+
+
 def emit_function_window(fp, rows, symbols, start, name):
     end = start + 0x8000
     nxt = next_symbol(symbols, start)
@@ -194,8 +210,7 @@ def emit_function_window(fp, rows, symbols, start, name):
     line(fp, "-- protocol-range immediates in %s --" % name)
     proto_hits = 0
     for addr, raw in selected:
-        values = [v for v in extract_hex_values(raw)
-                  if PROTO_MIN <= v <= PROTO_MAX]
+        values = protocol_immediate_values(raw)
         if values:
             proto_hits += 1
             line(fp, "address=0x%x values=%s line=%s" %
@@ -282,10 +297,7 @@ def emit_protocol_range_instruction_inventory(fp, rows, symbols):
     hits = []
     owners = {}
     for addr, raw in rows:
-        values = sorted(set(
-            v for v in extract_hex_values(raw)
-            if PROTO_MIN <= v <= PROTO_MAX
-        ))
+        values = sorted(set(protocol_immediate_values(raw)))
         if not values:
             continue
         owner = enclosing_symbol(symbols, addr)
