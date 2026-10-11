@@ -297,3 +297,33 @@ next step                                            -> exact fifth registration
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed result — fifth registration accepted; FontServer RPC is next
+
+The exact-five integration run accepted the reviewed fifth registration exactly:
+
+```text
+index=5
+allowed=4
+name=com_apple_CoreText_FontManagerChangedNotification
+object=kCFNotificationAnyObject
+behavior=1
+publicBehavior=4
+counter=1
+status=0
+```
+
+The broker finished with `register=5 callback=0 rejects=0 exact=YES` and `RESULT: PASS`. No sixth notification rejection was observed. The FontServer bootstrap adapter also continued to pass with a valid send right.
+
+`SetWindowTitleWithCFString` still did not reach T03. Before and after the fifth registration was accepted, CoreText repeatedly reported `CopyFontForName received mig IPC error (FFFFFED0) from font server`, followed by `CopyPropertiesForFontsMatchingRequest` with the same code. The subject exited 138 and named a crash report/core, while protected hashes remained unchanged.
+
+This closes the fifth-notification boundary. The next unresolved boundary is the first legacy FontServer RPC itself. The current logging does not expose that request's Mach ID, send/receive sizes, body layout, or reply shape, so no RPC adaptation is yet authorized.
+
+The authoritative next procedure is:
+
+```text
+docs/process-manager-post-createwindow-windowtitle-fontserver-rpc-transport-trace-experiment.md
+```
+
+That stage is passive: prove the trace build preserves Snow's successful title path, then record only Mach messages sent to the exact FontServer service port during one Lion exact-five title run. No XNU change is indicated.
