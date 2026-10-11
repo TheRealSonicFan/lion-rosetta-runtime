@@ -283,3 +283,55 @@ next step                                       -> standalone ID-only copied-buf
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — create-alpha copied-buffer policy proof passed
+
+The returned Snow control, syscall-295 gate, and Lion copied-buffer proof all pass.
+
+Artifact/control provenance:
+
+```text
+build ID                     createwindow-cgs-opacity-alpha-plane-create-compat-protocol-v1
+architecture                 ppc7400
+LC_LOAD_DYLINKER             /usr/oah/dyld
+proof executable SHA-256     8e26b90c7d3a33a9d93406bf8a6303dce8b2fd750117d25bb476a0aa9c0dcb95
+Snow control                 PASS
+syscall 295                  EBADF / no SIGSYS / PASS
+new diagnostics              none
+protected hashes             unchanged
+```
+
+The Lion local proof established:
+
+```text
+legacy request ID            0x724f
+Lion request ID              0x7250
+send / receive               0x24 / 0x2c
+captured window ID           0x239
+request changed bytes        1
+request body changes         0
+source request changes       0
+
+Lion success reply ID        0x72b4
+legacy success reply ID      0x72b3
+reply size                   0x24
+reply changed bytes          1
+reply body changes           0
+decoded result               0
+
+modeled nonzero raw result   0xd0feffff
+modeled decoded result       -304
+nonzero result               preserved
+RESULT                       CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_POLICY_PROOF_PASS
+```
+
+The `-304` value remains only a result-preservation sentinel in this local proof; it was not observed as an opacity server response in the passive trace.
+
+This closes the local policy prerequisite for the live create-alpha adapter. The authoritative next procedure is:
+
+```text
+docs/process-manager-createwindow-cgs-opacity-alpha-plane-create-compat-integration-experiment.md
+```
+
+That stage integrates only `0x724f -> 0x7250` and `0x72b4 -> 0x72b3` into the existing combined two-tuple CoreServices `mach_msg` interposer, keeps Snow strict passthrough, preserves the accepted NewWindow/release-backing adapters unchanged, and performs exactly one Lion CreateNewWindow run. Do not alter receive size, terminate-alpha, display-bounds, ShapeWindow, or XNU.
