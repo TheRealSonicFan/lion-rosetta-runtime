@@ -17,6 +17,7 @@ HITOOLBOX_EXTRAS_COMPAT_SHA_FILE="${ROSETTA_HITOOLBOX_EXTRAS_COMPAT_SHA256_FILE:
 HITOOLBOX_EXTRAS_RESOURCE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH:-}"
 HITOOLBOX_EXTRAS_MODE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE:-}"
 DOCKSERVER_COMPAT_MODE="${ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE:-}"
+FONTSERVER_COMPAT_MODE="${ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE:-}"
 NEWWINDOW_TRACE_MODE="${ROSETTA_CGS_NEWWINDOW_TRACE_MODE:-}"
 NEWWINDOW_COMPAT_MODE="${ROSETTA_CGS_NEWWINDOW_COMPAT_MODE:-}"
 RELEASEBACKING_TRACE_MODE="${ROSETTA_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE_MODE:-}"
@@ -44,6 +45,13 @@ if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
     [ "$DOCKSERVER_COMPAT_MODE" = "passthrough" ] ||
         fail "Snow DockServer compatibility mode must be passthrough"
     EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-compat-v2"
+fi
+if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
+    [ "$FONTSERVER_COMPAT_MODE" = "passthrough" ] ||
+        fail "Snow FontServer compatibility mode must be passthrough"
+    [ "$DOCKSERVER_COMPAT_MODE" = "passthrough" ] ||
+        fail "Snow FontServer compatibility requires DockServer passthrough"
+    EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-fontserver-compat-v3"
 fi
 if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
     [ "$NEWWINDOW_TRACE_MODE" = "passthrough" ] ||
@@ -325,6 +333,12 @@ echo "cgs_interposer_sha256=$EXPECTED_CGS_SHA" | /usr/bin/tee -a "$LOG"
 if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
     echo "dockserver_bootstrap_compat_mode=$DOCKSERVER_COMPAT_MODE" | /usr/bin/tee -a "$LOG"
 fi
+if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
+    echo "fontserver_bootstrap_compat_mode=$FONTSERVER_COMPAT_MODE" | /usr/bin/tee -a "$LOG"
+    export ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE="$FONTSERVER_COMPAT_MODE"
+else
+    unset ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE
+fi
 if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
     echo "cgs_newwindow_trace_mode=$NEWWINDOW_TRACE_MODE" | /usr/bin/tee -a "$LOG"
 fi
@@ -411,6 +425,11 @@ if [ "$RC" -eq 0 ] &&
        /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH:reason=DOCK_SNOW_PASSTHROUGH' "$LOG" &&
        /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH_RETURN:kr=0 hex=0x00000000' "$LOG" &&
        ! /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$LOG"; }; } &&
+   { [ -z "$FONTSERVER_COMPAT_MODE" ] ||
+     { /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_CALL:index=1 mode=passthrough' "$LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH:reason=FONT_SNOW_PASSTHROUGH' "$LOG" &&
+       /usr/bin/grep -Eq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH_RETURN:kr=0 hex=0x00000000 servicePort=0x0*[1-9a-fA-F][0-9a-fA-F]*' "$LOG" &&
+       ! /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$LOG"; }; } &&
    /usr/bin/grep -Fq 'PM_CGS_SERVER_VERSION_COMPAT_CALL:index=1 mode=passthrough' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CGS_SERVER_VERSION_COMPAT_RESULT:PASSTHROUGH major=545 minor=0' "$LOG" &&
    ! /usr/bin/grep -Fq 'PM_CGS_SERVER_VERSION_COMPAT_RESULT:ADAPTER_PASS' "$LOG" &&
@@ -532,7 +551,11 @@ if [ "$RC" -eq 0 ] &&
             echo "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT" | /usr/bin/tee -a "$LOG"
             echo "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT" | /usr/bin/tee -a "$LOG"
             if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
-                echo "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+                if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
+                    echo "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+                else
+                    echo "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+                fi
             else
                 echo "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
             fi
