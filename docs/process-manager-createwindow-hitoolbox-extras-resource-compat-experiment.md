@@ -336,3 +336,30 @@ Stop after Phase H.
 - If the Snow forced-external control fails, do not run Lion: the external-resource mechanism itself has not been validated.
 - No substitution with Lion's `Extras2.rsrc` is authorized.
 - No additional XNU change is indicated.
+
+## Returned Phase G result
+
+The forced external-resource Snow control passed: the exact target was redirected to the staged Snow `Extras.rsrc` twice, both fallbacks were non-NULL, and CreateNewWindow returned 0 with a nonzero WindowRef and reached M24.
+
+The Lion run also proved that the resource compatibility mechanism itself worked. After the first three reviewed notification registrations were accepted, the exact HIToolbox `Extras` / `rsrc` target was reached twice; Lion's original CFBundle lookup returned NULL both times and the exact staged Snow resource fallback returned NONNULL both times. The previous HIToolbox resource warning and TTheme `-4960` abort did not recur.
+
+Execution then exposed a new fourth legacy distributed-notification request:
+
+```text
+PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=4 ... payload=287
+PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REQUEST:length=287 status=25 createwindowRegister=YES
+PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:status=25 createwindowRegister=YES
+```
+
+In the reviewed registration broker, status 25 is `BROKER_REJECT_NAME`: the broker's allowlist contains only the three notification names observed before the missing-resource boundary. The resource fallback therefore advanced execution beyond TTheme and uncovered previously unreachable notification traffic; the `CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_PROTOCOL_REJECTED` runner label does not mean that the exact resource fallback regressed.
+
+The subject continued to `M21_AFTER_CreateNewWindow` and returned `CreateNewWindow=-304`, after a later `com.apple.dock.server` bootstrap passthrough failed with `-304`. That downstream CGS/bootstrap boundary is recorded but is not yet the next modification target.
+
+Current `main` advances to:
+
+```text
+docs/process-manager-createwindow-post-extras-distributed-notification-schema-audit.md
+```
+
+That stage preserves the exact first three native registrations and exact Snow `Extras.rsrc` fallback, captures the full fourth request dictionary, and deliberately continues to reject it with status 25. No fourth notification policy, dock-server compatibility change, or XNU change is authorized until that request is reviewed.
+
