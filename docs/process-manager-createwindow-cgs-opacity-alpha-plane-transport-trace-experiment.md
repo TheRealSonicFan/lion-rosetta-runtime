@@ -409,3 +409,68 @@ next step                                       -> passive legacy branch/transpo
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — create-alpha branch reproduced with receive-too-large
+
+The returned Snow control and Lion passive trace close the branch ambiguity.
+
+Artifact/control provenance:
+
+```text
+combined build ID             dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-trace-v1
+artifact SHA-256              860571c102912714dc972771c976b90d48c5c3678363ecb25e0fea5db067f4b1
+architecture                  ppc7400
+interpose section size        0x10
+Snow opacity branch           CREATE
+Snow control                  PASS / CreateNewWindow=0 / nonzero WindowRef / Dispose / M24
+syscall 295                   EBADF / no SIGSYS / PASS
+Lion opacity branch           CREATE
+protected hashes              unchanged
+```
+
+The Snow live transaction was:
+
+```text
+request                       0x724f
+expected reply                0x72b3
+bits                          0x1513
+option                        0x3
+send / receive                0x24 / 0x2c
+window ID                     0x113
+Mach return                   0
+reply                         0x72b3 / 0x24
+decoded result                0
+```
+
+The Lion live transaction reached the same legacy create-alpha request after both accepted upstream adapters had already completed with native success:
+
+```text
+NewWindow native reply        0x73fe / 0x38 / result 0
+release-backing native reply  0x72b0 / 0x24 / result 0
+opacity request               0x724f
+expected legacy reply         0x72b3
+bits                          0x1513
+option                        0x3
+send / receive                0x24 / 0x2c
+window ID                     0x239
+Mach return                   0x10004004 / MACH_RCV_TOO_LARGE
+failure snapshot postId       0x72b3
+failure snapshot postSize     0x18
+```
+
+The runner observed exactly one opacity alpha-plane request, classified it as CREATE, observed no terminate-alpha request, and emitted:
+
+```text
+RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_MACH_RCV_TOO_LARGE_OBSERVED
+```
+
+The later `CGSGetDisplayBounds` and `CGSShapeWindow` diagnostics remain downstream and are not promoted to the active boundary. The new crash/core files from this run are preserved evidence, but they are not required to choose the next discriminator because the exact first failing transaction is already identified.
+
+The authoritative next procedure is:
+
+```text
+docs/process-manager-createwindow-cgs-opacity-alpha-plane-create-compat-protocol-adapter-experiment.md
+```
+
+That next stage performs no Mach IPC. It proves on copied buffers that only request ID `0x724f -> 0x7250` and reply ID `0x72b4 -> 0x72b3` change, with zero body/source changes and result preservation. No live opacity adapter is authorized until that local proof passes and is reviewed.
