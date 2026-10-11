@@ -329,3 +329,31 @@ next step                                       -> one exact live 0x7394 -> 0x73
 ~~~
 
 No additional XNU change is indicated.
+
+
+## Observed result — native NewWindow succeeds; post-NewWindow CGS work is next
+
+The 2026-10-11 Lion integration did not reach `M21_AFTER_CreateNewWindow`, but the NewWindow adapter itself completed exactly as designed:
+
+```text
+PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS
+PM_CGS_NEWWINDOW_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES
+PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REQUEST:... changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0
+PM_CGS_NEWWINDOW_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0
+PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS
+PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000038 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS
+PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS
+PM_CGS_CONNECTION_TRACE_REPLY:... kind=CGS_CREATE_WINDOW_INLINE_LEGACY ... size=0x00000038 id=0x000073f8 ... idMatch=YES
+```
+
+Immediately after the successful legacy-facing NewWindow reply, CoreGraphics reported failures in `CGSSetWindowToReleaseBackingOnOrderOut`, `CGSSetWindowOpacity`, `CGSGetDisplayBounds`, and `CGSShapeWindow`. The process terminated with status 138 before the public `CreateNewWindow` call returned and produced a crash report/core, while the exact-four notification broker still reported PASS and protected hashes remained unchanged.
+
+The old runner result `CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_PASS_NO_RETURN` was therefore a classification-order artifact: its no-return branch checked Dock success before examining a completed NewWindow compatibility transaction. Current main now emits `CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN` for this state.
+
+The NewWindow ID-only compatibility policy is retained unchanged. Do not broaden it. The authoritative next gate is the static read-only differential:
+
+```text
+docs/process-manager-createwindow-cgs-post-newwindow-protocol-audit.md
+```
+
+That audit compares the four newly exposed post-NewWindow CoreGraphics helper families on Snow Leopard PPC and Lion i386 before any further live Mach tracing or compatibility work.
