@@ -17,6 +17,7 @@ HITOOLBOX_EXTRAS_COMPAT_SHA_FILE="${ROSETTA_HITOOLBOX_EXTRAS_COMPAT_SHA256_FILE:
 HITOOLBOX_EXTRAS_RESOURCE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH:-}"
 HITOOLBOX_EXTRAS_MODE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE:-}"
 DOCKSERVER_COMPAT_MODE="${ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE:-}"
+NEWWINDOW_TRACE_MODE="${ROSETTA_CGS_NEWWINDOW_TRACE_MODE:-}"
 
 PRIVATE_DYLD="/usr/oah/dyld"
 EXPECTED_DYLD_SHA="963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb"
@@ -37,6 +38,11 @@ if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
     [ "$DOCKSERVER_COMPAT_MODE" = "passthrough" ] ||
         fail "Snow DockServer compatibility mode must be passthrough"
     EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-compat-v2"
+fi
+if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
+    [ "$NEWWINDOW_TRACE_MODE" = "passthrough" ] ||
+        fail "Snow CGS NewWindow trace mode must be passthrough"
+    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-trace-v1"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 abspath() {
@@ -159,6 +165,12 @@ fi
     "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || fail "CoreServices CPS registration compatibility build marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_BUILD_ID:distributed-notifications-ppc-ingress-interposer-v2" || fail "embedded distributed-notifications ingress marker missing"
+if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
+    /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_CREATE_WINDOW_INLINE_LEGACY' ||
+        fail "CGS NewWindow legacy trace marker missing"
+    /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_CREATE_WINDOW_INLINE_LION' ||
+        fail "CGS NewWindow Lion trace marker missing"
+fi
 /usr/bin/strings "$SEC_INTERPOSER" | /usr/bin/grep -Fq \
     "PM_SECURITY_SESSION_API_COMPAT_BUILD_ID:$EXPECTED_SEC_BUILD_ID" || fail "Security build marker missing"
 /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq \
@@ -208,6 +220,9 @@ echo "security_interposer_sha256=$EXPECTED_SEC_SHA" | /usr/bin/tee -a "$LOG"
 echo "cgs_interposer_sha256=$EXPECTED_CGS_SHA" | /usr/bin/tee -a "$LOG"
 if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
     echo "dockserver_bootstrap_compat_mode=$DOCKSERVER_COMPAT_MODE" | /usr/bin/tee -a "$LOG"
+fi
+if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
+    echo "cgs_newwindow_trace_mode=$NEWWINDOW_TRACE_MODE" | /usr/bin/tee -a "$LOG"
 fi
 echo "private_dyld_sha256=$EXPECTED_DYLD_SHA" | /usr/bin/tee -a "$LOG"
 if [ -n "$HITOOLBOX_TRACE" ]; then
@@ -349,7 +364,17 @@ if [ "$RC" -eq 0 ] &&
        /usr/bin/grep -Fq 'mode=snow-force-external-v1 original=SKIPPED fallback=NONNULL' "$LOG" &&
        ! /usr/bin/grep -Fq 'mode=snow-force-external-v1 original=SKIPPED fallback=NULL' "$LOG" &&
        ! /usr/bin/grep -Fq 'HIToolbox: failed to copy resource URL for framework bundle.' "$LOG"; }; }; then
-    if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
+        if /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY' "$LOG" &&
+           /usr/bin/grep -Fq 'id=0x00007394 expectedReply=0x000073f8' "$LOG" &&
+           /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY kr=0 hex=0x00000000' "$LOG" &&
+           /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$LOG"; then
+            echo "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+        else
+            echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
+            exit 1
+        fi
+    elif [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
         echo "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
     elif [ -n "$HITOOLBOX_TRACE" ]; then
         echo "RESULT: CREATENEWWINDOW_HITOOLBOX_CFBUNDLE_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
