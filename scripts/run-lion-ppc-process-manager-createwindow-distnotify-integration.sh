@@ -25,6 +25,7 @@ HITOOLBOX_EXTRAS_RESOURCE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH:-}"
 HITOOLBOX_EXTRAS_MODE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE:-}"
 DOCKSERVER_COMPAT_MODE="${ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE:-}"
 FONTSERVER_COMPAT_MODE="${ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE:-}"
+FONTSERVER_RPC_TRACE_MODE="${ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE:-}"
 NEWWINDOW_TRACE_MODE="${ROSETTA_CGS_NEWWINDOW_TRACE_MODE:-}"
 NEWWINDOW_COMPAT_MODE="${ROSETTA_CGS_NEWWINDOW_COMPAT_MODE:-}"
 RELEASEBACKING_TRACE_MODE="${ROSETTA_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE_MODE:-}"
@@ -112,6 +113,17 @@ if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
       [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ]; } ||
         die 64 "FontServer compatibility requires the reviewed exact-four or exact-five notification broker"
     EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-fontserver-compat-v3"
+fi
+if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
+    [ "$FONTSERVER_RPC_TRACE_MODE" = "lion-passive-v1" ] ||
+        die 64 "unsupported ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE: $FONTSERVER_RPC_TRACE_MODE"
+    [ "$FONTSERVER_COMPAT_MODE" = "lion-fontserver-v1" ] ||
+        die 64 "FontServer RPC trace requires lion-fontserver-v1"
+    [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] ||
+        die 64 "FontServer RPC trace requires the reviewed exact-five notification broker"
+    [ "$POST_CREATEWINDOW_TITLE_MODE" = "lion-windowtitle-v1" ] ||
+        die 64 "FontServer RPC trace requires the window-title subject"
+    EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-fontserver-compat-rpc-trace-v4"
 fi
 if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
     [ "$NEWWINDOW_TRACE_MODE" = "lion-passive-v1" ] ||
@@ -506,6 +518,12 @@ if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
     /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' ||
         die 68 "FontServer adapter PASS marker missing from CGS interposer"
 fi
+if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
+    /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REQUEST:' ||
+        die 68 "FontServer RPC trace request marker missing from CGS interposer"
+    /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REPLY:' ||
+        die 68 "FontServer RPC trace reply marker missing from CGS interposer"
+fi
 if [ -n "$HITOOLBOX_TRACE" ]; then
     /usr/bin/strings "$HITOOLBOX_TRACE" | /usr/bin/grep -Fq \
         "PM_HITOOLBOX_CFBUNDLE_TRACE_BUILD_ID:$EXPECTED_HITOOLBOX_TRACE_BUILD_ID" ||
@@ -593,6 +611,12 @@ if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
     export ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE="$FONTSERVER_COMPAT_MODE"
 else
     unset ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE
+fi
+if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
+    log "fontserver_rpc_trace_mode=$FONTSERVER_RPC_TRACE_MODE"
+    export ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE="$FONTSERVER_RPC_TRACE_MODE"
+else
+    unset ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE
 fi
 if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
     log "cgs_newwindow_compat_mode=$NEWWINDOW_COMPAT_MODE"
@@ -1053,6 +1077,22 @@ if [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ]; th
     log "fifth_notification_registration_accept_count=$FIFTH_ACCEPT_COUNT"
     if [ "$FIFTH_ACCEPT_COUNT" -ne 1 ]; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
+    FONT_RPC_COUNT="$(/usr/bin/grep -c 'PM_CGS_FONTSERVER_RPC_TRACE_REQUEST:index=' "$RAW_LOG" 2>/dev/null || true)"
+    FONT_RPC_RETURN_COUNT="$(/usr/bin/grep -c 'PM_CGS_FONTSERVER_RPC_TRACE_MACH_RETURN:index=' "$RAW_LOG" 2>/dev/null || true)"
+    log "fontserver_rpc_trace_request_count=$FONT_RPC_COUNT"
+    log "fontserver_rpc_trace_return_count=$FONT_RPC_RETURN_COUNT"
+    if [ "$FONT_RPC_COUNT" -lt 1 ] || [ "$FONT_RPC_RETURN_COUNT" -ne "$FONT_RPC_COUNT" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_INCOMPLETE"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REQUEST:index=1 mode=lion-passive-v1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REQUEST_HEX:index=1' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_FIRST_REQUEST_MISSING"
         exit 0
     fi
 fi
@@ -1581,7 +1621,10 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
         exit 0
     fi
     if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T03_AFTER_SetWindowTitleWithCFString' "$RAW_LOG"; then
-        if [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] &&
+        if [ -n "$FONTSERVER_RPC_TRACE_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REQUEST:index=1 mode=lion-passive-v1' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_CAPTURED"
+        elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] &&
            /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=5 allowed=4 behavior=1 publicBehavior=4 anyObject=YES' "$RAW_LOG"; then
             log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_PASS_POST_RPC_NO_RETURN"
         elif [ -n "$FONTSERVER_COMPAT_MODE" ] &&
@@ -1646,7 +1689,9 @@ if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:P
 fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
-    if [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ]; then
+    if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_TITLE_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ]; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
     elif [ -n "$FONTSERVER_COMPAT_MODE" ]; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_INTEGRATION_PASS"
