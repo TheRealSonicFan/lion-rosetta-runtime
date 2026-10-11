@@ -335,3 +335,51 @@ next step                                                    -> passive exact 0x
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — legacy NewWindow transaction isolated
+
+The returned Snow and Lion evidence matches the first decision branch of this experiment exactly.
+
+Snow Leopard PPC:
+
+~~~text
+request kind             CGS_CREATE_WINDOW_INLINE_LEGACY
+request / reply          0x7394 / 0x73f8
+bits                     0x1513
+send / receive           0x68 / 0x40
+Mach result              0
+reply size               0x38
+CreateNewWindow          0
+WindowRef                nonzero
+DisposeWindow            reached
+RESULT                   CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_SNOW_CONTROL_PASS
+~~~
+
+Lion translated PPC:
+
+~~~text
+request kind             CGS_CREATE_WINDOW_INLINE_LEGACY
+request / reply          0x7394 / 0x73f8
+bits                     0x1513
+send / receive           0x68 / 0x40
+visible request words    identical to Snow through offset 0x40
+Mach result              0
+reply size               0x24
+raw result               0xd0feffff
+decoded result           -304
+CreateNewWindow          -304
+WindowRef                null
+legacy request count     1
+RESULT                   CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_LEGACY_REPLY_OBSERVED
+~~~
+
+The failure is therefore a normal server-side legacy NewWindow rejection after successful Mach transport, not a transport fault. Together with the completed static differential, the remaining compatibility hypothesis is the narrow generated-MIG routine-ID change from Snow 0x7394/0x73f8 to Lion native 0x739a/0x73fe.
+
+The authoritative next procedure is:
+
+~~~text
+docs/process-manager-createwindow-cgs-newwindow-compat-protocol-adapter-experiment.md
+~~~
+
+That stage is a standalone copied-buffer policy proof with no Mach IPC. It proves ID-only request/reply conversion and preserves an error result unchanged before any live adapter is considered. No XNU change is indicated.
