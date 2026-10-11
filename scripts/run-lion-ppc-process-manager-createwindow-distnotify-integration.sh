@@ -19,6 +19,10 @@ REPORT_DIR="$(/usr/bin/dirname "$REPORT")"
 RAW_LOG="${REPORT%.log}.raw.log"
 HITOOLBOX_TRACE="${ROSETTA_HITOOLBOX_CFBUNDLE_TRACE_PATH:-}"
 HITOOLBOX_TRACE_SHA_FILE="${ROSETTA_HITOOLBOX_CFBUNDLE_TRACE_SHA256_FILE:-}"
+HITOOLBOX_EXTRAS_COMPAT="${ROSETTA_HITOOLBOX_EXTRAS_COMPAT_PATH:-}"
+HITOOLBOX_EXTRAS_COMPAT_SHA_FILE="${ROSETTA_HITOOLBOX_EXTRAS_COMPAT_SHA256_FILE:-}"
+HITOOLBOX_EXTRAS_RESOURCE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH:-}"
+HITOOLBOX_EXTRAS_MODE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE:-}"
 
 TRANSLATOR="/usr/libexec/oah/translate"
 PRIVATE_DYLD="/usr/oah/dyld"
@@ -44,6 +48,8 @@ EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-s
 EXPECTED_SEC_BUILD_ID="security-session-auditinfo-api-v1"
 EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-compat-v1"
 EXPECTED_HITOOLBOX_TRACE_BUILD_ID="hitoolbox-cfbundle-resource-trace-v1"
+EXPECTED_HITOOLBOX_EXTRAS_COMPAT_BUILD_ID="hitoolbox-extras-resource-compat-v1"
+EXPECTED_HITOOLBOX_EXTRAS_RESOURCE_SHA="a0866d6cf2d48fac7787e8cf9e90264071642c0d39aa809636e7d478016a9197"
 SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_SCHEMA_AUDIT_REPORT:-}"
 REAL_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE:-}"
 if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
@@ -81,6 +87,22 @@ if { [ -n "$HITOOLBOX_TRACE" ] && [ -z "$HITOOLBOX_TRACE_SHA_FILE" ]; } ||
 fi
 if [ -n "$HITOOLBOX_TRACE" ] && [ -z "$REAL_REGISTRATION_MODE" ]; then
     die 64 "HIToolbox CFBundle trace requires the reviewed real-registration mode"
+fi
+if [ -n "$HITOOLBOX_TRACE" ] && [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    die 64 "HIToolbox trace and Extras compatibility modes are mutually exclusive"
+fi
+if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ] || [ -n "$HITOOLBOX_EXTRAS_COMPAT_SHA_FILE" ] ||
+   [ -n "$HITOOLBOX_EXTRAS_RESOURCE" ] || [ -n "$HITOOLBOX_EXTRAS_MODE" ]; then
+    [ -n "$REAL_REGISTRATION_MODE" ] ||
+        die 64 "HIToolbox Extras compatibility requires the reviewed real-registration mode"
+    [ -n "$HITOOLBOX_EXTRAS_COMPAT" ] ||
+        die 64 "set ROSETTA_HITOOLBOX_EXTRAS_COMPAT_PATH"
+    [ -n "$HITOOLBOX_EXTRAS_COMPAT_SHA_FILE" ] ||
+        die 64 "set ROSETTA_HITOOLBOX_EXTRAS_COMPAT_SHA256_FILE"
+    [ -n "$HITOOLBOX_EXTRAS_RESOURCE" ] ||
+        die 64 "set ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH"
+    [ "$HITOOLBOX_EXTRAS_MODE" = "lion-fallback-external-v1" ] ||
+        die 64 "Lion Extras compatibility mode must be lion-fallback-external-v1"
 fi
 
 abspath() {
@@ -142,6 +164,11 @@ if [ -n "$HITOOLBOX_TRACE" ]; then
     [ -e "$HITOOLBOX_TRACE" ] || die 66 "missing HIToolbox trace dylib: $HITOOLBOX_TRACE"
     [ -e "$HITOOLBOX_TRACE_SHA_FILE" ] || die 66 "missing HIToolbox trace SHA file: $HITOOLBOX_TRACE_SHA_FILE"
 fi
+if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    [ -e "$HITOOLBOX_EXTRAS_COMPAT" ] || die 66 "missing HIToolbox Extras compatibility dylib: $HITOOLBOX_EXTRAS_COMPAT"
+    [ -e "$HITOOLBOX_EXTRAS_COMPAT_SHA_FILE" ] || die 66 "missing HIToolbox Extras compatibility SHA file: $HITOOLBOX_EXTRAS_COMPAT_SHA_FILE"
+    [ -f "$HITOOLBOX_EXTRAS_RESOURCE" ] || die 66 "missing staged Snow Leopard Extras.rsrc: $HITOOLBOX_EXTRAS_RESOURCE"
+fi
 
 EXPECTED_SUBJECT_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$SUBJECT_SHA_FILE")"
 EXPECTED_CORE_COMPAT_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$CORE_COMPAT_SHA_FILE")"
@@ -150,6 +177,9 @@ EXPECTED_CGS_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$CGS_SHA_FILE")"
 EXPECTED_BROKER_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$BROKER_SHA_FILE")"
 if [ -n "$HITOOLBOX_TRACE" ]; then
     EXPECTED_HITOOLBOX_TRACE_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$HITOOLBOX_TRACE_SHA_FILE")"
+fi
+if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    EXPECTED_HITOOLBOX_EXTRAS_COMPAT_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$HITOOLBOX_EXTRAS_COMPAT_SHA_FILE")"
 fi
 
 KERNEL_BEFORE="$(sha256 /mach_kernel)"
@@ -173,6 +203,10 @@ SEC_BEFORE="$(sha256 "$SEC_INTERPOSER")"
 CGS_BEFORE="$(sha256 "$CGS_INTERPOSER")"
 if [ -n "$HITOOLBOX_TRACE" ]; then
     HITOOLBOX_TRACE_BEFORE="$(sha256 "$HITOOLBOX_TRACE")"
+fi
+if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    HITOOLBOX_EXTRAS_COMPAT_BEFORE="$(sha256 "$HITOOLBOX_EXTRAS_COMPAT")"
+    HITOOLBOX_EXTRAS_RESOURCE_BEFORE="$(sha256 "$HITOOLBOX_EXTRAS_RESOURCE")"
 fi
 
 log "mach_kernel_sha256_before=$KERNEL_BEFORE"
@@ -199,6 +233,12 @@ if [ -n "$HITOOLBOX_TRACE" ]; then
     log "expected_hitoolbox_trace_sha256=$EXPECTED_HITOOLBOX_TRACE_SHA"
     log "actual_hitoolbox_trace_sha256=$HITOOLBOX_TRACE_BEFORE"
 fi
+if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    log "expected_hitoolbox_extras_compat_sha256=$EXPECTED_HITOOLBOX_EXTRAS_COMPAT_SHA"
+    log "actual_hitoolbox_extras_compat_sha256=$HITOOLBOX_EXTRAS_COMPAT_BEFORE"
+    log "expected_hitoolbox_extras_resource_sha256=$EXPECTED_HITOOLBOX_EXTRAS_RESOURCE_SHA"
+    log "actual_hitoolbox_extras_resource_sha256=$HITOOLBOX_EXTRAS_RESOURCE_BEFORE"
+fi
 
 [ "$KERNEL_BEFORE" = "$EXPECTED_KERNEL_SHA" ] || die 68 "kernel hash mismatch"
 [ "$TRANSLATOR_BEFORE" = "$EXPECTED_TRANSLATOR_SHA" ] || die 68 "translator hash mismatch"
@@ -215,6 +255,12 @@ if [ -n "$HITOOLBOX_TRACE" ]; then
     [ "$HITOOLBOX_TRACE_BEFORE" = "$EXPECTED_HITOOLBOX_TRACE_SHA" ] ||
         die 68 "HIToolbox trace hash mismatch"
 fi
+if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    [ "$HITOOLBOX_EXTRAS_COMPAT_BEFORE" = "$EXPECTED_HITOOLBOX_EXTRAS_COMPAT_SHA" ] ||
+        die 68 "HIToolbox Extras compatibility hash mismatch"
+    [ "$HITOOLBOX_EXTRAS_RESOURCE_BEFORE" = "$EXPECTED_HITOOLBOX_EXTRAS_RESOURCE_SHA" ] ||
+        die 68 "staged Snow Leopard Extras.rsrc hash mismatch"
+fi
 
 HANDLER="$(/usr/sbin/sysctl -n kern.exec.archhandler.powerpc 2>/dev/null || true)"
 log "powerpc_archhandler=$HANDLER"
@@ -225,6 +271,9 @@ for p in "$SUBJECT" "$CORE_COMPAT" "$SEC_INTERPOSER" "$CGS_INTERPOSER"; do
 done
 if [ -n "$HITOOLBOX_TRACE" ]; then
     has_ppc32_arch "$HITOOLBOX_TRACE" || die 67 "HIToolbox trace is not 32-bit PPC"
+fi
+if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    has_ppc32_arch "$HITOOLBOX_EXTRAS_COMPAT" || die 67 "HIToolbox Extras compatibility dylib is not 32-bit PPC"
 fi
 
 BROKER_ARCH="$(/usr/bin/lipo -info "$BROKER" 2>/dev/null || true)"
@@ -250,6 +299,13 @@ if [ -n "$HITOOLBOX_TRACE" ]; then
     /usr/bin/nm -u "$HITOOLBOX_TRACE" | /usr/bin/grep -Fq '_dlsym' &&
         die 68 "HIToolbox trace unexpectedly imports dlsym"
 fi
+if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    /usr/bin/strings "$HITOOLBOX_EXTRAS_COMPAT" | /usr/bin/grep -Fq \
+        "PM_HITOOLBOX_EXTRAS_COMPAT_BUILD_ID:$EXPECTED_HITOOLBOX_EXTRAS_COMPAT_BUILD_ID" ||
+        die 68 "HIToolbox Extras compatibility build marker missing"
+    /usr/bin/nm -u "$HITOOLBOX_EXTRAS_COMPAT" | /usr/bin/grep -Fq '_dlsym' &&
+        die 68 "HIToolbox Extras compatibility dylib unexpectedly imports dlsym"
+fi
 
 for image in "$COREGRAPHICS" "$CARBONCORE" "$SECURITY" "$LAUNCHSERVICES" "$HISERVICES" "$LIBSYSTEM"; do
     /usr/bin/grep -Fq "$image" "$ROSETTA_CACHE_MAP" || die 68 "required image absent from Rosetta cache map: $image"
@@ -273,12 +329,25 @@ if [ -n "$HITOOLBOX_TRACE" ]; then
     [ -n "$HITOOLBOX_TRACE_ABS" ] || die 68 "could not resolve HIToolbox trace path"
     INSERTED="$INSERTED:$HITOOLBOX_TRACE_ABS"
 fi
+if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    HITOOLBOX_EXTRAS_COMPAT_ABS="$(abspath "$HITOOLBOX_EXTRAS_COMPAT")"
+    HITOOLBOX_EXTRAS_RESOURCE_ABS="$(abspath "$HITOOLBOX_EXTRAS_RESOURCE")"
+    [ -n "$HITOOLBOX_EXTRAS_COMPAT_ABS" ] || die 68 "could not resolve HIToolbox Extras compatibility path"
+    [ -n "$HITOOLBOX_EXTRAS_RESOURCE_ABS" ] || die 68 "could not resolve staged Extras.rsrc path"
+    INSERTED="$INSERTED:$HITOOLBOX_EXTRAS_COMPAT_ABS"
+fi
 log "coreservices_cps_registration_compat_absolute_path=$CORE_ABS"
 log "security_interposer_absolute_path=$SEC_ABS"
 log "cgs_interposer_absolute_path=$CGS_ABS"
 log "distributed_notifications_broker_absolute_path=$BROKER_ABS"
 if [ -n "$HITOOLBOX_TRACE" ]; then
     log "hitoolbox_cfbundle_trace_absolute_path=$HITOOLBOX_TRACE_ABS"
+fi
+if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    log "hitoolbox_extras_compat_absolute_path=$HITOOLBOX_EXTRAS_COMPAT_ABS"
+    log "hitoolbox_extras_resource_absolute_path=$HITOOLBOX_EXTRAS_RESOURCE_ABS"
+    export ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE="$HITOOLBOX_EXTRAS_MODE"
+    export ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH="$HITOOLBOX_EXTRAS_RESOURCE_ABS"
 fi
 if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
     : > "$SCHEMA_AUDIT_REPORT" || die 73 "could not initialize schema audit report: $SCHEMA_AUDIT_REPORT"
@@ -652,6 +721,21 @@ fi
 
 if /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG" &&
    ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M21_AFTER_CreateNewWindow' "$RAW_LOG"; then
+    if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        HITOOLBOX_EXTRAS_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_EXTRAS_COMPAT_TARGET:.*mode=lion-fallback-external-v1.*bundle=com.apple.HIToolbox name=Extras type=rsrc' "$RAW_LOG" 2>/dev/null || true)"
+        log "hitoolbox_extras_compat_target_count=$HITOOLBOX_EXTRAS_TARGET_COUNT"
+        if [ "$HITOOLBOX_EXTRAS_TARGET_COUNT" -ge 1 ] &&
+           /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" &&
+           ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NULL' "$RAW_LOG" &&
+           ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NONNULL fallback=NOT_USED' "$RAW_LOG" &&
+           /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=3 callback=[0-9]+ rejects=0 exact=YES' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_NO_RETURN"
+        else
+            log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_INCOMPLETE"
+        fi
+        exit 0
+    fi
     if [ -n "$HITOOLBOX_TRACE" ]; then
         HITOOLBOX_TRACE_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_CFBUNDLE_TRACE_TARGET:.*bundle=com.apple.HIToolbox name=Extras type=rsrc subdir=NULL localization=NULL' "$RAW_LOG" 2>/dev/null || true)"
         log "hitoolbox_cfbundle_trace_target_count=$HITOOLBOX_TRACE_TARGET_COUNT"
@@ -716,6 +800,17 @@ if [ -n "$REAL_REGISTRATION_MODE" ] &&
     exit 0
 fi
 
+if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    HITOOLBOX_EXTRAS_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_EXTRAS_COMPAT_TARGET:.*mode=lion-fallback-external-v1.*bundle=com.apple.HIToolbox name=Extras type=rsrc' "$RAW_LOG" 2>/dev/null || true)"
+    if [ "$HITOOLBOX_EXTRAS_TARGET_COUNT" -lt 1 ] ||
+       ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NULL' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NONNULL fallback=NOT_USED' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_INCOMPLETE"
+        exit 0
+    fi
+fi
+
 if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" ||
    ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_WAIT:pid=[0-9]+ exit=0$' "$RAW_LOG" ||
    ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_EXIT:lookups=1 requests=[0-9]+ callbacks=[0-9]+$' "$RAW_LOG"; then
@@ -724,7 +819,9 @@ if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:P
 fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
-    if [ -n "$REAL_REGISTRATION_MODE" ]; then
+    if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_PASS"
+    elif [ -n "$REAL_REGISTRATION_MODE" ]; then
         log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_PASS"
     else
         log "RESULT: CREATENEWWINDOW_DISTNOTIFY_INTEGRATION_PASS"
