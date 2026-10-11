@@ -15,7 +15,9 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                          uint64_t);
 extern mach_port_t mig_get_reply_port(void);
 
-#if defined(PM_CGS_RELEASEBACKING_COMPAT_INTEGRATION)
+#if defined(PM_CGS_POST_RELEASEBACKING_OPACITY_TRACE)
+#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-trace-v1"
+#elif defined(PM_CGS_RELEASEBACKING_COMPAT_INTEGRATION)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-v1"
 #elif defined(PM_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-trace-v1"
@@ -64,6 +66,10 @@ static const char kDistributedNotificationsName[] =
 
 #if defined(PM_CPS_SETFRONT_COMPAT_INTEGRATION) && !defined(PM_CPS_SETFRONT_COMPAT_PROTOCOL)
 #define PM_CPS_SETFRONT_COMPAT_PROTOCOL 1
+#endif
+
+#if defined(PM_CGS_POST_RELEASEBACKING_OPACITY_TRACE) && !defined(PM_CGS_RELEASEBACKING_COMPAT_INTEGRATION)
+#define PM_CGS_RELEASEBACKING_COMPAT_INTEGRATION 1
 #endif
 
 #if defined(PM_CGS_RELEASEBACKING_COMPAT_INTEGRATION) && !defined(PM_CGS_NEWWINDOW_COMPAT_INTEGRATION)
@@ -160,6 +166,16 @@ static const char kDistributedNotificationsName[] =
 #define CGS_SET_WINDOW_RELEASE_BACKING_LEGACY_REPLY_ID 0x000072afU
 #define CGS_SET_WINDOW_RELEASE_BACKING_LION_REQUEST_ID 0x0000724cU
 #define CGS_SET_WINDOW_RELEASE_BACKING_LION_REPLY_ID 0x000072b0U
+#endif
+#ifdef PM_CGS_POST_RELEASEBACKING_OPACITY_TRACE
+#define CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY_REQUEST_ID 0x0000724fU
+#define CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY_REPLY_ID 0x000072b3U
+#define CGS_CREATE_WINDOW_ALPHA_PLANE_LION_REQUEST_ID 0x00007250U
+#define CGS_CREATE_WINDOW_ALPHA_PLANE_LION_REPLY_ID 0x000072b4U
+#define CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY_REQUEST_ID 0x00007250U
+#define CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY_REPLY_ID 0x000072b4U
+#define CGS_TERMINATE_WINDOW_ALPHA_PLANE_LION_REQUEST_ID 0x00007251U
+#define CGS_TERMINATE_WINDOW_ALPHA_PLANE_LION_REPLY_ID 0x000072b5U
 #endif
 #endif
 
@@ -1818,6 +1834,12 @@ cgs_trace_kind(uint32_t request_id)
     if (request_id == CGS_SET_WINDOW_RELEASE_BACKING_LION_REQUEST_ID)
         return "CGS_SET_WINDOW_RELEASE_BACKING_LION";
 #endif
+#ifdef PM_CGS_POST_RELEASEBACKING_OPACITY_TRACE
+    if (request_id == CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY_REQUEST_ID)
+        return "CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY";
+    if (request_id == CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY_REQUEST_ID)
+        return "CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY";
+#endif
     return "UNKNOWN";
 }
 
@@ -1854,6 +1876,12 @@ cgs_trace_expected_reply(uint32_t request_id)
     if (request_id == CGS_SET_WINDOW_RELEASE_BACKING_LION_REQUEST_ID)
         return CGS_SET_WINDOW_RELEASE_BACKING_LION_REPLY_ID;
 #endif
+#ifdef PM_CGS_POST_RELEASEBACKING_OPACITY_TRACE
+    if (request_id == CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY_REQUEST_ID)
+        return CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY_REPLY_ID;
+    if (request_id == CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY_REQUEST_ID)
+        return CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY_REPLY_ID;
+#endif
     return 0U;
 }
 
@@ -1889,6 +1917,11 @@ is_cgs_trace_candidate(mach_msg_header_t *msg)
 #ifdef PM_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE
     if (request_id == CGS_SET_WINDOW_RELEASE_BACKING_LEGACY_REQUEST_ID ||
         request_id == CGS_SET_WINDOW_RELEASE_BACKING_LION_REQUEST_ID)
+        return 1;
+#endif
+#ifdef PM_CGS_POST_RELEASEBACKING_OPACITY_TRACE
+    if (request_id == CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY_REQUEST_ID ||
+        request_id == CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY_REQUEST_ID)
         return 1;
 #endif
     return 0;
@@ -2018,6 +2051,26 @@ trace_cgs_message(mach_msg_header_t *msg,
             (long)mr,
             (unsigned long)(uint32_t)mr);
     fflush(stderr);
+
+#ifdef PM_CGS_POST_RELEASEBACKING_OPACITY_TRACE
+    if (mr != MACH_MSG_SUCCESS &&
+        (request_id == CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY_REQUEST_ID ||
+         request_id == CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY_REQUEST_ID)) {
+        fprintf(stderr,
+                "PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:index=%u kind=%s kr=%ld hex=0x%08lx postBits=0x%08lx postSize=0x%08lx postId=0x%08lx off18=0x%08lx off1c=0x%08lx off20=0x%08lx\n",
+                gCGSTraceCallCount,
+                cgs_trace_kind(request_id),
+                (long)mr,
+                (unsigned long)(uint32_t)mr,
+                (unsigned long)get_u32(m + 0x00),
+                (unsigned long)get_u32(m + 0x04),
+                (unsigned long)get_u32(m + 0x14),
+                (unsigned long)get_u32(m + 0x18),
+                (unsigned long)get_u32(m + 0x1c),
+                (unsigned long)get_u32(m + 0x20));
+        fflush(stderr);
+    }
+#endif
 
     if (mr != MACH_MSG_SUCCESS)
         return mr;
