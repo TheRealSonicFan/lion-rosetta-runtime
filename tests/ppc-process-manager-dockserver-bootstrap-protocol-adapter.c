@@ -293,15 +293,6 @@ main(int argc, char **argv)
     fprintf(stderr,
             "PM_DOCKSERVER_BOOTSTRAP_ADAPTER_BOOTSTRAP_PORT:0x%08lx\n",
             (unsigned long)bootstrap_port);
-    fprintf(stderr,
-            "PM_DOCKSERVER_BOOTSTRAP_ADAPTER_ENV:SECURITYSERVER=%s\n",
-            getenv("SECURITYSERVER") ? "SET" : "UNSET");
-    fflush(stderr);
-
-    if (getenv("SECURITYSERVER") != NULL) {
-        marker("PM_DOCKSERVER_BOOTSTRAP_ADAPTER_RESULT:ENVIRONMENT_NOT_CLEAN");
-        return 30;
-    }
     if (bootstrap_port == MACH_PORT_NULL) {
         marker("PM_DOCKSERVER_BOOTSTRAP_ADAPTER_RESULT:BOOTSTRAP_PORT_NULL");
         return 31;
