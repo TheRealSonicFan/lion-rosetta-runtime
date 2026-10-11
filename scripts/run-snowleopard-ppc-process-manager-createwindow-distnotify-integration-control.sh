@@ -16,6 +16,7 @@ HITOOLBOX_EXTRAS_COMPAT="${ROSETTA_HITOOLBOX_EXTRAS_COMPAT_PATH:-}"
 HITOOLBOX_EXTRAS_COMPAT_SHA_FILE="${ROSETTA_HITOOLBOX_EXTRAS_COMPAT_SHA256_FILE:-}"
 HITOOLBOX_EXTRAS_RESOURCE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH:-}"
 HITOOLBOX_EXTRAS_MODE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE:-}"
+DOCKSERVER_COMPAT_MODE="${ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE:-}"
 
 PRIVATE_DYLD="/usr/oah/dyld"
 EXPECTED_DYLD_SHA="963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb"
@@ -31,6 +32,12 @@ fail() {
     echo "error: $*" | /usr/bin/tee -a "$LOG" >&2
     exit 1
 }
+
+if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+    [ "$DOCKSERVER_COMPAT_MODE" = "passthrough" ] ||
+        fail "Snow DockServer compatibility mode must be passthrough"
+    EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-compat-v2"
+fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 abspath() {
     file="$1"
@@ -199,6 +206,9 @@ echo "subject_sha256=$EXPECTED_SUBJECT_SHA" | /usr/bin/tee -a "$LOG"
 echo "coreservices_cps_registration_compat_sha256=$EXPECTED_CORE_COMPAT_SHA" | /usr/bin/tee -a "$LOG"
 echo "security_interposer_sha256=$EXPECTED_SEC_SHA" | /usr/bin/tee -a "$LOG"
 echo "cgs_interposer_sha256=$EXPECTED_CGS_SHA" | /usr/bin/tee -a "$LOG"
+if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+    echo "dockserver_bootstrap_compat_mode=$DOCKSERVER_COMPAT_MODE" | /usr/bin/tee -a "$LOG"
+fi
 echo "private_dyld_sha256=$EXPECTED_DYLD_SHA" | /usr/bin/tee -a "$LOG"
 if [ -n "$HITOOLBOX_TRACE" ]; then
     echo "hitoolbox_cfbundle_trace_path=$HITOOLBOX_TRACE_ABS" | /usr/bin/tee -a "$LOG"
@@ -250,6 +260,11 @@ if [ "$RC" -eq 0 ] &&
    ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_READY:' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CORESERVICES_COMPAT_SESSIONINIT_EXACT_CALL:index=1 mode=passthrough' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_CALL:index=1 mode=passthrough' "$LOG" &&
+   { [ -z "$DOCKSERVER_COMPAT_MODE" ] ||
+     { /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_CALL:index=1 mode=passthrough' "$LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH:reason=DOCK_SNOW_PASSTHROUGH' "$LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH_RETURN:kr=0 hex=0x00000000' "$LOG" &&
+       ! /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$LOG"; }; } &&
    /usr/bin/grep -Fq 'PM_CGS_SERVER_VERSION_COMPAT_CALL:index=1 mode=passthrough' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CGS_SERVER_VERSION_COMPAT_RESULT:PASSTHROUGH major=545 minor=0' "$LOG" &&
    ! /usr/bin/grep -Fq 'PM_CGS_SERVER_VERSION_COMPAT_RESULT:ADAPTER_PASS' "$LOG" &&
