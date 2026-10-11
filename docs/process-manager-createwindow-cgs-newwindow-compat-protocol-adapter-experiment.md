@@ -222,3 +222,55 @@ next step                                       -> standalone ID-only copied-buf
 ~~~
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — copied-buffer ID policy proof passed
+
+The returned Snow control, syscall-295 gate, and Lion policy proof fully pass this stage.
+
+Artifact and control provenance:
+
+~~~text
+build ID                    createwindow-cgs-newwindow-compat-protocol-v1
+architecture                ppc7400
+LC_LOAD_DYLINKER            /usr/oah/dyld
+proof executable SHA-256    70bcfc2a81bd39602c4002b5ffa77f2a7171cb2f3dfd4237940d44e18e9ef634
+Snow control                PASS
+syscall 295                 EBADF / no SIGSYS / PASS
+~~~
+
+The Lion copied-buffer proof established:
+
+~~~text
+legacy request ID           0x7394
+Lion request ID             0x739a
+send / receive              0x68 / 0x40
+request changed bytes       1
+source request changes      0
+
+Lion success reply ID       0x73fe
+legacy success reply ID     0x73f8
+success reply size          0x38
+reply changed bytes         1
+reply body changes          0
+
+Lion error reply ID         0x73fe
+legacy error reply ID       0x73f8
+error reply size            0x24
+reply changed bytes         1
+reply body changes          0
+modeled decoded error       -304
+new diagnostics             none
+protected hashes            unchanged
+RESULT                      CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_POLICY_PROOF_PASS
+~~~
+
+This closes the local policy prerequisite: for the validated transaction geometry, the proposed compatibility transformation changes only the generated MIG routine IDs and preserves the entire request/reply body, including a nonzero error result.
+
+The authoritative next procedure is:
+
+~~~text
+docs/process-manager-createwindow-cgs-newwindow-compat-integration-experiment.md
+~~~
+
+That stage integrates the same ID-only policy into the existing combined CoreServices mach_msg interposer using a private buffer, keeps Snow strict passthrough, and performs one Lion CreateNewWindow run under the already accepted Dock, exact-four notification, and HIToolbox Extras compatibility stack. The live adapter must never normalize a nonzero native server result to success.

@@ -405,3 +405,10 @@ Runtime `main` therefore advances to `docs/process-manager-createwindow-cgs-neww
 The passive NewWindow trace has now reproduced the exact same Snow PPC legacy inline request on both systems: 0x7394 with bits 0x1513, send size 0x68, receive size 0x40, and identical visible request words through offset 0x40. Snow returns the expected 0x73f8 / 0x38 success reply and creates a window. Lion accepts the Mach transaction but returns the expected legacy 0x73f8 in the 0x24 error form with raw result 0xd0feffff, which decodes to -304 and exactly matches public CreateNewWindow=-304.
 
 This closes the live attribution to the generated NewWindow routine boundary. Runtime main now advances to docs/process-manager-createwindow-cgs-newwindow-compat-protocol-adapter-experiment.md, a no-Mach-IPC copied-buffer proof of only 0x7394 -> 0x739a and 0x73fe -> 0x73f8. The proof must show every other request/reply byte is preserved and that a nonzero native server error remains nonzero. Do not integrate the conversion or change XNU until that standalone result is reviewed.
+
+
+## NewWindow copied-buffer policy passed; live integration next
+
+The standalone CreateNewWindow NewWindow compatibility proof has passed completely. For the validated 0x68/0x40 transaction, the private request copy changes only 0x7394 -> 0x739a with exactly one changed byte and zero source/body changes. Both modeled Lion reply forms convert only 0x73fe -> 0x73f8 with exactly one changed byte and zero body changes; the 0x24 error model remains decoded -304 rather than being normalized. Snow control, syscall 295, diagnostic checks, and protected hashes all pass.
+
+Current main advances to docs/process-manager-createwindow-cgs-newwindow-compat-integration-experiment.md. Build only the new combined NewWindow compatibility dylib on Snow, require full Snow passthrough, then perform exactly one Lion CreateNewWindow integration under the accepted Dock, exact-four notification, and Extras compatibility stack. The live adapter is ID-only and must propagate any nonzero native server result unchanged. No XNU rebuild or reboot is indicated.

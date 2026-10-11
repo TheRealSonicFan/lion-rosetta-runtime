@@ -25,6 +25,7 @@ HITOOLBOX_EXTRAS_RESOURCE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH:-}"
 HITOOLBOX_EXTRAS_MODE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE:-}"
 DOCKSERVER_COMPAT_MODE="${ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE:-}"
 NEWWINDOW_TRACE_MODE="${ROSETTA_CGS_NEWWINDOW_TRACE_MODE:-}"
+NEWWINDOW_COMPAT_MODE="${ROSETTA_CGS_NEWWINDOW_COMPAT_MODE:-}"
 
 TRANSLATOR="/usr/libexec/oah/translate"
 PRIVATE_DYLD="/usr/oah/dyld"
@@ -93,6 +94,19 @@ if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
     [ "$DOCKSERVER_COMPAT_MODE" = "lion-dockserver-v1" ] ||
         die 64 "CGS NewWindow passive trace requires lion-dockserver-v1"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-trace-v1"
+fi
+if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+    [ "$NEWWINDOW_COMPAT_MODE" = "lion-inline-id-v1" ] ||
+        die 64 "unsupported ROSETTA_CGS_NEWWINDOW_COMPAT_MODE: $NEWWINDOW_COMPAT_MODE"
+    [ -z "$NEWWINDOW_TRACE_MODE" ] ||
+        die 64 "CGS NewWindow compatibility integration and passive-trace runner modes are mutually exclusive"
+    [ "$DOCKSERVER_COMPAT_MODE" = "lion-dockserver-v1" ] ||
+        die 64 "CGS NewWindow compatibility integration requires lion-dockserver-v1"
+    [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] ||
+        die 64 "CGS NewWindow compatibility integration requires the exact-four post-Extras registration mode"
+    [ "$HITOOLBOX_EXTRAS_MODE" = "lion-fallback-external-v1" ] ||
+        die 64 "CGS NewWindow compatibility integration requires lion-fallback-external-v1"
+    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-v1"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 
@@ -331,11 +345,17 @@ echo "$BROKER_ARCH" | /usr/bin/grep -Eq '(^|[[:space:]])i386([[:space:]]|$)' ||
     "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || die 68 "CoreServices CPS registration compatibility build marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_BUILD_ID:distributed-notifications-ppc-ingress-interposer-v2" || die 68 "embedded distributed-notifications ingress marker missing"
-if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
+if [ -n "$NEWWINDOW_TRACE_MODE" ] || [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
     /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_CREATE_WINDOW_INLINE_LEGACY' ||
         die 68 "CGS NewWindow legacy trace marker missing"
     /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_CREATE_WINDOW_INLINE_LION' ||
         die 68 "CGS NewWindow Lion trace marker missing"
+fi
+if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+    for marker in         'PM_CGS_NEWWINDOW_COMPAT_CALL:'         'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REQUEST:'         'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:'         'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:'         'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS'; do
+        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "CGS NewWindow compatibility marker missing: $marker"
+    done
 fi
 /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq \
     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_BUILD_ID:$EXPECTED_BROKER_BUILD_ID" || die 68 "broker build marker missing"
@@ -424,6 +444,12 @@ if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
     export ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE="$DOCKSERVER_COMPAT_MODE"
 else
     unset ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE
+fi
+if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+    log "cgs_newwindow_compat_mode=$NEWWINDOW_COMPAT_MODE"
+    export ROSETTA_CGS_NEWWINDOW_COMPAT_MODE="$NEWWINDOW_COMPAT_MODE"
+else
+    unset ROSETTA_CGS_NEWWINDOW_COMPAT_MODE
 fi
 
 MARKER="$(/usr/bin/mktemp /tmp/lion-createwindow-validation-marker.XXXXXX)" || die 73 "could not create diagnostic marker"
@@ -903,6 +929,59 @@ if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
     exit 0
 fi
 
+
+if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+    NEWWINDOW_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    NEWWINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_newwindow_compat_call_count=$NEWWINDOW_COMPAT_COUNT"
+    log "cgs_newwindow_legacy_trace_count=$NEWWINDOW_TRACE_COUNT"
+
+    if [ "$NEWWINDOW_COMPAT_COUNT" -ne 1 ] || [ "$NEWWINDOW_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'registrationCalls=1 setFrontCalls=1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_PREDICATE_NOT_MET"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007394 lionId=0x0000739a send=0x00000068 recv=0x00000040 changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_MACH_FAILURE"
+        exit 0
+    fi
+
+    if /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000038 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_LEGACY_FACING_SUCCESS_REPLY_NOT_ACCEPTED"
+            exit 0
+        fi
+        log "cgs_newwindow_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073fe result=-[0-9]+ ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-[0-9]+ replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_newwindow_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
 if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] &&
    [ "$FOUND" -eq 0 ] &&
    /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=-304' "$RAW_LOG" &&
@@ -917,7 +996,9 @@ if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] &
 fi
 
 if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=0' "$RAW_LOG"; then
-    if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+    if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_SUCCESS_PUBLIC_ERROR"
+    elif [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
         log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_ADAPTER_PASS_CREATEWINDOW_ERROR"
     else
         log "RESULT: CREATENEWWINDOW_RETURNED_ERROR"
@@ -973,7 +1054,9 @@ if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:P
 fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
-    if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+    if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
         log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_PASS"
     elif [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ]; then
         log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATION_PASS"
