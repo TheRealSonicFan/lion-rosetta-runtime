@@ -23,6 +23,7 @@ RELEASEBACKING_TRACE_MODE="${ROSETTA_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE_MOD
 RELEASEBACKING_COMPAT_MODE="${ROSETTA_CGS_RELEASEBACKING_COMPAT_MODE:-}"
 OPACITY_ALPHA_TRACE_MODE="${ROSETTA_CGS_POST_RELEASEBACKING_OPACITY_TRACE_MODE:-}"
 OPACITY_ALPHA_CREATE_COMPAT_MODE="${ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE:-}"
+POST_CREATEWINDOW_TITLE_MODE="${ROSETTA_POST_CREATEWINDOW_TITLE_VALIDATION_MODE:-}"
 
 PRIVATE_DYLD="/usr/oah/dyld"
 EXPECTED_DYLD_SHA="963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb"
@@ -95,6 +96,17 @@ if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
     [ -z "$RELEASEBACKING_TRACE_MODE" ] ||
         fail "Snow opacity create-alpha compatibility and release-backing trace are mutually exclusive"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-v1"
+fi
+if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+    [ "$POST_CREATEWINDOW_TITLE_MODE" = "snow-windowtitle-v1" ] ||
+        fail "unsupported Snow post-CreateNewWindow title validation mode: $POST_CREATEWINDOW_TITLE_MODE"
+    [ "$OPACITY_ALPHA_CREATE_COMPAT_MODE" = "passthrough" ] ||
+        fail "Snow window-title validation requires opacity create-alpha passthrough"
+    [ "$RELEASEBACKING_COMPAT_MODE" = "passthrough" ] ||
+        fail "Snow window-title validation requires release-backing passthrough"
+    [ "$NEWWINDOW_COMPAT_MODE" = "passthrough" ] ||
+        fail "Snow window-title validation requires NewWindow passthrough"
+    EXPECTED_SUBJECT_BUILD_ID="cps-windowtitle-validation-v1"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 abspath() {
@@ -340,6 +352,9 @@ if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
 else
     unset ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE
 fi
+if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+    echo "post_createwindow_title_validation_mode=$POST_CREATEWINDOW_TITLE_MODE" | /usr/bin/tee -a "$LOG"
+fi
 echo "private_dyld_sha256=$EXPECTED_DYLD_SHA" | /usr/bin/tee -a "$LOG"
 if [ -n "$HITOOLBOX_TRACE" ]; then
     echo "hitoolbox_cfbundle_trace_path=$HITOOLBOX_TRACE_ABS" | /usr/bin/tee -a "$LOG"
@@ -480,6 +495,21 @@ if [ "$RC" -eq 0 ] &&
        /usr/bin/grep -Fq 'mode=snow-force-external-v1 original=SKIPPED fallback=NONNULL' "$LOG" &&
        ! /usr/bin/grep -Fq 'mode=snow-force-external-v1 original=SKIPPED fallback=NULL' "$LOG" &&
        ! /usr/bin/grep -Fq 'HIToolbox: failed to copy resource URL for framework bundle.' "$LOG"; }; }; then
+    if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T00_BEFORE_CFStringCreateWithCString' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T01_AFTER_CFStringCreateWithCString' "$LOG" ||
+           ! /usr/bin/grep -Eq 'PM_POSTWINDOWTITLE_CFSTRING:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_RESULT:CFSTRING_PASS' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T02_BEFORE_SetWindowTitleWithCFString' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T03_AFTER_SetWindowTitleWithCFString' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_STATUS:SetWindowTitleWithCFString=0' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_RESULT:SETWINDOWTITLE_PASS' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T04_BEFORE_CFRelease' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T05_AFTER_CFRelease' "$LOG"; then
+            echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
+            exit 1
+        fi
+    fi
     if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
         RELEASEBACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_RELEASEBACKING_COMPAT_CALL:' "$LOG" 2>/dev/null || true)"
         OPACITY_CREATE_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:' "$LOG" 2>/dev/null || true)"
@@ -501,7 +531,11 @@ if [ "$RC" -eq 0 ] &&
            ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:' "$LOG"; then
             echo "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT" | /usr/bin/tee -a "$LOG"
             echo "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT" | /usr/bin/tee -a "$LOG"
-            echo "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+            if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+                echo "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+            else
+                echo "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+            fi
         else
             echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
             exit 1
