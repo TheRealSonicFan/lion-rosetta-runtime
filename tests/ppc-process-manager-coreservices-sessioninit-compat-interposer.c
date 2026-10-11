@@ -15,7 +15,9 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                          uint64_t);
 extern mach_port_t mig_get_reply_port(void);
 
-#if defined(PM_DISTRIBUTED_NOTIFICATIONS_INGRESS_INTEGRATION)
+#if defined(PM_CGS_NEWWINDOW_TRACE)
+#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-trace-v1"
+#elif defined(PM_DISTRIBUTED_NOTIFICATIONS_INGRESS_INTEGRATION)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-v1"
 #elif defined(PM_DISTRIBUTED_NOTIFICATIONS_COMPAT_PROTOCOL)
 #define COMPAT_BUILD_ID "distributed-notifications-bootstrap-compat-protocol-v1"
@@ -124,6 +126,12 @@ static const char kDistributedNotificationsName[] =
 #define CGS_SET_FRONT_PROCESS_LEGACY_REPLY_ID 0x00007302U
 #define CGS_SET_FRONT_PROCESS_LION_REQUEST_ID 0x000072a1U
 #define CGS_SET_FRONT_PROCESS_LION_REPLY_ID 0x00007305U
+#endif
+#ifdef PM_CGS_NEWWINDOW_TRACE
+#define CGS_CREATE_WINDOW_INLINE_LEGACY_REQUEST_ID 0x00007394U
+#define CGS_CREATE_WINDOW_INLINE_LEGACY_REPLY_ID 0x000073f8U
+#define CGS_CREATE_WINDOW_INLINE_LION_REQUEST_ID 0x0000739aU
+#define CGS_CREATE_WINDOW_INLINE_LION_REPLY_ID 0x000073feU
 #endif
 #endif
 
@@ -1144,6 +1152,12 @@ cgs_trace_kind(uint32_t request_id)
     if (request_id == CGS_SET_FRONT_PROCESS_LION_REQUEST_ID)
         return "CPS_SET_FRONT_PROCESS_LION";
 #endif
+#ifdef PM_CGS_NEWWINDOW_TRACE
+    if (request_id == CGS_CREATE_WINDOW_INLINE_LEGACY_REQUEST_ID)
+        return "CGS_CREATE_WINDOW_INLINE_LEGACY";
+    if (request_id == CGS_CREATE_WINDOW_INLINE_LION_REQUEST_ID)
+        return "CGS_CREATE_WINDOW_INLINE_LION";
+#endif
     return "UNKNOWN";
 }
 
@@ -1167,6 +1181,12 @@ cgs_trace_expected_reply(uint32_t request_id)
         return CGS_SET_FRONT_PROCESS_LEGACY_REPLY_ID;
     if (request_id == CGS_SET_FRONT_PROCESS_LION_REQUEST_ID)
         return CGS_SET_FRONT_PROCESS_LION_REPLY_ID;
+#endif
+#ifdef PM_CGS_NEWWINDOW_TRACE
+    if (request_id == CGS_CREATE_WINDOW_INLINE_LEGACY_REQUEST_ID)
+        return CGS_CREATE_WINDOW_INLINE_LEGACY_REPLY_ID;
+    if (request_id == CGS_CREATE_WINDOW_INLINE_LION_REQUEST_ID)
+        return CGS_CREATE_WINDOW_INLINE_LION_REPLY_ID;
 #endif
     return 0U;
 }
@@ -1193,6 +1213,11 @@ is_cgs_trace_candidate(mach_msg_header_t *msg)
 #ifdef PM_CPS_SETFRONT_TRACE
     if (request_id == CGS_SET_FRONT_PROCESS_LEGACY_REQUEST_ID ||
         request_id == CGS_SET_FRONT_PROCESS_LION_REQUEST_ID)
+        return 1;
+#endif
+#ifdef PM_CGS_NEWWINDOW_TRACE
+    if (request_id == CGS_CREATE_WINDOW_INLINE_LEGACY_REQUEST_ID ||
+        request_id == CGS_CREATE_WINDOW_INLINE_LION_REQUEST_ID)
         return 1;
 #endif
     return 0;
