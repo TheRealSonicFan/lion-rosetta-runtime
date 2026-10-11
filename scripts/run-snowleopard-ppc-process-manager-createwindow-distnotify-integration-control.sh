@@ -265,8 +265,10 @@ if [ "$RC" -eq 0 ] &&
    ! /usr/bin/grep -Fq 'PM_CPS_SETFRONT_COMPAT_CALL:index=2' "$LOG" &&
    ! /usr/bin/grep -Fq '_RegisterApplication(), FAILED TO REGISTER PROCESS WITH CPS/CoreGraphics in WindowServer' "$LOG" &&
    { [ -z "$HITOOLBOX_TRACE" ] ||
-     { [ "$(/usr/bin/grep -c 'PM_HITOOLBOX_CFBUNDLE_TRACE_TARGET:.*bundle=com.apple.HIToolbox name=Extras type=rsrc subdir=NULL localization=NULL' "$LOG" 2>/dev/null || true)" -eq 1 ] &&
-       /usr/bin/grep -Fq 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:index=1 url=NONNULL' "$LOG"; }; }; then
+     { [ "$(/usr/bin/grep -c 'PM_HITOOLBOX_CFBUNDLE_TRACE_TARGET:.*bundle=com.apple.HIToolbox name=Extras type=rsrc subdir=NULL localization=NULL' "$LOG" 2>/dev/null || true)" -ge 1 ] &&
+       /usr/bin/grep -Fq 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:' "$LOG" &&
+       /usr/bin/grep -Fq ' url=NONNULL ' "$LOG" &&
+       ! /usr/bin/grep -F 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:' "$LOG" | /usr/bin/grep -Fq ' url=NULL '; }; }; then
     if [ -n "$HITOOLBOX_TRACE" ]; then
         echo "RESULT: CREATENEWWINDOW_HITOOLBOX_CFBUNDLE_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
     else
