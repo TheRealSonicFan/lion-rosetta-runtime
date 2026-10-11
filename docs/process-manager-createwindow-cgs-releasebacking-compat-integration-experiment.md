@@ -351,3 +351,60 @@ next step                                       -> one exact live 0x724b -> 0x72
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — release-backing live adapter passed; opacity is next
+
+The returned Snow control and Lion safety/integration evidence pass the release-backing live compatibility stage through the exact native release-backing RPC.
+
+Snow Leopard remains a full positive passthrough control: the release-backing compatibility predicate is reached exactly once in `passthrough` mode, the legacy `0x724b / 0x28 / 0x2c` request receives legacy `0x72af / 0x24 / result 0`, `CreateNewWindow=0`, the WindowRef is nonzero, DisposeWindow completes, and M24 succeeds.
+
+Lion preserves the accepted NewWindow path, then performs exactly one release-backing conversion:
+
+```text
+legacy request ID           0x724b
+native request ID           0x724c
+send / receive              0x28 / 0x2c
+window ID                   0x21c
+release flag                1
+request changed bytes       1
+request body changes        0
+source request changes      0
+
+native reply ID             0x72b0
+native reply size           0x24
+native result               0
+legacy reply ID             0x72af
+reply changed bytes         1
+reply body changes          0
+adapter result              PASS
+legacy-facing ID match      YES
+```
+
+The public `CreateNewWindow` call still does not reach M21. The first diagnostic after the successful release-backing legacy-facing reply is now:
+
+```text
+(ipc/rcv) msg too large: CGSSetWindowOpacity
+```
+
+It is followed by `CGSGetDisplayBounds (display 0)` illegal argument and `CGSShapeWindow` MIG type-check failure. The exact-four notification broker still passes, protected hashes remain unchanged, execution status is 138, and the runner produced:
+
+```text
+RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN
+```
+
+New diagnostics to preserve locally:
+
+```text
+/Users/Andy/Library/Logs/DiagnosticReports/.ppc-process-manager-cgs-session-bootstrap-integration-private-dy_2026-10-11-172341_Andys-Mac.crash.plist
+/Users/Andy/Library/Logs/DiagnosticReports/ppc-process-manager-cgs-session-bootstrap-integration-private-dy_2026-10-11-172341_Andys-Mac.crash
+/cores/core.37178
+```
+
+The earlier broad static audit did not justify a direct opacity ID rewrite. Re-review of those accepted static reports shows that `_CGSSetWindowOpacity` branches through `__CGSCreateWindowAlphaPlane` and `__CGSTerminateWindowAlphaPlane`, with generated-MIG transport under those helpers. The authoritative next procedure is:
+
+```text
+docs/process-manager-createwindow-cgs-opacity-alpha-plane-protocol-audit.md
+```
+
+That phase is static/read-only and emits complete Snow PPC and Lion i386 symbol windows for both alpha-plane generated-MIG helpers before any further live trace or compatibility change.
