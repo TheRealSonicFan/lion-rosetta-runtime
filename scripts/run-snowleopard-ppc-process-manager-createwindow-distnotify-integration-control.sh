@@ -18,6 +18,7 @@ HITOOLBOX_EXTRAS_RESOURCE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH:-}"
 HITOOLBOX_EXTRAS_MODE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE:-}"
 DOCKSERVER_COMPAT_MODE="${ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE:-}"
 FONTSERVER_COMPAT_MODE="${ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE:-}"
+FONTSERVER_RPC_TRACE_MODE="${ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE:-}"
 NEWWINDOW_TRACE_MODE="${ROSETTA_CGS_NEWWINDOW_TRACE_MODE:-}"
 NEWWINDOW_COMPAT_MODE="${ROSETTA_CGS_NEWWINDOW_COMPAT_MODE:-}"
 RELEASEBACKING_TRACE_MODE="${ROSETTA_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE_MODE:-}"
@@ -52,6 +53,15 @@ if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
     [ "$DOCKSERVER_COMPAT_MODE" = "passthrough" ] ||
         fail "Snow FontServer compatibility requires DockServer passthrough"
     EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-fontserver-compat-v3"
+fi
+if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
+    [ "$FONTSERVER_RPC_TRACE_MODE" = "snow-passive-v1" ] ||
+        fail "Snow FontServer RPC trace mode must be snow-passive-v1"
+    [ "$FONTSERVER_COMPAT_MODE" = "passthrough" ] ||
+        fail "Snow FontServer RPC trace requires FontServer passthrough"
+    [ -n "$POST_CREATEWINDOW_TITLE_MODE" ] ||
+        fail "Snow FontServer RPC trace requires the window-title subject"
+    EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-fontserver-compat-rpc-trace-v4"
 fi
 if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
     [ "$NEWWINDOW_TRACE_MODE" = "passthrough" ] ||
@@ -287,6 +297,12 @@ fi
     "PM_SECURITY_SESSION_API_COMPAT_BUILD_ID:$EXPECTED_SEC_BUILD_ID" || fail "Security build marker missing"
 /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq \
     "PM_CGS_SESSION_BOOTSTRAP_COMPAT_BUILD_ID:$EXPECTED_CGS_BUILD_ID" || fail "CGS build marker missing"
+if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
+    /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REQUEST:' ||
+        fail "FontServer RPC trace request marker missing"
+    /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REPLY:' ||
+        fail "FontServer RPC trace reply marker missing"
+fi
 if [ -n "$HITOOLBOX_TRACE" ]; then
     /usr/bin/strings "$HITOOLBOX_TRACE" | /usr/bin/grep -Fq \
         "PM_HITOOLBOX_CFBUNDLE_TRACE_BUILD_ID:$EXPECTED_HITOOLBOX_TRACE_BUILD_ID" ||
@@ -338,6 +354,12 @@ if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
     export ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE="$FONTSERVER_COMPAT_MODE"
 else
     unset ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE
+fi
+if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
+    echo "fontserver_rpc_trace_mode=$FONTSERVER_RPC_TRACE_MODE" | /usr/bin/tee -a "$LOG"
+    export ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE="$FONTSERVER_RPC_TRACE_MODE"
+else
+    unset ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE
 fi
 if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
     echo "cgs_newwindow_trace_mode=$NEWWINDOW_TRACE_MODE" | /usr/bin/tee -a "$LOG"
@@ -430,6 +452,13 @@ if [ "$RC" -eq 0 ] &&
        /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH:reason=FONT_SNOW_PASSTHROUGH' "$LOG" &&
        /usr/bin/grep -Eq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH_RETURN:kr=0 hex=0x00000000 servicePort=0x0*[1-9a-fA-F][0-9a-fA-F]*' "$LOG" &&
        ! /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$LOG"; }; } &&
+   { [ -z "$FONTSERVER_RPC_TRACE_MODE" ] ||
+     { /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_PORT:servicePort=' "$LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REQUEST:index=1 mode=snow-passive-v1' "$LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_MACH_RETURN:index=1' "$LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REPLY:index=1' "$LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REQUEST_HEX:index=1' "$LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REPLY_HEX:index=1' "$LOG"; }; } &&
    /usr/bin/grep -Fq 'PM_CGS_SERVER_VERSION_COMPAT_CALL:index=1 mode=passthrough' "$LOG" &&
    /usr/bin/grep -Fq 'PM_CGS_SERVER_VERSION_COMPAT_RESULT:PASSTHROUGH major=545 minor=0' "$LOG" &&
    ! /usr/bin/grep -Fq 'PM_CGS_SERVER_VERSION_COMPAT_RESULT:ADAPTER_PASS' "$LOG" &&
@@ -551,7 +580,9 @@ if [ "$RC" -eq 0 ] &&
             echo "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT" | /usr/bin/tee -a "$LOG"
             echo "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT" | /usr/bin/tee -a "$LOG"
             if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
-                if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
+                if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
+                    echo "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+                elif [ -n "$FONTSERVER_COMPAT_MODE" ]; then
                     echo "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
                 else
                     echo "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
