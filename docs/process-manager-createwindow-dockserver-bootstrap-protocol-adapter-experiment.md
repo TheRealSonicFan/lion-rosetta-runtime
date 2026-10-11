@@ -280,3 +280,41 @@ next step                                                -> isolated Dock lookup
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed result — exact Lion Dock lookup passes
+
+The standalone experiment completed successfully.
+
+Snow Leopard 10.6.8 resolved `com.apple.dock.server` through ordinary PPC `bootstrap_look_up` with `kr=0` and a nonzero service port. The transferred PPC subject retained the expected hash and `/usr/oah/dyld` load command.
+
+On Lion 10.7.5, the subject sent exactly the prepared request:
+
+```text
+name=com.apple.dock.server
+id=0x00000194
+send=0x000000bc
+recv=0x0000006c
+target_pid=0
+uuid=ZERO
+flags=0
+```
+
+`mach_msg` returned success. The reply was complex, size `0x28`, ID `0x1f8`, descriptor count 1, and carried a nonzero service port with a valid send right. The runner ended with:
+
+```text
+PM_DOCKSERVER_BOOTSTRAP_ADAPTER_RESULT:ADAPTER_LOOKUP_PASS
+RESULT: DOCKSERVER_BOOTSTRAP_PROTOCOL_ADAPTER_PASS
+```
+
+No new crash/core diagnostic was detected. The kernel, translator, private/system dyld, Dock executable, Rosetta cache, and PPC probe hashes remained unchanged. The syscall-295 routing probe also remained a clean EBADF/no-SIGSYS PASS.
+
+This proves that the prior integrated `bootstrap_look_up("com.apple.dock.server") -> -304` failure is another instance of the already established Snow-Leopard-to-Lion launchd request-layout mismatch. No further standalone bootstrap audit is required for this service.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-createwindow-dockserver-bootstrap-compat-integration-experiment.md
+```
+
+That stage builds an opt-in v2 variant of the existing CGS bootstrap interposer, requires a full Snow Leopard CreateNewWindow passthrough control, and then performs exactly one Lion CreateNewWindow run with only the exact Dock service adaptation added. The accepted four-registration notification broker and exact Snow `Extras.rsrc` fallback remain unchanged. No XNU change is indicated.
