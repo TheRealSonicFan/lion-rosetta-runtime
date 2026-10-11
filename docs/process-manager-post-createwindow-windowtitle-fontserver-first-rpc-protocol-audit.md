@@ -258,3 +258,33 @@ next step                                   -> static Snow/Lion first-RPC protoc
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed result — native Lion replaced Rendezvous with Rendezvous2
+
+Both v1 reports completed with `RESULT: PASS`, but the decisive result is not a complete protocol decode; it is the client-family replacement that the first analyzer exposed.
+
+Snow Leopard PPC `libFontRegistry.dylib` contains `_XTSendRendezvous`. Its emitted function window proves:
+
+```text
+request ID    0x32c8
+bits          0x1513
+send          0x18
+receive       0x3c
+reply ID      0x332c
+success form  complex, size 0x34
+```
+
+Lion's required i386 `libFontRegistry.dylib` contains no raw `0x32c8` request constant. Instead it contains `_XTSendRendezvous2`, and the Lion global registry rendezvous path calls that routine. Lion also carries explicit diagnostics for rendezvous failure and protocol-version mismatch/fallback.
+
+The v1 analyzer was seeded by already captured request IDs. Because Lion's native replacement no longer uses `0x32c8`, v1 did not emit the body of `_XTSendRendezvous2`; therefore it did not establish the new request ID, layout, or reply contract. Likewise, the discovered `fontd` executable contains no relevant generated-RPC body itself and links `libATSServer.dylib`, which v1 did not inspect. The server-side dispatch and the semantic meaning of Lion's `-667` reply therefore remain unproven.
+
+This is enough to reject an immediate ID-only adapter: the old rendezvous operation has been superseded at the native Lion client boundary, but the exact replacement contract still must be decoded.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-post-createwindow-windowtitle-fontserver-rendezvous-protocol-v2-audit.md
+```
+
+That read-only audit exact-targets `_XTSendRendezvous`, `_XTSendRendezvous2`, the registry rendezvous wrapper, and `libATSServer.dylib`, including all `0x3200..0x3400` protocol-range immediates and raw `-667/-304` constants. Do not rerun the PPC title path or adapt any FontServer message until the v2 client/server evidence is reviewed.
