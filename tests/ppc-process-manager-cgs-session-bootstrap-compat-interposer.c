@@ -13,7 +13,9 @@ extern kern_return_t bootstrap_look_up(mach_port_t,
                                        mach_port_t *);
 extern mach_port_t mig_get_reply_port(void);
 
-#ifdef PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT
+#ifdef PM_CGS_FONTSERVER_RPC_TRACE
+#define COMPAT_BUILD_ID "cgs-session-bootstrap-dockserver-fontserver-compat-rpc-trace-v4"
+#elif defined(PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT)
 #define COMPAT_BUILD_ID "cgs-session-bootstrap-dockserver-fontserver-compat-v3"
 #elif defined(PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT)
 #define COMPAT_BUILD_ID "cgs-session-bootstrap-dockserver-compat-v2"
@@ -33,6 +35,12 @@ extern mach_port_t mig_get_reply_port(void);
 #define FONT_COMPAT_MODE_ENV "ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE"
 #define FONT_COMPAT_MODE_PASSTHROUGH "passthrough"
 #define FONT_COMPAT_MODE_LION "lion-fontserver-v1"
+#endif
+#ifdef PM_CGS_FONTSERVER_RPC_TRACE
+#define FONT_RPC_TRACE_MODE_ENV "ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE"
+#define FONT_RPC_TRACE_MODE_SNOW "snow-passive-v1"
+#define FONT_RPC_TRACE_MODE_LION "lion-passive-v1"
+#define FONT_RPC_TRACE_HEX_MAX 0x00000400U
 #endif
 
 #define LION_LOOKUP_REQUEST_ID 0x00000194U
@@ -84,6 +92,15 @@ static const char *kFontServerService =
 typedef kern_return_t (*bootstrap_lookup_fn)(mach_port_t,
                                              const char *,
                                              mach_port_t *);
+#ifdef PM_CGS_FONTSERVER_RPC_TRACE
+typedef mach_msg_return_t (*mach_msg_fn)(mach_msg_header_t *,
+                                         mach_msg_option_t,
+                                         mach_msg_size_t,
+                                         mach_msg_size_t,
+                                         mach_port_name_t,
+                                         mach_msg_timeout_t,
+                                         mach_port_name_t);
+#endif
 
 struct interpose_tuple {
     const void *replacement;
@@ -94,6 +111,16 @@ static kern_return_t rosetta_bootstrap_look_up(mach_port_t,
                                                 const char *,
                                                 mach_port_t *);
 static struct interpose_tuple sInterpose;
+#ifdef PM_CGS_FONTSERVER_RPC_TRACE
+static mach_msg_return_t rosetta_fontserver_mach_msg(mach_msg_header_t *,
+                                                      mach_msg_option_t,
+                                                      mach_msg_size_t,
+                                                      mach_msg_size_t,
+                                                      mach_port_name_t,
+                                                      mach_msg_timeout_t,
+                                                      mach_port_name_t);
+static struct interpose_tuple sMachInterpose;
+#endif
 
 static bootstrap_lookup_fn gOriginalLookup = NULL;
 static unsigned int gExactCallCount = 0;
@@ -105,6 +132,11 @@ static unsigned int gDockAdaptedCallCount = 0;
 #ifdef PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT
 static unsigned int gFontCallCount = 0;
 static unsigned int gFontAdaptedCallCount = 0;
+#endif
+#ifdef PM_CGS_FONTSERVER_RPC_TRACE
+static mach_msg_fn gOriginalMachMsg = NULL;
+static mach_port_t gFontServicePort = MACH_PORT_NULL;
+static unsigned int gFontRpcCount = 0;
 #endif
 
 static void
@@ -144,6 +176,55 @@ original_lookup(void)
     }
     return gOriginalLookup;
 }
+
+#ifdef PM_CGS_FONTSERVER_RPC_TRACE
+static mach_msg_fn
+original_mach_msg(void)
+{
+    if (gOriginalMachMsg == NULL) {
+        gOriginalMachMsg =
+            (mach_msg_fn)(uintptr_t)sMachInterpose.replacee;
+    }
+    return gOriginalMachMsg;
+}
+
+static void
+font_rpc_trace_hex(const char *kind,
+                   unsigned int index,
+                   const unsigned char *bytes,
+                   uint32_t length)
+{
+    uint32_t i;
+    uint32_t emit = length;
+
+    if (emit > FONT_RPC_TRACE_HEX_MAX)
+        emit = FONT_RPC_TRACE_HEX_MAX;
+
+    fprintf(stderr,
+            "PM_CGS_FONTSERVER_RPC_TRACE_%s_HEX:index=%u length=0x%08lx emitted=0x%08lx truncated=%s data=",
+            kind,
+            index,
+            (unsigned long)length,
+            (unsigned long)emit,
+            length > emit ? "YES" : "NO");
+    for (i = 0; i < emit; ++i)
+        fprintf(stderr, "%02x", (unsigned int)bytes[i]);
+    fprintf(stderr, "\n");
+    fflush(stderr);
+}
+
+static void
+remember_font_service_port(mach_port_t port)
+{
+    if (port == MACH_PORT_NULL)
+        return;
+    gFontServicePort = port;
+    fprintf(stderr,
+            "PM_CGS_FONTSERVER_RPC_TRACE_PORT:servicePort=0x%08lx\n",
+            (unsigned long)port);
+    fflush(stderr);
+}
+#endif
 
 static kern_return_t
 call_original_lookup(mach_port_t bp,
@@ -934,8 +1015,15 @@ rosetta_bootstrap_look_up(mach_port_t bp,
         }
 
         if (strcmp(font_mode, FONT_COMPAT_MODE_PASSTHROUGH) == 0) {
-            return call_original_lookup(bp, service_name, service_port,
-                                        "FONT_SNOW_PASSTHROUGH");
+            kr = call_original_lookup(bp, service_name, service_port,
+                                      "FONT_SNOW_PASSTHROUGH");
+#ifdef PM_CGS_FONTSERVER_RPC_TRACE
+            if (kr == KERN_SUCCESS &&
+                service_port != NULL &&
+                *service_port != MACH_PORT_NULL)
+                remember_font_service_port(*service_port);
+#endif
+            return kr;
         }
 
         if (strcmp(font_mode, FONT_COMPAT_MODE_LION) != 0) {
@@ -962,6 +1050,9 @@ rosetta_bootstrap_look_up(mach_port_t bp,
         if (kr == KERN_SUCCESS &&
             service_port != NULL &&
             *service_port != MACH_PORT_NULL) {
+#ifdef PM_CGS_FONTSERVER_RPC_TRACE
+            remember_font_service_port(*service_port);
+#endif
             fprintf(stderr,
                     "PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS\n");
         } else {
@@ -1035,9 +1126,130 @@ rosetta_bootstrap_look_up(mach_port_t bp,
     return kr;
 }
 
+
+#ifdef PM_CGS_FONTSERVER_RPC_TRACE
+static mach_msg_return_t
+rosetta_fontserver_mach_msg(mach_msg_header_t *msg,
+                            mach_msg_option_t option,
+                            mach_msg_size_t send_size,
+                            mach_msg_size_t rcv_size,
+                            mach_port_name_t rcv_name,
+                            mach_msg_timeout_t timeout,
+                            mach_port_name_t notify)
+{
+    mach_msg_fn fn = original_mach_msg();
+    mach_msg_return_t mr;
+    uint32_t remote_port = MACH_PORT_NULL;
+    uint32_t request_id = 0;
+    uint32_t request_bits = 0;
+    uint32_t header_size = 0;
+    unsigned int index = 0;
+    int target = 0;
+    const char *mode = getenv(FONT_RPC_TRACE_MODE_ENV);
+
+    if (fn == NULL || fn == (mach_msg_fn)&rosetta_fontserver_mach_msg)
+        return MIG_BAD_ID;
+
+    if (msg != NULL && send_size >= sizeof(mach_msg_header_t)) {
+        remote_port = (uint32_t)msg->msgh_remote_port;
+        request_id = (uint32_t)msg->msgh_id;
+        request_bits = (uint32_t)msg->msgh_bits;
+        header_size = (uint32_t)msg->msgh_size;
+
+        target = mode != NULL &&
+                 (strcmp(mode, FONT_RPC_TRACE_MODE_SNOW) == 0 ||
+                  strcmp(mode, FONT_RPC_TRACE_MODE_LION) == 0) &&
+                 gFontServicePort != MACH_PORT_NULL &&
+                 remote_port == (uint32_t)gFontServicePort;
+    }
+
+    if (target) {
+        index = ++gFontRpcCount;
+        fprintf(stderr, "%s\n", COMPAT_BUILD_MARKER);
+        fprintf(stderr,
+                "PM_CGS_FONTSERVER_RPC_TRACE_REQUEST:index=%u mode=%s id=0x%08lx remote=0x%08lx bits=0x%08lx headerSizeObserved=0x%08lx option=0x%08lx send=0x%08lx recv=0x%08lx receivePort=0x%08lx timeout=0x%08lx notify=0x%08lx\n",
+                index,
+                mode,
+                (unsigned long)request_id,
+                (unsigned long)remote_port,
+                (unsigned long)request_bits,
+                (unsigned long)header_size,
+                (unsigned long)(uint32_t)option,
+                (unsigned long)send_size,
+                (unsigned long)rcv_size,
+                (unsigned long)rcv_name,
+                (unsigned long)timeout,
+                (unsigned long)notify);
+        font_rpc_trace_hex("REQUEST", index,
+                           (const unsigned char *)msg,
+                           (uint32_t)send_size);
+    }
+
+    mr = fn(msg, option, send_size, rcv_size,
+            rcv_name, timeout, notify);
+
+    if (target) {
+        fprintf(stderr,
+                "PM_CGS_FONTSERVER_RPC_TRACE_MACH_RETURN:index=%u requestId=0x%08lx kr=%ld hex=0x%08lx\n",
+                index,
+                (unsigned long)request_id,
+                (long)mr,
+                (unsigned long)(uint32_t)mr);
+
+        if (mr == MACH_MSG_SUCCESS && msg != NULL) {
+            uint32_t reply_bits = (uint32_t)msg->msgh_bits;
+            uint32_t reply_size = (uint32_t)msg->msgh_size;
+            uint32_t reply_id = (uint32_t)msg->msgh_id;
+            uint32_t safe_reply_size = reply_size;
+
+            if (safe_reply_size > (uint32_t)rcv_size)
+                safe_reply_size = (uint32_t)rcv_size;
+
+            fprintf(stderr,
+                    "PM_CGS_FONTSERVER_RPC_TRACE_REPLY:index=%u requestId=0x%08lx bits=0x%08lx size=0x%08lx replyId=0x%08lx",
+                    index,
+                    (unsigned long)request_id,
+                    (unsigned long)reply_bits,
+                    (unsigned long)reply_size,
+                    (unsigned long)reply_id);
+
+            if ((reply_bits & MACH_MSGH_BITS_COMPLEX) == 0 &&
+                safe_reply_size >= 0x24U) {
+                int32_t word20 =
+                    (int32_t)get_u32(((unsigned char *)msg) + 0x20U);
+                fprintf(stderr,
+                        " word0x20=%ld word0x20Hex=0x%08lx",
+                        (long)word20,
+                        (unsigned long)(uint32_t)word20);
+                if (reply_size == 0x24U)
+                    fprintf(stderr, " simpleMigErrorReply=YES");
+            }
+            fprintf(stderr, "\n");
+            fflush(stderr);
+
+            if (safe_reply_size != 0U)
+                font_rpc_trace_hex("REPLY", index,
+                                   (const unsigned char *)msg,
+                                   safe_reply_size);
+        }
+        fflush(stderr);
+    }
+
+    return mr;
+}
+#endif
+
 __attribute__((used))
 static struct interpose_tuple sInterpose
 __attribute__((section("__DATA,__interpose"))) = {
     (const void *)(uintptr_t)&rosetta_bootstrap_look_up,
     (const void *)(uintptr_t)&bootstrap_look_up
 };
+#ifdef PM_CGS_FONTSERVER_RPC_TRACE
+__attribute__((used))
+static struct interpose_tuple sMachInterpose
+__attribute__((section("__DATA,__interpose"))) = {
+    (const void *)(uintptr_t)&rosetta_fontserver_mach_msg,
+    (const void *)(uintptr_t)&mach_msg
+};
+#endif
