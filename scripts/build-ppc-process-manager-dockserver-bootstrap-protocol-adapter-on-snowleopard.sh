@@ -25,13 +25,28 @@ resolve_compiler() {
     command -v "$candidate" 2>/dev/null || return 1
 }
 
+macho_arch() {
+    info="$(/usr/bin/lipo -info "$1" 2>/dev/null || true)"
+    case "$info" in
+        *" is architecture: "*) echo "$info" | /usr/bin/sed 's/^.* is architecture: //' ;;
+        *) return 1 ;;
+    esac
+}
+
+is_ppc32_arch_name() {
+    case "$1" in
+        ppc|ppc601|ppc603|ppc603e|ppc603ev|ppc604|ppc604e|ppc750|ppc7400|ppc7450|ppc970)
+            return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 is_ppc32_macho() {
     file="$1"
-    if [ -x /usr/bin/lipo ]; then
-        /usr/bin/lipo -verify_arch ppc "$file" >/dev/null 2>&1 && return 0
-        /usr/bin/lipo "$file" -verify_arch ppc >/dev/null 2>&1 && return 0
-    fi
+    arch="$(macho_arch "$file")" || return 1
+    is_ppc32_arch_name "$arch" || return 1
     desc="$(/usr/bin/file "$file" 2>/dev/null || true)"
+    echo "$desc" | /usr/bin/grep -Fq 'Mach-O' || return 1
     echo "$desc" | /usr/bin/grep -Eiq '(^|[^[:alnum:]_])(ppc|powerpc)([^[:alnum:]_]|$)' || return 1
     echo "$desc" | /usr/bin/grep -Eiq 'ppc64|powerpc64' && return 1
     return 0
