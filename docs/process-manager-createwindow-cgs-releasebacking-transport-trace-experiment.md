@@ -296,3 +296,57 @@ next step                                       -> passive exact release-backing
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed result — legacy release-backing reaches Lion and returns -304
+
+The returned evidence closes the passive transport gate.
+
+Artifact provenance:
+
+```text
+build ID                         dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-trace-v1
+architecture                     ppc7400
+interpose section size           0x10 (two PPC tuples)
+trace dylib SHA-256              8c87c768fc92e2f2c602c59945371fb5026104ff2b1b299fc242436d8bee3413
+Snow control                     PASS
+syscall 295                      EBADF / no SIGSYS / PASS
+```
+
+The exact Snow control transaction was:
+
+```text
+request                          bits=0x1513 id=0x724b option=0x3 send=0x28 recv=0x2c
+request words                    off18=0 off1c=0 off20=0x000000ff off24=1
+Mach result                      0
+reply                            bits=0x1200 size=0x24 id=0x72af
+reply raw result                 0x00000000
+CreateNewWindow                  0
+WindowRef                        nonzero
+DisposeWindow / M24              reached
+```
+
+The exact Lion transaction, after the already accepted NewWindow adapter returned a native `0x73fe / 0x38 / result 0` success and mapped it back to `0x73f8`, was:
+
+```text
+request                          bits=0x1513 id=0x724b option=0x3 send=0x28 recv=0x2c
+request words                    off18=0 off1c=0 off20=0x0000020a off24=1
+Mach result                      0
+reply                            bits=0x1200 size=0x24 id=0x72af
+reply raw result                 0xd0feffff
+decoded result                   -304
+CoreGraphics diagnostic          MIG server type check failure: CGSSetWindowToReleaseBackingOnOrderOut
+runner result                    CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_LEGACY_REPLY_OBSERVED
+```
+
+The differing first post-NDR scalar (`0xff` on Snow, `0x20a` on Lion) is a per-run object value; the layout and second scalar remain aligned. The important discriminator is that Lion returns Mach success and the normal legacy reply envelope while carrying the same `-304` generated-MIG error pattern previously seen at NewWindow before its ID adaptation.
+
+The exact-four notification registrations and native broker remained PASS, the process again terminated later with status 138 and the same downstream opacity/display-bounds/ShapeWindow diagnostics, and all protected hashes remained unchanged. The syscall-295 safety gate also remained PASS.
+
+The next step is **not** live translation. The authoritative procedure is now:
+
+```text
+docs/process-manager-createwindow-cgs-releasebacking-compat-protocol-adapter-experiment.md
+```
+
+That stage is a standalone no-Mach-IPC copied-buffer proof of only `0x724b -> 0x724c` and `0x72b0 -> 0x72af`, including preservation of both success result 0 and a modeled nonzero `-304` result. Do not integrate the conversion until that proof is reviewed.
