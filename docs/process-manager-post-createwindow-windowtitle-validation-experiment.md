@@ -379,3 +379,33 @@ next step                                        -> SetWindowTitleWithCFString o
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed Lion result — FontServer bootstrap is the first window-title boundary
+
+The Snow Leopard full-stack control passed the complete title sequence. After `T02_BEFORE_SetWindowTitleWithCFString`, Snow loaded `libFontRegistry.dylib`, performed ordinary `bootstrap_look_up("com.apple.FontServer")`, received `kr=0` with a nonzero service port, returned from `SetWindowTitleWithCFString` with status 0, released the title, disposed the window, and reached `M24_SUCCESS`.
+
+The Lion run preserves every accepted upstream gate: the subject hash matches, syscall 295 remains EBADF/no-SIGSYS, CreateNewWindow returns 0 with a nonzero WindowRef, and `CFStringCreateWithCString` returns a nonzero object. Lion then reaches `T02_BEFORE_SetWindowTitleWithCFString` and loads the same FontRegistry component, but its first newly divergent operation is:
+
+```text
+PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH:reason=NON_TARGET ... name=com.apple.FontServer
+PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH_RETURN:kr=-304 hex=0xfffffed0 servicePort=0x00000000
+```
+
+This occurs before the fifth distributed-notification request. That later request has payload length 321 and is rejected with status 25 by the deliberately exact-four broker; the broker summary becomes `register=4 ... rejects=1 exact=NO`. The run then repeatedly retries the failing FontServer lookup, CoreText reports invalid font-server IPC destinations, `T03_AFTER_SetWindowTitleWithCFString` is never reached, the subject exits 138, and the runner names a new crash report plus `/cores/core.44137`. Protected hashes remain unchanged.
+
+The returned top-level label `CREATENEWWINDOW_POST_EXTRAS_REGISTRATION_PROTOCOL_REJECTED` was therefore too coarse for this new post-CreateNewWindow stage: it classified the later broker rejection before the earlier title-specific boundary. The Lion runner has been corrected so the same evidence would classify as:
+
+```text
+RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_BOOTSTRAP_MINUS304
+```
+
+Do not broaden the notification allowlist yet. The first Snow/Lion divergence is the exact `com.apple.FontServer` bootstrap lookup.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-post-createwindow-fontserver-bootstrap-protocol-adapter-experiment.md
+```
+
+It is standalone. It requires an ordinary Snow `com.apple.FontServer` lookup to return a nonzero port, then sends exactly one already-established Lion-format launchd lookup request for the same service with request ID `0x194`, send size `0xbc`, PID 0, zero UUID, flags 0, and expected reply ID `0x1f8`. It does not rerun the window-title subject, accept the fifth notification, or alter any accepted CreateNewWindow adapter. No XNU change is indicated.
