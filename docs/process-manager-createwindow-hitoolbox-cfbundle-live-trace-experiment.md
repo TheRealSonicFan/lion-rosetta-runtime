@@ -255,3 +255,52 @@ If Snow's live call returns a URL and Lion's otherwise equivalent live call retu
 If the live differential is not confirmed, analyze the trace and new diagnostic before proposing any resource compatibility mechanism.
 
 No additional XNU change is indicated by the current evidence.
+
+## Returned Phase F result
+
+The completed live-call differential returned the exact expected result.
+
+Snow Leopard observed the target twice:
+
+```text
+PM_HITOOLBOX_CFBUNDLE_TRACE_TARGET: ... bundle=com.apple.HIToolbox name=Extras type=rsrc ...
+PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT: ... url=NONNULL .../HIToolbox.framework/Resources/Extras.rsrc
+```
+
+and then reached:
+
+```text
+M21_AFTER_CreateNewWindow
+CreateNewWindow=0
+nonzero WindowRef
+M23_AFTER_DisposeWindow
+M24_SUCCESS
+RESULT: CREATENEWWINDOW_HITOOLBOX_CFBUNDLE_TRACE_SNOW_CONTROL_PASS
+RESULT: PASS
+```
+
+Lion observed the same exact target once:
+
+```text
+PM_HITOOLBOX_CFBUNDLE_TRACE_TARGET: ... bundle=com.apple.HIToolbox name=Extras type=rsrc ...
+PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:index=1 url=NULL path=(unavailable)
+HIToolbox: failed to copy resource URL for framework bundle.
+HIToolbox is damaged with error -4960 and TTheme instance 0. Aborting...
+```
+
+The native notification broker still reported `register=3 callback=0 rejects=0 exact=YES` and PASS, the subject exited 134, protected hashes were unchanged, and the runner returned:
+
+```text
+RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_LOOKUP_CONFIRMED_NO_RETURN
+```
+
+This closes the live lookup boundary: the restored Snow PPC HIToolbox code reaches the same `Extras`/`rsrc` CFBundle lookup on both systems, Snow resolves it to its `Extras.rsrc`, and Lion returns NULL immediately before the abort.
+
+Current `main` therefore advances to:
+
+```text
+docs/process-manager-createwindow-hitoolbox-extras-resource-compat-experiment.md
+```
+
+The next stage uses only the exact SHA-pinned Snow Leopard 10.6.8 `Extras.rsrc`, staged locally from the user's own Snow installation, and supplies it from an external process-local path. A forced-external Snow control must pass before one Lion fallback run is authorized. Lion's `Extras2.rsrc` remains explicitly out of scope because the existing resource comparison shows it is not payload-equivalent. No additional XNU change is indicated.
+
