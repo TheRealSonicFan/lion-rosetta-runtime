@@ -27,6 +27,7 @@ DOCKSERVER_COMPAT_MODE="${ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE:-}"
 NEWWINDOW_TRACE_MODE="${ROSETTA_CGS_NEWWINDOW_TRACE_MODE:-}"
 NEWWINDOW_COMPAT_MODE="${ROSETTA_CGS_NEWWINDOW_COMPAT_MODE:-}"
 RELEASEBACKING_TRACE_MODE="${ROSETTA_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE_MODE:-}"
+RELEASEBACKING_COMPAT_MODE="${ROSETTA_CGS_RELEASEBACKING_COMPAT_MODE:-}"
 
 TRANSLATOR="/usr/libexec/oah/translate"
 PRIVATE_DYLD="/usr/oah/dyld"
@@ -115,6 +116,15 @@ if [ -n "$RELEASEBACKING_TRACE_MODE" ]; then
     [ "$NEWWINDOW_COMPAT_MODE" = "lion-inline-id-v1" ] ||
         die 64 "post-NewWindow release-backing trace requires lion-inline-id-v1 NewWindow compatibility"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-trace-v1"
+fi
+if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+    [ "$RELEASEBACKING_COMPAT_MODE" = "lion-id-v1" ] ||
+        die 64 "unsupported ROSETTA_CGS_RELEASEBACKING_COMPAT_MODE: $RELEASEBACKING_COMPAT_MODE"
+    [ "$NEWWINDOW_COMPAT_MODE" = "lion-inline-id-v1" ] ||
+        die 64 "release-backing compatibility requires lion-inline-id-v1 NewWindow compatibility"
+    [ -z "$RELEASEBACKING_TRACE_MODE" ] ||
+        die 64 "release-backing compatibility and passive-trace runner modes are mutually exclusive"
+    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-v1"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 
@@ -371,6 +381,12 @@ if [ -n "$RELEASEBACKING_TRACE_MODE" ]; then
     /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_SET_WINDOW_RELEASE_BACKING_LION' ||
         die 68 "CGS release-backing Lion trace marker missing"
 fi
+if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+    for marker in         'CGS_SET_WINDOW_RELEASE_BACKING_LEGACY'         'CGS_SET_WINDOW_RELEASE_BACKING_LION'         'PM_CGS_RELEASEBACKING_COMPAT_CALL:'         'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REQUEST:'         'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:'         'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:'         'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS'; do
+        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "CGS release-backing compatibility marker missing: $marker"
+    done
+fi
 /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq \
     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_BUILD_ID:$EXPECTED_BROKER_BUILD_ID" || die 68 "broker build marker missing"
 /usr/bin/strings "$SEC_INTERPOSER" | /usr/bin/grep -Fq \
@@ -464,6 +480,12 @@ if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
     export ROSETTA_CGS_NEWWINDOW_COMPAT_MODE="$NEWWINDOW_COMPAT_MODE"
 else
     unset ROSETTA_CGS_NEWWINDOW_COMPAT_MODE
+fi
+if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+    log "cgs_releasebacking_compat_mode=$RELEASEBACKING_COMPAT_MODE"
+    export ROSETTA_CGS_RELEASEBACKING_COMPAT_MODE="$RELEASEBACKING_COMPAT_MODE"
+else
+    unset ROSETTA_CGS_RELEASEBACKING_COMPAT_MODE
 fi
 
 MARKER="$(/usr/bin/mktemp /tmp/lion-createwindow-validation-marker.XXXXXX)" || die 73 "could not create diagnostic marker"
@@ -856,6 +878,41 @@ fi
 
 if /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG" &&
    ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M21_AFTER_CreateNewWindow' "$RAW_LOG"; then
+    if [ -n "$RELEASEBACKING_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        RELEASEBACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_releasebacking_compat_call_count=$RELEASEBACKING_COMPAT_COUNT"
+        if [ "$RELEASEBACKING_COMPAT_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseFlag=0x00000001 newWindowCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724b lionId=0x0000724c send=0x00000028 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=-[0-9]+ ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+           /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-[0-9]+ replyClass=ERROR' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        fi
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
     if [ -n "$RELEASEBACKING_TRACE_MODE" ] &&
        /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
        /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
@@ -1031,6 +1088,53 @@ if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
     fi
 fi
 
+if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+    RELEASEBACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    RELEASEBACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_releasebacking_compat_call_count=$RELEASEBACKING_COMPAT_COUNT"
+    log "cgs_releasebacking_legacy_trace_count=$RELEASEBACKING_TRACE_COUNT"
+
+    if [ "$RELEASEBACKING_COMPAT_COUNT" -ne 1 ] || [ "$RELEASEBACKING_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseFlag=0x00000001 newWindowCompatCalls=1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_MET"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724b lionId=0x0000724c send=0x00000028 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_FAILURE"
+        exit 0
+    fi
+
+    if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_releasebacking_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=-[0-9]+ ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-[0-9]+ replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_releasebacking_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
 if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] &&
    [ "$FOUND" -eq 0 ] &&
    /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=-304' "$RAW_LOG" &&
@@ -1045,7 +1149,9 @@ if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] &
 fi
 
 if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=0' "$RAW_LOG"; then
-    if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+    if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_SUCCESS_PUBLIC_ERROR"
+    elif [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
         log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_SUCCESS_PUBLIC_ERROR"
     elif [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
         log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_ADAPTER_PASS_CREATEWINDOW_ERROR"
@@ -1103,7 +1209,9 @@ if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:P
 fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
-    if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+    if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
         log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_INTEGRATION_PASS"
     elif [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
         log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_PASS"
