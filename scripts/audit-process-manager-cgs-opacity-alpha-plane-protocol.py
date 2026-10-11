@@ -9,7 +9,7 @@ import sys
 import tempfile
 
 DEFAULT_REPORT = "./process-manager-cgs-opacity-alpha-plane-protocol.txt"
-ANALYZER_VERSION = "1"
+ANALYZER_VERSION = "2"
 
 ROSETTA_CACHE = "/private/var/db/dyld/dyld_shared_cache_rosetta"
 ROSETTA_MAP = "/private/var/db/dyld/dyld_shared_cache_rosetta.map"
@@ -255,11 +255,12 @@ def main():
                             write_line(fp, "== Target inventory ==")
                             for target in TARGETS:
                                 hits = exact_symbol(ordered, target)
+                                addresses = ""
+                                if hits:
+                                    addresses = " addresses=" + ",".join(
+                                        ["0x%x" % hit[0] for hit in hits])
                                 write_line(fp, "%s count=%d%s" %
-                                           (target, len(hits),
-                                            (" addresses=%s" %
-                                             ",".join("0x%x" % x[0] for x in hits))
-                                             if hits else "")))
+                                           (target, len(hits), addresses))
                                 if len(hits) != 1:
                                     issues.append("%s: expected exactly one text symbol" %
                                                   target)
