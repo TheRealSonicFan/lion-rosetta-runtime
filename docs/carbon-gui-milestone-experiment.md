@@ -365,3 +365,12 @@ Do not rerun this older milestone subject as the current gate. The authoritative
 ## Current-path note after restored-stack CreateNewWindow localization
 
 The restored Process Manager stack now reaches the historical window-creation call, but the first live failure occurs before CreateNewWindow returns: the Snow PPC bootstrap lookup for com.apple.distributed_notifications.2 (pid 0, flags 8) succeeds on Snow and returns -304/null on Lion, after which HIToolbox reports theme/resource damage and aborts. The current authoritative procedure is docs/distributed-notifications-bootstrap-compat-protocol-experiment.md. Do not use the older Carbon milestone subject to infer a CreateNewWindow/WindowServer RPC mismatch and do not add a window adapter before the standalone distributed-notifications lookup proof is reviewed.
+
+
+## CreateNewWindow chain closed; window-title validation next
+
+The live opacity create-alpha integration has now closed the restored-stack CreateNewWindow construction gate. Lion converted only `0x724f -> 0x7250` in the private request copy and `0x72b4 -> 0x72b3` in the private reply copy, received native result 0, and the public `CreateNewWindow` call returned 0 with a nonzero WindowRef. Immediate `DisposeWindow` reached `M24_SUCCESS`, the process exited 0, the exact-four notification broker passed, no new crash/core diagnostic was created, and protected hashes remained unchanged.
+
+Residual CoreGraphics diagnostics for display-bounds, ShapeWindow, backing lock/map, and display-color-space are still visible inside the successful CreateNewWindow call. They are not independently authorized targets because they no longer block the public API.
+
+Current `main` advances to `docs/process-manager-post-createwindow-windowtitle-validation-experiment.md`. Build only the new exact-basename PPC subject, require the Snow full-stack passthrough control, repeat syscall 295, and perform one Lion run that adds only `CFStringCreateWithCString` plus `SetWindowTitleWithCFString` before release/disposal. Keep every accepted compatibility adapter unchanged; do not show/select the window, query visibility, enter the event loop, or modify XNU before this title result is reviewed.
