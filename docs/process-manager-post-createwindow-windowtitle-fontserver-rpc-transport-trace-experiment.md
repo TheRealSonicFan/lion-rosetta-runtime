@@ -381,3 +381,46 @@ next step                                             -> passive Snow/Lion FontS
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed result — first FontServer RPC diverges before CopyFontForName
+
+The completed Snow/Lion passive trace resolves the first transport boundary.
+
+Snow Leopard 10.6.8 sends exactly one FontServer RPC during the title call:
+
+```text
+request ID      0x000032c8
+bits            0x00001513
+send            0x00000018
+receive         0x0000003c
+mach_msg        0
+reply ID        0x0000332c
+reply size      0x00000034
+reply complex   YES
+```
+
+The title then reaches T03, returns `SetWindowTitleWithCFString=0`, completes CFRelease and DisposeWindow, reaches M24, and the control passes.
+
+Lion reaches the same exact `0x32c8 / 0x18 / 0x3c` request first, with successful Mach transport, but receives:
+
+```text
+reply ID        0x0000332c
+reply size      0x00000024
+reply complex   NO
+raw word 0x20   bytes 65 fd ff ff
+```
+
+The Lion PPC-facing trace later emits raw reply bytes `d0 fe ff ff` for `0x32d9`, while CoreText reports that later status as `FFFFFED0`. Correlating those byte orders establishes the first reply value as `0xfffffd65` / signed `-667`; its semantic name remains unresolved.
+
+Lion retries `0x32c8`, then later sends `0x32d9` and `0x32db`, which receive simple `-304/MIG_BAD_ARGUMENTS` replies, while `0x32cb` receives a complex `0x34` reply. The exact-five notification broker remains successful, all 16 traced FontServer calls return from `mach_msg`, and protected hashes remain unchanged.
+
+Therefore `0x32d9/-304` is not the first FontServer divergence. The first new boundary is the `0x32c8` success-on-Snow versus simple-status-on-Lion result.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-post-createwindow-windowtitle-fontserver-first-rpc-protocol-audit.md
+```
+
+That stage is static/read-only. Do not rerun the translated-PPC title path or adapt any FontServer RPC before the shipped Snow and Lion clients/server binaries identify the exact `0x32c8` operation and Lion-native replacement/precondition.
