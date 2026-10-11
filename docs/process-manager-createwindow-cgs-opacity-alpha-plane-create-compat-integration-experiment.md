@@ -402,3 +402,49 @@ next step                                       -> one exact live 0x724f -> 0x72
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — create-alpha live integration passed
+
+The returned evidence closes the CreateNewWindow compatibility chain through the exact live opacity create-alpha transaction.
+
+Artifact provenance:
+
+```text
+combined build ID              dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-v1
+architecture                   ppc7400
+__interpose size               0x10 (exactly two PPC tuples)
+combined dylib SHA-256         6d7f6d6a6aaa56512caa107c6b70a60e7ea30e63196b78c960899bd237cb5f25
+Snow passthrough control       PASS
+syscall 295                    EBADF / no SIGSYS / PASS
+```
+
+The Lion run reached exactly one create-alpha compatibility call after exactly one accepted NewWindow and one accepted release-backing compatibility call:
+
+```text
+legacy create request          0x724f
+native Lion request            0x7250
+send / receive                 0x24 / 0x2c
+window ID                      0x251
+request changed bytes          1
+request body changes           0
+source request changes         0
+native Mach return             0
+native reply                   0x72b4 / 0x24 / result 0
+legacy-facing reply            0x72b3 / 0x24 / result 0
+reply changed bytes            1
+reply body changes             0
+adapter result                 PASS
+```
+
+After that native-success conversion, public `CreateNewWindow` returned 0 with a nonzero WindowRef, immediate `DisposeWindow` returned, and `M24_SUCCESS` was reached. The exact-four distributed-notification broker passed, process exit status was 0, no new crash/core diagnostic was created, and protected hashes remained unchanged.
+
+Several CoreGraphics diagnostics remain visible inside the successful `CreateNewWindow` call, including `CGSGetDisplayBounds (display 0)`, `CGSShapeWindow` type-check failure, backing-map/lock failures, and invalid display-color-space. Because they no longer prevent `CreateNewWindow` from returning a valid object and the test disposes that object immediately, they are not independently authorized compatibility targets yet.
+
+The CreateNewWindow construction gate is therefore complete. The next controlled discriminator is the first post-construction operation from the historical Carbon GUI flow: create the already-proven CoreFoundation title string and call `SetWindowTitleWithCFString` on the returned WindowRef, then dispose the window without showing/selecting it or entering the event loop. Follow:
+
+```text
+docs/process-manager-post-createwindow-windowtitle-validation-experiment.md
+```
+
+Keep the accepted NewWindow, release-backing, and create-alpha adapters byte-for-byte unchanged. Do not adapt terminate-alpha, display-bounds, ShapeWindow, backing, visibility, or event-loop traffic unless a later experiment makes one of them the first failing observable. No XNU change is indicated.
