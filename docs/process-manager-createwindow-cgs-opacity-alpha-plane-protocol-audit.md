@@ -257,3 +257,34 @@ run the Phase A parser preflight with /usr/bin/python
 rerun Snow Phase B once
 continue to Lion Phase C only if Snow returns RESULT: PASS
 ```
+
+
+## Observed completed result — both alpha-plane contracts are narrow shifted MIG pairs
+
+Analyzer v2 completed successfully on both Snow Leopard 10.6.8 PPC7400 and Lion 10.7.5 i386. The wrapper and both generated-MIG helpers were recovered on each platform, all structural validation gates passed, and both reports ended with `RESULT: PASS`.
+
+The complete static differential is:
+
+```text
+                              Snow PPC             Lion i386
+create request/reply          0x724f / 0x72b3      0x7250 / 0x72b4
+terminate request/reply       0x7250 / 0x72b4      0x7251 / 0x72b5
+header bits                   0x1513               0x1513
+mach_msg option               0x3                  0x3
+send size                     0x24                 0x24
+receive size                  0x2c                 0x2c
+accepted reply size           0x24                 0x24
+NDR/result handling           equivalent            equivalent
+```
+
+Both helper families therefore show a narrow generated-MIG routine-number shift with otherwise matching visible wire geometry. The terminate pair has an additional semantic hazard: Snow terminate `0x7250/0x72b4` is numerically identical to Lion create `0x7250/0x72b4`. A legacy terminate request sent unchanged to Lion can therefore collide with Lion's create-alpha routine.
+
+The prior live diagnostic does not identify whether the PPC opacity wrapper selected the create or terminate branch. Static evidence therefore does **not** authorize either ID conversion yet.
+
+The authoritative next procedure is:
+
+```text
+docs/process-manager-createwindow-cgs-opacity-alpha-plane-transport-trace-experiment.md
+```
+
+That stage keeps the accepted NewWindow and release-backing adapters unchanged, identifies exactly one legacy opacity alpha-plane branch on the Snow positive control and one Lion run, and performs no opacity rewrite. Display-bounds and ShapeWindow remain out of scope.
