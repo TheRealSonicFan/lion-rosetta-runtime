@@ -219,3 +219,28 @@ Stop after Phase E.
 - If the exact registration summary passes but `CreateNewWindow` still aborts, do not broaden distributed-notification policy automatically; analyze the new post-registration boundary.
 - If any unreviewed request is rejected, audit that exact request first.
 - No additional XNU change is indicated by the current evidence.
+
+## Returned Phase D result
+
+The completed Lion exact-registration run returned:
+
+```text
+PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=3 callback=0 rejects=0 exact=YES
+PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS
+createwindow_validation_exec_status=134
+protected_hashes_unchanged=YES
+RESULT: CREATENEWWINDOW_DISTNOTIFY_REGISTRATIONS_ESTABLISHED_CREATEWINDOW_NO_RETURN
+```
+
+Immediately after the third reviewed registration was accepted, HIToolbox again logged the framework-bundle resource URL failure and TTheme damage `-4960`, and `M21_AFTER_CreateNewWindow` was not reached. This closes distributed-notification registration as the immediate blocker: no registration was rejected, no callback occurred, and no further legacy notification operation was observed before the abort.
+
+The historical Library record now becomes directly relevant to the next unresolved boundary. Snow PPC HIToolbox `_MakeThemeFSRef` requests the `Extras` / `rsrc` resource through `CFBundleCopyResourceURLForLocalization`; Snow's HIToolbox bundle contains `Extras.rsrc`, while Lion's contains `Extras2.rsrc` but not `Extras.rsrc`. A prior standalone PPC CFBundle probe reproduced that resource-URL differential. However, `Extras.rsrc` and `Extras2.rsrc` are not byte-equivalent resource payloads, so no redirection or substitution is authorized.
+
+Current `main` therefore advances to:
+
+```text
+docs/process-manager-createwindow-hitoolbox-cfbundle-live-trace-experiment.md
+```
+
+That experiment is pass-through and diagnostic only: it traces the exact live `com.apple.HIToolbox` / `Extras` / `rsrc` CFBundle lookup first on Snow's successful CreateNewWindow control and then once on Lion with the now-proven three-registration broker. No additional distributed-notification semantics and no XNU change are indicated.
+
