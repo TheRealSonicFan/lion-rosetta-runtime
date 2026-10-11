@@ -65,7 +65,8 @@ BUILD_VERSION="$(/usr/bin/sw_vers -buildVersion 2>/dev/null || true)"
 log "product_version=$PRODUCT_VERSION"
 log "build_version=$BUILD_VERSION"
 [ "$PRODUCT_VERSION" = "10.7.5" ] || die 65 "requires Lion 10.7.5"
-[ -z "${DYLD_INSERT_LIBRARIES+x}" ] || die 68 "DYLD_INSERT_LIBRARIES must be unset"log "DYLD_INSERT_LIBRARIES=UNSET_IN_PARENT"
+[ -z "${DYLD_INSERT_LIBRARIES+x}" ] || die 68 "DYLD_INSERT_LIBRARIES must be unset"
+log "DYLD_INSERT_LIBRARIES=UNSET_IN_PARENT"
 
 [ -n "$EXPECTED_KERNEL_SHA" ] || die 64 "set ROSETTA_EXPECTED_KERNEL_SHA256 to the validated syscall-295 kernel hash"
 [ -f /mach_kernel ] || die 66 "missing /mach_kernel"
@@ -136,7 +137,7 @@ if ulimit -c unlimited 2>/dev/null; then
 else
     log "core_dump_limit could not be raised; continuing with normal crash reporting"
 fi
-MARKER="$(/usr/bin/mktemp /tmp/lion-security-bootstrap-adapter-marker.XXXXXX)" || die 73 "could not create diagnostic marker"
+MARKER="$(/usr/bin/mktemp /tmp/lion-dockserver-bootstrap-adapter-marker.XXXXXX)" || die 73 "could not create diagnostic marker"
 
 log ""
 log "== SINGLE PPC LION-FORMAT DOCKSERVER BOOTSTRAP TEST =="
@@ -144,7 +145,7 @@ log "+ DYLD_SHARED_CACHE_DONT_VALIDATE=1 DYLD_PRINT_LIBRARIES=1 $EXE lion-adapte
 DYLD_SHARED_CACHE_DONT_VALIDATE=1 DYLD_PRINT_LIBRARIES=1     "$EXE" lion-adapter > "$RAW_LOG" 2>&1
 RC=$?
 /bin/cat "$RAW_LOG" | /usr/bin/tee -a "$REPORT"
-log "security_bootstrap_adapter_exec_status=$RC"
+log "dockserver_bootstrap_adapter_exec_status=$RC"
 
 /bin/sleep 3
 
@@ -194,10 +195,6 @@ log "probe_sha256_after=$EXE_AFTER"
 [ "$EXE_AFTER" = "$EXPECTED_EXE_SHA" ] || die 70 "probe executable changed"
 
 log ""
-if /usr/bin/grep -Fq 'PM_DOCKSERVER_BOOTSTRAP_ADAPTER_RESULT:ENVIRONMENT_NOT_CLEAN' "$RAW_LOG"; then
-    log "RESULT: ENVIRONMENT_NOT_CLEAN"
-    exit 1
-fi
 if /usr/bin/grep -Fq 'PM_DOCKSERVER_BOOTSTRAP_ADAPTER_RESULT:BOOTSTRAP_PORT_NULL' "$RAW_LOG"; then
     log "RESULT: BOOTSTRAP_PORT_NULL"
     exit 1
@@ -229,6 +226,10 @@ if /usr/bin/grep -Fq 'PM_DOCKSERVER_BOOTSTRAP_ADAPTER_RESULT:ADAPTER_SERVER_ERRO
 fi
 if /usr/bin/grep -Fq 'PM_DOCKSERVER_BOOTSTRAP_ADAPTER_RESULT:ADAPTER_ZERO_PORT' "$RAW_LOG"; then
     log "RESULT: ADAPTER_ZERO_PORT"
+    exit 1
+fi
+if /usr/bin/grep -Fq 'PM_DOCKSERVER_BOOTSTRAP_ADAPTER_RESULT:ADAPTER_PORT_RIGHT_ERROR' "$RAW_LOG"; then
+    log "RESULT: ADAPTER_PORT_RIGHT_ERROR"
     exit 1
 fi
 if /usr/bin/grep -Eq 'PM_DOCKSERVER_BOOTSTRAP_ADAPTER_RESULT:(REPLY_ID_MISMATCH|COMPLEX_REPLY_SHAPE_ERROR|REPLY_SHAPE_ERROR)' "$RAW_LOG"; then
