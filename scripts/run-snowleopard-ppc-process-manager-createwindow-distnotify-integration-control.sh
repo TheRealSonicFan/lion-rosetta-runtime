@@ -10,6 +10,8 @@ SEC_SHA_FILE="${6:-$SEC_INTERPOSER.sha256}"
 CGS_INTERPOSER="${7:-./ppc-process-manager-cgs-session-bootstrap-compat.dylib}"
 CGS_SHA_FILE="${8:-$CGS_INTERPOSER.sha256}"
 LOG="${9:-./ppc-process-manager-createwindow-distnotify-integration-snowleopard-control.log}"
+HITOOLBOX_TRACE="${ROSETTA_HITOOLBOX_CFBUNDLE_TRACE_PATH:-}"
+HITOOLBOX_TRACE_SHA_FILE="${ROSETTA_HITOOLBOX_CFBUNDLE_TRACE_SHA256_FILE:-}"
 
 PRIVATE_DYLD="/usr/oah/dyld"
 EXPECTED_DYLD_SHA="963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb"
@@ -17,6 +19,7 @@ EXPECTED_SUBJECT_BUILD_ID="cps-createwindow-validation-v1"
 EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-v1"
 EXPECTED_SEC_BUILD_ID="security-session-auditinfo-api-v1"
 EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-compat-v1"
+EXPECTED_HITOOLBOX_TRACE_BUILD_ID="hitoolbox-cfbundle-resource-trace-v1"
 
 fail() {
     echo "error: $*" | /usr/bin/tee -a "$LOG" >&2
@@ -42,6 +45,11 @@ has_ppc32_arch() {
 }
 
 : > "$LOG" || exit 73
+
+if { [ -n "$HITOOLBOX_TRACE" ] && [ -z "$HITOOLBOX_TRACE_SHA_FILE" ]; } ||
+   { [ -z "$HITOOLBOX_TRACE" ] && [ -n "$HITOOLBOX_TRACE_SHA_FILE" ]; }; then
+    fail "set both ROSETTA_HITOOLBOX_CFBUNDLE_TRACE_PATH and ROSETTA_HITOOLBOX_CFBUNDLE_TRACE_SHA256_FILE, or neither"
+fi
 
 PRODUCT_VERSION="$(/usr/bin/sw_vers -productVersion 2>/dev/null || true)"
 BUILD_VERSION="$(/usr/bin/sw_vers -buildVersion 2>/dev/null || true)"
@@ -71,21 +79,35 @@ for p in "$SUBJECT" "$SUBJECT_SHA_FILE" "$CORE_COMPAT" "$CORE_COMPAT_SHA_FILE" \
          "$PRIVATE_DYLD"; do
     [ -e "$p" ] || fail "missing required path: $p"
 done
+if [ -n "$HITOOLBOX_TRACE" ]; then
+    [ -e "$HITOOLBOX_TRACE" ] || fail "missing HIToolbox trace dylib: $HITOOLBOX_TRACE"
+    [ -e "$HITOOLBOX_TRACE_SHA_FILE" ] || fail "missing HIToolbox trace SHA file: $HITOOLBOX_TRACE_SHA_FILE"
+fi
 
 EXPECTED_SUBJECT_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$SUBJECT_SHA_FILE")"
 EXPECTED_CORE_COMPAT_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$CORE_COMPAT_SHA_FILE")"
 EXPECTED_SEC_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$SEC_SHA_FILE")"
 EXPECTED_CGS_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$CGS_SHA_FILE")"
+if [ -n "$HITOOLBOX_TRACE" ]; then
+    EXPECTED_HITOOLBOX_TRACE_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$HITOOLBOX_TRACE_SHA_FILE")"
+fi
 
 [ "$(sha256 "$SUBJECT")" = "$EXPECTED_SUBJECT_SHA" ] || fail "subject hash mismatch"
 [ "$(sha256 "$CORE_COMPAT")" = "$EXPECTED_CORE_COMPAT_SHA" ] || fail "CoreServices CPS registration compatibility hash mismatch"
 [ "$(sha256 "$SEC_INTERPOSER")" = "$EXPECTED_SEC_SHA" ] || fail "Security interposer hash mismatch"
 [ "$(sha256 "$CGS_INTERPOSER")" = "$EXPECTED_CGS_SHA" ] || fail "CGS interposer hash mismatch"
 [ "$(sha256 "$PRIVATE_DYLD")" = "$EXPECTED_DYLD_SHA" ] || fail "private dyld hash mismatch"
+if [ -n "$HITOOLBOX_TRACE" ]; then
+    [ "$(sha256 "$HITOOLBOX_TRACE")" = "$EXPECTED_HITOOLBOX_TRACE_SHA" ] ||
+        fail "HIToolbox trace hash mismatch"
+fi
 
 for p in "$SUBJECT" "$CORE_COMPAT" "$SEC_INTERPOSER" "$CGS_INTERPOSER"; do
     has_ppc32_arch "$p" || fail "required artifact is not 32-bit PPC: $p"
 done
+if [ -n "$HITOOLBOX_TRACE" ]; then
+    has_ppc32_arch "$HITOOLBOX_TRACE" || fail "HIToolbox trace is not 32-bit PPC"
+fi
 
 /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq \
     "PM_CPS_CREATEWINDOW_BUILD_ID:$EXPECTED_SUBJECT_BUILD_ID" || fail "subject build marker missing"
@@ -97,6 +119,13 @@ done
     "PM_SECURITY_SESSION_API_COMPAT_BUILD_ID:$EXPECTED_SEC_BUILD_ID" || fail "Security build marker missing"
 /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq \
     "PM_CGS_SESSION_BOOTSTRAP_COMPAT_BUILD_ID:$EXPECTED_CGS_BUILD_ID" || fail "CGS build marker missing"
+if [ -n "$HITOOLBOX_TRACE" ]; then
+    /usr/bin/strings "$HITOOLBOX_TRACE" | /usr/bin/grep -Fq \
+        "PM_HITOOLBOX_CFBUNDLE_TRACE_BUILD_ID:$EXPECTED_HITOOLBOX_TRACE_BUILD_ID" ||
+        fail "HIToolbox trace build marker missing"
+    /usr/bin/nm -u "$HITOOLBOX_TRACE" | /usr/bin/grep -Fq '_dlsym' &&
+        fail "HIToolbox trace unexpectedly imports dlsym"
+fi
 
 OT="$(/usr/bin/otool -l "$SUBJECT" | /usr/bin/grep -A3 LC_LOAD_DYLINKER || true)"
 echo "$OT" | /usr/bin/tee -a "$LOG"
@@ -109,12 +138,21 @@ CGS_ABS="$(abspath "$CGS_INTERPOSER")"
 [ -n "$SEC_ABS" ] || fail "could not resolve Security interposer path"
 [ -n "$CGS_ABS" ] || fail "could not resolve CGS interposer path"
 INSERTED="$CORE_ABS:$SEC_ABS:$CGS_ABS"
+if [ -n "$HITOOLBOX_TRACE" ]; then
+    HITOOLBOX_TRACE_ABS="$(abspath "$HITOOLBOX_TRACE")"
+    [ -n "$HITOOLBOX_TRACE_ABS" ] || fail "could not resolve HIToolbox trace path"
+    INSERTED="$INSERTED:$HITOOLBOX_TRACE_ABS"
+fi
 
 echo "subject_sha256=$EXPECTED_SUBJECT_SHA" | /usr/bin/tee -a "$LOG"
 echo "coreservices_cps_registration_compat_sha256=$EXPECTED_CORE_COMPAT_SHA" | /usr/bin/tee -a "$LOG"
 echo "security_interposer_sha256=$EXPECTED_SEC_SHA" | /usr/bin/tee -a "$LOG"
 echo "cgs_interposer_sha256=$EXPECTED_CGS_SHA" | /usr/bin/tee -a "$LOG"
 echo "private_dyld_sha256=$EXPECTED_DYLD_SHA" | /usr/bin/tee -a "$LOG"
+if [ -n "$HITOOLBOX_TRACE" ]; then
+    echo "hitoolbox_cfbundle_trace_path=$HITOOLBOX_TRACE_ABS" | /usr/bin/tee -a "$LOG"
+    echo "hitoolbox_cfbundle_trace_sha256=$EXPECTED_HITOOLBOX_TRACE_SHA" | /usr/bin/tee -a "$LOG"
+fi
 
 echo "== Snow Leopard restored-stack CreateNewWindow validation control ==" | /usr/bin/tee -a "$LOG"
 ROSETTA_CORESERVICES_COMPAT_MODE=passthrough \
@@ -225,8 +263,15 @@ if [ "$RC" -eq 0 ] &&
    ! /usr/bin/grep -Fq 'kind=CPS_SET_FRONT_PROCESS_LION' "$LOG" &&
    ! /usr/bin/grep -Fq 'PM_CPS_REGISTRATION_COMPAT_CALL:index=2' "$LOG" &&
    ! /usr/bin/grep -Fq 'PM_CPS_SETFRONT_COMPAT_CALL:index=2' "$LOG" &&
-   ! /usr/bin/grep -Fq '_RegisterApplication(), FAILED TO REGISTER PROCESS WITH CPS/CoreGraphics in WindowServer' "$LOG"; then
-    echo "RESULT: CREATENEWWINDOW_DISTNOTIFY_INTEGRATION_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+   ! /usr/bin/grep -Fq '_RegisterApplication(), FAILED TO REGISTER PROCESS WITH CPS/CoreGraphics in WindowServer' "$LOG" &&
+   { [ -z "$HITOOLBOX_TRACE" ] ||
+     { [ "$(/usr/bin/grep -c 'PM_HITOOLBOX_CFBUNDLE_TRACE_TARGET:.*bundle=com.apple.HIToolbox name=Extras type=rsrc subdir=NULL localization=NULL' "$LOG" 2>/dev/null || true)" -eq 1 ] &&
+       /usr/bin/grep -Fq 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:index=1 url=NONNULL' "$LOG"; }; }; then
+    if [ -n "$HITOOLBOX_TRACE" ]; then
+        echo "RESULT: CREATENEWWINDOW_HITOOLBOX_CFBUNDLE_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+    else
+        echo "RESULT: CREATENEWWINDOW_DISTNOTIFY_INTEGRATION_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+    fi
     echo "RESULT: PASS" | /usr/bin/tee -a "$LOG"
     exit 0
 fi
