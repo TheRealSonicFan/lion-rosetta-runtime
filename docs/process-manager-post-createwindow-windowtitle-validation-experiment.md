@@ -409,3 +409,16 @@ docs/process-manager-post-createwindow-fontserver-bootstrap-protocol-adapter-exp
 ```
 
 It is standalone. It requires an ordinary Snow `com.apple.FontServer` lookup to return a nonzero port, then sends exactly one already-established Lion-format launchd lookup request for the same service with request ID `0x194`, send size `0xbc`, PID 0, zero UUID, flags 0, and expected reply ID `0x1f8`. It does not rerun the window-title subject, accept the fifth notification, or alter any accepted CreateNewWindow adapter. No XNU change is indicated.
+
+
+## FontServer standalone follow-up passed
+
+The isolated follow-up now proves that `com.apple.FontServer` itself resolves successfully from translated PPC when the ordinary lookup is encoded with Lion's UUID-expanded `0xbc` request. Snow ordinary legacy lookup returns `kr=0` and a nonzero port; Lion returns `0x1f8 / 0x28`, descriptor count 1, a nonzero valid send right, no diagnostic, and unchanged protected state.
+
+The title experiment therefore remains blocked specifically by the legacy lookup layout, not by service absence. The authoritative next procedure is now:
+
+```text
+docs/process-manager-post-createwindow-fontserver-bootstrap-compat-integration-experiment.md
+```
+
+That stage adds only exact `com.apple.FontServer` lookup compatibility to the existing one-tuple CGS bootstrap interposer and reruns the title subject once. The exact-four notification broker remains unchanged so the previously observed fifth request can become the next boundary only after FontServer lookup compatibility is live.
