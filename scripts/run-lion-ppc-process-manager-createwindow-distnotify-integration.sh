@@ -29,6 +29,7 @@ NEWWINDOW_COMPAT_MODE="${ROSETTA_CGS_NEWWINDOW_COMPAT_MODE:-}"
 RELEASEBACKING_TRACE_MODE="${ROSETTA_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE_MODE:-}"
 RELEASEBACKING_COMPAT_MODE="${ROSETTA_CGS_RELEASEBACKING_COMPAT_MODE:-}"
 OPACITY_ALPHA_TRACE_MODE="${ROSETTA_CGS_POST_RELEASEBACKING_OPACITY_TRACE_MODE:-}"
+OPACITY_ALPHA_CREATE_COMPAT_MODE="${ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE:-}"
 
 TRANSLATOR="/usr/libexec/oah/translate"
 PRIVATE_DYLD="/usr/oah/dyld"
@@ -137,6 +138,19 @@ if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
     [ -z "$RELEASEBACKING_TRACE_MODE" ] ||
         die 64 "opacity alpha-plane trace and release-backing passive trace are mutually exclusive"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-trace-v1"
+fi
+if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+    [ "$OPACITY_ALPHA_CREATE_COMPAT_MODE" = "lion-id-v1" ] ||
+        die 64 "unsupported ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE: $OPACITY_ALPHA_CREATE_COMPAT_MODE"
+    [ -z "$OPACITY_ALPHA_TRACE_MODE" ] ||
+        die 64 "opacity create-alpha compatibility and passive-trace runner modes are mutually exclusive"
+    [ "$RELEASEBACKING_COMPAT_MODE" = "lion-id-v1" ] ||
+        die 64 "opacity create-alpha compatibility requires lion-id-v1 release-backing compatibility"
+    [ "$NEWWINDOW_COMPAT_MODE" = "lion-inline-id-v1" ] ||
+        die 64 "opacity create-alpha compatibility requires lion-inline-id-v1 NewWindow compatibility"
+    [ -z "$RELEASEBACKING_TRACE_MODE" ] ||
+        die 64 "opacity create-alpha compatibility and release-backing passive trace are mutually exclusive"
+    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-v1"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 
@@ -408,6 +422,18 @@ if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
             die 68 "CGS opacity alpha-plane trace marker missing: $marker"
     done
 fi
+if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+    for marker in \
+        'CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' \
+        'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:' \
+        'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REQUEST:' \
+        'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:' \
+        'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:' \
+        'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS'; do
+        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "CGS opacity create-alpha compatibility marker missing: $marker"
+    done
+fi
 /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq \
     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_BUILD_ID:$EXPECTED_BROKER_BUILD_ID" || die 68 "broker build marker missing"
 /usr/bin/strings "$SEC_INTERPOSER" | /usr/bin/grep -Fq \
@@ -510,6 +536,12 @@ else
 fi
 if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
     log "cgs_post_releasebacking_opacity_alpha_trace_mode=$OPACITY_ALPHA_TRACE_MODE"
+fi
+if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+    log "cgs_opacity_alpha_create_compat_mode=$OPACITY_ALPHA_CREATE_COMPAT_MODE"
+    export ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE="$OPACITY_ALPHA_CREATE_COMPAT_MODE"
+else
+    unset ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE
 fi
 
 MARKER="$(/usr/bin/mktemp /tmp/lion-createwindow-validation-marker.XXXXXX)" || die 73 "could not create diagnostic marker"
@@ -902,6 +934,49 @@ fi
 
 if /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG" &&
    ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M21_AFTER_CreateNewWindow' "$RAW_LOG"; then
+    if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        OPACITY_CREATE_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        OPACITY_CREATE_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT"
+        log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT"
+        if [ "$OPACITY_CREATE_COMPAT_COUNT" -ne 1 ] || [ "$OPACITY_CREATE_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseBackingCompatCalls=1 newWindowCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724f lionId=0x00007250 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_FAILURE"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001200 size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+           /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        fi
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
     if [ -n "$OPACITY_ALPHA_TRACE_MODE" ] &&
        /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
        /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
@@ -1223,6 +1298,46 @@ if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
     fi
 fi
 
+if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+    OPACITY_CREATE_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_CREATE_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT"
+    log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT"
+    if [ "$OPACITY_CREATE_COMPAT_COUNT" -ne 1 ] || [ "$OPACITY_CREATE_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseBackingCompatCalls=1 newWindowCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724f lionId=0x00007250 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001200 size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_create_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_create_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
 if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
     OPACITY_CREATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
     OPACITY_TERMINATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
@@ -1278,7 +1393,9 @@ if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] &
 fi
 
 if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=0' "$RAW_LOG"; then
-    if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+    if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PUBLIC_ERROR"
+    elif [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
         log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_PUBLIC_ERROR"
     elif [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
         log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_SUCCESS_PUBLIC_ERROR"
@@ -1340,7 +1457,9 @@ if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:P
 fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
-    if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+    if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
         log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATEWINDOW_PASS"
     elif [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
         log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_INTEGRATION_PASS"
