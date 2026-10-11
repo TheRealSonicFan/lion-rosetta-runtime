@@ -658,8 +658,9 @@ if /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RA
     fi
     if [ -n "$REAL_REGISTRATION_MODE" ] &&
        [ -n "$HITOOLBOX_TRACE" ] &&
-       [ "$HITOOLBOX_TRACE_TARGET_COUNT" -eq 1 ] &&
-       /usr/bin/grep -Fq 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:index=1 url=NULL' "$RAW_LOG" &&
+       [ "$HITOOLBOX_TRACE_TARGET_COUNT" -ge 1 ] &&
+       /usr/bin/grep -F 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:' "$RAW_LOG" | /usr/bin/grep -Fq ' url=NULL ' &&
+       ! /usr/bin/grep -F 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:' "$RAW_LOG" | /usr/bin/grep -Fq ' url=NONNULL ' &&
        /usr/bin/grep -Fq 'HIToolbox: failed to copy resource URL for framework bundle.' "$RAW_LOG" &&
        /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=3 callback=[0-9]+ rejects=0 exact=YES' "$RAW_LOG" &&
        /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
