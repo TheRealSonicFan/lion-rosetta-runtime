@@ -101,6 +101,39 @@ git rev-parse HEAD
 
 Confirm the new builder and this document are present.
 
+## Artifact/result identity hard gate
+
+This integration experiment is **not** the earlier standalone Dock bootstrap protocol-adapter experiment. Before continuing, verify that you are using the integration artifacts and runners from this document.
+
+The following filenames belong to the completed standalone proof and are **not** evidence for this integration stage:
+
+```text
+ppc-process-manager-dockserver-bootstrap-protocol-adapter-private-dyld
+ppc-process-manager-dockserver-bootstrap-protocol-adapter-private-dyld.info.txt
+ppc-process-manager-dockserver-bootstrap-protocol-adapter-private-dyld.sha256
+ppc-process-manager-dockserver-bootstrap-protocol-adapter-snowleopard-control.log
+lion-ppc-process-manager-dockserver-bootstrap-protocol-adapter.log
+lion-ppc-process-manager-dockserver-bootstrap-protocol-adapter.raw.log
+RESULT: DOCKSERVER_BOOTSTRAP_PROTOCOL_ADAPTER_PASS
+```
+
+If Phase F produces `RESULT: DOCKSERVER_BOOTSTRAP_PROTOCOL_ADAPTER_PASS`, stop: the standalone adapter was rerun and the CreateNewWindow integration has **not** been executed. Do not advance the investigation from that result.
+
+This integration stage must instead build and use:
+
+```text
+ppc-process-manager-cgs-session-dockserver-bootstrap-compat.dylib
+ppc-process-manager-cgs-session-dockserver-bootstrap-compat.dylib.info.txt
+ppc-process-manager-cgs-session-dockserver-bootstrap-compat.dylib.sha256
+```
+
+and its Lion report must be named distinctly, for example:
+
+```text
+lion-ppc-process-manager-createwindow-dockserver-bootstrap-compat.log
+lion-ppc-process-manager-createwindow-dockserver-bootstrap-compat.raw.log
+```
+
 ## Phase B — build only the Dock-aware CGS interposer on Snow Leopard
 
 Syntax-check:
@@ -249,21 +282,28 @@ Syntax-check:
 /bin/bash -n ./scripts/run-lion-ppc-process-manager-createwindow-distnotify-integration.sh
 ```
 
-Run the same accepted exact-four integration command, changing only the CGS interposer positional arguments to:
+Run the CreateNewWindow integration runner itself, **not** the standalone Dock protocol-adapter runner. From the runtime repository root, an explicit invocation using the established artifact names is:
 
-```text
-ppc-process-manager-cgs-session-dockserver-bootstrap-compat.dylib
-ppc-process-manager-cgs-session-dockserver-bootstrap-compat.dylib.sha256
+```sh
+/bin/bash ./scripts/run-lion-ppc-process-manager-createwindow-distnotify-integration.sh \
+  ./payload/ppc-process-manager-cgs-session-bootstrap-integration-private-dyld \
+  ./payload/ppc-process-manager-cgs-session-bootstrap-integration-private-dyld.sha256 \
+  ./payload/ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-compat.dylib \
+  ./payload/ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-compat.dylib.sha256 \
+  ./payload/ppc-process-manager-security-session-auditinfo-api.dylib \
+  ./payload/ppc-process-manager-security-session-auditinfo-api.dylib.sha256 \
+  ./payload/ppc-process-manager-cgs-session-dockserver-bootstrap-compat.dylib \
+  ./payload/ppc-process-manager-cgs-session-dockserver-bootstrap-compat.dylib.sha256 \
+  ./native-distributed-notifications-createwindow-post-extras-registration-broker \
+  ./native-distributed-notifications-createwindow-post-extras-registration-broker.sha256 \
+  ./payload/lion-ppc-process-manager-createwindow-dockserver-bootstrap-compat.log
 ```
 
-and continue to use:
+If your accepted artifacts live at different paths, substitute only those paths; keep the argument order unchanged. The seventh and eighth arguments must be the new v2 Dock-aware CGS interposer and its SHA sidecar. The ninth and tenth arguments must remain the exact-four native broker and its SHA sidecar.
 
-```text
-native-distributed-notifications-createwindow-post-extras-registration-broker
-native-distributed-notifications-createwindow-post-extras-registration-broker.sha256
-```
+A correct Phase F report begins with the restored-stack CreateNewWindow integration heading and includes the v2 CGS build marker. It must **not** begin with `== Lion PPC DockServer bootstrap protocol adapter ==`.
 
-Use a fresh report path such as:
+Use the fresh report path:
 
 ```text
 payload/lion-ppc-process-manager-createwindow-dockserver-bootstrap-compat.log
