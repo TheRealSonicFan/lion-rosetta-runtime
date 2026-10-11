@@ -980,7 +980,7 @@ if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_ADAPTER_FAILED"
         exit 0
     fi
-    if [ "$FONT_PASSES" -lt 1 ]; then
+    if [ "$FONT_PASSES" -lt 1 ] || [ "$FONT_PASSES" -ne "$FONT_CALLS" ]; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_ADAPTER_INCOMPLETE"
         exit 0
     fi
