@@ -111,7 +111,7 @@ rosetta_CFBundleCopyResourceURLForLocalization(CFBundleRef bundle,
         path[0] = '\0';
         if (result != NULL) {
             have_path = CFURLGetFileSystemRepresentation(
-                result, true, path, (CFIndex)sizeof(path));
+                result, (Boolean)1, path, (CFIndex)sizeof(path));
         }
 
         fprintf(stderr,
