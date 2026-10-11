@@ -23,6 +23,7 @@ HITOOLBOX_EXTRAS_COMPAT="${ROSETTA_HITOOLBOX_EXTRAS_COMPAT_PATH:-}"
 HITOOLBOX_EXTRAS_COMPAT_SHA_FILE="${ROSETTA_HITOOLBOX_EXTRAS_COMPAT_SHA256_FILE:-}"
 HITOOLBOX_EXTRAS_RESOURCE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH:-}"
 HITOOLBOX_EXTRAS_MODE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE:-}"
+DOCKSERVER_COMPAT_MODE="${ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE:-}"
 
 TRANSLATOR="/usr/libexec/oah/translate"
 PRIVATE_DYLD="/usr/oah/dyld"
@@ -79,6 +80,12 @@ die() {
     log "ERROR: $*"
     exit "$code"
 }
+
+if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+    [ "$DOCKSERVER_COMPAT_MODE" = "lion-dockserver-v1" ] ||
+        die 64 "unsupported ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE: $DOCKSERVER_COMPAT_MODE"
+    EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-compat-v2"
+fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 
 if [ -n "$SCHEMA_AUDIT_REPORT" ] && [ -n "$REAL_REGISTRATION_MODE" ]; then
@@ -94,6 +101,11 @@ if [ -n "$REAL_REGISTRATION_MODE" ] &&
    [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-register-v1" ] &&
    [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-post-extras-register-v1" ]; then
     die 64 "unsupported ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE: $REAL_REGISTRATION_MODE"
+fi
+
+if [ -n "$DOCKSERVER_COMPAT_MODE" ] &&
+   [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-post-extras-register-v1" ]; then
+    die 64 "DockServer bootstrap compatibility requires lion-createwindow-post-extras-register-v1"
 fi
 if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] &&
    [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-register-v1" ]; then
@@ -111,6 +123,10 @@ if [ -n "$HITOOLBOX_TRACE" ] && [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
 fi
 if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] && [ -z "$HITOOLBOX_EXTRAS_COMPAT" ]; then
     die 64 "post-Extras schema audit requires the exact HIToolbox Extras compatibility path"
+fi
+
+if [ -n "$DOCKSERVER_COMPAT_MODE" ] && [ -z "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    die 64 "DockServer bootstrap compatibility requires the exact HIToolbox Extras compatibility path"
 fi
 if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ] || [ -n "$HITOOLBOX_EXTRAS_COMPAT_SHA_FILE" ] ||
    [ -n "$HITOOLBOX_EXTRAS_RESOURCE" ] || [ -n "$HITOOLBOX_EXTRAS_MODE" ]; then
@@ -313,6 +329,12 @@ echo "$BROKER_ARCH" | /usr/bin/grep -Eq '(^|[[:space:]])i386([[:space:]]|$)' ||
     "PM_SECURITY_SESSION_API_COMPAT_BUILD_ID:$EXPECTED_SEC_BUILD_ID" || die 68 "Security build marker missing"
 /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq \
     "PM_CGS_SESSION_BOOTSTRAP_COMPAT_BUILD_ID:$EXPECTED_CGS_BUILD_ID" || die 68 "CGS build marker missing"
+if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+    /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'com.apple.dock.server' ||
+        die 68 "DockServer service marker missing from CGS interposer"
+    /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' ||
+        die 68 "DockServer adapter PASS marker missing from CGS interposer"
+fi
 if [ -n "$HITOOLBOX_TRACE" ]; then
     /usr/bin/strings "$HITOOLBOX_TRACE" | /usr/bin/grep -Fq \
         "PM_HITOOLBOX_CFBUNDLE_TRACE_BUILD_ID:$EXPECTED_HITOOLBOX_TRACE_BUILD_ID" ||
@@ -382,6 +404,12 @@ if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ]; then
 fi
 if [ -n "$REAL_REGISTRATION_MODE" ]; then
     log "distributed_notifications_real_registration_mode=$REAL_REGISTRATION_MODE"
+fi
+if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+    log "dockserver_bootstrap_compat_mode=$DOCKSERVER_COMPAT_MODE"
+    export ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE="$DOCKSERVER_COMPAT_MODE"
+else
+    unset ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE
 fi
 
 MARKER="$(/usr/bin/mktemp /tmp/lion-createwindow-validation-marker.XXXXXX)" || die 73 "could not create diagnostic marker"
@@ -774,6 +802,11 @@ fi
 
 if /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG" &&
    ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M21_AFTER_CreateNewWindow' "$RAW_LOG"; then
+    if [ -n "$DOCKSERVER_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_PASS_NO_RETURN"
+        exit 0
+    fi
     if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
         HITOOLBOX_EXTRAS_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_EXTRAS_COMPAT_TARGET:.*mode=lion-fallback-external-v1.*bundle=com.apple.HIToolbox name=Extras type=rsrc' "$RAW_LOG" 2>/dev/null || true)"
         log "hitoolbox_extras_compat_target_count=$HITOOLBOX_EXTRAS_TARGET_COUNT"
@@ -819,6 +852,17 @@ if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$
     exit 0
 fi
 
+if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+    if ! /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_CALL:index=1 mode=lion-dockserver-v1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_LOOKUP_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_ADAPTER_FAILED"
+        exit 0
+    fi
+fi
+
 if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] &&
    [ "$FOUND" -eq 0 ] &&
    /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=-304' "$RAW_LOG" &&
@@ -833,7 +877,11 @@ if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] &
 fi
 
 if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=0' "$RAW_LOG"; then
-    log "RESULT: CREATENEWWINDOW_RETURNED_ERROR"
+    if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_ADAPTER_PASS_CREATEWINDOW_ERROR"
+    else
+        log "RESULT: CREATENEWWINDOW_RETURNED_ERROR"
+    fi
     exit 0
 fi
 
@@ -885,7 +933,9 @@ if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:P
 fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
-    if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ]; then
+    if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ]; then
         log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATION_PASS"
     elif [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
         log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_PASS"
