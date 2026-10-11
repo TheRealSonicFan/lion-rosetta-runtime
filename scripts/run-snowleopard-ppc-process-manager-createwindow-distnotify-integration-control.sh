@@ -19,6 +19,7 @@ HITOOLBOX_EXTRAS_MODE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE:-}"
 DOCKSERVER_COMPAT_MODE="${ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE:-}"
 NEWWINDOW_TRACE_MODE="${ROSETTA_CGS_NEWWINDOW_TRACE_MODE:-}"
 NEWWINDOW_COMPAT_MODE="${ROSETTA_CGS_NEWWINDOW_COMPAT_MODE:-}"
+RELEASEBACKING_TRACE_MODE="${ROSETTA_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE_MODE:-}"
 
 PRIVATE_DYLD="/usr/oah/dyld"
 EXPECTED_DYLD_SHA="963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb"
@@ -51,6 +52,13 @@ if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
     [ -z "$NEWWINDOW_TRACE_MODE" ] ||
         fail "Snow NewWindow compatibility and passive-trace runner modes are mutually exclusive"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-v1"
+fi
+if [ -n "$RELEASEBACKING_TRACE_MODE" ]; then
+    [ "$RELEASEBACKING_TRACE_MODE" = "passthrough" ] ||
+        fail "Snow post-NewWindow release-backing trace mode must be passthrough"
+    [ "$NEWWINDOW_COMPAT_MODE" = "passthrough" ] ||
+        fail "Snow post-NewWindow release-backing trace requires NewWindow compatibility passthrough mode"
+    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-trace-v1"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 abspath() {
@@ -185,6 +193,12 @@ if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
     /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:PASSTHROUGH' ||
         fail "CGS NewWindow compatibility passthrough marker missing"
 fi
+if [ -n "$RELEASEBACKING_TRACE_MODE" ]; then
+    /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_SET_WINDOW_RELEASE_BACKING_LEGACY' ||
+        fail "CGS release-backing legacy trace marker missing"
+    /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_SET_WINDOW_RELEASE_BACKING_LION' ||
+        fail "CGS release-backing Lion trace marker missing"
+fi
 /usr/bin/strings "$SEC_INTERPOSER" | /usr/bin/grep -Fq \
     "PM_SECURITY_SESSION_API_COMPAT_BUILD_ID:$EXPECTED_SEC_BUILD_ID" || fail "Security build marker missing"
 /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq \
@@ -243,6 +257,9 @@ if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
     export ROSETTA_CGS_NEWWINDOW_COMPAT_MODE="$NEWWINDOW_COMPAT_MODE"
 else
     unset ROSETTA_CGS_NEWWINDOW_COMPAT_MODE
+fi
+if [ -n "$RELEASEBACKING_TRACE_MODE" ]; then
+    echo "cgs_post_newwindow_releasebacking_trace_mode=$RELEASEBACKING_TRACE_MODE" | /usr/bin/tee -a "$LOG"
 fi
 echo "private_dyld_sha256=$EXPECTED_DYLD_SHA" | /usr/bin/tee -a "$LOG"
 if [ -n "$HITOOLBOX_TRACE" ]; then
@@ -384,7 +401,23 @@ if [ "$RC" -eq 0 ] &&
        /usr/bin/grep -Fq 'mode=snow-force-external-v1 original=SKIPPED fallback=NONNULL' "$LOG" &&
        ! /usr/bin/grep -Fq 'mode=snow-force-external-v1 original=SKIPPED fallback=NULL' "$LOG" &&
        ! /usr/bin/grep -Fq 'HIToolbox: failed to copy resource URL for framework bundle.' "$LOG"; }; }; then
-    if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+    if [ -n "$RELEASEBACKING_TRACE_MODE" ]; then
+        RELEASEBACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY' "$LOG" 2>/dev/null || true)"
+        if /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=1 mode=passthrough exact=YES' "$LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:PASSTHROUGH' "$LOG" &&
+           ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$LOG" &&
+           [ "$RELEASEBACKING_TRACE_COUNT" -eq 1 ] &&
+           /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY bits=0x00001513' "$LOG" &&
+           /usr/bin/grep -Fq 'id=0x0000724b expectedReply=0x000072af option=0x00000003 send=0x00000028 recv=0x0000002c' "$LOG" &&
+           /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY kr=0 hex=0x00000000' "$LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$LOG"; then
+            echo "cgs_releasebacking_legacy_trace_count=$RELEASEBACKING_TRACE_COUNT" | /usr/bin/tee -a "$LOG"
+            echo "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+        else
+            echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
+            exit 1
+        fi
+    elif [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
         if /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=1 mode=passthrough exact=YES' "$LOG" &&
            /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:PASSTHROUGH' "$LOG" &&
            ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$LOG" &&
