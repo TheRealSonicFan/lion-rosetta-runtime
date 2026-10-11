@@ -9,3 +9,8 @@ RosettaNonGrata
 Shims/
 dyld_shared_cache_rosetta*
 .DS_Store
+
+# Locally staged proprietary Snow Leopard HIToolbox resource; never commit.
+SnowLeopard-HIToolbox-Extras.rsrc
+SnowLeopard-HIToolbox-Extras.rsrc.sha256
+SnowLeopard-HIToolbox-Extras.rsrc.info.txt
