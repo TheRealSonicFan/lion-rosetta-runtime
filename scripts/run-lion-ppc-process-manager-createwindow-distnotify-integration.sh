@@ -51,9 +51,12 @@ EXPECTED_HITOOLBOX_TRACE_BUILD_ID="hitoolbox-cfbundle-resource-trace-v1"
 EXPECTED_HITOOLBOX_EXTRAS_COMPAT_BUILD_ID="hitoolbox-extras-resource-compat-v1"
 EXPECTED_HITOOLBOX_EXTRAS_RESOURCE_SHA="a0866d6cf2d48fac7787e8cf9e90264071642c0d39aa809636e7d478016a9197"
 SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_SCHEMA_AUDIT_REPORT:-}"
+POST_EXTRAS_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_EXTRAS_SCHEMA_AUDIT_REPORT:-}"
 REAL_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE:-}"
 if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-createwindow-schema-audit-broker-v1"
+elif [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ]; then
+    EXPECTED_BROKER_BUILD_ID="distributed-notifications-createwindow-post-extras-schema-audit-broker-v1"
 elif [ -n "$REAL_REGISTRATION_MODE" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-createwindow-registration-broker-v1"
 else
@@ -77,6 +80,12 @@ sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 if [ -n "$SCHEMA_AUDIT_REPORT" ] && [ -n "$REAL_REGISTRATION_MODE" ]; then
     die 64 "schema-audit and real-registration modes are mutually exclusive"
 fi
+if [ -n "$SCHEMA_AUDIT_REPORT" ] && [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ]; then
+    die 64 "initial schema-audit and post-Extras schema-audit modes are mutually exclusive"
+fi
+if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] && [ -z "$REAL_REGISTRATION_MODE" ]; then
+    die 64 "post-Extras schema audit requires the reviewed real-registration mode"
+fi
 if [ -n "$REAL_REGISTRATION_MODE" ] &&
    [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-register-v1" ]; then
     die 64 "unsupported ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE: $REAL_REGISTRATION_MODE"
@@ -90,6 +99,9 @@ if [ -n "$HITOOLBOX_TRACE" ] && [ -z "$REAL_REGISTRATION_MODE" ]; then
 fi
 if [ -n "$HITOOLBOX_TRACE" ] && [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
     die 64 "HIToolbox trace and Extras compatibility modes are mutually exclusive"
+fi
+if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] && [ -z "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    die 64 "post-Extras schema audit requires the exact HIToolbox Extras compatibility path"
 fi
 if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ] || [ -n "$HITOOLBOX_EXTRAS_COMPAT_SHA_FILE" ] ||
    [ -n "$HITOOLBOX_EXTRAS_RESOURCE" ] || [ -n "$HITOOLBOX_EXTRAS_MODE" ]; then
@@ -352,6 +364,12 @@ fi
 if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
     : > "$SCHEMA_AUDIT_REPORT" || die 73 "could not initialize schema audit report: $SCHEMA_AUDIT_REPORT"
     log "distributed_notifications_schema_audit_report=$SCHEMA_AUDIT_REPORT"
+fi
+if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ]; then
+    : > "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ||
+        die 73 "could not initialize post-Extras schema audit report: $POST_EXTRAS_SCHEMA_AUDIT_REPORT"
+    export ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_EXTRAS_SCHEMA_AUDIT_REPORT="$POST_EXTRAS_SCHEMA_AUDIT_REPORT"
+    log "distributed_notifications_post_extras_schema_audit_report=$POST_EXTRAS_SCHEMA_AUDIT_REPORT"
 fi
 if [ -n "$REAL_REGISTRATION_MODE" ]; then
     log "distributed_notifications_real_registration_mode=$REAL_REGISTRATION_MODE"
@@ -702,6 +720,30 @@ if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
         exit 0
     fi
     log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_SCHEMA_AUDIT_INCOMPLETE"
+    exit 0
+fi
+
+if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ]; then
+    POST_EXTRAS_CAPTURE_COUNT="$(/usr/bin/grep -c 'PM_DISTRIBUTED_NOTIFICATIONS_POST_EXTRAS_SCHEMA_AUDIT_CAPTURE:index=' "$RAW_LOG" 2>/dev/null || true)"
+    REQUEST_COUNT="$(/usr/bin/grep -c 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:' "$RAW_LOG" 2>/dev/null || true)"
+    HITOOLBOX_EXTRAS_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_EXTRAS_COMPAT_TARGET:.*mode=lion-fallback-external-v1.*bundle=com.apple.HIToolbox name=Extras type=rsrc' "$RAW_LOG" 2>/dev/null || true)"
+    log "post_extras_schema_audit_capture_count=$POST_EXTRAS_CAPTURE_COUNT"
+    log "legacy_mach_request_count=$REQUEST_COUNT"
+    log "hitoolbox_extras_compat_target_count=$HITOOLBOX_EXTRAS_TARGET_COUNT"
+    if [ -s "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] &&
+       [ "$POST_EXTRAS_CAPTURE_COUNT" -eq 1 ] &&
+       [ "$REQUEST_COUNT" -eq 4 ] &&
+       [ "$HITOOLBOX_EXTRAS_TARGET_COUNT" -ge 1 ] &&
+       /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_POST_EXTRAS_SCHEMA_AUDIT_REJECT:status=25 intentional=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_POST_EXTRAS_SCHEMA_AUDIT_SUMMARY:captures=1 failures=0 unexpectedRejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=3 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:POST_EXTRAS_AUDIT_PASS' "$RAW_LOG"; then
+        log "post_extras_schema_audit_output_sha256=$(sha256 "$POST_EXTRAS_SCHEMA_AUDIT_REPORT")"
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_POST_EXTRAS_SCHEMA_AUDIT_PASS"
+        exit 0
+    fi
+    log "RESULT: CREATENEWWINDOW_DISTNOTIFY_POST_EXTRAS_SCHEMA_AUDIT_INCOMPLETE"
     exit 0
 fi
 
