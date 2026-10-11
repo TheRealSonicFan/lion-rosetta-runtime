@@ -486,3 +486,10 @@ The post-Extras schema audit captured `AppleAquaColorVariantChanged` as the four
 
 Follow `docs/process-manager-createwindow-post-extras-distributed-notification-registration-experiment.md`. The next run may add only that exact fourth name to the native public-CoreFoundation registration broker. If all four registrations pass and `com.apple.dock.server` still returns `-304`, stop there and treat that bootstrap lookup as the next boundary. No fifth notification policy, dock-server compatibility change, or XNU change is part of this gate.
 
+
+
+## Dock server bootstrap protocol proof after exact-four registration gate
+
+The exact-four post-Extras notification run established all four reviewed registrations with zero rejects and left the already recorded `com.apple.dock.server` lookup as the next live boundary. On Lion the untouched Snow PPC ordinary `bootstrap_look_up` returned `-304/MIG_BAD_ARGUMENTS` with a zero port and `CreateNewWindow=-304`; the exact Snow resource fallback and protected-state checks remained clean.
+
+Follow `docs/process-manager-createwindow-dockserver-bootstrap-protocol-adapter-experiment.md`. Build the standalone PPC Dock lookup subject only on Snow Leopard, require its ordinary `com.apple.dock.server` control to return `kr=0` and a nonzero port, transfer that exact hashed subject to Lion, repeat the native safety gates, and send exactly one known Lion-format lookup request: ID `0x194`, size `0xbc`, PID 0, zero UUID, flags 0, reply ID `0x1f8`. Stop after the lookup result. Do not run CreateNewWindow, modify the CGS interposer, broaden notification policy, alter HIToolbox resources, or change XNU before review.
