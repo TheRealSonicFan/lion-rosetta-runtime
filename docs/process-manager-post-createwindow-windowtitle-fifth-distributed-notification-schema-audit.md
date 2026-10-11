@@ -278,3 +278,31 @@ next step                                              -> capture/decode exact f
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed result — fifth registration schema reviewed
+
+The audit passed exactly once. The fifth request was captured as a 321-byte binary plist with an eight-key registration dictionary:
+
+```text
+message_type  register
+client        ppc-process-manager-cgs-session-bootstrap-integration-private-dyld
+counter       1
+entry         3854864 in the captured run
+name          com_apple_CoreText_FontManagerChangedNotification
+object        kCFNotificationAnyObject
+behavior      1
+sessionid     78 in the captured run
+```
+
+The broker accepted the four previously reviewed registrations, captured exactly one fifth request, deliberately rejected it with status 25, reported zero audit failures and zero unexpected rejects, and returned `POST_FONTSERVER_AUDIT_PASS`. The runner reported exactly five legacy Mach requests, one FontServer compatibility call and PASS, unchanged protected hashes, and `POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_SCHEMA_AUDIT_PASS`. The subject still exited after the intentional rejection, as expected.
+
+The fifth request matches the established registration dictionary shape. Its AnyObject semantics are already used by the third and fourth accepted registrations, while legacy behavior 1 is already mapped by the broker for the first two accepted registrations. The runtime-valued `entry` and `sessionid` are not hard-coded; the registration broker continues to require a positive unique entry and equality with the established session scope.
+
+The authoritative next procedure is:
+
+```text
+docs/process-manager-post-createwindow-windowtitle-fifth-distributed-notification-registration-experiment.md
+```
+
+That stage accepts only this exact fifth name/object/behavior tuple and reruns the unchanged title subject once. Any sixth unreviewed request remains rejected and becomes a new audit boundary. No XNU change is indicated.
