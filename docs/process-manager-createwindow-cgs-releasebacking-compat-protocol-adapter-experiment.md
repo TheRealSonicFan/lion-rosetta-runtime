@@ -244,3 +244,60 @@ next step                                       -> standalone ID-only copied-buf
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — release-backing copied-buffer policy proof passed
+
+The returned Snow control, syscall-295 gate, and Lion policy proof fully pass this stage.
+
+Artifact and control provenance:
+
+```text
+build ID                    createwindow-cgs-releasebacking-compat-protocol-v1
+architecture                ppc7400
+LC_LOAD_DYLINKER            /usr/oah/dyld
+proof executable SHA-256    c98af9277124863794152947c5898e6f88913cb55fbd2b822f40e4042c71bde3
+Snow control                PASS
+syscall 295                 EBADF / no SIGSYS / PASS
+```
+
+The Lion copied-buffer proof established:
+
+```text
+legacy request ID           0x724b
+Lion request ID             0x724c
+send / receive              0x28 / 0x2c
+captured window ID          0x20a
+release flag                1
+request changed bytes       1
+request body changes        0
+source request changes      0
+
+Lion success reply ID       0x72b0
+legacy success reply ID     0x72af
+reply size                  0x24
+reply changed bytes         1
+reply body changes          0
+decoded result              0
+
+Lion error reply ID         0x72b0
+legacy error reply ID       0x72af
+reply size                  0x24
+reply changed bytes         1
+reply body changes          0
+raw result                  0xd0feffff
+decoded result              -304
+new diagnostics             none
+protected hashes            unchanged
+RESULT                      CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_POLICY_PROOF_PASS
+```
+
+This closes the local policy prerequisite: for the validated release-backing transaction geometry, the proposed compatibility transformation changes only the generated MIG routine IDs and preserves the complete request/reply body and result scalar.
+
+The authoritative next procedure is:
+
+```text
+docs/process-manager-createwindow-cgs-releasebacking-compat-integration-experiment.md
+```
+
+That stage integrates only this ID conversion into the existing combined CoreServices `mach_msg` interposer, keeps Snow strict passthrough, retains the accepted NewWindow adapter unchanged, and performs one Lion CreateNewWindow run. A nonzero native release-backing result must remain nonzero and no later CoreGraphics helper is adapted in the same run.
