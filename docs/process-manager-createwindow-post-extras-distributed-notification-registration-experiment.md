@@ -253,3 +253,27 @@ Stop after Phase E.
 - If a fifth request is rejected, capture and review that exact request before extending policy.
 - No wildcard notification policy is authorized.
 - No XNU change is indicated.
+
+
+## Observed result — exact four registrations established; Dock lookup is next boundary
+
+The Lion exact-four run reached:
+
+```text
+PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=4 callback=0 rejects=0 exact=YES
+PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS
+PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH:reason=NON_TARGET ... name=com.apple.dock.server
+PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH_RETURN:kr=-304 ... servicePort=0
+PM_POSTIDENTITY_STATUS:CreateNewWindow=-304
+RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATIONS_ESTABLISHED_DOCK_SERVER_MINUS304
+```
+
+No new crash/core diagnostic was produced and protected hashes remained unchanged. This closes the reviewed four-registration distributed-notification sequence as the immediate blocker. The exact Snow `Extras.rsrc` fallback also remains established; neither notification policy nor HIToolbox resource compatibility should be broadened further at this boundary.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-createwindow-dockserver-bootstrap-protocol-adapter-experiment.md
+```
+
+That stage is deliberately standalone. It first proves ordinary `bootstrap_look_up("com.apple.dock.server")` on Snow Leopard, then sends exactly one already-established Lion-format `0xbc` launchd lookup request on Lion with PID 0, zero instance UUID, and flags 0. It does not rerun CreateNewWindow or integrate Dock lookup compatibility yet. No XNU change is indicated.
