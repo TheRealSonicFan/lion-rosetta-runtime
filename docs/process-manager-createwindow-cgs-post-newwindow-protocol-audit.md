@@ -129,3 +129,22 @@ If the analyzer cannot recover a required family, treat that as an analyzer/mode
 ## Current boundary statement
 
 The NewWindow ID-only adapter is now proven to reach a native Lion NewWindow success reply. The unresolved boundary is inside the remaining work performed by `CreateNewWindow` after that reply, where the first observable failures are the four CoreGraphics helpers above. This remains a runtime/user-space compatibility investigation; the current evidence does not indicate another XNU defect.
+
+
+## Observed result — release-backing is the first trace target
+
+Both analyzer-v1 reports passed. Snow Leopard 10.6.8 supplied the required PPC7400 target families and Lion 10.7.5 supplied the required i386 families.
+
+The first live post-NewWindow diagnostic, `CGSSetWindowToReleaseBackingOnOrderOut`, is a narrow generated-MIG differential. Snow PPC uses request/reply IDs `0x724b/0x72af`; Lion i386 uses `0x724c/0x72b0`. Both generated clients use bits `0x1513`, Mach option `0x3`, send/receive sizes `0x28/0x2c`, a `0x24` accepted reply, and corresponding NDR-aware scalar decoding. The two post-NDR request scalars occupy the same positions.
+
+The later ShapeWindow generated clients also changed IDs: non-inline `0x7367/0x73cb -> 0x736d/0x73d1`, inline `0x7368/0x73cc -> 0x736e/0x73d2`. Those are not yet active work because the live failure sequence reaches release-backing first.
+
+The audited `CGSSetWindowOpacity` and `CGSGetDisplayBounds` public symbol windows do not provide a same-named direct generated-`mach_msg` contract that would justify an ID rewrite from this static evidence alone.
+
+The authoritative next gate is:
+
+```text
+docs/process-manager-createwindow-cgs-releasebacking-transport-trace-experiment.md
+```
+
+That stage keeps the accepted NewWindow adapter unchanged and passively traces only the exact Snow legacy release-backing transaction before any further compatibility policy is considered.
