@@ -13,7 +13,9 @@ extern kern_return_t bootstrap_look_up(mach_port_t,
                                        mach_port_t *);
 extern mach_port_t mig_get_reply_port(void);
 
-#ifdef PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT
+#ifdef PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT
+#define COMPAT_BUILD_ID "cgs-session-bootstrap-dockserver-fontserver-compat-v3"
+#elif defined(PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT)
 #define COMPAT_BUILD_ID "cgs-session-bootstrap-dockserver-compat-v2"
 #else
 #define COMPAT_BUILD_ID "cgs-session-bootstrap-compat-v1"
@@ -26,6 +28,11 @@ extern mach_port_t mig_get_reply_port(void);
 #define DOCK_COMPAT_MODE_ENV "ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE"
 #define DOCK_COMPAT_MODE_PASSTHROUGH "passthrough"
 #define DOCK_COMPAT_MODE_LION "lion-dockserver-v1"
+#endif
+#ifdef PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT
+#define FONT_COMPAT_MODE_ENV "ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE"
+#define FONT_COMPAT_MODE_PASSTHROUGH "passthrough"
+#define FONT_COMPAT_MODE_LION "lion-fontserver-v1"
 #endif
 
 #define LION_LOOKUP_REQUEST_ID 0x00000194U
@@ -69,6 +76,10 @@ static const char *kLionActiveService =
 static const char *kDockServerService =
     "com.apple.dock.server";
 #endif
+#ifdef PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT
+static const char *kFontServerService =
+    "com.apple.FontServer";
+#endif
 
 typedef kern_return_t (*bootstrap_lookup_fn)(mach_port_t,
                                              const char *,
@@ -90,6 +101,10 @@ static unsigned int gAdaptedCallCount = 0;
 #ifdef PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT
 static unsigned int gDockCallCount = 0;
 static unsigned int gDockAdaptedCallCount = 0;
+#endif
+#ifdef PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT
+static unsigned int gFontCallCount = 0;
+static unsigned int gFontAdaptedCallCount = 0;
 #endif
 
 static void
@@ -358,6 +373,155 @@ lookup_lion_dockserver(mach_port_t bp,
 
     fprintf(stderr,
             "PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_COMPLEX_REPLY:descriptor_count=%lu servicePort=0x%08lx\n",
+            (unsigned long)descriptor_count,
+            (unsigned long)returned_port);
+    fflush(stderr);
+
+    if (reply_size != LION_LOOKUP_SUCCESS_SIZE ||
+        descriptor_count != 1U ||
+        returned_port == MACH_PORT_NULL) {
+        if (returned_port != MACH_PORT_NULL)
+            (void)mach_port_deallocate(mach_task_self(), returned_port);
+        return MIG_TYPE_ERROR;
+    }
+
+    if (!has_send_right(returned_port)) {
+        (void)mach_port_deallocate(mach_task_self(), returned_port);
+        return MIG_TYPE_ERROR;
+    }
+
+    *service_port = returned_port;
+    return KERN_SUCCESS;
+}
+#endif
+
+#ifdef PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT
+static int
+build_lion_font_lookup_request(unsigned char *buffer,
+                               mach_port_t remote_port,
+                               mach_port_t reply_port)
+{
+    uint32_t bits;
+    pid_t target_pid = 0;
+    uint64_t flags = 0;
+
+    if (buffer == NULL)
+        return 0;
+
+    memset(buffer, 0, LION_LOOKUP_SEND_SIZE);
+
+    bits = (uint32_t)MACH_MSGH_BITS(MACH_MSG_TYPE_COPY_SEND,
+                                    MACH_MSG_TYPE_MAKE_SEND_ONCE);
+
+    put_u32(buffer + 0x00, bits);
+    put_u32(buffer + 0x04, LION_LOOKUP_SEND_SIZE);
+    put_u32(buffer + 0x08, (uint32_t)remote_port);
+    put_u32(buffer + 0x0c, (uint32_t)reply_port);
+    put_u32(buffer + 0x10, 0U);
+    put_u32(buffer + 0x14, LION_LOOKUP_REQUEST_ID);
+    memcpy(buffer + 0x18, &NDR_record, sizeof(NDR_record));
+
+    strncpy((char *)(buffer + LION_LOOKUP_SERVICE_OFF),
+            kFontServerService, 0x7f);
+    ((char *)(buffer + LION_LOOKUP_SERVICE_OFF))[0x7f] = '\0';
+
+    memcpy(buffer + LION_LOOKUP_PID_OFF, &target_pid, sizeof(target_pid));
+    memset(buffer + LION_LOOKUP_UUID_OFF, 0, 16);
+    put_u64(buffer + LION_LOOKUP_FLAGS_OFF, flags);
+
+    return get_u32(buffer + 0x00) == LION_LOOKUP_REQUEST_BITS &&
+           get_u32(buffer + 0x04) == LION_LOOKUP_SEND_SIZE &&
+           get_u32(buffer + 0x14) == LION_LOOKUP_REQUEST_ID &&
+           get_u64(buffer + LION_LOOKUP_FLAGS_OFF) == 0;
+}
+
+static kern_return_t
+lookup_lion_fontserver(mach_port_t bp,
+                       mach_port_t *service_port)
+{
+    uint32_t storage[LION_LOOKUP_SEND_SIZE / sizeof(uint32_t)];
+    unsigned char *message = (unsigned char *)storage;
+    mach_port_t reply_port;
+    mach_port_t returned_port;
+    mach_msg_return_t mr;
+    uint32_t reply_bits;
+    uint32_t reply_size;
+    uint32_t reply_id;
+    uint32_t descriptor_count;
+    int32_t retcode;
+
+    if (bp == MACH_PORT_NULL || service_port == NULL)
+        return MIG_BAD_ARGUMENTS;
+    *service_port = MACH_PORT_NULL;
+
+    reply_port = mig_get_reply_port();
+    if (reply_port == MACH_PORT_NULL)
+        return MIG_NO_REPLY;
+
+    if (!build_lion_font_lookup_request(message, bp, reply_port))
+        return MIG_BAD_ARGUMENTS;
+
+    fprintf(stderr,
+            "PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_REQUEST:bp=0x%08lx reply=0x%08lx name=%s id=0x%08lx send=0x%08lx recv=0x%08lx pid=0 uuid=ZERO flags=0x0000000000000000\n",
+            (unsigned long)bp,
+            (unsigned long)reply_port,
+            kFontServerService,
+            (unsigned long)LION_LOOKUP_REQUEST_ID,
+            (unsigned long)LION_LOOKUP_SEND_SIZE,
+            (unsigned long)LION_LOOKUP_RECV_SIZE);
+    fflush(stderr);
+
+    mr = mach_msg((mach_msg_header_t *)message,
+                  (mach_msg_option_t)LION_LOOKUP_MSG_OPTIONS,
+                  (mach_msg_size_t)LION_LOOKUP_SEND_SIZE,
+                  (mach_msg_size_t)LION_LOOKUP_RECV_SIZE,
+                  reply_port,
+                  MACH_MSG_TIMEOUT_NONE,
+                  MACH_PORT_NULL);
+
+    fprintf(stderr,
+            "PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MACH_RETURN:kr=%ld hex=0x%08lx\n",
+            (long)mr,
+            (unsigned long)(uint32_t)mr);
+    fflush(stderr);
+
+    if (mr != MACH_MSG_SUCCESS)
+        return mr;
+
+    reply_bits = get_u32(message + 0x00);
+    reply_size = get_u32(message + 0x04);
+    reply_id = get_u32(message + 0x14);
+
+    fprintf(stderr,
+            "PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_REPLY:bits=0x%08lx size=0x%08lx id=0x%08lx\n",
+            (unsigned long)reply_bits,
+            (unsigned long)reply_size,
+            (unsigned long)reply_id);
+    fflush(stderr);
+
+    if (reply_id != LION_LOOKUP_REPLY_ID)
+        return MIG_REPLY_MISMATCH;
+
+    if ((reply_bits & MACH_MSGH_BITS_COMPLEX) == 0) {
+        if (reply_size != LION_LOOKUP_ERROR_SIZE)
+            return MIG_TYPE_ERROR;
+        retcode =
+            (int32_t)get_u32(message + LION_LOOKUP_REPLY_RETCODE_OFF);
+        fprintf(stderr,
+                "PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_SIMPLE_REPLY:retcode=%ld hex=0x%08lx\n",
+                (long)retcode,
+                (unsigned long)(uint32_t)retcode);
+        fflush(stderr);
+        return (kern_return_t)retcode;
+    }
+
+    descriptor_count =
+        get_u32(message + LION_LOOKUP_REPLY_DESC_COUNT_OFF);
+    returned_port =
+        (mach_port_t)get_u32(message + LION_LOOKUP_REPLY_PORT_OFF);
+
+    fprintf(stderr,
+            "PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_COMPLEX_REPLY:descriptor_count=%lu servicePort=0x%08lx\n",
             (unsigned long)descriptor_count,
             (unsigned long)returned_port);
     fflush(stderr);
@@ -743,6 +907,66 @@ rosetta_bootstrap_look_up(mach_port_t bp,
         } else {
             fprintf(stderr,
                     "PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_FAIL\n");
+        }
+        fflush(stderr);
+        return kr;
+    }
+#endif
+
+#ifdef PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT
+    if (service_name != NULL &&
+        strcmp(service_name, kFontServerService) == 0) {
+        const char *font_mode = getenv(FONT_COMPAT_MODE_ENV);
+
+        ++gFontCallCount;
+        fprintf(stderr, "%s\n", COMPAT_BUILD_MARKER);
+        fprintf(stderr,
+                "PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_CALL:index=%u mode=%s bp=0x%08lx name=%s\n",
+                gFontCallCount,
+                font_mode != NULL ? font_mode : "(unset)",
+                (unsigned long)bp,
+                service_name);
+        fflush(stderr);
+
+        if (font_mode == NULL) {
+            return call_original_lookup(bp, service_name, service_port,
+                                        "FONT_MODE_UNSET");
+        }
+
+        if (strcmp(font_mode, FONT_COMPAT_MODE_PASSTHROUGH) == 0) {
+            return call_original_lookup(bp, service_name, service_port,
+                                        "FONT_SNOW_PASSTHROUGH");
+        }
+
+        if (strcmp(font_mode, FONT_COMPAT_MODE_LION) != 0) {
+            if (service_port != NULL)
+                *service_port = MACH_PORT_NULL;
+            fprintf(stderr,
+                    "PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:MODE_REJECTED\n");
+            fflush(stderr);
+            return MIG_BAD_ARGUMENTS;
+        }
+
+        ++gFontAdaptedCallCount;
+        kr = lookup_lion_fontserver(bp, service_port);
+
+        fprintf(stderr,
+                "PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_ADAPTER_RETURN:index=%u kr=%ld hex=0x%08lx servicePort=0x%08lx\n",
+                gFontAdaptedCallCount,
+                (long)kr,
+                (unsigned long)(uint32_t)kr,
+                (unsigned long)((service_port != NULL) ?
+                                *service_port : MACH_PORT_NULL));
+        fflush(stderr);
+
+        if (kr == KERN_SUCCESS &&
+            service_port != NULL &&
+            *service_port != MACH_PORT_NULL) {
+            fprintf(stderr,
+                    "PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS\n");
+        } else {
+            fprintf(stderr,
+                    "PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_FAIL\n");
         }
         fflush(stderr);
         return kr;
