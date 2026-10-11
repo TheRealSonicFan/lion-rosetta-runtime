@@ -71,6 +71,9 @@ elif [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ]; then
 elif [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-post-createwindow-windowtitle-fontserver-schema-audit-broker-v1"
     EXPECTED_REAL_REGISTRATION_COUNT=4
+elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ]; then
+    EXPECTED_BROKER_BUILD_ID="distributed-notifications-post-createwindow-windowtitle-fontserver-registration-broker-v1"
+    EXPECTED_REAL_REGISTRATION_COUNT=5
 elif [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-createwindow-post-extras-registration-broker-v1"
     EXPECTED_REAL_REGISTRATION_COUNT=4
@@ -105,8 +108,9 @@ if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
         die 64 "FontServer compatibility requires lion-dockserver-v1"
     [ "$POST_CREATEWINDOW_TITLE_MODE" = "lion-windowtitle-v1" ] ||
         die 64 "FontServer compatibility requires the post-CreateNewWindow window-title subject"
-    [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] ||
-        die 64 "FontServer compatibility requires the exact-four notification broker"
+    { [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] ||
+      [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ]; } ||
+        die 64 "FontServer compatibility requires the reviewed exact-four or exact-five notification broker"
     EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-fontserver-compat-v3"
 fi
 if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
@@ -123,8 +127,9 @@ if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
         die 64 "CGS NewWindow compatibility integration and passive-trace runner modes are mutually exclusive"
     [ "$DOCKSERVER_COMPAT_MODE" = "lion-dockserver-v1" ] ||
         die 64 "CGS NewWindow compatibility integration requires lion-dockserver-v1"
-    [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] ||
-        die 64 "CGS NewWindow compatibility integration requires the exact-four post-Extras registration mode"
+    { [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] ||
+      [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ]; } ||
+        die 64 "CGS NewWindow compatibility integration requires the reviewed exact-four or exact-five registration mode"
     [ "$HITOOLBOX_EXTRAS_MODE" = "lion-fallback-external-v1" ] ||
         die 64 "CGS NewWindow compatibility integration requires lion-fallback-external-v1"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-v1"
@@ -209,13 +214,15 @@ if [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ]; then
 fi
 if [ -n "$REAL_REGISTRATION_MODE" ] &&
    [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-register-v1" ] &&
-   [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-post-extras-register-v1" ]; then
+   [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-post-extras-register-v1" ] &&
+   [ "$REAL_REGISTRATION_MODE" != "lion-windowtitle-fontserver-register-v1" ]; then
     die 64 "unsupported ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE: $REAL_REGISTRATION_MODE"
 fi
 
 if [ -n "$DOCKSERVER_COMPAT_MODE" ] &&
-   [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-post-extras-register-v1" ]; then
-    die 64 "DockServer bootstrap compatibility requires lion-createwindow-post-extras-register-v1"
+   [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-post-extras-register-v1" ] &&
+   [ "$REAL_REGISTRATION_MODE" != "lion-windowtitle-fontserver-register-v1" ]; then
+    die 64 "DockServer bootstrap compatibility requires the reviewed exact-four or exact-five registration mode"
 fi
 if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] &&
    [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-register-v1" ]; then
@@ -1041,11 +1048,23 @@ if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
     fi
 fi
 
+if [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ]; then
+    FIFTH_ACCEPT_COUNT="$(/usr/bin/grep -c 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=5 allowed=4 behavior=1 publicBehavior=4 anyObject=YES' "$RAW_LOG" 2>/dev/null || true)"
+    log "fifth_notification_registration_accept_count=$FIFTH_ACCEPT_COUNT"
+    if [ "$FIFTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+fi
+
 if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REJECT:' "$RAW_LOG" ||
    /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_REQUEST:FAIL' "$RAW_LOG" ||
    /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_CALLBACK:REJECT' "$RAW_LOG" ||
    /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
-    if [ -n "$FONTSERVER_COMPAT_MODE" ] &&
+    if [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=5 allowed=4 behavior=1 publicBehavior=4 anyObject=YES' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_PASS_SIXTH_PROTOCOL_REJECTED"
+    elif [ -n "$FONTSERVER_COMPAT_MODE" ] &&
        /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_PASS_NOTIFICATION_PROTOCOL_REJECTED"
     elif [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ]; then
@@ -1562,7 +1581,10 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
         exit 0
     fi
     if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T03_AFTER_SetWindowTitleWithCFString' "$RAW_LOG"; then
-        if [ -n "$FONTSERVER_COMPAT_MODE" ] &&
+        if [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] &&
+           /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=5 allowed=4 behavior=1 publicBehavior=4 anyObject=YES' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_PASS_POST_RPC_NO_RETURN"
+        elif [ -n "$FONTSERVER_COMPAT_MODE" ] &&
            /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
             log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
         else
@@ -1624,7 +1646,9 @@ if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:P
 fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
-    if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
+    if [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$FONTSERVER_COMPAT_MODE" ]; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_INTEGRATION_PASS"
     elif [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_VALIDATION_PASS"
