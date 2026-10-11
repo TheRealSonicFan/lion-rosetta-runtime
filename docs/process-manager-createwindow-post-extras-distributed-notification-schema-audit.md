@@ -244,3 +244,31 @@ and compare it with the three already reviewed registrations and with Snow behav
 Only if that exact request is semantically justified should the native broker be extended. The already observed `com.apple.dock.server` bootstrap failure is a downstream candidate boundary, but it must not be changed in the same experiment.
 
 No XNU change is indicated.
+
+## Returned audit result
+
+The diagnostic gate passed with exactly one captured post-Extras request, four total legacy Mach requests, zero audit failures, zero unexpected rejects, and unchanged protected hashes.
+
+The fourth request is:
+
+```text
+message_type=register
+client=ppc-process-manager-cgs-session-bootstrap-integration-private-dyld
+name=AppleAquaColorVariantChanged
+object=kCFNotificationAnyObject
+behavior=4
+counter=1
+entry=<run-time identity>
+sessionid=<current session>
+```
+
+It is the same reviewed eight-key registration shape as the preceding appearance notification and uses the already proven legacy behavior 4 -> public Coalesce mapping. The Snow Leopard HIToolbox inventory contains `AppleAquaColorVariantChanged` in the same appearance-preference string cluster as `AppleColorPreferencesChangedNotification`; Lion HIToolbox contains the same name as well. The request is therefore justified for an **exact fourth registration only**.
+
+Current `main` advances to:
+
+```text
+docs/process-manager-createwindow-post-extras-distributed-notification-registration-experiment.md
+```
+
+That stage accepts exactly the four reviewed registration names while retaining the exact Snow `Extras.rsrc` fallback. It does not alter `com.apple.dock.server`. If the four-registration broker passes and CreateNewWindow still returns `-304` at the same dock-server lookup, that bootstrap lookup becomes the next diagnostic boundary. No XNU change is authorized.
+
