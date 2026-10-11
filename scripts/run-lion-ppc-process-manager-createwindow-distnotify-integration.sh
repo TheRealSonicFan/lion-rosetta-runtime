@@ -1223,6 +1223,47 @@ if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
     fi
 fi
 
+if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+    OPACITY_CREATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_TERMINATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_TOTAL_COUNT=$((OPACITY_CREATE_COUNT + OPACITY_TERMINATE_COUNT))
+    log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_COUNT"
+    log "cgs_opacity_alpha_terminate_legacy_trace_count=$OPACITY_TERMINATE_COUNT"
+    log "cgs_opacity_alpha_legacy_trace_count=$OPACITY_TOTAL_COUNT"
+
+    if [ "$OPACITY_TOTAL_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_REQUEST_NOT_REACHED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_UNEXPECTED_MACH_FAILURE"
+        exit 0
+    fi
+
+    if [ "$OPACITY_CREATE_COUNT" -eq 1 ]; then
+        OPACITY_KIND="CREATE"
+        if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x0000724f expectedReply=0x000072b3 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY" | /usr/bin/grep -Fq 'size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES'; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_SUCCESS_UNEXPECTED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_legacy_kind=CREATE"
+    elif [ "$OPACITY_TERMINATE_COUNT" -eq 1 ]; then
+        OPACITY_KIND="TERMINATE"
+        if ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x00007250 expectedReply=0x000072b4 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY" | /usr/bin/grep -Fq 'size=0x00000024 id=0x000072b4 expected=0x000072b4 idMatch=YES'; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_TERMINATE_SUCCESS_UNEXPECTED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_legacy_kind=TERMINATE"
+        log "cgs_opacity_alpha_id_collision=SNOW_TERMINATE_EQUALS_LION_CREATE"
+    fi
+fi
+
 if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] &&
    [ "$FOUND" -eq 0 ] &&
    /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=-304' "$RAW_LOG" &&
@@ -1237,7 +1278,9 @@ if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] &
 fi
 
 if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=0' "$RAW_LOG"; then
-    if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+    if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_PUBLIC_ERROR"
+    elif [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
         log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_SUCCESS_PUBLIC_ERROR"
     elif [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
         log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_SUCCESS_PUBLIC_ERROR"
