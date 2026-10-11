@@ -21,6 +21,7 @@ NEWWINDOW_TRACE_MODE="${ROSETTA_CGS_NEWWINDOW_TRACE_MODE:-}"
 NEWWINDOW_COMPAT_MODE="${ROSETTA_CGS_NEWWINDOW_COMPAT_MODE:-}"
 RELEASEBACKING_TRACE_MODE="${ROSETTA_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE_MODE:-}"
 RELEASEBACKING_COMPAT_MODE="${ROSETTA_CGS_RELEASEBACKING_COMPAT_MODE:-}"
+OPACITY_ALPHA_TRACE_MODE="${ROSETTA_CGS_POST_RELEASEBACKING_OPACITY_TRACE_MODE:-}"
 
 PRIVATE_DYLD="/usr/oah/dyld"
 EXPECTED_DYLD_SHA="963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb"
@@ -69,6 +70,17 @@ if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
     [ -z "$RELEASEBACKING_TRACE_MODE" ] ||
         fail "Snow release-backing compatibility and passive-trace runner modes are mutually exclusive"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-v1"
+fi
+if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+    [ "$OPACITY_ALPHA_TRACE_MODE" = "passthrough" ] ||
+        fail "Snow opacity alpha-plane trace mode must be passthrough"
+    [ "$RELEASEBACKING_COMPAT_MODE" = "passthrough" ] ||
+        fail "Snow opacity alpha-plane trace requires release-backing compatibility passthrough mode"
+    [ "$NEWWINDOW_COMPAT_MODE" = "passthrough" ] ||
+        fail "Snow opacity alpha-plane trace requires NewWindow compatibility passthrough mode"
+    [ -z "$RELEASEBACKING_TRACE_MODE" ] ||
+        fail "Snow opacity alpha-plane trace and release-backing passive trace are mutually exclusive"
+    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-trace-v1"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 abspath() {
@@ -215,6 +227,15 @@ if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
             fail "CGS release-backing compatibility marker missing: $marker"
     done
 fi
+if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+    for marker in \
+        'CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' \
+        'CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY' \
+        'PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:'; do
+        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
+            fail "CGS opacity alpha-plane trace marker missing: $marker"
+    done
+fi
 /usr/bin/strings "$SEC_INTERPOSER" | /usr/bin/grep -Fq \
     "PM_SECURITY_SESSION_API_COMPAT_BUILD_ID:$EXPECTED_SEC_BUILD_ID" || fail "Security build marker missing"
 /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq \
@@ -282,6 +303,9 @@ if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
     export ROSETTA_CGS_RELEASEBACKING_COMPAT_MODE="$RELEASEBACKING_COMPAT_MODE"
 else
     unset ROSETTA_CGS_RELEASEBACKING_COMPAT_MODE
+fi
+if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+    echo "cgs_post_releasebacking_opacity_alpha_trace_mode=$OPACITY_ALPHA_TRACE_MODE" | /usr/bin/tee -a "$LOG"
 fi
 echo "private_dyld_sha256=$EXPECTED_DYLD_SHA" | /usr/bin/tee -a "$LOG"
 if [ -n "$HITOOLBOX_TRACE" ]; then
@@ -423,7 +447,49 @@ if [ "$RC" -eq 0 ] &&
        /usr/bin/grep -Fq 'mode=snow-force-external-v1 original=SKIPPED fallback=NONNULL' "$LOG" &&
        ! /usr/bin/grep -Fq 'mode=snow-force-external-v1 original=SKIPPED fallback=NULL' "$LOG" &&
        ! /usr/bin/grep -Fq 'HIToolbox: failed to copy resource URL for framework bundle.' "$LOG"; }; }; then
-    if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+    if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+        RELEASEBACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_RELEASEBACKING_COMPAT_CALL:' "$LOG" 2>/dev/null || true)"
+        OPACITY_CREATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$LOG" 2>/dev/null || true)"
+        OPACITY_TERMINATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY' "$LOG" 2>/dev/null || true)"
+        OPACITY_TOTAL_COUNT=$((OPACITY_CREATE_COUNT + OPACITY_TERMINATE_COUNT))
+        if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=1 mode=passthrough exact=YES' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:PASSTHROUGH' "$LOG" ||
+           [ "$RELEASEBACKING_COMPAT_COUNT" -ne 1 ] ||
+           ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=1 mode=passthrough exact=YES .*releaseFlag=0x00000001 newWindowCompatCalls=1' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:PASSTHROUGH' "$LOG" ||
+           /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$LOG" ||
+           [ "$OPACITY_TOTAL_COUNT" -ne 1 ] ||
+           /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:' "$LOG"; then
+            echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
+            exit 1
+        fi
+        if [ "$OPACITY_CREATE_COUNT" -eq 1 ]; then
+            if /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$LOG" &&
+               /usr/bin/grep -Fq 'id=0x0000724f expectedReply=0x000072b3 option=0x00000003 send=0x00000024 recv=0x0000002c' "$LOG" &&
+               /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$LOG" &&
+               /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001200 size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES' "$LOG"; then
+                echo "cgs_opacity_alpha_legacy_kind=CREATE" | /usr/bin/tee -a "$LOG"
+            else
+                echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
+                exit 1
+            fi
+        elif [ "$OPACITY_TERMINATE_COUNT" -eq 1 ]; then
+            if /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$LOG" &&
+               /usr/bin/grep -Fq 'id=0x00007250 expectedReply=0x000072b4 option=0x00000003 send=0x00000024 recv=0x0000002c' "$LOG" &&
+               /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$LOG" &&
+               /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001200 size=0x00000024 id=0x000072b4 expected=0x000072b4 idMatch=YES' "$LOG"; then
+                echo "cgs_opacity_alpha_legacy_kind=TERMINATE" | /usr/bin/tee -a "$LOG"
+            else
+                echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
+                exit 1
+            fi
+        else
+            echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
+            exit 1
+        fi
+        echo "cgs_opacity_alpha_legacy_trace_count=$OPACITY_TOTAL_COUNT" | /usr/bin/tee -a "$LOG"
+        echo "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+    elif [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
         RELEASEBACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_RELEASEBACKING_COMPAT_CALL:' "$LOG" 2>/dev/null || true)"
         if /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=1 mode=passthrough exact=YES' "$LOG" &&
            /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:PASSTHROUGH' "$LOG" &&
