@@ -24,6 +24,7 @@ HITOOLBOX_EXTRAS_COMPAT_SHA_FILE="${ROSETTA_HITOOLBOX_EXTRAS_COMPAT_SHA256_FILE:
 HITOOLBOX_EXTRAS_RESOURCE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH:-}"
 HITOOLBOX_EXTRAS_MODE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE:-}"
 DOCKSERVER_COMPAT_MODE="${ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE:-}"
+NEWWINDOW_TRACE_MODE="${ROSETTA_CGS_NEWWINDOW_TRACE_MODE:-}"
 
 TRANSLATOR="/usr/libexec/oah/translate"
 PRIVATE_DYLD="/usr/oah/dyld"
@@ -85,6 +86,13 @@ if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
     [ "$DOCKSERVER_COMPAT_MODE" = "lion-dockserver-v1" ] ||
         die 64 "unsupported ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE: $DOCKSERVER_COMPAT_MODE"
     EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-compat-v2"
+fi
+if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
+    [ "$NEWWINDOW_TRACE_MODE" = "lion-passive-v1" ] ||
+        die 64 "unsupported ROSETTA_CGS_NEWWINDOW_TRACE_MODE: $NEWWINDOW_TRACE_MODE"
+    [ "$DOCKSERVER_COMPAT_MODE" = "lion-dockserver-v1" ] ||
+        die 64 "CGS NewWindow passive trace requires lion-dockserver-v1"
+    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-trace-v1"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 
@@ -323,6 +331,12 @@ echo "$BROKER_ARCH" | /usr/bin/grep -Eq '(^|[[:space:]])i386([[:space:]]|$)' ||
     "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || die 68 "CoreServices CPS registration compatibility build marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_BUILD_ID:distributed-notifications-ppc-ingress-interposer-v2" || die 68 "embedded distributed-notifications ingress marker missing"
+if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
+    /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_CREATE_WINDOW_INLINE_LEGACY' ||
+        die 68 "CGS NewWindow legacy trace marker missing"
+    /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_CREATE_WINDOW_INLINE_LION' ||
+        die 68 "CGS NewWindow Lion trace marker missing"
+fi
 /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq \
     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_BUILD_ID:$EXPECTED_BROKER_BUILD_ID" || die 68 "broker build marker missing"
 /usr/bin/strings "$SEC_INTERPOSER" | /usr/bin/grep -Fq \
@@ -861,6 +875,32 @@ if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
         log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_ADAPTER_FAILED"
         exit 0
     fi
+fi
+
+if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
+    NEWWINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_newwindow_legacy_trace_count=$NEWWINDOW_TRACE_COUNT"
+    if [ "$NEWWINDOW_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REQUEST_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'id=0x00007394 expectedReply=0x000073f8 option=0x00000003' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'recv=0x00000040' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REQUEST_UNEXPECTED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_MACH_FAILURE"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_LEGACY_REPLY_OBSERVED"
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REPLY_UNEXPECTED"
+    fi
+    exit 0
 fi
 
 if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] &&
