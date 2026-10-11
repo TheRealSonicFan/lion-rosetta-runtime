@@ -516,3 +516,10 @@ The exact fifth title-path distributed-notification registration now passes unde
 The title call still did not return. CoreText immediately produced repeated `CopyFontForName ... FFFFFED0` errors from FontServer, plus `CopyPropertiesForFontsMatchingRequest ... FFFFFED0`, and T03 was not reached. This makes the first actual FontServer RPC the next unresolved boundary; the current log does not contain its Mach request/reply schema.
 
 Follow `docs/process-manager-post-createwindow-windowtitle-fontserver-rpc-transport-trace-experiment.md`. Build only the passive v4 CGS/FontServer trace interposer on Snow, prove the full Snow title path still passes, then perform one Lion exact-five title run and capture the exact FontServer-port `mach_msg` request/reply sequence. Do not adapt FontServer RPC traffic, widen notification policy, or change XNU before that trace is reviewed.
+
+
+## FontServer first RPC localized
+
+The passive Snow/Lion FontServer transport trace now identifies the first RPC divergence beneath `SetWindowTitleWithCFString`. Snow PPC sends request `0x32c8` with send/receive `0x18/0x3c`, receives a complex `0x34` reply `0x332c`, and the title returns 0. Lion translated PPC sends the same request and receives a simple `0x24` reply `0x332c` whose raw status bytes are `65 fd ff ff`; correlated with the later `d0 fe ff ff -> FFFFFED0` CoreText errors, that first status is `0xfffffd65` / `-667`. Lion then retries and later reaches `0x32d9/0x32db -> -304`, while `0x32cb` receives a complex reply.
+
+The first unresolved boundary is therefore the semantics of `0x32c8`, not the later CopyFont request. Follow `docs/process-manager-post-createwindow-windowtitle-fontserver-first-rpc-protocol-audit.md`: run the read-only Snow and Lion shipped-binary analyzer, identify the old method, the Lion-native equivalent or precondition, and the meaning of `-667`, and return only the two reports. Do not rerun the PPC title path or adapt any FontServer RPC before that audit is reviewed.
