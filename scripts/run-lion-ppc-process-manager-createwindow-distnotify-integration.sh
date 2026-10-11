@@ -30,6 +30,7 @@ RELEASEBACKING_TRACE_MODE="${ROSETTA_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE_MOD
 RELEASEBACKING_COMPAT_MODE="${ROSETTA_CGS_RELEASEBACKING_COMPAT_MODE:-}"
 OPACITY_ALPHA_TRACE_MODE="${ROSETTA_CGS_POST_RELEASEBACKING_OPACITY_TRACE_MODE:-}"
 OPACITY_ALPHA_CREATE_COMPAT_MODE="${ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE:-}"
+POST_CREATEWINDOW_TITLE_MODE="${ROSETTA_POST_CREATEWINDOW_TITLE_VALIDATION_MODE:-}"
 
 TRANSLATOR="/usr/libexec/oah/translate"
 PRIVATE_DYLD="/usr/oah/dyld"
@@ -151,6 +152,19 @@ if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
     [ -z "$RELEASEBACKING_TRACE_MODE" ] ||
         die 64 "opacity create-alpha compatibility and release-backing passive trace are mutually exclusive"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-v1"
+fi
+if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+    [ "$POST_CREATEWINDOW_TITLE_MODE" = "lion-windowtitle-v1" ] ||
+        die 64 "unsupported ROSETTA_POST_CREATEWINDOW_TITLE_VALIDATION_MODE: $POST_CREATEWINDOW_TITLE_MODE"
+    [ "$OPACITY_ALPHA_CREATE_COMPAT_MODE" = "lion-id-v1" ] ||
+        die 64 "post-CreateNewWindow title validation requires lion-id-v1 opacity create-alpha compatibility"
+    [ "$RELEASEBACKING_COMPAT_MODE" = "lion-id-v1" ] ||
+        die 64 "post-CreateNewWindow title validation requires lion-id-v1 release-backing compatibility"
+    [ "$NEWWINDOW_COMPAT_MODE" = "lion-inline-id-v1" ] ||
+        die 64 "post-CreateNewWindow title validation requires lion-inline-id-v1 NewWindow compatibility"
+    [ -z "$OPACITY_ALPHA_TRACE_MODE" ] ||
+        die 64 "post-CreateNewWindow title validation requires opacity passive trace unset"
+    EXPECTED_SUBJECT_BUILD_ID="cps-windowtitle-validation-v1"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 
@@ -542,6 +556,9 @@ if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
     export ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE="$OPACITY_ALPHA_CREATE_COMPAT_MODE"
 else
     unset ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE
+fi
+if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+    log "post_createwindow_title_validation_mode=$POST_CREATEWINDOW_TITLE_MODE"
 fi
 
 MARKER="$(/usr/bin/mktemp /tmp/lion-createwindow-validation-marker.XXXXXX)" || die 73 "could not create diagnostic marker"
@@ -1415,6 +1432,40 @@ if ! /usr/bin/grep -Eq 'PM_POSTIDENTITY_WINDOW:pointer=0x[0-9a-fA-F]+ nonzero=YE
     exit 0
 fi
 
+if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T00_BEFORE_CFStringCreateWithCString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_STAGE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T01_AFTER_CFStringCreateWithCString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFSTRING_NO_RETURN"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_POSTWINDOWTITLE_CFSTRING:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_RESULT:CFSTRING_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFSTRING_FAILED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T02_BEFORE_SetWindowTitleWithCFString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T03_AFTER_SetWindowTitleWithCFString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_NO_RETURN"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_STATUS:SetWindowTitleWithCFString=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_RESULT:SETWINDOWTITLE_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_ERROR"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T04_BEFORE_CFRelease' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T05_AFTER_CFRelease' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFRELEASE_INCOMPLETE"
+        exit 0
+    fi
+fi
+
 if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M22_BEFORE_DisposeWindow' "$RAW_LOG" ||
    ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M23_AFTER_DisposeWindow' "$RAW_LOG" ||
    ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG"; then
@@ -1457,7 +1508,9 @@ if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:P
 fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
-    if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+    if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_VALIDATION_PASS"
+    elif [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
         log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_INTEGRATION_PASS"
     elif [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
         log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATEWINDOW_PASS"
