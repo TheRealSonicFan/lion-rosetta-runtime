@@ -663,3 +663,10 @@ Runtime `main` now carries trace v2 and revised instructions in `docs/process-ma
 The corrected native-i386 Lion capture passed: request `0x32e7`, bits `0x1513`, send/receive `0x18/0x40`, Mach success, reply `0x334b`, complex size `0x38`, descriptor count 1, protocol version `5`, and explicit payload size `0x1000`. The prior server-dispatch ambiguity is therefore closed dynamically.
 
 Current runtime `main` advances only to `docs/process-manager-post-createwindow-windowtitle-fontserver-rendezvous-compat-protocol-adapter-experiment.md`. That stage performs no Mach IPC and proves the request copy/envelope change plus the structural native-success-to-legacy-success reply conversion, including simple-error preservation. Do not integrate live FontServer translation, adapt later `0x32d9/0x32db` operations, or change XNU before the local policy proof is reviewed.
+
+
+## FontServer rendezvous local policy closed; one live integration run next
+
+The no-IPC PPC rendezvous policy proof is complete: Snow control passed, syscall 295 remained EBADF/no-SIGSYS, Lion request conversion changed only `0x32c8 -> 0x32e7` while widening only the receive argument `0x3c -> 0x40`, and the modeled native `0x334b/0x38` version-5 success was converted to legacy `0x332c/0x34` with descriptor/NDR preservation and explicit-size relocation. The modeled simple error preserved its nonzero result. No diagnostics appeared and protected hashes were unchanged.
+
+The authoritative next gate is `docs/process-manager-post-createwindow-windowtitle-fontserver-rendezvous-compat-integration-experiment.md`: one Snow passthrough title control followed by exactly one Lion title run with only the first FontServer rendezvous adapted. Keep RPC tracing active and leave all later FontServer operations unmodified for diagnosis.
