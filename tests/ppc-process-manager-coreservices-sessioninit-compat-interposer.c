@@ -2324,7 +2324,7 @@ emit_cgs_showwindow_unknown_hex(const char *marker,
         emitted = CGS_SHOWWINDOW_UNKNOWN_TRACE_HEX_MAX;
 
     fprintf(stderr,
-            "%s:index=%u length=0x%08lx emitted=0x%08lx truncated=%s data=",
+            "%sindex=%u length=0x%08lx emitted=0x%08lx truncated=%s data=",
             marker,
             index,
             (unsigned long)length,
@@ -2408,7 +2408,7 @@ trace_cgs_message(mach_msg_header_t *msg,
                 (unsigned long)get_u32(m + 0x08U),
                 (unsigned long)rcv_name);
         emit_cgs_showwindow_unknown_hex(
-            "PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST_HEX",
+            "PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST_HEX:",
             gCGSShowWindowUnknownTraceCount,
             m,
             (uint32_t)send_size);
@@ -2518,7 +2518,7 @@ trace_cgs_message(mach_msg_header_t *msg,
         fflush(stderr);
         if (mr != MACH_MSG_SUCCESS)
             emit_cgs_showwindow_unknown_hex(
-                "PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_FAILURE_BUFFER_HEX",
+                "PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_FAILURE_BUFFER_HEX:",
                 gCGSShowWindowUnknownTraceCount,
                 m,
                 (uint32_t)rcv_size);
@@ -2566,7 +2566,7 @@ trace_cgs_message(mach_msg_header_t *msg,
 #ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
     if (showwindow_unknown_request)
         emit_cgs_showwindow_unknown_hex(
-            "PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REPLY_HEX",
+            "PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REPLY_HEX:",
             gCGSShowWindowUnknownTraceCount,
             m,
             reply_size <= (uint32_t)rcv_size ?
