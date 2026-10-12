@@ -351,11 +351,12 @@ Also return every new crash/core diagnostic named by the Lion runner, if any. Do
 
 ```text
 SetFrontWindow                               accepted adapter PASS
-ColorProfileClient Snow PPC                 0x74d4 / 0x7538, result 0, client ID nonzero; v2 structural exact
-ColorProfileClient Lion legacy live         0x74d4 / 0x7538, transport success, raw -304
-ColorProfileClient Lion native helper       0x74d6 / 0x753a
-wire geometry                               equivalent; exact ID-only conversion authorized
-next step                                   one exact ColorProfileClient compatibility integration
+ColorProfileClient Snow PPC                 passthrough control PASS
+ColorProfileClient Lion adapter             0x74d4 -> 0x74d6, native 0x753a success, PPC-facing 0x7538
+ColorProfileClient retries                  none after adapter success
+first downstream failure                    Cannot resolve color profile id(1)
+ShowWindow                                  S01 absent; Lion exit 139
+next step                                   static ResolveColorProfile protocol differential
 CGWindowContext/CoreUI/RawCamera            downstream/held
 CGSShapeWindow                              held
 XNU                                         no change indicated
