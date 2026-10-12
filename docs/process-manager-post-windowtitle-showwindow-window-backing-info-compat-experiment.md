@@ -421,3 +421,46 @@ seventh notification registration                held
 CGSShapeWindow                                   held
 XNU                                              no change indicated
 ```
+
+
+## Observed result — WindowBackingInfo compatibility is live-proven
+
+The Snow passthrough control completed ShowWindow, disposal, M24, and PASS with exactly one target `0x7263 / 0x72c7` backing-info transaction. The syscall-295 preflight also remained healthy.
+
+The single Lion compatibility run satisfied the exact one-call gate. The adapter saw the first application-port backing-info request before the later ShowWindow compatibility calls, changed only request ID `0x7263 -> 0x7264`, received native `0x72c8 / 0x34 / result 0`, and changed only the reply ID `0x72c8 -> 0x72c7`. The request body, window ID, result, and both reply output pairs were preserved. No second WindowBackingInfo compatibility call occurred.
+
+The prior immediate `_CGSBindWindowBacking: cannot map backing data shmem` and `_CGSLockWindow: Unable to lock window` failures disappeared. Later in the same run, ColorProfileClient and ResolveColorProfile each still passed their existing exact adapters.
+
+ShowWindow still does not return because the exact-six notification broker reaches a new, later boundary: request index 7 has Mach bits `0x1111`, message ID 4, message size 356, binary-plist payload 322, and is rejected with status 25 / `BROKER_REJECT_NAME`. RawCamera loading and the later CoreUI diagnostics remain downstream of that deliberately closed notification boundary.
+
+WindowBackingInfo compatibility is therefore accepted as live-proven. Do not broaden its one-call rule or rewrite its output values.
+
+The authoritative next procedure is:
+
+```text
+docs/process-manager-showwindow-seventh-notification-schema-audit.md
+```
+
+That stage keeps the exact six reviewed registrations active, captures and decodes exactly the seventh payload, deliberately preserves status 25, and stops for review. It does not authorize a seventh registration, ShapeWindow compatibility, RawCamera/CoreUI workarounds, or an XNU change.
+
+## Completed boundary
+
+```text
+WindowBackingInfo legacy request                  0x7263
+WindowBackingInfo Lion request                    0x7264
+WindowBackingInfo native reply                    0x72c8 / 0x34 / result 0
+WindowBackingInfo PPC-facing reply                0x72c7 / 0x34 / result 0
+request/reply body changes                        0
+adapter calls                                     exactly one
+backing-data shmem mapping failure                cleared
+_CGSLockWindow failure                            cleared
+ColorProfileClient compatibility                  PASS
+ResolveColorProfile compatibility                 PASS
+sixth notification registration                   accepted
+seventh notification request                      id=4 size=356 payload=322
+exact-six broker seventh-request result            status 25 / name reject
+next step                                         capture/decode seventh payload
+CGSShapeWindow                                    held
+RawCamera / CoreUI                                held
+XNU                                               no change indicated
+```
