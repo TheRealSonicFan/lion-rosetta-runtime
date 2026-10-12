@@ -733,3 +733,25 @@ The next live gate is `docs/process-manager-post-windowtitle-showwindow-cgs-orde
 The OrderFrontConditionally integration passed on Lion, then AddTrackingArea passed unchanged, `0x7268 / 0x72cc` succeeded natively, and the next nonzero-window `0x72f2 / 0x7356` request returned `-304` before ShowWindow could return. The prior static audit identifies that exact request as `__CGSSetFrontWindow`: Snow PPC uses `0x72f2 / 0x7356`, Lion i386 uses `0x72f5 / 0x7359`, and both use bits `0x1513`, option `0x3`, send `0x24`, receive `0x2c`, NDR plus one 32-bit window ID, and a simple `0x24` result reply.
 
 The next live gate is `docs/process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat-integration-experiment.md`. Build only the new combined PPC dylib on Snow Leopard, require a strict passthrough control, repeat syscall 295 on Lion, then make exactly one Lion run adapting only the first nonzero-window SetFrontWindow request `0x72f2 -> 0x72f5` and native reply `0x7359 -> 0x7356`. Preserve the later zero-window disposal request, ShapeWindow, color-profile/window-context, and all other CGS behavior unchanged.
+
+
+## Experiment-document command completeness
+
+Every authoritative experiment document must be operationally complete. Do not write instructions such as “run the existing runner,” “repeat the probe,” “transfer the artifact,” or “invoke with the new dylib” without the exact command block immediately below it.
+
+For each experiment stage, the document must include, as applicable:
+
+- the exact working directory or a single explicitly assigned path variable;
+- every `unset` required to remove stale modes;
+- every `export` required by the stage;
+- syntax-check commands for every shell/Python helper that will be executed;
+- the complete build command;
+- the complete runner command with every positional argument in order;
+- the exact output/report filename;
+- the complete syscall-295 probe command and kernel-hash gate;
+- explicit transfer commands when transfer is part of the procedure, with only irreducibly site-specific values such as a remote hostname left as a named variable;
+- post-transfer hash verification;
+- explicit stop conditions and required result markers;
+- the exact artifact list to return.
+
+A reader following the current authoritative document should not need to infer a command from an older procedure or inspect a script merely to determine how to invoke it.
