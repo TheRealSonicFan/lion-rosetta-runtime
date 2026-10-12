@@ -26,6 +26,7 @@ HITOOLBOX_EXTRAS_MODE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE:-}"
 DOCKSERVER_COMPAT_MODE="${ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE:-}"
 FONTSERVER_COMPAT_MODE="${ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE:-}"
 FONTSERVER_RPC_TRACE_MODE="${ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE:-}"
+FONTSERVER_RENDEZVOUS_COMPAT_MODE="${ROSETTA_CGS_FONTSERVER_RENDEZVOUS_COMPAT_MODE:-}"
 NEWWINDOW_TRACE_MODE="${ROSETTA_CGS_NEWWINDOW_TRACE_MODE:-}"
 NEWWINDOW_COMPAT_MODE="${ROSETTA_CGS_NEWWINDOW_COMPAT_MODE:-}"
 RELEASEBACKING_TRACE_MODE="${ROSETTA_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE_MODE:-}"
@@ -124,6 +125,19 @@ if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
     [ "$POST_CREATEWINDOW_TITLE_MODE" = "lion-windowtitle-v1" ] ||
         die 64 "FontServer RPC trace requires the window-title subject"
     EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-fontserver-compat-rpc-trace-v4"
+fi
+if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+    [ "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" = "lion-rendezvous-v1" ] ||
+        die 64 "unsupported ROSETTA_CGS_FONTSERVER_RENDEZVOUS_COMPAT_MODE: $FONTSERVER_RENDEZVOUS_COMPAT_MODE"
+    [ "$FONTSERVER_COMPAT_MODE" = "lion-fontserver-v1" ] ||
+        die 64 "FontServer rendezvous compatibility requires lion-fontserver-v1 bootstrap compatibility"
+    [ "$FONTSERVER_RPC_TRACE_MODE" = "lion-passive-v1" ] ||
+        die 64 "FontServer rendezvous compatibility requires lion-passive-v1 RPC tracing"
+    [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] ||
+        die 64 "FontServer rendezvous compatibility requires the reviewed exact-five notification broker"
+    [ "$POST_CREATEWINDOW_TITLE_MODE" = "lion-windowtitle-v1" ] ||
+        die 64 "FontServer rendezvous compatibility requires the window-title subject"
+    EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-fontserver-rendezvous-compat-v5"
 fi
 if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
     [ "$NEWWINDOW_TRACE_MODE" = "lion-passive-v1" ] ||
@@ -524,6 +538,18 @@ if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
     /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REPLY:' ||
         die 68 "FontServer RPC trace reply marker missing from CGS interposer"
 fi
+if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+    for marker in \
+        'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_CALL:' \
+        'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REQUEST:' \
+        'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_NATIVE_MACH_RETURN:' \
+        'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_NATIVE_REPLY:' \
+        'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REPLY:' \
+        'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:ADAPTER_PASS'; do
+        /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "FontServer rendezvous compatibility marker missing from CGS interposer: $marker"
+    done
+fi
 if [ -n "$HITOOLBOX_TRACE" ]; then
     /usr/bin/strings "$HITOOLBOX_TRACE" | /usr/bin/grep -Fq \
         "PM_HITOOLBOX_CFBUNDLE_TRACE_BUILD_ID:$EXPECTED_HITOOLBOX_TRACE_BUILD_ID" ||
@@ -617,6 +643,12 @@ if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
     export ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE="$FONTSERVER_RPC_TRACE_MODE"
 else
     unset ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE
+fi
+if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+    log "fontserver_rendezvous_compat_mode=$FONTSERVER_RENDEZVOUS_COMPAT_MODE"
+    export ROSETTA_CGS_FONTSERVER_RENDEZVOUS_COMPAT_MODE="$FONTSERVER_RENDEZVOUS_COMPAT_MODE"
+else
+    unset ROSETTA_CGS_FONTSERVER_RENDEZVOUS_COMPAT_MODE
 fi
 if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
     log "cgs_newwindow_compat_mode=$NEWWINDOW_COMPAT_MODE"
@@ -1093,6 +1125,47 @@ if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
     if ! /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REQUEST:index=1 mode=lion-passive-v1' "$RAW_LOG" ||
        ! /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REQUEST_HEX:index=1' "$RAW_LOG"; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_FIRST_REQUEST_MISSING"
+        exit 0
+    fi
+fi
+
+if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+    FONTSERVER_RENDEZVOUS_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "fontserver_rendezvous_compat_pass_count=$FONTSERVER_RENDEZVOUS_PASS_COUNT"
+
+    if ! /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_CALL:index=1 rpcIndex=1 mode=lion-rendezvous-v1 exact=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000032c8 lionId=0x000032e7 send=0x00000018 legacyRecv=0x0000003c lionRecv=0x00000040 changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+
+    if ! /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_NATIVE_MACH_FAILURE"
+        exit 0
+    fi
+
+    if /usr/bin/grep -F 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_NATIVE_REPLY:index=1 ' "$RAW_LOG" |
+       /usr/bin/grep -F 'bits=0x80001200 size=0x00000038 id=0x0000334b complex=YES descriptorCount=1 ' |
+       /usr/bin/grep -Fq 'protocolVersion=5 explicitSize=0x00001000'; then
+        if [ "$FONTSERVER_RENDEZVOUS_PASS_COUNT" -ne 1 ] ||
+           ! /usr/bin/grep -F 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REPLY:index=1 replyClass=SUCCESS nativeId=0x0000334b legacyId=0x0000332c nativeSize=0x00000038 legacySize=0x00000034 protocolVersion=5 ' "$RAW_LOG" |
+                /usr/bin/grep -F 'nativeExplicitSize=0x00001000 legacyExplicitSize=0x00001000 preservedPrefixChangedBytes=0 sourceChangedBytes=0 descriptorPreserved=YES ndrPreserved=YES explicitSizeRelocated=YES removedProtocolBytes=4' >/dev/null; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "fontserver_rendezvous_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -F 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_NATIVE_REPLY:index=1 ' "$RAW_LOG" |
+         /usr/bin/grep -Fq 'bits=0x00001200 size=0x00000024 id=0x0000334b complex=NO'; then
+        if [ "$FONTSERVER_RENDEZVOUS_PASS_COUNT" -ne 1 ] ||
+           ! /usr/bin/grep -Eq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REPLY:index=1 replyClass=ERROR nativeId=0x0000334b legacyId=0x0000332c size=0x00000024 changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 result=-?[1-9][0-9]* ndrSwapped=(YES|NO)' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "fontserver_rendezvous_native_reply_class=ERROR"
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_NATIVE_REPLY_UNEXPECTED"
         exit 0
     fi
 fi
@@ -1621,7 +1694,11 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
         exit 0
     fi
     if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T03_AFTER_SetWindowTitleWithCFString' "$RAW_LOG"; then
-        if [ -n "$FONTSERVER_RPC_TRACE_MODE" ] &&
+        if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REPLY:index=1 replyClass=SUCCESS' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        elif [ -n "$FONTSERVER_RPC_TRACE_MODE" ] &&
            /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REQUEST:index=1 mode=lion-passive-v1' "$RAW_LOG"; then
             log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_CAPTURED"
         elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] &&
@@ -1689,7 +1766,9 @@ if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:P
 fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
-    if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
+    if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_TITLE_PASS"
     elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ]; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
