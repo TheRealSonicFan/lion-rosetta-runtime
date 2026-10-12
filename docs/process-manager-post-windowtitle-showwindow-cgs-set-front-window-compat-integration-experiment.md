@@ -127,9 +127,12 @@ Stop if build, architecture, marker, or hash validation fails.
 
 ## Phase C — Snow Leopard behavior-preserving control
 
-Unset superseded audit modes:
+Run from the Snow Leopard runtime checkout:
 
 ```sh
+export RUNTIME=/path/to/lion-rosetta-runtime
+cd "$RUNTIME" || exit 1
+
 unset ROSETTA_CGS_NEWWINDOW_TRACE_MODE
 unset ROSETTA_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE_MODE
 unset ROSETTA_CGS_POST_RELEASEBACKING_OPACITY_TRACE_MODE
@@ -217,6 +220,7 @@ Place the dylib, its `.info.txt`, and its `.sha256` under Lion's `payload/` dire
 On Lion, verify the transferred dylib hash before execution:
 
 ```sh
+export RUNTIME=/path/to/lion-rosetta-runtime
 cd "$RUNTIME" || exit 1
 
 EXPECTED_CORE_SHA="$(awk 'NR==1 {print $1}' ./payload/ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat.dylib.sha256)"
@@ -230,9 +234,10 @@ Reuse the existing subject, Security interposer, CGS FontServer-rendezvous inter
 
 ## Phase E — repeat syscall 295 on Lion
 
-Set the actual XNU build directory containing the existing i386 `syscall295-probe`, then run:
+Set the runtime, XNU repository, and XNU build directory containing the existing i386 `syscall295-probe`, then run:
 
 ```sh
+export RUNTIME=/path/to/lion-rosetta-runtime
 export ROSETTA_XNU=/path/to/lion-rosetta-xnu
 export XNU_SRC=/path/to/xnu-build-directory
 export ROSETTA_EXPECTED_KERNEL_SHA256=fe68467b60b3bd7edfab61b2d6c8af7f988de5206c4b7b624151dc9f1a1061d3
@@ -265,6 +270,7 @@ Do not proceed if this gate fails.
 On Lion, run this block exactly once after Phase E passes:
 
 ```sh
+export RUNTIME=/path/to/lion-rosetta-runtime
 cd "$RUNTIME" || exit 1
 
 unset ROSETTA_CGS_NEWWINDOW_TRACE_MODE
