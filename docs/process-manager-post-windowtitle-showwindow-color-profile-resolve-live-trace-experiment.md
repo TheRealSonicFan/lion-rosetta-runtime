@@ -27,6 +27,18 @@ No ResolveColorProfile rewrite is authorized in this stage.
 
 ## Prepared instrumentation
 
+### Filename abbreviations
+
+To avoid legacy per-component filename limits, this procedure deliberately uses short artifact names:
+
+```text
+PM   Process Manager
+CPC  ColorProfileClient
+CPR  ColorProfile Resolve
+```
+
+The short artifact basename is `pm-cpc-compat-cpr-trace.dylib`. The embedded build IDs and trace markers remain the authoritative identity checks; shortening filenames does not relax any compatibility or provenance gate.
+
 Current runtime `main` provides:
 
 ```text
@@ -83,6 +95,8 @@ git rev-parse HEAD
 
 ## Phase B — build the passive resolver tracer on Snow Leopard
 
+Phase B no longer uses the full compatibility-stack name for the output artifact; the previous basename could exceed legacy filesystem filename limits once `.info.txt` or `.sha256` was appended.
+
 On Snow Leopard 10.6.8:
 
 ```sh
@@ -98,9 +112,9 @@ CC=/Developer-3.2.6/usr/bin/gcc-4.2 \
 Expected outputs:
 
 ```text
-ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-resolve-trace.dylib
-ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-resolve-trace.dylib.info.txt
-ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-resolve-trace.dylib.sha256
+pm-cpc-compat-cpr-trace.dylib
+pm-cpc-compat-cpr-trace.dylib.info.txt
+pm-cpc-compat-cpr-trace.dylib.sha256
 ```
 
 Require a 32-bit PPC Mach-O dylib, exactly two `__interpose` tuples, the accepted ColorProfileClient v2 core build ID, embedded distributed-notifications ingress v2, and the resolver-trace build marker above.
@@ -144,22 +158,22 @@ export ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE=snow-force-external-v1
 /bin/bash ./scripts/run-snowleopard-ppc-process-manager-createwindow-distnotify-integration-control.sh \
   ./ppc-process-manager-cgs-session-bootstrap-integration-private-dyld \
   ./ppc-process-manager-cgs-session-bootstrap-integration-private-dyld.sha256 \
-  ./ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-resolve-trace.dylib \
-  ./ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-resolve-trace.dylib.sha256 \
+  ./pm-cpc-compat-cpr-trace.dylib \
+  ./pm-cpc-compat-cpr-trace.dylib.sha256 \
   ./ppc-process-manager-security-session-auditinfo-api.dylib \
   ./ppc-process-manager-security-session-auditinfo-api.dylib.sha256 \
   ./ppc-process-manager-cgs-session-dockserver-fontserver-rendezvous-compat.dylib \
   ./ppc-process-manager-cgs-session-dockserver-fontserver-rendezvous-compat.dylib.sha256 \
-  ./ppc-process-manager-post-windowtitle-showwindow-color-profile-resolve-trace-snowleopard-control.log || exit 1
+  ./pm-cpr-snow.log || exit 1
 
 /usr/bin/grep -F 'PM_CGS_COLOR_PROFILE_RESOLVE_TRACE_BUILD_ID:color-profile-resolve-passive-trace-v1' \
-  ./ppc-process-manager-post-windowtitle-showwindow-color-profile-resolve-trace-snowleopard-control.log || exit 1
+  ./pm-cpr-snow.log || exit 1
 /usr/bin/grep -F 'PM_CGS_COLOR_PROFILE_RESOLVE_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_RESOLVE_LEGACY exact=YES' \
-  ./ppc-process-manager-post-windowtitle-showwindow-color-profile-resolve-trace-snowleopard-control.log || exit 1
+  ./pm-cpr-snow.log || exit 1
 /usr/bin/grep -F 'profileId=1' \
-  ./ppc-process-manager-post-windowtitle-showwindow-color-profile-resolve-trace-snowleopard-control.log || exit 1
+  ./pm-cpr-snow.log || exit 1
 /usr/bin/grep -F 'PM_CGS_COLOR_PROFILE_RESOLVE_TRACE_REPLY:kind=CGS_COLOR_PROFILE_RESOLVE_LEGACY' \
-  ./ppc-process-manager-post-windowtitle-showwindow-color-profile-resolve-trace-snowleopard-control.log || exit 1
+  ./pm-cpr-snow.log || exit 1
 ```
 
 The leading expected Snow resolver transaction is:
@@ -183,10 +197,10 @@ Stop if the resolver trace changes Snow behavior, if the request is not structur
 Transfer these files from Snow Leopard to Lion:
 
 ```text
-ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-resolve-trace.dylib
-ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-resolve-trace.dylib.info.txt
-ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-resolve-trace.dylib.sha256
-ppc-process-manager-post-windowtitle-showwindow-color-profile-resolve-trace-snowleopard-control.log
+pm-cpc-compat-cpr-trace.dylib
+pm-cpc-compat-cpr-trace.dylib.info.txt
+pm-cpc-compat-cpr-trace.dylib.sha256
+pm-cpr-snow.log
 ```
 
 Place the dylib, `.info.txt`, and `.sha256` under Lion's `payload/` directory and keep the Snow control log at the runtime root. Verify the transferred dylib against its sidecar before execution.
@@ -203,7 +217,7 @@ export ROSETTA_EXPECTED_KERNEL_SHA256=fe68467b60b3bd7edfab61b2d6c8af7f988de5206c
 
 /bin/bash "$ROSETTA_XNU/tools/run_syscall295_probe.sh" \
   "$XNU_SRC/syscall295-probe" \
-  "$RUNTIME/syscall295-probe-process-manager-post-windowtitle-showwindow-color-profile-resolve-trace.log" || exit 1
+  "$RUNTIME/sys295-pm-cpr.log" || exit 1
 ```
 
 Require the accepted kernel SHA, `result=-1 errno=9 saw_sigsys=0`, exit status 0, and `RESULT: PASS`.
@@ -251,15 +265,15 @@ export ROSETTA_EXPECTED_KERNEL_SHA256=fe68467b60b3bd7edfab61b2d6c8af7f988de5206c
 /bin/bash ./scripts/run-lion-ppc-process-manager-createwindow-distnotify-integration.sh \
   ./payload/ppc-process-manager-cgs-session-bootstrap-integration-private-dyld \
   ./payload/ppc-process-manager-cgs-session-bootstrap-integration-private-dyld.sha256 \
-  ./payload/ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-resolve-trace.dylib \
-  ./payload/ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-resolve-trace.dylib.sha256 \
+  ./payload/pm-cpc-compat-cpr-trace.dylib \
+  ./payload/pm-cpc-compat-cpr-trace.dylib.sha256 \
   ./payload/ppc-process-manager-security-session-auditinfo-api.dylib \
   ./payload/ppc-process-manager-security-session-auditinfo-api.dylib.sha256 \
   ./payload/ppc-process-manager-cgs-session-dockserver-fontserver-rendezvous-compat.dylib \
   ./payload/ppc-process-manager-cgs-session-dockserver-fontserver-rendezvous-compat.dylib.sha256 \
   ./native-distributed-notifications-post-windowtitle-showwindow-sixth-registration-broker \
   ./native-distributed-notifications-post-windowtitle-showwindow-sixth-registration-broker.sha256 \
-  ./payload/lion-ppc-process-manager-post-windowtitle-showwindow-color-profile-resolve-trace.log
+  ./payload/lion-pm-cpr.log
 ```
 
 Do not run the Lion subject a second time.
@@ -305,12 +319,12 @@ If the request is not `exact=YES`, if the profile ID is not 1, or if the envelop
 Return these six primary artifacts:
 
 ```text
-ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-resolve-trace.dylib.info.txt
-ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-resolve-trace.dylib.sha256
-ppc-process-manager-post-windowtitle-showwindow-color-profile-resolve-trace-snowleopard-control.log
-syscall295-probe-process-manager-post-windowtitle-showwindow-color-profile-resolve-trace.log
-lion-ppc-process-manager-post-windowtitle-showwindow-color-profile-resolve-trace.log
-lion-ppc-process-manager-post-windowtitle-showwindow-color-profile-resolve-trace.raw.log
+pm-cpc-compat-cpr-trace.dylib.info.txt
+pm-cpc-compat-cpr-trace.dylib.sha256
+pm-cpr-snow.log
+sys295-pm-cpr.log
+lion-pm-cpr.log
+lion-pm-cpr.raw.log
 ```
 
 Also return every new crash/core diagnostic named by the Lion runner, if any. Do not upload the dylib itself unless specifically requested.
