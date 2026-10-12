@@ -73,39 +73,30 @@ No XNU source change, kernel rebuild, or reboot is part of this stage.
 
 ## Phase A — update repositories
 
-All commands below are intended to be copy/paste complete. The checked-out runtime path used by the current experiment is `/Users/Andy/Desktop/lion-rosetta-runtime-main`. On Lion the XNU compatibility repository is expected at `/Users/Andy/Desktop/lion-rosetta-xnu-main`; if that checkout is stored elsewhere, change only the `ROSETTA_XNU` assignment before running the block.
+Use your actual checkout paths; the remaining commands are complete and do not depend on earlier experiment documents.
 
 On Snow Leopard:
 
 ```sh
-export RUNTIME=/Users/Andy/Desktop/lion-rosetta-runtime-main
+export RUNTIME=/path/to/lion-rosetta-runtime
 cd "$RUNTIME" || exit 1
-/usr/bin/git checkout main || exit 1
-/usr/bin/git pull --ff-only origin main || exit 1
-/usr/bin/git rev-parse HEAD
-/usr/bin/test -f ./scripts/build-ppc-process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat-on-snowleopard.sh || exit 1
-/usr/bin/test -f ./scripts/run-snowleopard-ppc-process-manager-createwindow-distnotify-integration-control.sh || exit 1
-/usr/bin/test -f ./docs/process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat-integration-experiment.md || exit 1
+git pull --ff-only
+git rev-parse HEAD
 ```
 
 On Lion:
 
 ```sh
-export RUNTIME=/Users/Andy/Desktop/lion-rosetta-runtime-main
-export ROSETTA_XNU=/Users/Andy/Desktop/lion-rosetta-xnu-main
+export RUNTIME=/path/to/lion-rosetta-runtime
+export ROSETTA_XNU=/path/to/lion-rosetta-xnu
 
 cd "$RUNTIME" || exit 1
-/usr/bin/git checkout main || exit 1
-/usr/bin/git pull --ff-only origin main || exit 1
-/usr/bin/git rev-parse HEAD
-/usr/bin/test -f ./scripts/run-lion-ppc-process-manager-createwindow-distnotify-integration.sh || exit 1
-/usr/bin/test -f ./docs/process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat-integration-experiment.md || exit 1
+git pull --ff-only
+git rev-parse HEAD
 
 cd "$ROSETTA_XNU" || exit 1
-/usr/bin/git checkout main || exit 1
-/usr/bin/git pull --ff-only origin main || exit 1
-/usr/bin/git rev-parse HEAD
-/usr/bin/test -f ./tools/run_syscall295_probe.sh || exit 1
+git pull --ff-only
+git rev-parse HEAD
 ```
 
 ## Phase B — build on Snow Leopard
@@ -113,17 +104,13 @@ cd "$ROSETTA_XNU" || exit 1
 On Snow Leopard 10.6.8:
 
 ```sh
-export RUNTIME=/Users/Andy/Desktop/lion-rosetta-runtime-main
+export RUNTIME=/path/to/lion-rosetta-runtime
 cd "$RUNTIME" || exit 1
 
 /bin/bash -n ./scripts/build-ppc-process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat-on-snowleopard.sh || exit 1
 
 CC=/Developer-3.2.6/usr/bin/gcc-4.2 \
 /bin/bash ./scripts/build-ppc-process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat-on-snowleopard.sh || exit 1
-
-/usr/bin/test -f ./ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat.dylib || exit 1
-/usr/bin/test -f ./ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat.dylib.info.txt || exit 1
-/usr/bin/test -f ./ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat.dylib.sha256 || exit 1
 ```
 
 Expected outputs:
@@ -177,7 +164,6 @@ export ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE=snow-force-external-v1
 Syntax-check and run the Snow control with every runner argument explicit:
 
 ```sh
-export RUNTIME=/Users/Andy/Desktop/lion-rosetta-runtime-main
 cd "$RUNTIME" || exit 1
 
 /bin/bash -n ./scripts/run-snowleopard-ppc-process-manager-createwindow-distnotify-integration-control.sh || exit 1
@@ -192,9 +178,6 @@ cd "$RUNTIME" || exit 1
   ./ppc-process-manager-cgs-session-dockserver-fontserver-rendezvous-compat.dylib \
   ./ppc-process-manager-cgs-session-dockserver-fontserver-rendezvous-compat.dylib.sha256 \
   ./ppc-process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat-snowleopard-control.log || exit 1
-
-/usr/bin/test -s ./ppc-process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat-snowleopard-control.log || exit 1
-/usr/bin/tail -n 40 ./ppc-process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat-snowleopard-control.log
 ```
 
 Require:
@@ -220,68 +203,50 @@ Stop if Snow behavior changes.
 
 ## Phase D — transfer only the new compatibility artifact
 
-From Snow Leopard, use the following commands. Set `LION_HOST` to the Lion machine's hostname or IP address; no other path substitutions are required for the current layout.
+Transfer these four files from Snow Leopard to the Lion checkout using your normal file-transfer method:
 
-```sh
-export RUNTIME=/Users/Andy/Desktop/lion-rosetta-runtime-main
-export LION_HOST='REPLACE_WITH_LION_HOSTNAME_OR_IP'
-export LION_USER=Andy
-export LION_RUNTIME=/Users/Andy/Desktop/lion-rosetta-runtime-main
-
-cd "$RUNTIME" || exit 1
-
-/usr/bin/scp \
-  ./ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat.dylib \
-  ./ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat.dylib.info.txt \
-  ./ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat.dylib.sha256 \
-  "$LION_USER@$LION_HOST:$LION_RUNTIME/payload/" || exit 1
-
-/usr/bin/scp \
-  ./ppc-process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat-snowleopard-control.log \
-  "$LION_USER@$LION_HOST:$LION_RUNTIME/" || exit 1
+```text
+ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat.dylib
+ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat.dylib.info.txt
+ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat.dylib.sha256
+ppc-process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat-snowleopard-control.log
 ```
 
-On Lion, verify the transferred artifact before any execution:
+Place the dylib, its `.info.txt`, and its `.sha256` under Lion's `payload/` directory. Place the Snow control log at the runtime repository root.
+
+On Lion, verify the transferred dylib hash before execution:
 
 ```sh
-export RUNTIME=/Users/Andy/Desktop/lion-rosetta-runtime-main
 cd "$RUNTIME" || exit 1
 
-EXPECTED_CORE_SHA="$(/usr/bin/awk 'NR==1 {print $1}' ./payload/ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat.dylib.sha256)"
-ACTUAL_CORE_SHA="$(/usr/bin/shasum -a 256 ./payload/ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat.dylib | /usr/bin/awk '{print $1}')"
+EXPECTED_CORE_SHA="$(awk 'NR==1 {print $1}' ./payload/ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat.dylib.sha256)"
+ACTUAL_CORE_SHA="$(shasum -a 256 ./payload/ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat.dylib | awk '{print $1}')"
 echo "expected_core_sha=$EXPECTED_CORE_SHA"
 echo "actual_core_sha=$ACTUAL_CORE_SHA"
 [ "$EXPECTED_CORE_SHA" = "$ACTUAL_CORE_SHA" ] || exit 1
-
-/usr/bin/file ./payload/ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat.dylib
-/usr/bin/lipo -info ./payload/ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat.dylib
 ```
 
 Reuse the existing subject, Security interposer, CGS FontServer-rendezvous interposer, exact-six broker, HIToolbox Extras compatibility dylib, and staged resource unchanged.
 
 ## Phase E — repeat syscall 295 on Lion
 
-Use the already-built i386 probe and the XNU helper. The validated kernel hash for this investigation is `fe68467b60b3bd7edfab61b2d6c8af7f988de5206c4b7b624151dc9f1a1061d3`.
+Set the actual XNU build directory containing the existing i386 `syscall295-probe`, then run:
 
 ```sh
-export RUNTIME=/Users/Andy/Desktop/lion-rosetta-runtime-main
-export ROSETTA_XNU=/Users/Andy/Desktop/lion-rosetta-xnu-main
-export XNU_SRC=/Users/Andy/Desktop/xnu-xnu-1699.32.7
+export ROSETTA_XNU=/path/to/lion-rosetta-xnu
+export XNU_SRC=/path/to/xnu-build-directory
 export ROSETTA_EXPECTED_KERNEL_SHA256=fe68467b60b3bd7edfab61b2d6c8af7f988de5206c4b7b624151dc9f1a1061d3
 
-ACTUAL_KERNEL_SHA="$(/usr/bin/shasum -a 256 /mach_kernel | /usr/bin/awk '{print $1}')"
+ACTUAL_KERNEL_SHA="$(shasum -a 256 /mach_kernel | awk '{print $1}')"
 echo "expected_kernel_sha=$ROSETTA_EXPECTED_KERNEL_SHA256"
 echo "actual_kernel_sha=$ACTUAL_KERNEL_SHA"
 [ "$ACTUAL_KERNEL_SHA" = "$ROSETTA_EXPECTED_KERNEL_SHA256" ] || exit 1
 
 /bin/bash -n "$ROSETTA_XNU/tools/run_syscall295_probe.sh" || exit 1
-/usr/bin/test -x "$XNU_SRC/syscall295-probe" || exit 1
 
 /bin/bash "$ROSETTA_XNU/tools/run_syscall295_probe.sh" \
   "$XNU_SRC/syscall295-probe" \
   "$RUNTIME/syscall295-probe-process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat.log" || exit 1
-
-/usr/bin/cat "$RUNTIME/syscall295-probe-process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat.log"
 ```
 
 Require:
@@ -297,10 +262,9 @@ Do not proceed if this gate fails.
 
 ## Phase F — exactly one Lion integration
 
-Run the following block on Lion exactly once after Phase E passes. It contains the complete unset list, environment, syntax check, and all eleven runner arguments.
+On Lion, run this block exactly once after Phase E passes:
 
 ```sh
-export RUNTIME=/Users/Andy/Desktop/lion-rosetta-runtime-main
 cd "$RUNTIME" || exit 1
 
 unset ROSETTA_CGS_NEWWINDOW_TRACE_MODE
@@ -347,12 +311,6 @@ export ROSETTA_EXPECTED_KERNEL_SHA256=fe68467b60b3bd7edfab61b2d6c8af7f988de5206c
   ./native-distributed-notifications-post-windowtitle-showwindow-sixth-registration-broker \
   ./native-distributed-notifications-post-windowtitle-showwindow-sixth-registration-broker.sha256 \
   ./payload/lion-ppc-process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat.log
-
-LION_RUN_STATUS=$?
-echo "lion_runner_exit_status=$LION_RUN_STATUS"
-/usr/bin/test -s ./payload/lion-ppc-process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat.log || exit 1
-/usr/bin/test -s ./payload/lion-ppc-process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat.raw.log || exit 1
-/usr/bin/tail -n 80 ./payload/lion-ppc-process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat.log
 ```
 
 Do not invoke the Lion runner a second time to chase a different result. Preserve the first report, raw report, and every crash/core path it names.
