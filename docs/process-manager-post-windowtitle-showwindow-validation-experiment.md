@@ -363,3 +363,29 @@ ShowWindow                                   -> next isolated discriminator
 SelectWindow / visibility / event loop       -> held
 XNU                                          -> no change indicated
 ```
+
+
+## Observed result — sixth distributed-notification boundary precedes ShowWindow return
+
+The Snow control passed: the exact subject reached `S01_AFTER_ShowWindow`, emitted `SHOWWINDOW_PASS`, completed release/disposal, and returned 0.
+
+The first Lion run preserved all accepted upstream compatibility through title assignment and entered `ShowWindow` at `S00_BEFORE_ShowWindow`, but did not reach `S01_AFTER_ShowWindow`. Before return, the ingress bridge observed a sixth legacy distributed-notification request:
+
+```text
+index                    6
+bits                     0x00001111
+id                       4
+Mach size                320
+payload                  287
+exact-five broker status 20
+```
+
+The exact-five broker classified that request as a schema reject, then reported `register=5 callback=0 rejects=1 exact=NO`. The subject exited 139 and Lion named a crash report plus core. Protected hashes remained unchanged. The single FontServer rendezvous adapter still passed and no additional FontServer RPC was introduced.
+
+This explicit sixth-request rejection is a narrower controlled boundary than the generic ShowWindow no-return classification. Do not begin a broad ShowWindow/CGS passive trace yet, and do not infer a sixth registration schema from status 20. The authoritative next procedure is:
+
+```text
+docs/process-manager-post-windowtitle-showwindow-sixth-distributed-notification-schema-audit.md
+```
+
+That stage reuses the accepted ShowWindow subject and compatibility artifacts unchanged, captures exactly the sixth 287-byte payload as binary plist plus XML, deliberately preserves status 20, and stops for review. No XNU change is indicated.
