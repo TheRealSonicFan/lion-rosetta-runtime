@@ -360,3 +360,44 @@ CGSReleaseColorProfile                     held
 CGSShapeWindow                             held
 XNU                                        no change indicated
 ```
+
+
+## Completed result — ResolveColorProfile compatibility live-proven
+
+The returned six primary artifacts complete this experiment.
+
+The Snow Leopard build is the intended PPC compatibility dylib, carries the independent `color-profile-resolve-id-compat-v1` marker, retains the accepted ColorProfileClient v2 core build ID, and has the expected two interpose tuples. The Snow passthrough control makes no resolver adaptation, the target profile-ID-1 `0x74d7 / 0x753b` transaction succeeds with a `0x34` result-zero reply, ShowWindow returns, M24 is reached, and the control ends in PASS. The Lion syscall-295 preflight remains on the accepted EBADF/no-SIGSYS path.
+
+In the single Lion run, ColorProfileClient succeeds exactly once and records semantic client ID 57. The immediately following target resolver request is `exact=YES` and `provenanceExact=YES`, with the same client ID 57, the captured server/reply/task ports, and profile ID 1. The resolver adapter changes only request ID `0x74d7 -> 0x74d9`. Lion returns native `0x753d / 0x34`, result zero, with mapped-output words present. The adapter changes only reply ID `0x753d -> 0x753b`, reports zero body changes, and returns `ADAPTER_PASS`. Only one resolver compatibility call occurs.
+
+This removes the former first-order color-profile/window-context failure. The run contains no `Cannot resolve color profile id(1)`, no invalid-profile diagnostic, no `Failed to create window context color transform`, and no `CGWindowContextCreate: failed to create context delegate` cascade.
+
+ShowWindow still does not reach `S01_AFTER_ShowWindow`. The first remaining repeated failure after the successful resolver is an existing `0x7263 / 0x72c7` CGS transaction. Mach transport succeeds and the simple `0x34` reply reports result zero, but CoreGraphics immediately emits `_CGSBindWindowBacking: cannot map backing data shmem` and `_CGSLockWindow: Unable to lock window`. The pair repeats seven times. Snow uses the same observed IDs and envelope without those errors and completes ShowWindow, so no ID rewrite is authorized from the live evidence.
+
+The exact-six notification broker accepts the sixth registration after resolver success. A later seventh registration is rejected only after several backing-map failures, so broker expansion is held. RawCamera loading and later CoreUI art-file errors are also downstream of the newly isolated backing-lock failure.
+
+The authoritative next stage is the static, read-only:
+
+```text
+docs/process-manager-post-windowtitle-showwindow-window-backing-lock-protocol-audit.md
+scripts/audit-process-manager-showwindow-window-backing-lock-protocol.py
+```
+
+Do not broaden the resolver adapter, change `CGSReleaseColorProfile`, adapt `0x7263`, expand the notification broker, revisit ShapeWindow, force backing mapping, or change XNU until the Snow/Lion backing-lock differential is reviewed.
+
+## Completed boundary
+
+```text
+ColorProfileClient adapter                         accepted PASS
+ResolveColorProfile adapter                        live-proven PASS
+native resolver reply                              0x753d / 0x34 / result 0
+legacy-facing resolver reply                       0x753b / 0x34 / result 0
+old color-profile/window-context failure           eliminated
+ShowWindow                                         S00 reached, S01 absent
+0x7263 / 0x72c7                                   result 0, backing map fails
+backing-map/lock diagnostic repetitions            7
+sixth notification registration                    accepted
+seventh notification registration                  later reject, held
+next step                                          static backing-lock protocol/ABI audit
+XNU                                                no change indicated
+```
