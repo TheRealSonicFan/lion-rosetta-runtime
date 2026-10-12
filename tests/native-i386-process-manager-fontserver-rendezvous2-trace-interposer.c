@@ -102,10 +102,10 @@ static void
 finish(int code, const char *result)
 {
     if (strcmp(result, "CAPTURED_COMPLEX_V5") == 0) {
-        fprintf(stderr, "%s\\n", TRACE_SUCCESS_MARKER);
+        fprintf(stderr, "%s\n", TRACE_SUCCESS_MARKER);
     } else {
         fprintf(stderr,
-                "PM_NATIVE_FONTSERVER_RENDEZVOUS2_RESULT:%s\\n",
+                "PM_NATIVE_FONTSERVER_RENDEZVOUS2_RESULT:%s\n",
                 result);
     }
     fflush(stderr);
