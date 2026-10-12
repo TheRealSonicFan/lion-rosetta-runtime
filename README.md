@@ -614,3 +614,12 @@ The exact count-9 `CGSAddTrackingAreaInline` compatibility rule now passes live 
 The Snow-PPC/Lion-i386 static differential identifies both remaining post-`S00` `-304` requests. `__CGSOrderFrontConditionally` changes from Snow `0x72e7 / 0x734b` to Lion `0x72ea / 0x734e`, and `__CGSSetFrontWindow` changes from Snow `0x72f2 / 0x7356` to Lion `0x72f5 / 0x7359`. Both retain their Snow wire geometry; each is an ID-only `+3` generated-MIG shift.
 
 Only the first causal boundary advances. Follow `docs/process-manager-post-windowtitle-showwindow-cgs-order-front-conditionally-compat-integration-experiment.md`: build the new combined PPC compatibility dylib on Snow Leopard, require the Snow passthrough control, repeat syscall 295 on Lion, then run exactly one Lion integration adapting only `CGSOrderFrontConditionally`. Keep the proven `CGSSetFrontWindow` differential, the earlier `CGSShapeWindow` rejection, and color-profile/window-context failures held until that result is reviewed. No XNU change is indicated.
+
+
+## ShowWindow OrderFrontConditionally passed; SetFrontWindow gate next
+
+The exact Lion OrderFrontConditionally adapter is now live-proven: the legacy `0x72e7` request was changed only to Lion `0x72ea`, native `0x734e/result 0` was accepted, and the PPC-facing reply was changed only back to `0x734b`. The existing AddTrackingArea adapter then passed unchanged, followed by a native-success `0x7268 / 0x72cc` transaction.
+
+The next deterministic ShowWindow failure is now the nonzero-window `__CGSSetFrontWindow` request. Snow uses `0x72f2 / 0x7356`; Lion uses `0x72f5 / 0x7359`; the static audit already proved identical `0x1513`, option `0x3`, `0x24 / 0x2c` wire geometry. Lion returned `-304` for the unchanged Snow ID and did not reach `S01_AFTER_ShowWindow`.
+
+Follow `docs/process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat-integration-experiment.md`. The new rule is restricted to the first nonzero-window SetFrontWindow call after the accepted OrderFrontConditionally and AddTrackingArea calls. The later zero-window disposal-time SetFrontWindow call remains passthrough. The earlier ShapeWindow rejection and color-profile/window-context diagnostics remain held. No XNU change is indicated.
