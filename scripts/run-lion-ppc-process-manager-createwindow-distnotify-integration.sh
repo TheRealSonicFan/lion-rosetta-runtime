@@ -38,6 +38,7 @@ POST_WINDOWTITLE_SHOWWINDOW_MODE="${ROSETTA_POST_WINDOWTITLE_SHOWWINDOW_VALIDATI
 SHOWWINDOW_UNKNOWN_TRACE_MODE="${ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE:-}"
 SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE:-}"
 SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE:-}"
+SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE:-}"
 
 TRANSLATOR="/usr/libexec/oah/translate"
 PRIVATE_DYLD="/usr/oah/dyld"
@@ -276,6 +277,21 @@ if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
     [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
         die 64 "CGSOrderFrontConditionally compatibility requires the accepted exact-six notification broker"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-compat-v1"
+fi
+if [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
+    [ "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" = "lion-id-v1" ] ||
+        die 64 "unsupported ROSETTA_CGS_SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE: $SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE"
+    [ "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" = "lion-id-v1" ] ||
+        die 64 "CGSSetFrontWindow compatibility requires accepted CGSOrderFrontConditionally compatibility"
+    [ "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" = "lion-inline-id-v1" ] ||
+        die 64 "CGSSetFrontWindow compatibility requires accepted CGSAddTrackingArea compatibility"
+    [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "lion-passive-v1" ] ||
+        die 64 "CGSSetFrontWindow compatibility requires lion-passive-v1 ShowWindow CGS tracing"
+    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
+        die 64 "CGSSetFrontWindow compatibility requires the ShowWindow subject"
+    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+        die 64 "CGSSetFrontWindow compatibility requires the accepted exact-six notification broker"
+    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat-v1"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 
@@ -825,6 +841,12 @@ if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
     export ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE="$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE"
 else
     unset ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE
+fi
+if [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
+    log "showwindow_set_front_window_compat_mode=$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE"
+    export ROSETTA_CGS_SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE="$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE"
+else
+    unset ROSETTA_CGS_SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE
 fi
 
 MARKER="$(/usr/bin/mktemp /tmp/lion-createwindow-validation-marker.XXXXXX)" || die 73 "could not create diagnostic marker"
@@ -1835,6 +1857,43 @@ if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
     fi
 fi
 
+if [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
+    SET_FRONT_WINDOW_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_SET_FRONT_WINDOW_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    SET_FRONT_WINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_FRONT_WINDOW_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_set_front_window_compat_call_count=$SET_FRONT_WINDOW_COMPAT_COUNT"
+    log "cgs_set_front_window_legacy_trace_count=$SET_FRONT_WINDOW_TRACE_COUNT"
+    if [ "$SET_FRONT_WINDOW_COMPAT_COUNT" -ne 1 ] || [ "$SET_FRONT_WINDOW_TRACE_COUNT" -lt 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* .*opacityCreateCompatCalls=1 orderFrontCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072f2 lionId=0x000072f5 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x00007359 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x00007359 legacyId=0x00007356 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_SET_FRONT_WINDOW_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_SET_FRONT_WINDOW_LEGACY bits=0x00001200 size=0x00000024 id=0x00007356 expected=0x00007356 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_set_front_window_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x00007359 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x00007359 legacyId=0x00007356 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'id=0x00007356 expected=0x00007356 idMatch=YES' "$RAW_LOG"; then
+        log "cgs_set_front_window_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
 if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
     ORDER_FRONT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
     ORDER_FRONT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
@@ -2003,7 +2062,9 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
                 elif [ "$SHOWWINDOW_UNKNOWN_RETURN_COUNT" -ne "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" ]; then
                     log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_INCOMPLETE"
                 else
-                    if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
+                    if [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
+                        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                    elif [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
                         log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
                     elif [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
                         log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
@@ -2070,7 +2131,10 @@ if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:P
 fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
-    if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ] &&
+    if [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ] &&
        [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
         log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_INTEGRATION_PASS"
     elif [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ] &&
