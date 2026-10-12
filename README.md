@@ -558,3 +558,10 @@ The next gate is `docs/process-manager-post-createwindow-windowtitle-fontserver-
 The standalone PPC policy proof passed on both Snow Leopard and Lion. It proved the exact first-rendezvous conversion without Mach IPC: request `0x32c8 -> 0x32e7`, receive envelope `0x3c -> 0x40`, native complex success `0x334b/0x38` with protocol version 5 back to legacy `0x332c/0x34`, descriptor/NDR preservation, explicit-size relocation, and nonzero simple-error preservation. The Lion proof produced no diagnostics and all protected hashes remained unchanged.
 
 Current `main` now provides `docs/process-manager-post-createwindow-windowtitle-fontserver-rendezvous-compat-integration-experiment.md`. This stage integrates only the first exact rendezvous transaction into the existing two-tuple FontServer bootstrap/RPC interposer. Passive tracing remains enabled, and every later FontServer request remains passthrough-only. No XNU change is indicated.
+
+
+## FontServer rendezvous integration passed; ShowWindow next
+
+The live translated-PPC FontServer rendezvous adapter now passes end to end. The Lion title run converted only the first legacy `0x32c8 / 0x18 / 0x3c` transaction to Lion `0x32e7 / receive 0x40`, accepted the native `0x334b / 0x38` protocol-version-5 complex reply, reconstructed the legacy `0x332c / 0x34` reply with descriptor/NDR and explicit size preserved, and reported exactly one adapter pass. `SetWindowTitleWithCFString` returned 0, the subject reached disposal and M24, the exact-five notification broker remained clean, no new diagnostics appeared, and protected hashes were unchanged. No later FontServer RPC was required.
+
+Current `main` advances to `docs/process-manager-post-windowtitle-showwindow-validation-experiment.md`. Build only the new `cps-showwindow-validation-v1` PPC subject on Snow Leopard, run the Snow passthrough control, repeat syscall 295, and perform exactly one Lion run that adds only `ShowWindow(window)`. Keep `SelectWindow`, visibility queries, timers, the event loop, new CGS adapters, and XNU changes out of this step.
