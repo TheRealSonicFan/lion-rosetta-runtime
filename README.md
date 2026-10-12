@@ -623,3 +623,12 @@ The exact Lion OrderFrontConditionally adapter is now live-proven: the legacy `0
 The next deterministic ShowWindow failure is now the nonzero-window `__CGSSetFrontWindow` request. Snow uses `0x72f2 / 0x7356`; Lion uses `0x72f5 / 0x7359`; the static audit already proved identical `0x1513`, option `0x3`, `0x24 / 0x2c` wire geometry. Lion returned `-304` for the unchanged Snow ID and did not reach `S01_AFTER_ShowWindow`.
 
 Follow `docs/process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat-integration-experiment.md`. The new rule is restricted to the first nonzero-window SetFrontWindow call after the accepted OrderFrontConditionally and AddTrackingArea calls. The later zero-window disposal-time SetFrontWindow call remains passthrough. The earlier ShapeWindow rejection and color-profile/window-context diagnostics remain held. No XNU change is indicated.
+
+
+## ShowWindow SetFrontWindow passed; color-profile/window-context audit next
+
+The exact SetFrontWindow integration is now live-proven. Lion converted the first nonzero-window `0x72f2` request to native `0x72f5`, received `0x7359 / result 0`, and returned `0x7356 / result 0` to the unchanged PPC client; OrderFrontConditionally and AddTrackingArea remained successful. Snow stayed strict passthrough and completed ShowWindow and disposal.
+
+Lion still does not reach `S01_AFTER_ShowWindow`. After the now-successful ordering RPC chain, no new application-CGS request/reply mismatch appears; instead the persistent `CGSColorProfileCreateWithColorProfileID` / `_CGSWindowColorProfile` / `CGWindowContextCreate` failure cluster continues into null-context drawing and CoreUI/RawCamera errors. The exact-six broker and protected hashes remain intact.
+
+Follow `docs/process-manager-post-windowtitle-showwindow-color-profile-window-context-audit.md`. It is a read-only Snow-versus-Lion CoreGraphics audit of the color-profile client and window-context creation path. No new live adapter or XNU change is authorized yet.
