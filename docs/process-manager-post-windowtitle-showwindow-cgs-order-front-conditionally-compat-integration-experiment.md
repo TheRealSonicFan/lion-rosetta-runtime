@@ -376,3 +376,20 @@ earlier CGSShapeWindow rejection                   -> held
 next step                                          -> one exact OrderFrontConditionally integration
 XNU                                                -> no change indicated
 ```
+
+
+## Observed result — OrderFrontConditionally adapter passed; SetFrontWindow is now the next deterministic boundary
+
+The Snow control passed with the new OrderFrontConditionally path in strict passthrough. The first nonzero-window `0x72f2 / 0x7356` SetFrontWindow call also succeeded on Snow.
+
+On Lion, the exact OrderFrontConditionally predicate matched once and the adapter changed only `0x72e7 -> 0x72ea`, received native `0x734e / result 0`, and returned only `0x734e -> 0x734b` to the PPC client. The accepted AddTrackingArea adapter then also passed unchanged. The next unknown transaction `0x7268 / 0x72cc` succeeded unchanged.
+
+The immediately following nonzero-window `0x72f2 / 0x7356` transaction returned `result=-304` on Lion and ShowWindow did not reach `S01_AFTER_ShowWindow`. The prior static audit already identifies this exact generated helper as `__CGSSetFrontWindow`, with Lion native IDs `0x72f5 / 0x7359` and the same `0x1513`, option `0x3`, `0x24 / 0x2c` request/receive geometry. This is therefore the next narrow ID-only compatibility boundary.
+
+The authoritative next procedure is:
+
+```text
+docs/process-manager-post-windowtitle-showwindow-cgs-set-front-window-compat-integration-experiment.md
+```
+
+The earlier `CGSShapeWindow` rejection and the color-profile/window-context diagnostics remain held. The new Lion run also produced crash/core diagnostics; preserve them, but the next compatibility gate is already determined by the exact SetFrontWindow wire differential.
