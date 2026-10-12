@@ -305,3 +305,67 @@ next step                                  -> standalone no-IPC rendezvous copie
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed completed result — copied-buffer rendezvous policy proof passed
+
+The returned Snow control, Lion syscall-295 gate, and Lion no-IPC proof all pass.
+
+Artifact/control provenance:
+
+```text
+build ID                         windowtitle-fontserver-rendezvous-compat-protocol-v1
+architecture                     ppc7400
+LC_LOAD_DYLINKER                 /usr/oah/dyld
+proof executable SHA-256         6fab10b71e1d0c7fcc1efd9fc964f87f811ca1fd183c64e83275366ff7dac942
+Snow control                     PASS
+syscall 295                      EBADF / no SIGSYS / PASS
+new diagnostics                  none
+protected hashes                 unchanged
+```
+
+The Lion policy proof established:
+
+```text
+legacy request ID                0x32c8
+Lion request ID                  0x32e7
+send                             0x18
+legacy receive                   0x3c
+Lion receive                     0x40
+request changed bytes            1
+request body changes             0
+source request changes           0
+
+Lion success reply ID            0x334b
+legacy success reply ID          0x332c
+Lion success size                0x38
+legacy success size              0x34
+protocol version                 5
+descriptor count                 1
+descriptor size                  0x1000
+native explicit size             0x1000
+legacy explicit size             0x1000
+preserved-prefix changes         0
+source reply changes             0
+descriptor preserved             YES
+NDR preserved                    YES
+explicit size relocated          YES
+removed protocol bytes           4
+
+modeled simple error size        0x24
+error reply ID conversion        0x334b -> 0x332c
+error body changes               0
+modeled decoded error            -304
+nonzero result                   preserved
+RESULT                           POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_POLICY_PROOF_PASS
+```
+
+This closes the local proof prerequisite. The captured OOL address remains per-run state and is not a future live-adapter predicate.
+
+The authoritative next procedure is:
+
+```text
+docs/process-manager-post-createwindow-windowtitle-fontserver-rendezvous-compat-integration-experiment.md
+```
+
+That stage integrates only the first `0x32c8` rendezvous conversion into the existing two-tuple FontServer bootstrap/RPC interposer, keeps Snow strict passthrough, keeps passive tracing enabled, and performs exactly one Lion title run. Later FontServer operations remain unadapted even if the successful rendezvous reaches them.
