@@ -607,3 +607,10 @@ Current `main` prepares a single exact compatibility rule and advances to `docs/
 The exact count-9 `CGSAddTrackingAreaInline` compatibility rule now passes live on Lion: `0x7388 -> 0x738e`, native reply `0x73f2 / 0x24 / result 0`, and PPC-facing `0x73ec / 0x24 / result 0`, with only the request/reply ID byte changed. Snow passthrough remains clean and syscall 295 remains healthy. The former `CGSAddTrackingArea` MIG server type-check diagnostic is gone.
 
 `ShowWindow` still does not return. After `S00`, Lion now has two remaining `-304` CGS replies around the successful tracking call: `0x72e7 -> 0x734b` and `0x72f2 -> 0x7356`; `0x7268 -> 0x72cc` succeeds. The color-profile/window-context diagnostic cluster is still present and begins before `0x72e7`, so no further live ID rewrite is justified from ordering alone. Follow `docs/process-manager-post-windowtitle-showwindow-post-tracking-cgs-protocol-audit.md`: run only the new read-only CoreGraphics analyzer on Snow PPC and Lion i386 and return the two reports. Preserve the new Lion crash/plist/core locally; no XNU change is indicated.
+
+
+## ShowWindow post-tracking audit passed; OrderFrontConditionally gate next
+
+The Snow-PPC/Lion-i386 static differential identifies both remaining post-`S00` `-304` requests. `__CGSOrderFrontConditionally` changes from Snow `0x72e7 / 0x734b` to Lion `0x72ea / 0x734e`, and `__CGSSetFrontWindow` changes from Snow `0x72f2 / 0x7356` to Lion `0x72f5 / 0x7359`. Both retain their Snow wire geometry; each is an ID-only `+3` generated-MIG shift.
+
+Only the first causal boundary advances. Follow `docs/process-manager-post-windowtitle-showwindow-cgs-order-front-conditionally-compat-integration-experiment.md`: build the new combined PPC compatibility dylib on Snow Leopard, require the Snow passthrough control, repeat syscall 295 on Lion, then run exactly one Lion integration adapting only `CGSOrderFrontConditionally`. Keep the proven `CGSSetFrontWindow` differential, the earlier `CGSShapeWindow` rejection, and color-profile/window-context failures held until that result is reviewed. No XNU change is indicated.
