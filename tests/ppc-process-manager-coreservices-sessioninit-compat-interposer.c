@@ -421,6 +421,33 @@ static const char kDistributedNotificationsName[] =
 #define CGS_COLOR_PROFILE_CLIENT_COMPAT_LION_V1 "lion-id-v1"
 #endif
 
+#ifdef PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_TRACE
+#define CGS_COLOR_PROFILE_RESOLVE_TRACE_BUILD_ID "color-profile-resolve-passive-trace-v1"
+#define CGS_COLOR_PROFILE_RESOLVE_TRACE_BUILD_MARKER "PM_CGS_COLOR_PROFILE_RESOLVE_TRACE_BUILD_ID:" CGS_COLOR_PROFILE_RESOLVE_TRACE_BUILD_ID
+#define CGS_COLOR_PROFILE_RESOLVE_LEGACY_REQUEST_ID 0x000074d7U
+#define CGS_COLOR_PROFILE_RESOLVE_LEGACY_REPLY_ID 0x0000753bU
+#define CGS_COLOR_PROFILE_RESOLVE_LION_REQUEST_ID 0x000074d9U
+#define CGS_COLOR_PROFILE_RESOLVE_LION_REPLY_ID 0x0000753dU
+#define CGS_COLOR_PROFILE_RESOLVE_BITS 0x80001513U
+#define CGS_COLOR_PROFILE_RESOLVE_MSG_OPTIONS 0x00000003U
+#define CGS_COLOR_PROFILE_RESOLVE_SEND_SIZE 0x00000038U
+#define CGS_COLOR_PROFILE_RESOLVE_RECV_SIZE 0x0000003cU
+#define CGS_COLOR_PROFILE_RESOLVE_SUCCESS_REPLY_SIZE 0x00000034U
+#define CGS_COLOR_PROFILE_RESOLVE_ERROR_REPLY_SIZE 0x00000024U
+#define CGS_COLOR_PROFILE_RESOLVE_DESC_COUNT_OFF 0x18U
+#define CGS_COLOR_PROFILE_RESOLVE_DESC_PORT_OFF 0x1cU
+#define CGS_COLOR_PROFILE_RESOLVE_DESC_DISPOSITION_OFF 0x26U
+#define CGS_COLOR_PROFILE_RESOLVE_DESC_TYPE_OFF 0x27U
+#define CGS_COLOR_PROFILE_RESOLVE_NDR_OFF 0x28U
+#define CGS_COLOR_PROFILE_RESOLVE_CLIENT_ID_OFF 0x30U
+#define CGS_COLOR_PROFILE_RESOLVE_PROFILE_ID_OFF 0x34U
+#define CGS_COLOR_PROFILE_RESOLVE_RESULT_OFF 0x20U
+#define CGS_COLOR_PROFILE_RESOLVE_OUT0_LO_OFF 0x24U
+#define CGS_COLOR_PROFILE_RESOLVE_OUT0_HI_OFF 0x28U
+#define CGS_COLOR_PROFILE_RESOLVE_OUT1_LO_OFF 0x2cU
+#define CGS_COLOR_PROFILE_RESOLVE_OUT1_HI_OFF 0x30U
+#endif
+
 #ifdef PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION
 #define CGS_SERVER_VERSION_COMPAT_ENV "ROSETTA_CGS_SERVER_VERSION_COMPAT_MODE"
 #define CGS_SERVER_VERSION_COMPAT_PASSTHROUGH "passthrough"
@@ -3503,6 +3530,12 @@ cgs_trace_kind(uint32_t request_id)
     if (request_id == CGS_COLOR_PROFILE_CLIENT_LION_REQUEST_ID)
         return "CGS_COLOR_PROFILE_CLIENT_LION";
 #endif
+#ifdef PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_TRACE
+    if (request_id == CGS_COLOR_PROFILE_RESOLVE_LEGACY_REQUEST_ID)
+        return "CGS_COLOR_PROFILE_RESOLVE_LEGACY";
+    if (request_id == CGS_COLOR_PROFILE_RESOLVE_LION_REQUEST_ID)
+        return "CGS_COLOR_PROFILE_RESOLVE_LION";
+#endif
 #ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
     if (gCGSShowWindowTracePort != MACH_PORT_NULL)
         return "CGS_SHOWWINDOW_UNKNOWN";
@@ -3573,6 +3606,12 @@ cgs_trace_expected_reply(uint32_t request_id)
     if (request_id == CGS_COLOR_PROFILE_CLIENT_LION_REQUEST_ID)
         return CGS_COLOR_PROFILE_CLIENT_LION_REPLY_ID;
 #endif
+#ifdef PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_TRACE
+    if (request_id == CGS_COLOR_PROFILE_RESOLVE_LEGACY_REQUEST_ID)
+        return CGS_COLOR_PROFILE_RESOLVE_LEGACY_REPLY_ID;
+    if (request_id == CGS_COLOR_PROFILE_RESOLVE_LION_REQUEST_ID)
+        return CGS_COLOR_PROFILE_RESOLVE_LION_REPLY_ID;
+#endif
 #ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
     if (gCGSShowWindowTracePort != MACH_PORT_NULL)
         return request_id + 0x64U;
@@ -3637,6 +3676,11 @@ is_cgs_trace_candidate(mach_msg_header_t *msg)
 #ifdef PM_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE
     if (request_id == CGS_COLOR_PROFILE_CLIENT_LEGACY_REQUEST_ID ||
         request_id == CGS_COLOR_PROFILE_CLIENT_LION_REQUEST_ID)
+        return 1;
+#endif
+#ifdef PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_TRACE
+    if (request_id == CGS_COLOR_PROFILE_RESOLVE_LEGACY_REQUEST_ID ||
+        request_id == CGS_COLOR_PROFILE_RESOLVE_LION_REQUEST_ID)
         return 1;
 #endif
     return 0;
@@ -3794,6 +3838,45 @@ trace_cgs_message(mach_msg_header_t *msg,
                 (unsigned int)m[CGS_COLOR_PROFILE_CLIENT_DESC_DISPOSITION_OFF],
                 (unsigned int)m[CGS_COLOR_PROFILE_CLIENT_DESC_TYPE_OFF],
                 (unsigned long)get_u32(m + CGS_COLOR_PROFILE_CLIENT_PID_OFF));
+        fflush(stderr);
+    }
+#endif
+#ifdef PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_TRACE
+    if (request_id == CGS_COLOR_PROFILE_RESOLVE_LEGACY_REQUEST_ID ||
+        request_id == CGS_COLOR_PROFILE_RESOLVE_LION_REQUEST_ID) {
+        int exact =
+            get_u32(m + 0x00U) == CGS_COLOR_PROFILE_RESOLVE_BITS &&
+            get_u32(m + 0x08U) != 0U &&
+            get_u32(m + 0x0cU) == (uint32_t)rcv_name &&
+            option == (mach_msg_option_t)CGS_COLOR_PROFILE_RESOLVE_MSG_OPTIONS &&
+            send_size == (mach_msg_size_t)CGS_COLOR_PROFILE_RESOLVE_SEND_SIZE &&
+            rcv_size == (mach_msg_size_t)CGS_COLOR_PROFILE_RESOLVE_RECV_SIZE &&
+            rcv_name != MACH_PORT_NULL &&
+            timeout == MACH_MSG_TIMEOUT_NONE &&
+            notify == MACH_PORT_NULL &&
+            get_u32(m + CGS_COLOR_PROFILE_RESOLVE_DESC_COUNT_OFF) == 1U &&
+            get_u32(m + CGS_COLOR_PROFILE_RESOLVE_DESC_PORT_OFF) != 0U &&
+            m[CGS_COLOR_PROFILE_RESOLVE_DESC_DISPOSITION_OFF] == 0x13U &&
+            m[CGS_COLOR_PROFILE_RESOLVE_DESC_TYPE_OFF] == 0x00U &&
+            get_u32(m + CGS_COLOR_PROFILE_RESOLVE_CLIENT_ID_OFF) != 0U &&
+            get_u32(m + CGS_COLOR_PROFILE_RESOLVE_PROFILE_ID_OFF) == 1U;
+        fprintf(stderr, "%s\n", CGS_COLOR_PROFILE_RESOLVE_TRACE_BUILD_MARKER);
+        fprintf(stderr,
+                "PM_CGS_COLOR_PROFILE_RESOLVE_TRACE_REQUEST:kind=%s exact=%s bits=0x%08lx id=0x%08lx send=0x%08lx recv=0x%08lx remotePort=0x%08lx replyPort=0x%08lx descriptorCount=%lu descriptorPort=0x%08lx disposition=0x%02x type=0x%02x clientId=%lu profileId=%lu\n",
+                cgs_trace_kind(request_id),
+                exact ? "YES" : "NO",
+                (unsigned long)get_u32(m + 0x00U),
+                (unsigned long)request_id,
+                (unsigned long)send_size,
+                (unsigned long)rcv_size,
+                (unsigned long)get_u32(m + 0x08U),
+                (unsigned long)rcv_name,
+                (unsigned long)get_u32(m + CGS_COLOR_PROFILE_RESOLVE_DESC_COUNT_OFF),
+                (unsigned long)get_u32(m + CGS_COLOR_PROFILE_RESOLVE_DESC_PORT_OFF),
+                (unsigned int)m[CGS_COLOR_PROFILE_RESOLVE_DESC_DISPOSITION_OFF],
+                (unsigned int)m[CGS_COLOR_PROFILE_RESOLVE_DESC_TYPE_OFF],
+                (unsigned long)get_u32(m + CGS_COLOR_PROFILE_RESOLVE_CLIENT_ID_OFF),
+                (unsigned long)get_u32(m + CGS_COLOR_PROFILE_RESOLVE_PROFILE_ID_OFF));
         fflush(stderr);
     }
 #endif
@@ -4046,6 +4129,29 @@ trace_cgs_message(mach_msg_header_t *msg,
                     get_u32(m + CGS_COLOR_PROFILE_CLIENT_RESULT_OFF) : 0U),
                 (unsigned long)(reply_size >= 0x28U ?
                     get_u32(m + CGS_COLOR_PROFILE_CLIENT_ID_OFF) : 0U));
+        fflush(stderr);
+    }
+#endif
+#ifdef PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_TRACE
+    if (request_id == CGS_COLOR_PROFILE_RESOLVE_LEGACY_REQUEST_ID ||
+        request_id == CGS_COLOR_PROFILE_RESOLVE_LION_REQUEST_ID) {
+        fprintf(stderr,
+                "PM_CGS_COLOR_PROFILE_RESOLVE_TRACE_REPLY:kind=%s bits=0x%08lx size=0x%08lx id=0x%08lx expected=0x%08lx resultRaw=0x%08lx out0LoRaw=0x%08lx out0HiRaw=0x%08lx out1LoRaw=0x%08lx out1HiRaw=0x%08lx\n",
+                cgs_trace_kind(request_id),
+                (unsigned long)reply_bits,
+                (unsigned long)reply_size,
+                (unsigned long)reply_id,
+                (unsigned long)expected_reply,
+                (unsigned long)(reply_size >= 0x24U ?
+                    get_u32(m + CGS_COLOR_PROFILE_RESOLVE_RESULT_OFF) : 0U),
+                (unsigned long)(reply_size >= CGS_COLOR_PROFILE_RESOLVE_SUCCESS_REPLY_SIZE ?
+                    get_u32(m + CGS_COLOR_PROFILE_RESOLVE_OUT0_LO_OFF) : 0U),
+                (unsigned long)(reply_size >= CGS_COLOR_PROFILE_RESOLVE_SUCCESS_REPLY_SIZE ?
+                    get_u32(m + CGS_COLOR_PROFILE_RESOLVE_OUT0_HI_OFF) : 0U),
+                (unsigned long)(reply_size >= CGS_COLOR_PROFILE_RESOLVE_SUCCESS_REPLY_SIZE ?
+                    get_u32(m + CGS_COLOR_PROFILE_RESOLVE_OUT1_LO_OFF) : 0U),
+                (unsigned long)(reply_size >= CGS_COLOR_PROFILE_RESOLVE_SUCCESS_REPLY_SIZE ?
+                    get_u32(m + CGS_COLOR_PROFILE_RESOLVE_OUT1_HI_OFF) : 0U));
         fflush(stderr);
     }
 #endif
