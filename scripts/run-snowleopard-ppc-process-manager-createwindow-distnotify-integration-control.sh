@@ -681,8 +681,8 @@ if [ "$RC" -eq 0 ] &&
             if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
                 if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
                     if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
-                        SHOWWINDOW_UNKNOWN_REQUEST_COUNT="$(/usr/bin/grep -c 'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST:index=' "$LOG" 2>/dev/null || true)"
-                        SHOWWINDOW_UNKNOWN_RETURN_COUNT="$(/usr/bin/grep -c 'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_MACH_RETURN:index=' "$LOG" 2>/dev/null || true)"
+                        SHOWWINDOW_UNKNOWN_REQUEST_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow/{seen=1; next} seen && /PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow/{exit} seen && /PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST:index=/{n++} END{print n+0}' "$LOG" 2>/dev/null)"
+                        SHOWWINDOW_UNKNOWN_RETURN_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow/{seen=1; next} seen && /PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow/{exit} seen && /PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_MACH_RETURN:index=/{n++} END{print n+0}' "$LOG" 2>/dev/null)"
                         echo "showwindow_unknown_cgs_trace_request_count=$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" | /usr/bin/tee -a "$LOG"
                         echo "showwindow_unknown_cgs_trace_return_count=$SHOWWINDOW_UNKNOWN_RETURN_COUNT" | /usr/bin/tee -a "$LOG"
                         if [ "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" -lt 1 ] ||
