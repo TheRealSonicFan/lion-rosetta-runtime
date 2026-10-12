@@ -7,7 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#define TRACE_BUILD_ID "native-i386-fontserver-rendezvous2-trace-v1"
+#define TRACE_BUILD_ID "native-i386-fontserver-rendezvous2-trace-v2"
 #define TRACE_BUILD_MARKER "PM_NATIVE_FONTSERVER_RENDEZVOUS2_TRACE_BUILD_ID:" TRACE_BUILD_ID
 #define TRACE_SUCCESS_MARKER "PM_NATIVE_FONTSERVER_RENDEZVOUS2_RESULT:CAPTURED_COMPLEX_V5"
 #define FONT_SERVICE "com.apple.FontServer"
@@ -158,7 +158,8 @@ rosetta_native_fontserver_mach_msg(mach_msg_header_t *msg,
     mach_msg_fn fn = original_mach_msg();
     mach_msg_return_t mr;
     uint32_t request_bits;
-    uint32_t request_size;
+    uint32_t request_size_observed;
+    uint32_t request_reserved_observed;
     uint32_t request_id;
 
     if (fn == NULL ||
@@ -176,7 +177,9 @@ rosetta_native_fontserver_mach_msg(mach_msg_header_t *msg,
         finish(75, "UNEXPECTED_SECOND_FONTSERVER_RPC");
 
     request_bits = (uint32_t)msg->msgh_bits;
-    request_size = (uint32_t)msg->msgh_size;
+    request_size_observed = (uint32_t)msg->msgh_size;
+    request_reserved_observed =
+        get_u32(((const unsigned char *)msg) + 0x10U);
     request_id = (uint32_t)msg->msgh_id;
 
     fprintf(stderr, "%s\n", TRACE_BUILD_MARKER);
@@ -193,11 +196,21 @@ rosetta_native_fontserver_mach_msg(mach_msg_header_t *msg,
     dump_hex("REQUEST", (const unsigned char *)msg,
              (uint32_t)send_size);
 
+    /*
+     * The generated MIG stub does not initialize msgh_size or the reserved
+     * header word before calling mach_msg().  The mach_msg wrapper receives
+     * the authoritative send size separately and normalizes the header before
+     * entering the kernel.  Because this interposer runs above that wrapper,
+     * the two pre-wrapper header words are observational only and may contain
+     * stale stack bytes.  Validate the statically decoded contract using the
+     * generated stub's actual mach_msg arguments instead.
+     */
     if (request_bits != EXPECTED_REQUEST_BITS ||
         request_id != EXPECTED_REQUEST_ID ||
-        request_size != EXPECTED_SEND_SIZE ||
         send_size != EXPECTED_SEND_SIZE ||
-        rcv_size != EXPECTED_RECV_SIZE)
+        rcv_size != EXPECTED_RECV_SIZE ||
+        option != (mach_msg_option_t)0x00000003U ||
+        msg->msgh_local_port != rcv_name)
         finish(76, "REQUEST_CONTRACT_MISMATCH");
 
     mr = fn(msg, option, send_size, rcv_size,
