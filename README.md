@@ -632,3 +632,10 @@ The exact SetFrontWindow integration is now live-proven. Lion converted the firs
 Lion still does not reach `S01_AFTER_ShowWindow`. After the now-successful ordering RPC chain, no new application-CGS request/reply mismatch appears; instead the persistent `CGSColorProfileCreateWithColorProfileID` / `_CGSWindowColorProfile` / `CGWindowContextCreate` failure cluster continues into null-context drawing and CoreUI/RawCamera errors. The exact-six broker and protected hashes remain intact.
 
 Follow `docs/process-manager-post-windowtitle-showwindow-color-profile-window-context-audit.md`. It is a read-only Snow-versus-Lion CoreGraphics audit of the color-profile client and window-context creation path. No new live adapter or XNU change is authorized yet.
+
+
+## ShowWindow ColorProfileClient static differential complete
+
+The read-only CoreGraphics differential identifies a precise upstream boundary behind the persistent color-profile/window-context failure. Snow PPC `__CGSColorProfileClient` uses `0x74d4 / 0x7538`; Lion i386 uses `0x74d6 / 0x753a`. Request bits, descriptor layout, NDR/PID offsets, send/receive sizes, success/error reply geometry, result offset, and returned client-ID offset are otherwise equivalent. The callers prove that failure of this helper produces the observed `Cannot initialize color profile client` error and then the invalid window-profile/context cascade.
+
+Current `main` advances to `docs/process-manager-post-windowtitle-showwindow-color-profile-client-live-trace-experiment.md`. That stage is passive only: it captures the exact legacy ColorProfileClient RPC on Snow and once on Lion without rewriting it. No ColorProfileClient adapter, CGWindowContext/CoreUI/RawCamera workaround, ShapeWindow change, or XNU change is authorized until the live result is reviewed.
