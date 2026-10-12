@@ -424,3 +424,45 @@ next step                                      -> one exact inline ID compatibil
 neighboring ShowWindow CGS requests            -> held
 XNU                                             -> no change indicated
 ```
+
+
+## Observed result — tracking-area adapter passes; ShowWindow remains open
+
+The prepared compatibility dylib built as PPC7400 with the expected `showwindow-addtrackingarea-compat-v1` build ID, two PPC interpose tuples, and SHA-256 `061cecf39a48050f105f293b47c5f5181e056ef4bc31ded93f6bc9dd3d2f81cd`. The Snow Leopard control matched the exact count-9 tracking request in passthrough mode and completed `S01_AFTER_ShowWindow`, disposal, and final `RESULT: PASS`. Syscall 295 on Lion remained healthy.
+
+The one Lion integration proves the exact tracking-area conversion succeeds:
+
+```text
+predicate              exact=YES
+count                  9
+legacy request         0x7388
+native request         0x738e
+request changed bytes  1
+request body changes   0
+native reply           0x73f2 / 0x24 / result 0
+legacy reply           0x73ec / 0x24 / result 0
+reply changed bytes    1
+reply body changes     0
+adapter                PASS
+```
+
+The previous `CGSAddTrackingArea` server type-check failure is no longer present. ShowWindow nevertheless does not return: `S01` remains absent, the process exits 139, and a new crash/plist/core set is reported.
+
+The continuing post-`S00` application-CGS sequence now exposes three unknown transactions around the successful adapter:
+
+```text
+0x72e7 -> 0x734b   result -304
+0x7388 -> 0x73ec   adapted result 0
+0x7268 -> 0x72cc   result 0
+0x72f2 -> 0x7356   result -304
+```
+
+The repeated color-profile/window-context failures remain, and their first cluster occurs before the `0x72e7` request. Therefore no additional live conversion is authorized yet.
+
+The authoritative next procedure is:
+
+```text
+docs/process-manager-post-windowtitle-showwindow-post-tracking-cgs-protocol-audit.md
+```
+
+That stage is static and read-only. It attributes the exact `0x72e7 / 0x734b` and `0x72f2 / 0x7356` contracts on Snow PPC and Lion i386 before deciding whether either `-304` is an ID/ABI mismatch or merely a consequence of the earlier color-profile/window-context failure. The known earlier `CGSShapeWindow` rejection remains held; no XNU change is indicated.
