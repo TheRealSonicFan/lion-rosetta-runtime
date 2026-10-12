@@ -297,9 +297,9 @@ export ROSETTA_CGS_NEWWINDOW_COMPAT_MODE=lion-inline-id-v1
 export ROSETTA_CGS_RELEASEBACKING_COMPAT_MODE=lion-id-v1
 export ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE=lion-id-v1
 export ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE=lion-showwindow-sixth-register-v1
-export ROSETTA_HITOOLBOX_EXTRAS_COMPAT_PATH="$RUNTIME/payload/ppc-hitoolbox-extras-resource-compat.dylib"
-export ROSETTA_HITOOLBOX_EXTRAS_COMPAT_SHA256_FILE="$RUNTIME/payload/ppc-hitoolbox-extras-resource-compat.dylib.sha256"
-export ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH="$RUNTIME/payload/SnowLeopard-HIToolbox-Extras.rsrc"
+export ROSETTA_HITOOLBOX_EXTRAS_COMPAT_PATH=./payload/ppc-hitoolbox-extras-resource-compat.dylib
+export ROSETTA_HITOOLBOX_EXTRAS_COMPAT_SHA256_FILE=./payload/ppc-hitoolbox-extras-resource-compat.dylib.sha256
+export ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH=./payload/SnowLeopard-HIToolbox-Extras.rsrc
 export ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE=lion-fallback-external-v1
 export ROSETTA_EXPECTED_KERNEL_SHA256=fe68467b60b3bd7edfab61b2d6c8af7f988de5206c4b7b624151dc9f1a1061d3
 
