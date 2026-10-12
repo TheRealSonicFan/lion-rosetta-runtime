@@ -184,10 +184,11 @@ rosetta_native_fontserver_mach_msg(mach_msg_header_t *msg,
 
     fprintf(stderr, "%s\n", TRACE_BUILD_MARKER);
     fprintf(stderr,
-            "PM_NATIVE_FONTSERVER_RENDEZVOUS2_REQUEST:index=1 id=0x%08lx bits=0x%08lx headerSize=0x%08lx send=0x%08lx recv=0x%08lx remote=0x%08lx receivePort=0x%08lx option=0x%08lx\n",
+            "PM_NATIVE_FONTSERVER_RENDEZVOUS2_REQUEST:index=1 id=0x%08lx bits=0x%08lx headerSizeObserved=0x%08lx headerReservedObserved=0x%08lx headerPreWrapperAuthoritative=NO send=0x%08lx recv=0x%08lx remote=0x%08lx receivePort=0x%08lx option=0x%08lx\n",
             (unsigned long)request_id,
             (unsigned long)request_bits,
-            (unsigned long)request_size,
+            (unsigned long)request_size_observed,
+            (unsigned long)request_reserved_observed,
             (unsigned long)send_size,
             (unsigned long)rcv_size,
             (unsigned long)msg->msgh_remote_port,
