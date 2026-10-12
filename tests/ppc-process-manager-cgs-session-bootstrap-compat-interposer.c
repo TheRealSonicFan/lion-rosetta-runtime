@@ -13,7 +13,14 @@ extern kern_return_t bootstrap_look_up(mach_port_t,
                                        mach_port_t *);
 extern mach_port_t mig_get_reply_port(void);
 
-#ifdef PM_CGS_FONTSERVER_RPC_TRACE
+#if defined(PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_INTEGRATION) && \
+    !defined(PM_CGS_FONTSERVER_RPC_TRACE)
+#define PM_CGS_FONTSERVER_RPC_TRACE 1
+#endif
+
+#ifdef PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_INTEGRATION
+#define COMPAT_BUILD_ID "cgs-session-bootstrap-dockserver-fontserver-rendezvous-compat-v5"
+#elif defined(PM_CGS_FONTSERVER_RPC_TRACE)
 #define COMPAT_BUILD_ID "cgs-session-bootstrap-dockserver-fontserver-compat-rpc-trace-v4"
 #elif defined(PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT)
 #define COMPAT_BUILD_ID "cgs-session-bootstrap-dockserver-fontserver-compat-v3"
@@ -41,6 +48,38 @@ extern mach_port_t mig_get_reply_port(void);
 #define FONT_RPC_TRACE_MODE_SNOW "snow-passive-v1"
 #define FONT_RPC_TRACE_MODE_LION "lion-passive-v1"
 #define FONT_RPC_TRACE_HEX_MAX 0x00000400U
+#endif
+#ifdef PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_INTEGRATION
+#define FONT_RENDEZVOUS_COMPAT_MODE_ENV \
+    "ROSETTA_CGS_FONTSERVER_RENDEZVOUS_COMPAT_MODE"
+#define FONT_RENDEZVOUS_COMPAT_MODE_PASSTHROUGH "passthrough"
+#define FONT_RENDEZVOUS_COMPAT_MODE_LION "lion-rendezvous-v1"
+
+#define FONT_RENDEZVOUS_LEGACY_REQUEST_ID 0x000032c8U
+#define FONT_RENDEZVOUS_LEGACY_REPLY_ID 0x0000332cU
+#define FONT_RENDEZVOUS_LION_REQUEST_ID 0x000032e7U
+#define FONT_RENDEZVOUS_LION_REPLY_ID 0x0000334bU
+#define FONT_RENDEZVOUS_REQUEST_BITS 0x00001513U
+#define FONT_RENDEZVOUS_MSG_OPTIONS 0x00000003U
+#define FONT_RENDEZVOUS_SEND_SIZE 0x00000018U
+#define FONT_RENDEZVOUS_LEGACY_RECV_SIZE 0x0000003cU
+#define FONT_RENDEZVOUS_LION_RECV_SIZE 0x00000040U
+#define FONT_RENDEZVOUS_LEGACY_SUCCESS_SIZE 0x00000034U
+#define FONT_RENDEZVOUS_LION_SUCCESS_SIZE 0x00000038U
+#define FONT_RENDEZVOUS_SIMPLE_ERROR_SIZE 0x00000024U
+#define FONT_RENDEZVOUS_COMPLEX_BITS 0x80001200U
+#define FONT_RENDEZVOUS_SIMPLE_BITS 0x00001200U
+#define FONT_RENDEZVOUS_DESC_COUNT_OFF 0x18U
+#define FONT_RENDEZVOUS_DESC_ADDR_OFF 0x1cU
+#define FONT_RENDEZVOUS_DESC_SIZE_OFF 0x20U
+#define FONT_RENDEZVOUS_DESC_FLAGS_OFF 0x24U
+#define FONT_RENDEZVOUS_COMPLEX_NDR_OFF 0x28U
+#define FONT_RENDEZVOUS_PROTOCOL_VERSION_OFF 0x30U
+#define FONT_RENDEZVOUS_LION_EXPLICIT_SIZE_OFF 0x34U
+#define FONT_RENDEZVOUS_LEGACY_EXPLICIT_SIZE_OFF 0x30U
+#define FONT_RENDEZVOUS_SIMPLE_NDR_OFF 0x18U
+#define FONT_RENDEZVOUS_SIMPLE_RESULT_OFF 0x20U
+#define FONT_RENDEZVOUS_EXPECTED_PROTOCOL_VERSION 5U
 #endif
 
 #define LION_LOOKUP_REQUEST_ID 0x00000194U
@@ -137,6 +176,9 @@ static unsigned int gFontAdaptedCallCount = 0;
 static mach_msg_fn gOriginalMachMsg = NULL;
 static mach_port_t gFontServicePort = MACH_PORT_NULL;
 static unsigned int gFontRpcCount = 0;
+#ifdef PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_INTEGRATION
+static unsigned int gFontRendezvousCompatCallCount = 0;
+#endif
 #endif
 
 static void
@@ -1127,6 +1169,519 @@ rosetta_bootstrap_look_up(mach_port_t bp,
 }
 
 
+#ifdef PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_INTEGRATION
+static uint32_t
+font_rendezvous_swap_u32(uint32_t value)
+{
+    return ((value & 0x000000ffU) << 24) |
+           ((value & 0x0000ff00U) << 8) |
+           ((value & 0x00ff0000U) >> 8) |
+           ((value & 0xff000000U) >> 24);
+}
+
+static int
+font_rendezvous_ndr_is_swapped(const unsigned char *message,
+                               uint32_t ndr_off)
+{
+    const unsigned char *local_ndr = (const unsigned char *)&NDR_record;
+    return message[ndr_off + 4U] != local_ndr[4];
+}
+
+static uint32_t
+font_rendezvous_decode_u32(const unsigned char *message,
+                           uint32_t ndr_off,
+                           uint32_t value_off)
+{
+    uint32_t value = get_u32(message + value_off);
+
+    if (font_rendezvous_ndr_is_swapped(message, ndr_off))
+        value = font_rendezvous_swap_u32(value);
+    return value;
+}
+
+static int32_t
+font_rendezvous_decode_i32(const unsigned char *message,
+                           uint32_t ndr_off,
+                           uint32_t value_off)
+{
+    return (int32_t)font_rendezvous_decode_u32(message,
+                                               ndr_off,
+                                               value_off);
+}
+
+static unsigned int
+font_rendezvous_count_changes(const unsigned char *a,
+                              const unsigned char *b,
+                              uint32_t size)
+{
+    uint32_t off;
+    unsigned int changed = 0U;
+
+    for (off = 0U; off < size; ++off) {
+        if (a[off] != b[off])
+            ++changed;
+    }
+    return changed;
+}
+
+static unsigned int
+font_rendezvous_count_request_body_changes(const unsigned char *a,
+                                           const unsigned char *b)
+{
+    uint32_t off;
+    unsigned int changed = 0U;
+
+    for (off = 0U; off < FONT_RENDEZVOUS_SEND_SIZE; ++off) {
+        if (off >= 0x14U && off < 0x18U)
+            continue;
+        if (a[off] != b[off])
+            ++changed;
+    }
+    return changed;
+}
+
+static unsigned int
+font_rendezvous_count_simple_body_changes(const unsigned char *a,
+                                          const unsigned char *b)
+{
+    uint32_t off;
+    unsigned int changed = 0U;
+
+    for (off = 0U; off < FONT_RENDEZVOUS_SIMPLE_ERROR_SIZE; ++off) {
+        if (off >= 0x14U && off < 0x18U)
+            continue;
+        if (a[off] != b[off])
+            ++changed;
+    }
+    return changed;
+}
+
+static unsigned int
+font_rendezvous_count_preserved_success_prefix_changes(
+    const unsigned char *native_reply,
+    const unsigned char *legacy_reply)
+{
+    uint32_t off;
+    unsigned int changed = 0U;
+
+    for (off = 0U; off < FONT_RENDEZVOUS_PROTOCOL_VERSION_OFF; ++off) {
+        if (off >= 0x04U && off < 0x08U)
+            continue;
+        if (off >= 0x14U && off < 0x18U)
+            continue;
+        if (native_reply[off] != legacy_reply[off])
+            ++changed;
+    }
+    return changed;
+}
+
+static int
+is_exact_legacy_font_rendezvous_request(mach_msg_header_t *msg,
+                                        mach_msg_option_t option,
+                                        mach_msg_size_t send_size,
+                                        mach_msg_size_t rcv_size,
+                                        mach_port_name_t rcv_name,
+                                        mach_msg_timeout_t timeout,
+                                        mach_port_name_t notify)
+{
+    if (msg == NULL)
+        return 0;
+
+    return (uint32_t)msg->msgh_bits == FONT_RENDEZVOUS_REQUEST_BITS &&
+           msg->msgh_remote_port == gFontServicePort &&
+           gFontServicePort != MACH_PORT_NULL &&
+           msg->msgh_local_port == rcv_name &&
+           rcv_name != MACH_PORT_NULL &&
+           (uint32_t)msg->msgh_id == FONT_RENDEZVOUS_LEGACY_REQUEST_ID &&
+           option == (mach_msg_option_t)FONT_RENDEZVOUS_MSG_OPTIONS &&
+           send_size == (mach_msg_size_t)FONT_RENDEZVOUS_SEND_SIZE &&
+           rcv_size ==
+               (mach_msg_size_t)FONT_RENDEZVOUS_LEGACY_RECV_SIZE &&
+           timeout == MACH_MSG_TIMEOUT_NONE &&
+           notify == MACH_PORT_NULL;
+}
+
+static mach_msg_return_t
+handle_fontserver_rendezvous_compat(mach_msg_header_t *msg,
+                                    mach_msg_option_t option,
+                                    mach_msg_size_t send_size,
+                                    mach_msg_size_t rcv_size,
+                                    mach_port_name_t rcv_name,
+                                    mach_msg_timeout_t timeout,
+                                    mach_port_name_t notify)
+{
+    mach_msg_fn fn = original_mach_msg();
+    const char *mode = getenv(FONT_RENDEZVOUS_COMPAT_MODE_ENV);
+    unsigned char *source = (unsigned char *)msg;
+    uint32_t storage[
+        FONT_RENDEZVOUS_LION_RECV_SIZE / sizeof(uint32_t)];
+    unsigned char *adapted = (unsigned char *)storage;
+    unsigned char source_before[FONT_RENDEZVOUS_SEND_SIZE];
+    unsigned char native_reply_before[FONT_RENDEZVOUS_LION_RECV_SIZE];
+    unsigned char legacy_reply[FONT_RENDEZVOUS_LEGACY_SUCCESS_SIZE];
+    mach_msg_return_t mr;
+    uint32_t native_bits;
+    uint32_t native_size;
+    uint32_t native_id;
+    uint32_t descriptor_count = 0U;
+    uint32_t descriptor_address = 0U;
+    uint32_t descriptor_size = 0U;
+    uint32_t descriptor_flags = 0U;
+    uint32_t protocol_version = 0U;
+    uint32_t native_explicit_size = 0U;
+    uint32_t legacy_explicit_size = 0U;
+    uint32_t copy_size;
+    int32_t native_error = 0;
+    unsigned int request_changed = 0U;
+    unsigned int request_body_changed = 0U;
+    unsigned int request_source_changed = 0U;
+    unsigned int preserved_prefix_changed = 0U;
+    unsigned int reply_source_changed = 0U;
+    unsigned int error_changed = 0U;
+    unsigned int error_body_changed = 0U;
+    int exact;
+    int ndr_swapped = 0;
+    int descriptor_preserved = 0;
+    int ndr_preserved = 0;
+    int explicit_size_relocated = 0;
+
+    if (fn == NULL || fn == (mach_msg_fn)&rosetta_fontserver_mach_msg)
+        return MIG_BAD_ID;
+
+    ++gFontRendezvousCompatCallCount;
+    exact = is_exact_legacy_font_rendezvous_request(
+        msg, option, send_size, rcv_size, rcv_name, timeout, notify);
+
+    fprintf(stderr,
+            "PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_CALL:index=%u rpcIndex=%u mode=%s exact=%s id=0x%08lx bits=0x%08lx send=0x%08lx legacyRecv=0x%08lx remote=0x%08lx receivePort=0x%08lx\n",
+            gFontRendezvousCompatCallCount,
+            gFontRpcCount,
+            mode != NULL ? mode : "(unset)",
+            exact ? "YES" : "NO",
+            (unsigned long)(msg != NULL ? (uint32_t)msg->msgh_id : 0U),
+            (unsigned long)(msg != NULL ? (uint32_t)msg->msgh_bits : 0U),
+            (unsigned long)send_size,
+            (unsigned long)rcv_size,
+            (unsigned long)(msg != NULL ?
+                            (uint32_t)msg->msgh_remote_port : 0U),
+            (unsigned long)rcv_name);
+    fflush(stderr);
+
+    if (mode != NULL &&
+        strcmp(mode, FONT_RENDEZVOUS_COMPAT_MODE_PASSTHROUGH) == 0) {
+        fprintf(stderr,
+                "PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:PASSTHROUGH\n");
+        fflush(stderr);
+        return fn(msg, option, send_size, rcv_size,
+                  rcv_name, timeout, notify);
+    }
+
+    if (mode == NULL ||
+        strcmp(mode, FONT_RENDEZVOUS_COMPAT_MODE_LION) != 0 ||
+        !exact ||
+        gFontRpcCount != 1U ||
+        gFontRendezvousCompatCallCount != 1U) {
+        fprintf(stderr,
+                "PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:PREDICATE_REJECTED_PASSTHROUGH\n");
+        fflush(stderr);
+        return fn(msg, option, send_size, rcv_size,
+                  rcv_name, timeout, notify);
+    }
+
+    memset(storage, 0, sizeof(storage));
+    memcpy(source_before, source, FONT_RENDEZVOUS_SEND_SIZE);
+    memcpy(adapted, source, FONT_RENDEZVOUS_SEND_SIZE);
+    put_u32(adapted + 0x14U, FONT_RENDEZVOUS_LION_REQUEST_ID);
+
+    request_changed =
+        font_rendezvous_count_changes(source_before, adapted,
+                                      FONT_RENDEZVOUS_SEND_SIZE);
+    request_body_changed =
+        font_rendezvous_count_request_body_changes(source_before, adapted);
+    request_source_changed =
+        font_rendezvous_count_changes(source_before, source,
+                                      FONT_RENDEZVOUS_SEND_SIZE);
+
+    fprintf(stderr,
+            "PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x%08lx lionId=0x%08lx send=0x%08lx legacyRecv=0x%08lx lionRecv=0x%08lx changedBytes=%u bodyChangedBytes=%u sourceChangedBytes=%u\n",
+            (unsigned long)get_u32(source_before + 0x14U),
+            (unsigned long)get_u32(adapted + 0x14U),
+            (unsigned long)FONT_RENDEZVOUS_SEND_SIZE,
+            (unsigned long)FONT_RENDEZVOUS_LEGACY_RECV_SIZE,
+            (unsigned long)FONT_RENDEZVOUS_LION_RECV_SIZE,
+            request_changed,
+            request_body_changed,
+            request_source_changed);
+    fflush(stderr);
+
+    if (request_changed != 1U ||
+        request_body_changed != 0U ||
+        request_source_changed != 0U ||
+        get_u32(adapted + 0x14U) != FONT_RENDEZVOUS_LION_REQUEST_ID) {
+        fprintf(stderr,
+                "PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:REQUEST_POSTCHECK_FAILED_PASSTHROUGH\n");
+        fflush(stderr);
+        return fn(msg, option, send_size, rcv_size,
+                  rcv_name, timeout, notify);
+    }
+
+    mr = fn((mach_msg_header_t *)adapted,
+            option,
+            (mach_msg_size_t)FONT_RENDEZVOUS_SEND_SIZE,
+            (mach_msg_size_t)FONT_RENDEZVOUS_LION_RECV_SIZE,
+            rcv_name,
+            timeout,
+            notify);
+
+    fprintf(stderr,
+            "PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_NATIVE_MACH_RETURN:index=1 kr=%ld hex=0x%08lx\n",
+            (long)mr,
+            (unsigned long)(uint32_t)mr);
+    fflush(stderr);
+
+    if (mr != MACH_MSG_SUCCESS)
+        return mr;
+
+    native_bits = get_u32(adapted + 0x00U);
+    native_size = get_u32(adapted + 0x04U);
+    native_id = get_u32(adapted + 0x14U);
+
+    if ((native_bits & MACH_MSGH_BITS_COMPLEX) != 0U &&
+        native_size == FONT_RENDEZVOUS_LION_SUCCESS_SIZE) {
+        descriptor_count =
+            get_u32(adapted + FONT_RENDEZVOUS_DESC_COUNT_OFF);
+        descriptor_address =
+            get_u32(adapted + FONT_RENDEZVOUS_DESC_ADDR_OFF);
+        descriptor_size =
+            get_u32(adapted + FONT_RENDEZVOUS_DESC_SIZE_OFF);
+        descriptor_flags =
+            get_u32(adapted + FONT_RENDEZVOUS_DESC_FLAGS_OFF);
+        ndr_swapped =
+            font_rendezvous_ndr_is_swapped(
+                adapted, FONT_RENDEZVOUS_COMPLEX_NDR_OFF);
+        protocol_version =
+            font_rendezvous_decode_u32(
+                adapted,
+                FONT_RENDEZVOUS_COMPLEX_NDR_OFF,
+                FONT_RENDEZVOUS_PROTOCOL_VERSION_OFF);
+        native_explicit_size =
+            font_rendezvous_decode_u32(
+                adapted,
+                FONT_RENDEZVOUS_COMPLEX_NDR_OFF,
+                FONT_RENDEZVOUS_LION_EXPLICIT_SIZE_OFF);
+    } else if ((native_bits & MACH_MSGH_BITS_COMPLEX) == 0U &&
+               native_size == FONT_RENDEZVOUS_SIMPLE_ERROR_SIZE) {
+        ndr_swapped =
+            font_rendezvous_ndr_is_swapped(
+                adapted, FONT_RENDEZVOUS_SIMPLE_NDR_OFF);
+        native_error =
+            font_rendezvous_decode_i32(
+                adapted,
+                FONT_RENDEZVOUS_SIMPLE_NDR_OFF,
+                FONT_RENDEZVOUS_SIMPLE_RESULT_OFF);
+    }
+
+    fprintf(stderr,
+            "PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_NATIVE_REPLY:index=1 bits=0x%08lx size=0x%08lx id=0x%08lx complex=%s descriptorCount=%lu descriptorAddress=0x%08lx descriptorSize=0x%08lx descriptorFlags=0x%08lx protocolVersion=%lu explicitSize=0x%08lx simpleResult=%ld ndrSwapped=%s\n",
+            (unsigned long)native_bits,
+            (unsigned long)native_size,
+            (unsigned long)native_id,
+            (native_bits & MACH_MSGH_BITS_COMPLEX) != 0U ? "YES" : "NO",
+            (unsigned long)descriptor_count,
+            (unsigned long)descriptor_address,
+            (unsigned long)descriptor_size,
+            (unsigned long)descriptor_flags,
+            (unsigned long)protocol_version,
+            (unsigned long)native_explicit_size,
+            (long)native_error,
+            ndr_swapped ? "YES" : "NO");
+    fflush(stderr);
+
+    if (native_id != FONT_RENDEZVOUS_LION_REPLY_ID) {
+        copy_size = native_size;
+        if (copy_size > FONT_RENDEZVOUS_LEGACY_RECV_SIZE)
+            copy_size = FONT_RENDEZVOUS_LEGACY_RECV_SIZE;
+        if (copy_size != 0U)
+            memcpy(source, adapted, copy_size);
+        fprintf(stderr,
+                "PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:NATIVE_REPLY_ID_REJECTED\n");
+        fflush(stderr);
+        return mr;
+    }
+
+    if ((native_bits & MACH_MSGH_BITS_COMPLEX) != 0U) {
+        if (native_bits != FONT_RENDEZVOUS_COMPLEX_BITS ||
+            native_size != FONT_RENDEZVOUS_LION_SUCCESS_SIZE ||
+            descriptor_count != 1U ||
+            descriptor_address == 0U ||
+            descriptor_size == 0U ||
+            !ndr_swapped ||
+            protocol_version !=
+                FONT_RENDEZVOUS_EXPECTED_PROTOCOL_VERSION ||
+            native_explicit_size == 0U ||
+            native_explicit_size != descriptor_size) {
+            copy_size = native_size;
+            if (copy_size > FONT_RENDEZVOUS_LEGACY_RECV_SIZE)
+                copy_size = FONT_RENDEZVOUS_LEGACY_RECV_SIZE;
+            if (copy_size != 0U)
+                memcpy(source, adapted, copy_size);
+            fprintf(stderr,
+                    "PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:NATIVE_COMPLEX_REPLY_REJECTED\n");
+            fflush(stderr);
+            return mr;
+        }
+
+        memcpy(native_reply_before, adapted,
+               FONT_RENDEZVOUS_LION_SUCCESS_SIZE);
+        memset(legacy_reply, 0, sizeof(legacy_reply));
+        memcpy(legacy_reply, adapted,
+               FONT_RENDEZVOUS_PROTOCOL_VERSION_OFF);
+        put_u32(legacy_reply + 0x04U,
+                FONT_RENDEZVOUS_LEGACY_SUCCESS_SIZE);
+        put_u32(legacy_reply + 0x14U,
+                FONT_RENDEZVOUS_LEGACY_REPLY_ID);
+        memcpy(legacy_reply + FONT_RENDEZVOUS_LEGACY_EXPLICIT_SIZE_OFF,
+               adapted + FONT_RENDEZVOUS_LION_EXPLICIT_SIZE_OFF,
+               sizeof(uint32_t));
+
+        legacy_explicit_size =
+            font_rendezvous_decode_u32(
+                legacy_reply,
+                FONT_RENDEZVOUS_COMPLEX_NDR_OFF,
+                FONT_RENDEZVOUS_LEGACY_EXPLICIT_SIZE_OFF);
+        preserved_prefix_changed =
+            font_rendezvous_count_preserved_success_prefix_changes(
+                native_reply_before, legacy_reply);
+        reply_source_changed =
+            font_rendezvous_count_changes(
+                native_reply_before, adapted,
+                FONT_RENDEZVOUS_LION_SUCCESS_SIZE);
+        descriptor_preserved =
+            get_u32(native_reply_before + FONT_RENDEZVOUS_DESC_COUNT_OFF) ==
+                get_u32(legacy_reply + FONT_RENDEZVOUS_DESC_COUNT_OFF) &&
+            get_u32(native_reply_before + FONT_RENDEZVOUS_DESC_ADDR_OFF) ==
+                get_u32(legacy_reply + FONT_RENDEZVOUS_DESC_ADDR_OFF) &&
+            get_u32(native_reply_before + FONT_RENDEZVOUS_DESC_SIZE_OFF) ==
+                get_u32(legacy_reply + FONT_RENDEZVOUS_DESC_SIZE_OFF) &&
+            get_u32(native_reply_before + FONT_RENDEZVOUS_DESC_FLAGS_OFF) ==
+                get_u32(legacy_reply + FONT_RENDEZVOUS_DESC_FLAGS_OFF);
+        ndr_preserved =
+            memcmp(native_reply_before + FONT_RENDEZVOUS_COMPLEX_NDR_OFF,
+                   legacy_reply + FONT_RENDEZVOUS_COMPLEX_NDR_OFF,
+                   sizeof(NDR_record)) == 0;
+        explicit_size_relocated =
+            memcmp(native_reply_before +
+                       FONT_RENDEZVOUS_LION_EXPLICIT_SIZE_OFF,
+                   legacy_reply +
+                       FONT_RENDEZVOUS_LEGACY_EXPLICIT_SIZE_OFF,
+                   sizeof(uint32_t)) == 0;
+
+        if (get_u32(legacy_reply + 0x00U) !=
+                FONT_RENDEZVOUS_COMPLEX_BITS ||
+            get_u32(legacy_reply + 0x04U) !=
+                FONT_RENDEZVOUS_LEGACY_SUCCESS_SIZE ||
+            get_u32(legacy_reply + 0x14U) !=
+                FONT_RENDEZVOUS_LEGACY_REPLY_ID ||
+            legacy_explicit_size != native_explicit_size ||
+            preserved_prefix_changed != 0U ||
+            reply_source_changed != 0U ||
+            !descriptor_preserved ||
+            !ndr_preserved ||
+            !explicit_size_relocated) {
+            memcpy(source, native_reply_before,
+                   FONT_RENDEZVOUS_LEGACY_RECV_SIZE);
+            fprintf(stderr,
+                    "PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:SUCCESS_REPLY_POSTCHECK_FAILED_NATIVE_PREFIX_COPIED\n");
+            fflush(stderr);
+            return mr;
+        }
+
+        memcpy(source, legacy_reply,
+               FONT_RENDEZVOUS_LEGACY_SUCCESS_SIZE);
+        fprintf(stderr,
+                "PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REPLY:index=1 replyClass=SUCCESS nativeId=0x%08lx legacyId=0x%08lx nativeSize=0x%08lx legacySize=0x%08lx protocolVersion=%lu descriptorCount=%lu descriptorAddress=0x%08lx descriptorSize=0x%08lx nativeExplicitSize=0x%08lx legacyExplicitSize=0x%08lx preservedPrefixChangedBytes=%u sourceChangedBytes=%u descriptorPreserved=%s ndrPreserved=%s explicitSizeRelocated=%s removedProtocolBytes=4\n",
+                (unsigned long)FONT_RENDEZVOUS_LION_REPLY_ID,
+                (unsigned long)get_u32(source + 0x14U),
+                (unsigned long)native_size,
+                (unsigned long)get_u32(source + 0x04U),
+                (unsigned long)protocol_version,
+                (unsigned long)descriptor_count,
+                (unsigned long)descriptor_address,
+                (unsigned long)descriptor_size,
+                (unsigned long)native_explicit_size,
+                (unsigned long)legacy_explicit_size,
+                preserved_prefix_changed,
+                reply_source_changed,
+                descriptor_preserved ? "YES" : "NO",
+                ndr_preserved ? "YES" : "NO",
+                explicit_size_relocated ? "YES" : "NO");
+        fprintf(stderr,
+                "PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:ADAPTER_PASS\n");
+        fflush(stderr);
+        return mr;
+    }
+
+    if (native_bits != FONT_RENDEZVOUS_SIMPLE_BITS ||
+        native_size != FONT_RENDEZVOUS_SIMPLE_ERROR_SIZE ||
+        native_error == 0) {
+        copy_size = native_size;
+        if (copy_size > FONT_RENDEZVOUS_LEGACY_RECV_SIZE)
+            copy_size = FONT_RENDEZVOUS_LEGACY_RECV_SIZE;
+        if (copy_size != 0U)
+            memcpy(source, adapted, copy_size);
+        fprintf(stderr,
+                "PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:NATIVE_SIMPLE_REPLY_REJECTED\n");
+        fflush(stderr);
+        return mr;
+    }
+
+    memcpy(native_reply_before, adapted,
+           FONT_RENDEZVOUS_SIMPLE_ERROR_SIZE);
+    put_u32(adapted + 0x14U, FONT_RENDEZVOUS_LEGACY_REPLY_ID);
+    error_changed =
+        font_rendezvous_count_changes(
+            native_reply_before, adapted,
+            FONT_RENDEZVOUS_SIMPLE_ERROR_SIZE);
+    error_body_changed =
+        font_rendezvous_count_simple_body_changes(
+            native_reply_before, adapted);
+    reply_source_changed =
+        font_rendezvous_count_changes(
+            native_reply_before, adapted,
+            FONT_RENDEZVOUS_SIMPLE_ERROR_SIZE);
+
+    if (error_changed != 1U ||
+        error_body_changed != 0U ||
+        font_rendezvous_decode_i32(
+            adapted,
+            FONT_RENDEZVOUS_SIMPLE_NDR_OFF,
+            FONT_RENDEZVOUS_SIMPLE_RESULT_OFF) != native_error) {
+        memcpy(source, native_reply_before,
+               FONT_RENDEZVOUS_SIMPLE_ERROR_SIZE);
+        fprintf(stderr,
+                "PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:ERROR_REPLY_POSTCHECK_FAILED_NATIVE_COPIED\n");
+        fflush(stderr);
+        return mr;
+    }
+
+    memcpy(source, adapted, FONT_RENDEZVOUS_SIMPLE_ERROR_SIZE);
+    fprintf(stderr,
+            "PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REPLY:index=1 replyClass=ERROR nativeId=0x%08lx legacyId=0x%08lx size=0x%08lx changedBytes=%u bodyChangedBytes=%u result=%ld ndrSwapped=%s\n",
+            (unsigned long)FONT_RENDEZVOUS_LION_REPLY_ID,
+            (unsigned long)get_u32(source + 0x14U),
+            (unsigned long)get_u32(source + 0x04U),
+            error_changed,
+            error_body_changed,
+            (long)native_error,
+            ndr_swapped ? "YES" : "NO");
+    fprintf(stderr,
+            "PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:ADAPTER_PASS\n");
+    fflush(stderr);
+    return mr;
+}
+#endif
+
+
 #ifdef PM_CGS_FONTSERVER_RPC_TRACE
 static mach_msg_return_t
 rosetta_fontserver_mach_msg(mach_msg_header_t *msg,
@@ -1185,8 +1740,19 @@ rosetta_fontserver_mach_msg(mach_msg_header_t *msg,
                            (uint32_t)send_size);
     }
 
+#ifdef PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_INTEGRATION
+    if (target) {
+        mr = handle_fontserver_rendezvous_compat(
+            msg, option, send_size, rcv_size,
+            rcv_name, timeout, notify);
+    } else {
+        mr = fn(msg, option, send_size, rcv_size,
+                rcv_name, timeout, notify);
+    }
+#else
     mr = fn(msg, option, send_size, rcv_size,
             rcv_name, timeout, notify);
+#endif
 
     if (target) {
         fprintf(stderr,
