@@ -16,7 +16,7 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
 extern mach_port_t mig_get_reply_port(void);
 
 #if defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION)
-#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-v1"
+#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-v2"
 #elif defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-trace-v1"
 #elif defined(PM_CGS_SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_INTEGRATION)
@@ -3166,10 +3166,16 @@ is_exact_legacy_cgs_color_profile_client_request(
     if (msg == NULL)
         return 0;
 
+    /*
+     * Keep "exact" identical to the passive live-trace geometry.  Port
+     * provenance is Lion-only state and is checked separately by the adapter:
+     * Snow's one successful ColorProfileClient request occurs before the first
+     * CreateNewWindow request has established gCGSShowWindowTracePort.
+     * The NDR bytes are preserved verbatim by this ID-only adapter and are not
+     * an additional recognition constraint.
+     */
     return get_u32(m + 0x00U) == CGS_COLOR_PROFILE_CLIENT_BITS &&
            get_u32(m + 0x08U) != 0U &&
-           gCGSShowWindowTracePort != MACH_PORT_NULL &&
-           get_u32(m + 0x08U) != (uint32_t)gCGSShowWindowTracePort &&
            get_u32(m + 0x0cU) == (uint32_t)rcv_name &&
            rcv_name != MACH_PORT_NULL &&
            get_u32(m + 0x14U) == CGS_COLOR_PROFILE_CLIENT_LEGACY_REQUEST_ID &&
@@ -3182,8 +3188,6 @@ is_exact_legacy_cgs_color_profile_client_request(
            get_u32(m + CGS_COLOR_PROFILE_CLIENT_DESC_PORT_OFF) != 0U &&
            m[CGS_COLOR_PROFILE_CLIENT_DESC_DISPOSITION_OFF] == 0x13U &&
            m[CGS_COLOR_PROFILE_CLIENT_DESC_TYPE_OFF] == 0x00U &&
-           memcmp(m + CGS_COLOR_PROFILE_CLIENT_NDR_OFF,
-                  &NDR_record, sizeof(NDR_record)) == 0 &&
            get_u32(m + CGS_COLOR_PROFILE_CLIENT_PID_OFF) != 0U;
 }
 
@@ -3219,18 +3223,25 @@ handle_cgs_color_profile_client_compat(
     unsigned int reply_changed = 0U;
     unsigned int reply_body_changed = 0U;
     int exact;
+    int lion_port_exact;
     const char *reply_class = "UNEXPECTED";
 
     ++gCGSColorProfileClientCompatCallCount;
     mode = getenv(CGS_COLOR_PROFILE_CLIENT_COMPAT_ENV);
     exact = is_exact_legacy_cgs_color_profile_client_request(
         msg, option, send_size, rcv_size, rcv_name, timeout, notify);
+    lion_port_exact =
+        gCGSShowWindowTracePort != MACH_PORT_NULL &&
+        get_u32(m + 0x08U) != 0U &&
+        get_u32(m + 0x08U) != (uint32_t)gCGSShowWindowTracePort;
 
     fprintf(stderr,
-            "PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=%u mode=%s exact=%s bits=0x%08lx id=0x%08lx send=0x%08lx recv=0x%08lx remotePort=0x%08lx replyPort=0x%08lx descriptorCount=%lu descriptorPort=0x%08lx disposition=0x%02x type=0x%02x pid=%lu newWindowCompatCalls=%u releaseBackingCompatCalls=%u opacityCreateCompatCalls=%u orderFrontCompatCalls=%u addTrackingCompatCalls=%u setFrontWindowCompatCalls=%u\n",
+            "PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=%u mode=%s exact=%s lionPortExact=%s applicationPort=0x%08lx bits=0x%08lx id=0x%08lx send=0x%08lx recv=0x%08lx remotePort=0x%08lx replyPort=0x%08lx descriptorCount=%lu descriptorPort=0x%08lx disposition=0x%02x type=0x%02x pid=%lu newWindowCompatCalls=%u releaseBackingCompatCalls=%u opacityCreateCompatCalls=%u orderFrontCompatCalls=%u addTrackingCompatCalls=%u setFrontWindowCompatCalls=%u\n",
             gCGSColorProfileClientCompatCallCount,
             mode ? mode : "(unset)",
             exact ? "YES" : "NO",
+            lion_port_exact ? "YES" : "NO",
+            (unsigned long)(uint32_t)gCGSShowWindowTracePort,
             (unsigned long)get_u32(m + 0x00U),
             (unsigned long)get_u32(m + 0x14U),
             (unsigned long)send_size,
@@ -3263,6 +3274,7 @@ handle_cgs_color_profile_client_compat(
     if (mode == NULL ||
         strcmp(mode, CGS_COLOR_PROFILE_CLIENT_COMPAT_LION_V1) != 0 ||
         !exact ||
+        !lion_port_exact ||
         gCGSColorProfileClientCompatCallCount != 1U ||
         gCGSNewWindowCompatCallCount != 1U ||
         gCGSReleaseBackingCompatCallCount != 1U ||
