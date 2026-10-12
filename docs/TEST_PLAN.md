@@ -642,3 +642,10 @@ The next stage is `docs/process-manager-post-createwindow-windowtitle-fontserver
 The v1 first-RPC audit passed and proved that Snow PPC's first title-path FontServer transaction is `_XTSendRendezvous` request `0x32c8` with `0x18/0x3c`, while Lion native FontRegistry has replaced that client with `_XTSendRendezvous2` and contains no raw `0x32c8` request constant in the required i386 slice. The Lion registry rendezvous path calls `_XTSendRendezvous2`; `fontd` itself links the service implementation from `libATSServer.dylib`.
 
 The v1 tool was request-ID-seeded, so it did not emit the new Rendezvous2 body or analyze the server library. Run `docs/process-manager-post-createwindow-windowtitle-fontserver-rendezvous-protocol-v2-audit.md` next. The v2 analyzer exact-targets both rendezvous client families, the wrapper and server-port helper, all protocol-range immediates in `0x3200..0x3400`, `libATSServer` rendezvous/demux/dispatch code, and raw `-667/-304` constants. No live title run or FontServer translation is authorized until those two static reports are reviewed.
+
+
+## Native Lion FontServer Rendezvous2 trace gate
+
+The completed v2 static audit now decodes Lion i386 `_XTSendRendezvous2`: header-only request `0x32e7`, bits `0x1513`, send/receive `0x18/0x40`, reply `0x334b`, complex success size `0x38` (simple error `0x24`). The native global-registry caller requires returned protocol version `5` and nonzero rendezvous payload address/length. Snow PPC remains `_XTSendRendezvous` `0x32c8 -> 0x332c`, `0x18/0x3c`, complex `0x34`.
+
+The corrected Lion server audit exposes zero true protocol-range immediates in `libATSServer.dylib`, so static evidence still cannot prove the server dispatch mapping or assign a semantic name to the translated legacy `-667` result. The next and only authorized stage is `docs/process-manager-post-createwindow-windowtitle-fontserver-native-rendezvous2-transport-trace-experiment.md`: one native-i386 Lion trace of the first FontServer transaction, terminated immediately after its reply. Do not rerun the translated-PPC title path or add a rendezvous adapter before review.
