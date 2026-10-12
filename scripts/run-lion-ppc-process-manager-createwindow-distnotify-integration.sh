@@ -36,6 +36,7 @@ OPACITY_ALPHA_CREATE_COMPAT_MODE="${ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE
 POST_CREATEWINDOW_TITLE_MODE="${ROSETTA_POST_CREATEWINDOW_TITLE_VALIDATION_MODE:-}"
 POST_WINDOWTITLE_SHOWWINDOW_MODE="${ROSETTA_POST_WINDOWTITLE_SHOWWINDOW_VALIDATION_MODE:-}"
 SHOWWINDOW_UNKNOWN_TRACE_MODE="${ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE:-}"
+SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE:-}"
 
 TRANSLATOR="/usr/libexec/oah/translate"
 PRIVATE_DYLD="/usr/oah/dyld"
@@ -248,6 +249,19 @@ if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     [ "$OPACITY_ALPHA_CREATE_COMPAT_MODE" = "lion-id-v1" ] ||
         die 64 "ShowWindow CGS passive trace requires accepted opacity create-alpha compatibility"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-unknown-trace-v1"
+fi
+if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+    [ "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" = "lion-inline-id-v1" ] ||
+        die 64 "unsupported ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE: $SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE"
+    [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "lion-passive-v1" ] ||
+        die 64 "CGSAddTrackingArea compatibility requires lion-passive-v1 ShowWindow CGS tracing"
+    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
+        die 64 "CGSAddTrackingArea compatibility requires the ShowWindow subject"
+    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+        die 64 "CGSAddTrackingArea compatibility requires the accepted exact-six notification broker"
+    [ "$OPACITY_ALPHA_CREATE_COMPAT_MODE" = "lion-id-v1" ] ||
+        die 64 "CGSAddTrackingArea compatibility requires accepted opacity create-alpha compatibility"
+    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-compat-v1"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 
@@ -785,6 +799,12 @@ if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     export ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE="$SHOWWINDOW_UNKNOWN_TRACE_MODE"
 else
     unset ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE
+fi
+if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+    log "showwindow_add_tracking_area_compat_mode=$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE"
+    export ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE="$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE"
+else
+    unset ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE
 fi
 
 MARKER="$(/usr/bin/mktemp /tmp/lion-createwindow-validation-marker.XXXXXX)" || die 73 "could not create diagnostic marker"
@@ -1795,6 +1815,43 @@ if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
     fi
 fi
 
+if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+    ADD_TRACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ADD_TRACKING_AREA_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    ADD_TRACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_add_tracking_area_compat_call_count=$ADD_TRACKING_COMPAT_COUNT"
+    log "cgs_add_tracking_area_legacy_trace_count=$ADD_TRACKING_TRACE_COUNT"
+    if [ "$ADD_TRACKING_COMPAT_COUNT" -ne 1 ] || [ "$ADD_TRACKING_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES .*count=9 opacityCreateCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007388 lionId=0x0000738e send=0x00000060 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*count=9' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073f2 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073f2 legacyId=0x000073ec size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY bits=0x00001200 size=0x00000024 id=0x000073ec expected=0x000073ec idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_add_tracking_area_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073f2 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073f2 legacyId=0x000073ec size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'id=0x000073ec expected=0x000073ec idMatch=YES' "$RAW_LOG"; then
+        log "cgs_add_tracking_area_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
 if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] &&
    [ "$FOUND" -eq 0 ] &&
    /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=-304' "$RAW_LOG" &&
@@ -1889,7 +1946,11 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
                 elif [ "$SHOWWINDOW_UNKNOWN_RETURN_COUNT" -ne "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" ]; then
                     log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_INCOMPLETE"
                 else
-                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_CAPTURED"
+                    if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+                        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                    else
+                        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_CAPTURED"
+                    fi
                 fi
             else
                 log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_NO_RETURN"
@@ -1950,7 +2011,10 @@ if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:P
 fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
-    if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ] &&
+    if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ] &&
        [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
         log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_SHOWWINDOW_PASS"
     elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] &&
