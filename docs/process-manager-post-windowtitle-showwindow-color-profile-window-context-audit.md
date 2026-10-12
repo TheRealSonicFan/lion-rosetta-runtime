@@ -188,3 +188,20 @@ CoreUI/RawCamera rendering errors                 downstream/held
 next step                                         static color-profile/window-context differential
 XNU                                               no change indicated
 ```
+
+
+## Observed result — exact ColorProfileClient ID-only differential
+
+Both static reports passed. The generated `__CGSColorProfileClient` helper is structurally equivalent across Snow Leopard PPC and Lion i386: both use complex request bits `0x80001513`, option `0x3`, send `0x34`, receive `0x30`, one port descriptor with disposition/type `0x13/0x00`, NDR at `0x28`, PID at `0x30`, simple success/error replies of `0x28/0x24`, result at `0x20`, and client ID at `0x24`. The only proven wire difference is the generated-MIG routine ID pair: Snow `0x74d4 / 0x7538`, Lion `0x74d6 / 0x753a`.
+
+The caller paths also close the causal chain. `CGSColorProfileCreateWithColorProfileID` invokes `__CGSColorProfileClient` when its cached client ID is zero and emits `Cannot initialize color profile client` when that call fails; `_CGSWindowColorProfile` then reports the requested profile ID invalid after profile creation returns null. `CGWindowContextCreate` and later null-context/CoreUI/RawCamera failures are therefore downstream and remain held.
+
+The prior application-CGS passive trace did not record `0x74d4` because the color-profile helper is issued through the CGS server-port path rather than the traced application-connection port. Before authorizing the statically indicated `+2` ID conversion, capture the live transaction directly.
+
+The authoritative next step is:
+
+```text
+docs/process-manager-post-windowtitle-showwindow-color-profile-client-live-trace-experiment.md
+```
+
+Run the Snow positive control and exactly one Lion passive trace. Do not add the ID adapter until that live discriminator is reviewed.
