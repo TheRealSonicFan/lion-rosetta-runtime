@@ -670,3 +670,10 @@ Current runtime `main` advances only to `docs/process-manager-post-createwindow-
 The no-IPC PPC rendezvous policy proof is complete: Snow control passed, syscall 295 remained EBADF/no-SIGSYS, Lion request conversion changed only `0x32c8 -> 0x32e7` while widening only the receive argument `0x3c -> 0x40`, and the modeled native `0x334b/0x38` version-5 success was converted to legacy `0x332c/0x34` with descriptor/NDR preservation and explicit-size relocation. The modeled simple error preserved its nonzero result. No diagnostics appeared and protected hashes were unchanged.
 
 The authoritative next gate is `docs/process-manager-post-createwindow-windowtitle-fontserver-rendezvous-compat-integration-experiment.md`: one Snow passthrough title control followed by exactly one Lion title run with only the first FontServer rendezvous adapted. Keep RPC tracing active and leave all later FontServer operations unmodified for diagnosis.
+
+
+## Window title gate closed; isolate ShowWindow
+
+The live FontServer rendezvous integration is complete. Lion observed exactly one targeted FontServer RPC: legacy `0x32c8` was converted to native `0x32e7`, the native server returned complex `0x334b/0x38` with protocol version 5, and the adapter reconstructed legacy `0x332c/0x34` while preserving the descriptor, NDR, and `0x1000` explicit size. The title API then returned success, disposal completed, the exact-five notification broker remained at five accepted registrations with zero rejects, no diagnostics appeared, and protected hashes were unchanged. There was no second FontServer RPC.
+
+Follow `docs/process-manager-post-windowtitle-showwindow-validation-experiment.md`. Reuse all accepted compatibility artifacts unchanged, build only the new ShowWindow subject, require a Snow positive control, repeat syscall 295, and run exactly one Lion discriminator containing `ShowWindow` but no `SelectWindow`, `IsWindowVisible`, timers, or event loop. A ShowWindow no-return result authorizes only a later passive trace, not an immediate compatibility rule.
