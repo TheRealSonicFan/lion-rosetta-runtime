@@ -333,3 +333,38 @@ next step                                    -> passive unknown-CGS transport tr
 live CGS adaptation                          -> not authorized
 XNU                                           -> no change indicated
 ```
+
+
+## Observed result — passive trace localizes the live CGSAddTrackingArea rejection
+
+The new trace dylib built as thin PPC7400 with the expected ShowWindow trace build ID, exactly two interpose tuples, and SHA-256 `fc67d42da313e28461ad5b741ef170ab0d05caac5590f26f98becccf68426103`. The Snow Leopard control remained behavior-preserving: six unknown CGS requests and six matching returns were recorded between `S00` and `S01`, then `SHOWWINDOW_PASS`, release, disposal, and final `RESULT: PASS` completed.
+
+The Snow ShowWindow call-window sequence is:
+
+```text
+0x7320 -> 0x7384   result 0
+0x72e7 -> 0x734b   result 0
+0x7388 -> 0x73ec   result 0
+0x7268 -> 0x72cc   result 0
+0x72f2 -> 0x7356   result 0
+0x723c -> 0x72a0   result 0
+```
+
+The Lion run retained the accepted exact-six notification broker and all upstream adapters, recorded four unknown CGS requests and four matching returns, then exited 139 without `S01`. The sequence reached:
+
+```text
+0x72e7 -> 0x734b   result -304
+0x7388 -> 0x73ec   result -304
+0x7268 -> 0x72cc   result 0
+0x72f2 -> 0x7356   result -304
+```
+
+The `0x7388` transaction is now directly attributable: on Snow and Lion the translated PPC client sends the same legacy `0x1513`, `0x60`-byte request and expects `0x73ec` in a `0x2c` receive buffer. Snow returns a simple `0x24` success reply with result 0. Lion returns a simple `0x24` reply with result `-304 / MIG_BAD_ARGUMENTS`, immediately followed by `MIG: server type check failure: CGSAddTrackingArea`.
+
+The trace therefore closes the attribution question but does not yet authorize a rewrite. The authoritative next procedure is:
+
+```text
+docs/process-manager-post-windowtitle-showwindow-cgs-add-tracking-area-protocol-audit.md
+```
+
+That stage is static and read-only. It recovers the exact Snow PPC and Lion i386 `CGSAddTrackingArea` client contracts before any adapter is designed. The neighboring `0x72e7` and `0x72f2` rejections and the color-profile/window-context path remain explicitly out of scope until the tracking-area contract is resolved.
