@@ -9,6 +9,7 @@
 
 #define TRACE_BUILD_ID "native-i386-fontserver-rendezvous2-trace-v1"
 #define TRACE_BUILD_MARKER "PM_NATIVE_FONTSERVER_RENDEZVOUS2_TRACE_BUILD_ID:" TRACE_BUILD_ID
+#define TRACE_SUCCESS_MARKER "PM_NATIVE_FONTSERVER_RENDEZVOUS2_RESULT:CAPTURED_COMPLEX_V5"
 #define FONT_SERVICE "com.apple.FontServer"
 
 #define EXPECTED_REQUEST_BITS 0x00001513U
@@ -100,9 +101,13 @@ dump_hex(const char *kind, const unsigned char *bytes, uint32_t length)
 static void
 finish(int code, const char *result)
 {
-    fprintf(stderr,
-            "PM_NATIVE_FONTSERVER_RENDEZVOUS2_RESULT:%s\n",
-            result);
+    if (strcmp(result, "CAPTURED_COMPLEX_V5") == 0) {
+        fprintf(stderr, "%s\\n", TRACE_SUCCESS_MARKER);
+    } else {
+        fprintf(stderr,
+                "PM_NATIVE_FONTSERVER_RENDEZVOUS2_RESULT:%s\\n",
+                result);
+    }
     fflush(stderr);
     _exit(code);
 }
