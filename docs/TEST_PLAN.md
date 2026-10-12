@@ -649,3 +649,10 @@ The v1 tool was request-ID-seeded, so it did not emit the new Rendezvous2 body o
 The completed v2 static audit now decodes Lion i386 `_XTSendRendezvous2`: header-only request `0x32e7`, bits `0x1513`, send/receive `0x18/0x40`, reply `0x334b`, complex success size `0x38` (simple error `0x24`). The native global-registry caller requires returned protocol version `5` and nonzero rendezvous payload address/length. Snow PPC remains `_XTSendRendezvous` `0x32c8 -> 0x332c`, `0x18/0x3c`, complex `0x34`.
 
 The corrected Lion server audit exposes zero true protocol-range immediates in `libATSServer.dylib`, so static evidence still cannot prove the server dispatch mapping or assign a semantic name to the translated legacy `-667` result. The next and only authorized stage is `docs/process-manager-post-createwindow-windowtitle-fontserver-native-rendezvous2-transport-trace-experiment.md`: one native-i386 Lion trace of the first FontServer transaction, terminated immediately after its reply. Do not rerun the translated-PPC title path or add a rendezvous adapter before review.
+
+
+## Native Rendezvous2 trace correction
+
+The first native-i386 Rendezvous2 attempt is not a protocol result. It reached the expected Lion request `0x32e7` with bits `0x1513`, `mach_msg` send/receive arguments `0x18/0x40`, and option `0x3`, but trace v1 rejected the call before IPC because it also required the pre-wrapper `msgh_size` field to equal `0x18`. Static disassembly shows the generated stub does not initialize that header word before calling `mach_msg`; the send-size argument is authoritative at this interposition layer.
+
+Runtime `main` now carries trace v2 and revised instructions in `docs/process-manager-post-createwindow-windowtitle-fontserver-native-rendezvous2-transport-trace-experiment.md`. Rebuild and perform exactly one corrected native Lion capture. Do not advance to a rendezvous copied-buffer proof until an actual `0x334b` server reply has been observed.
