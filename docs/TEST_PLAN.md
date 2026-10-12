@@ -737,21 +737,18 @@ The next live gate is `docs/process-manager-post-windowtitle-showwindow-cgs-set-
 
 ## Experiment-document command completeness
 
-Every authoritative experiment document must be operationally complete. Do not write instructions such as “run the existing runner,” “repeat the probe,” “transfer the artifact,” or “invoke with the new dylib” without the exact command block immediately below it.
+Every authoritative experiment document must contain the actual commands needed for the current stage. Do not tell the reader to “run the existing runner,” “repeat the probe,” or refer to an older experiment for the invocation details.
 
-For each experiment stage, the document must include, as applicable:
+Keep those commands portable and proportional:
 
-- the exact working directory or a single explicitly assigned path variable;
-- every `unset` required to remove stale modes;
-- every `export` required by the stage;
-- syntax-check commands for every shell/Python helper that will be executed;
-- the complete build command;
-- the complete runner command with every positional argument in order;
-- the exact output/report filename;
-- the complete syscall-295 probe command and kernel-hash gate;
-- explicit transfer commands when transfer is part of the procedure, with only irreducibly site-specific values such as a remote hostname left as a named variable;
-- post-transfer hash verification;
-- explicit stop conditions and required result markers;
-- the exact artifact list to return.
+- use a small number of path variables such as `RUNTIME`, `ROSETTA_XNU`, and `XNU_SRC` rather than hard-coding one user's absolute checkout paths;
+- use shell builtins such as `[ ... ]` when a guard is useful; do not depend on a separate `/usr/bin/test` binary;
+- include the complete build command and complete runner command with every positional argument required by the current stage;
+- include all stage-specific `unset` and `export` settings that materially affect behavior;
+- include the syscall-295 command and kernel-hash gate when that preflight is part of the stage;
+- name every expected output/report and every artifact that must be returned;
+- state exact stop conditions and result markers;
+- avoid redundant file-existence checks, repeated diagnostics, and long machine-specific transfer commands that do not improve the experiment's correctness;
+- where transport between machines is inherently site-specific, list the exact files and required destination rather than pretending one transfer command is universal.
 
-A reader following the current authoritative document should not need to infer a command from an older procedure or inspect a script merely to determine how to invoke it.
+The current authoritative document must be self-contained for build and execution logic, but it should not become a machine-specific transcript.
