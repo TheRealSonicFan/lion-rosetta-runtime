@@ -33,6 +33,7 @@ SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_
 SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE:-}"
 SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE:-}"
 SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE="${ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE:-}"
+SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE:-}"
 
 PRIVATE_DYLD="/usr/oah/dyld"
 EXPECTED_DYLD_SHA="963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb"
@@ -206,6 +207,17 @@ if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
         fail "Snow ColorProfileClient trace requires the ShowWindow subject"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-trace-v1"
 fi
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+    [ "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" = "passthrough" ] ||
+        fail "Snow ColorProfileClient compatibility mode must be passthrough"
+    [ -z "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ] ||
+        fail "Snow ColorProfileClient compatibility and passive-trace runner modes are mutually exclusive"
+    [ "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" = "passthrough" ] ||
+        fail "Snow ColorProfileClient compatibility control requires CGSSetFrontWindow passthrough"
+    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "snow-showwindow-v1" ] ||
+        fail "Snow ColorProfileClient compatibility control requires the ShowWindow subject"
+    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-v1"
+fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 abspath() {
     file="$1"
@@ -336,6 +348,29 @@ fi
     "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || fail "CoreServices CPS registration compatibility build marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_BUILD_ID:distributed-notifications-ppc-ingress-interposer-v2" || fail "embedded distributed-notifications ingress marker missing"
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ] || [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+    for marker in \
+        'CGS_COLOR_PROFILE_CLIENT_LEGACY' \
+        'CGS_COLOR_PROFILE_CLIENT_LION' \
+        'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:' \
+        'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:'; do
+        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
+            fail "ColorProfileClient trace marker missing: $marker"
+    done
+fi
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+    for marker in \
+        'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:' \
+        'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REQUEST:' \
+        'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_MACH_RETURN:' \
+        'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY:' \
+        'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:' \
+        'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' \
+        'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:PASSTHROUGH'; do
+        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
+            fail "ColorProfileClient compatibility marker missing: $marker"
+    done
+fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     for marker in \
         'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST:' \
@@ -542,6 +577,12 @@ if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
     export ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE="$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE"
 else
     unset ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE
+fi
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+    echo "showwindow_color_profile_client_compat_mode=$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" | /usr/bin/tee -a "$LOG"
+    export ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE="$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE"
+else
+    unset ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE
 fi
 echo "private_dyld_sha256=$EXPECTED_DYLD_SHA" | /usr/bin/tee -a "$LOG"
 if [ -n "$HITOOLBOX_TRACE" ]; then
@@ -818,6 +859,25 @@ if [ "$RC" -eq 0 ] &&
                 fi
                 echo "cgs_color_profile_client_live_result=LEGACY_SUCCESS" | /usr/bin/tee -a "$LOG"
             fi
+            if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+                COLOR_PROFILE_CLIENT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=' "$LOG" 2>/dev/null || true)"
+                COLOR_PROFILE_CLIENT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY' "$LOG" 2>/dev/null || true)"
+                echo "cgs_color_profile_client_compat_call_count=$COLOR_PROFILE_CLIENT_COMPAT_COUNT" | /usr/bin/tee -a "$LOG"
+                echo "cgs_color_profile_client_legacy_trace_count=$COLOR_PROFILE_CLIENT_TRACE_COUNT" | /usr/bin/tee -a "$LOG"
+                if [ "$COLOR_PROFILE_CLIENT_COMPAT_COUNT" -ne 1 ] ||
+                   [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -ne 1 ] ||
+                   ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=1 mode=passthrough exact=YES .*descriptorCount=1 .*disposition=0x13 type=0x00 .*setFrontWindowCompatCalls=1 orderFrontCompatCalls=1 addTrackingCompatCalls=1 opacityCreateCompatCalls=1' "$LOG" ||
+                   ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:PASSTHROUGH' "$LOG" ||
+                   /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$LOG" ||
+                   ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY kr=0 hex=0x00000000' "$LOG" ||
+                   ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000028 id=0x00007538 expected=0x00007538 idMatch=YES' "$LOG" ||
+                   ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000028 id=0x00007538 expected=0x00007538 resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$LOG" ||
+                   /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LION' "$LOG"; then
+                    echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
+                    exit 1
+                fi
+                echo "cgs_color_profile_client_live_result=LEGACY_SUCCESS_COMPAT_PASSTHROUGH" | /usr/bin/tee -a "$LOG"
+            fi
             if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
                 if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
                     if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
@@ -830,7 +890,9 @@ if [ "$RC" -eq 0 ] &&
                             echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
                             exit 1
                         fi
-                        if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
+                        if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+                            echo "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+                        elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
                             echo "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
                         elif [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
                             echo "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
