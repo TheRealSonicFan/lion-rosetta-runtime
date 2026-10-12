@@ -1589,7 +1589,7 @@ handle_fontserver_rendezvous_compat(mach_msg_header_t *msg,
             !ndr_preserved ||
             !explicit_size_relocated) {
             memcpy(source, native_reply_before,
-                   FONT_RENDEZVOUS_LEGACY_RECV_SIZE);
+                   FONT_RENDEZVOUS_LION_SUCCESS_SIZE);
             fprintf(stderr,
                     "PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:SUCCESS_REPLY_POSTCHECK_FAILED_NATIVE_PREFIX_COPIED\n");
             fflush(stderr);
@@ -1637,14 +1637,17 @@ handle_fontserver_rendezvous_compat(mach_msg_header_t *msg,
 
     memcpy(native_reply_before, adapted,
            FONT_RENDEZVOUS_SIMPLE_ERROR_SIZE);
-    put_u32(adapted + 0x14U, FONT_RENDEZVOUS_LEGACY_REPLY_ID);
+    memset(legacy_reply, 0, sizeof(legacy_reply));
+    memcpy(legacy_reply, adapted,
+           FONT_RENDEZVOUS_SIMPLE_ERROR_SIZE);
+    put_u32(legacy_reply + 0x14U, FONT_RENDEZVOUS_LEGACY_REPLY_ID);
     error_changed =
         font_rendezvous_count_changes(
-            native_reply_before, adapted,
+            native_reply_before, legacy_reply,
             FONT_RENDEZVOUS_SIMPLE_ERROR_SIZE);
     error_body_changed =
         font_rendezvous_count_simple_body_changes(
-            native_reply_before, adapted);
+            native_reply_before, legacy_reply);
     reply_source_changed =
         font_rendezvous_count_changes(
             native_reply_before, adapted,
@@ -1652,8 +1655,9 @@ handle_fontserver_rendezvous_compat(mach_msg_header_t *msg,
 
     if (error_changed != 1U ||
         error_body_changed != 0U ||
+        reply_source_changed != 0U ||
         font_rendezvous_decode_i32(
-            adapted,
+            legacy_reply,
             FONT_RENDEZVOUS_SIMPLE_NDR_OFF,
             FONT_RENDEZVOUS_SIMPLE_RESULT_OFF) != native_error) {
         memcpy(source, native_reply_before,
@@ -1664,14 +1668,15 @@ handle_fontserver_rendezvous_compat(mach_msg_header_t *msg,
         return mr;
     }
 
-    memcpy(source, adapted, FONT_RENDEZVOUS_SIMPLE_ERROR_SIZE);
+    memcpy(source, legacy_reply, FONT_RENDEZVOUS_SIMPLE_ERROR_SIZE);
     fprintf(stderr,
-            "PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REPLY:index=1 replyClass=ERROR nativeId=0x%08lx legacyId=0x%08lx size=0x%08lx changedBytes=%u bodyChangedBytes=%u result=%ld ndrSwapped=%s\n",
+            "PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REPLY:index=1 replyClass=ERROR nativeId=0x%08lx legacyId=0x%08lx size=0x%08lx changedBytes=%u bodyChangedBytes=%u sourceChangedBytes=%u result=%ld ndrSwapped=%s\n",
             (unsigned long)FONT_RENDEZVOUS_LION_REPLY_ID,
             (unsigned long)get_u32(source + 0x14U),
             (unsigned long)get_u32(source + 0x04U),
             error_changed,
             error_body_changed,
+            reply_source_changed,
             (long)native_error,
             ndr_swapped ? "YES" : "NO");
     fprintf(stderr,
