@@ -2358,6 +2358,9 @@ trace_cgs_message(mach_msg_header_t *msg,
 #ifdef PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION
     int server_version_request_exact = 0;
 #endif
+#ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
+    int showwindow_unknown_request = 0;
+#endif
 
     request_id = get_u32(m + 0x14);
 #ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
@@ -2367,6 +2370,9 @@ trace_cgs_message(mach_msg_header_t *msg,
             (mach_port_t)get_u32(m + 0x08U);
 #endif
     expected_reply = cgs_trace_expected_reply(request_id);
+#ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
+    showwindow_unknown_request = !is_cgs_trace_candidate(msg);
+#endif
 #ifdef PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION
     if (request_id == CGS_SERVER_VERSION_REQUEST_ID) {
         server_version_request_exact =
@@ -2384,7 +2390,7 @@ trace_cgs_message(mach_msg_header_t *msg,
     ++gCGSTraceCallCount;
 
 #ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
-    if (!is_cgs_trace_candidate(msg)) {
+    if (showwindow_unknown_request) {
         const char *showwindow_mode =
             getenv(CGS_SHOWWINDOW_UNKNOWN_TRACE_ENV);
         ++gCGSShowWindowUnknownTraceCount;
@@ -2502,7 +2508,7 @@ trace_cgs_message(mach_msg_header_t *msg,
     fflush(stderr);
 
 #ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
-    if (!is_cgs_trace_candidate(msg)) {
+    if (showwindow_unknown_request) {
         fprintf(stderr,
                 "PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_MACH_RETURN:index=%u id=0x%08lx kr=%ld hex=0x%08lx\n",
                 gCGSShowWindowUnknownTraceCount,
@@ -2558,7 +2564,7 @@ trace_cgs_message(mach_msg_header_t *msg,
     fflush(stderr);
 
 #ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
-    if (!is_cgs_trace_candidate(msg))
+    if (showwindow_unknown_request)
         emit_cgs_showwindow_unknown_hex(
             "REPLY",
             gCGSShowWindowUnknownTraceCount,
