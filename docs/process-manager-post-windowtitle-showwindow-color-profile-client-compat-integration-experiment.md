@@ -21,6 +21,16 @@ The Lion legacy requests use a non-application CGS server port, Mach transport s
 
 This experiment therefore adds one narrowly gated user-space compatibility rule. It does not change XNU.
 
+## Phase-C v1 control failure and v2 correction
+
+The first compatibility-capable Snow control reached the real legacy ColorProfileClient request and preserved its successful reply, ShowWindow return, disposal, and exit status, but the harness ended in `RESULT: FAIL`. The passive trace classified that request `exact=YES`, while the compatibility call printed `exact=NO` even though its bits, IDs, sizes, descriptor geometry, PID, and all compatibility-call counters matched the expected Snow control.
+
+That discrepancy was a recognition bug in compatibility build v1, not a Snow Leopard behavior change. The compatibility predicate incorrectly required `gCGSShowWindowTracePort` to have already been learned from `CGS_CREATE_WINDOW_INLINE_LEGACY` and required the ColorProfileClient remote port to differ from it. Snow's successful ColorProfileClient initialization occurs at `M20_BEFORE_CreateNewWindow`, before the first CreateNewWindow request, so that application-CGS port is necessarily still unknown at this point.
+
+Compatibility build v2 fixes the gate by making `exact` mean the same structural request geometry already proven by the passive trace. The Lion-only server-port provenance test is now a separate `lionPortExact` predicate and remains mandatory before any ID adaptation. Thus the Snow passthrough control must report `exact=YES lionPortExact=NO applicationPort=0x00000000`, while the Lion adapter is permitted only with `exact=YES lionPortExact=YES` and a nonzero learned application port. The ID-only adapter still preserves the NDR/body bytes verbatim; NDR value equality is not an extra recognition constraint.
+
+Any v1 compatibility dylib is stale after this correction. Pull current runtime `main`, rebuild Phase B, and repeat Phase C. Do not transfer the v1 artifact or proceed to Lion from a v1 `RESULT: FAIL`.
+
 ## Compatibility rule
 
 Runtime mode:
@@ -126,7 +136,7 @@ ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotif
 Require a 32-bit PPC dylib, exactly two `__interpose` tuples, embedded distributed-notifications ingress v2, and build ID:
 
 ```text
-dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-v1
+dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-v2
 ```
 
 Stop if build, architecture, marker, or hash validation fails.
@@ -181,7 +191,7 @@ export ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE=snow-force-external-v1
   ./ppc-process-manager-post-windowtitle-showwindow-color-profile-client-compat-snowleopard-control.log || exit 1
 ```
 
-Require exactly one ColorProfileClient compatibility call with `mode=passthrough` and `exact=YES`, with the logged NewWindow/release-backing/create-alpha/OrderFront/AddTrackingArea/SetFrontWindow compatibility counts all still zero at that Snow call, no adapter PASS marker, and the established Snow transaction unchanged:
+Require exactly one ColorProfileClient compatibility call with `mode=passthrough`, `exact=YES`, `lionPortExact=NO`, and `applicationPort=0x00000000`, with the logged NewWindow/release-backing/create-alpha/OrderFront/AddTrackingArea/SetFrontWindow compatibility counts all still zero at that Snow call, no adapter PASS marker, and the established Snow transaction unchanged:
 
 ```text
 request                    0x74d4
@@ -292,7 +302,7 @@ Do not run the Lion subject a second time.
 
 ### ColorProfileClient adapter succeeds
 
-The leading expected result is one exact compatibility call at the first Lion ShowWindow color-profile attempt, with NewWindow/release-backing/create-alpha compatibility counts equal to 1 and OrderFront/AddTrackingArea/SetFrontWindow counts equal to 0:
+The leading expected result is one exact compatibility call at the first Lion ShowWindow color-profile attempt, with `lionPortExact=YES`, a nonzero learned application-CGS port distinct from the ColorProfileClient remote port, NewWindow/release-backing/create-alpha compatibility counts equal to 1, and OrderFront/AddTrackingArea/SetFrontWindow counts equal to 0:
 
 ```text
 legacy request             0x74d4
@@ -341,7 +351,7 @@ Also return every new crash/core diagnostic named by the Lion runner, if any. Do
 
 ```text
 SetFrontWindow                               accepted adapter PASS
-ColorProfileClient Snow PPC                 0x74d4 / 0x7538, result 0, client ID nonzero
+ColorProfileClient Snow PPC                 0x74d4 / 0x7538, result 0, client ID nonzero; v2 structural exact
 ColorProfileClient Lion legacy live         0x74d4 / 0x7538, transport success, raw -304
 ColorProfileClient Lion native helper       0x74d6 / 0x753a
 wire geometry                               equivalent; exact ID-only conversion authorized
