@@ -10,7 +10,7 @@ INGRESS_SRC="$ROOT/tests/ppc-distributed-notifications-ingress-interposer.c"
 INFO="$OUT.info.txt"
 SHA="$OUT.sha256"
 
-EXPECTED_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-v1"
+EXPECTED_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-v2"
 EXPECTED_INGRESS_BUILD_ID="distributed-notifications-ppc-ingress-interposer-v2"
 CC_SELECTED="${CC:-/Developer-3.2.6/usr/bin/gcc-4.2}"
 
