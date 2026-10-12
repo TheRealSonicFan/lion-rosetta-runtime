@@ -27,6 +27,7 @@ RELEASEBACKING_COMPAT_MODE="${ROSETTA_CGS_RELEASEBACKING_COMPAT_MODE:-}"
 OPACITY_ALPHA_TRACE_MODE="${ROSETTA_CGS_POST_RELEASEBACKING_OPACITY_TRACE_MODE:-}"
 OPACITY_ALPHA_CREATE_COMPAT_MODE="${ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE:-}"
 POST_CREATEWINDOW_TITLE_MODE="${ROSETTA_POST_CREATEWINDOW_TITLE_VALIDATION_MODE:-}"
+POST_WINDOWTITLE_SHOWWINDOW_MODE="${ROSETTA_POST_WINDOWTITLE_SHOWWINDOW_VALIDATION_MODE:-}"
 
 PRIVATE_DYLD="/usr/oah/dyld"
 EXPECTED_DYLD_SHA="963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb"
@@ -137,6 +138,13 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
     [ "$NEWWINDOW_COMPAT_MODE" = "passthrough" ] ||
         fail "Snow window-title validation requires NewWindow passthrough"
     EXPECTED_SUBJECT_BUILD_ID="cps-windowtitle-validation-v1"
+fi
+if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "snow-showwindow-v1" ] ||
+        fail "unsupported Snow post-window-title ShowWindow validation mode: $POST_WINDOWTITLE_SHOWWINDOW_MODE"
+    [ "$POST_CREATEWINDOW_TITLE_MODE" = "snow-windowtitle-v1" ] ||
+        fail "Snow ShowWindow validation requires the window-title validation mode"
+    EXPECTED_SUBJECT_BUILD_ID="cps-showwindow-validation-v1"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 abspath() {
@@ -255,6 +263,15 @@ fi
 
 /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq \
     "PM_CPS_CREATEWINDOW_BUILD_ID:$EXPECTED_SUBJECT_BUILD_ID" || fail "subject build marker missing"
+if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+    for marker in \
+        'PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow' \
+        'PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow' \
+        'PM_POSTWINDOWSHOW_RESULT:SHOWWINDOW_PASS'; do
+        /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq "$marker" ||
+            fail "ShowWindow subject marker missing: $marker"
+    done
+fi
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
     "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || fail "CoreServices CPS registration compatibility build marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
@@ -589,6 +606,14 @@ if [ "$RC" -eq 0 ] &&
             exit 1
         fi
     fi
+    if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_RESULT:SHOWWINDOW_PASS' "$LOG"; then
+            echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
+            exit 1
+        fi
+    fi
     if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
         FONTSERVER_RENDEZVOUS_COMPAT_CALLS="$(/usr/bin/grep -c 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_CALL:' "$LOG" 2>/dev/null || true)"
         if [ "$FONTSERVER_RENDEZVOUS_COMPAT_CALLS" -ne 1 ] ||
@@ -622,7 +647,9 @@ if [ "$RC" -eq 0 ] &&
             echo "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT" | /usr/bin/tee -a "$LOG"
             echo "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT" | /usr/bin/tee -a "$LOG"
             if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
-                if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+                if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+                    echo "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+                elif [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
                     echo "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
                 elif [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
                     echo "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
