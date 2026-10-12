@@ -232,3 +232,42 @@ next step                               -> focused client/server rendezvous audi
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed result — Rendezvous2 client contract decoded; server dispatch still opaque
+
+Both v2 reports completed with `RESULT: PASS`. The corrected true-immediate inventory now resolves the native Lion i386 client contract without relying on request-ID seeding.
+
+Snow Leopard PPC remains:
+
+```text
+client          _XTSendRendezvous
+request         0x32c8
+bits            0x1513
+send / receive  0x18 / 0x3c
+reply           0x332c
+success         complex 0x34
+```
+
+Lion i386 `_XTSendRendezvous2` is now decoded as:
+
+```text
+request         0x32e7
+bits            0x1513
+send / receive  0x18 / 0x40
+reply           0x334b
+success         complex 0x38, descriptor count 1
+error           simple 0x24
+```
+
+The request remains header-only. `TGlobalFontRegistryImp::RendezvousWithServer()` supplies three output locations to `_XTSendRendezvous2`; after a successful client-stub return it requires the first scalar output to equal protocol version `5`, then requires the returned payload address and length to be nonzero before continuing. This proves a concrete structural change from Snow's rendezvous reply rather than an ID-only rename.
+
+The static server half remains unresolved. With the corrected immediate filter, both Lion `libATSServer.dylib` slices produce zero true protocol-range instruction hits, so this audit does not recover a trustworthy `0x32e7` demux/handler entry and does not establish a semantic name for the translated legacy `-667` result. Do not infer that `-667` is merely a request-ID error.
+
+This selects the existing "static server dispatch remains unresolved" decision gate. The authoritative next stage is:
+
+```text
+docs/process-manager-post-createwindow-windowtitle-fontserver-native-rendezvous2-transport-trace-experiment.md
+```
+
+That experiment uses Lion's own native i386 FontRegistry path, captures exactly the first `com.apple.FontServer` request/reply, requires the statically decoded `0x32e7/0x334b` contract, records the returned version/payload fields, and terminates immediately before any later font request. No translated-PPC title rerun, FontServer compatibility conversion, or XNU change is authorized before that native capture is reviewed.
