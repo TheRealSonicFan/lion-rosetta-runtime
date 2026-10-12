@@ -544,3 +544,10 @@ The corrected Lion `libATSServer.dylib` inventory yields zero true protocol-rang
 The first native-i386 Lion Rendezvous2 run reached the intended `com.apple.FontServer` path and observed request `0x32e7`, bits `0x1513`, send `0x18`, receive `0x40`, and option `0x3`, matching the static client decode. It stopped before calling the original `mach_msg` only because trace v1 incorrectly treated the pre-wrapper in-buffer `msgh_size` word as authoritative. Lion's generated MIG stub does not initialize that word before the public `mach_msg` call; the authoritative length at this hook is the separate send-size argument.
 
 Current `main` therefore uses `native-i386-fontserver-rendezvous2-trace-v2`, which records the pre-wrapper size/reserved words without validating them and preserves the exact one-request stop condition. Repeat only `docs/process-manager-post-createwindow-windowtitle-fontserver-native-rendezvous2-transport-trace-experiment.md` with the rebuilt v2 tracer. No translated-PPC title rerun, copied-buffer FontServer adapter, or XNU change is authorized yet.
+
+
+## Native FontServer Rendezvous2 confirmed; copied-buffer proof next
+
+The corrected one-shot native Lion trace now dynamically confirms the static Rendezvous2 contract: Lion i386 sends `0x32e7` with bits `0x1513`, send/receive `0x18/0x40`, and receives Mach success with complex reply `0x334b / 0x38`. The reply carries one OOL descriptor, protocol version `5`, and explicit payload size `0x1000`. This closes the native-server uncertainty left by the stripped `libATSServer.dylib` audit.
+
+The next gate is `docs/process-manager-post-createwindow-windowtitle-fontserver-rendezvous-compat-protocol-adapter-experiment.md`. It is a standalone PPC no-IPC proof of the exact legacy-to-Lion conversion: `0x32c8 -> 0x32e7`, receive envelope `0x3c -> 0x40`, and native complex success `0x334b/0x38` back to legacy `0x332c/0x34` by removing only the added version scalar and relocating explicit size. Do not rerun the translated-PPC title path or integrate the FontServer adapter before that proof is reviewed.
