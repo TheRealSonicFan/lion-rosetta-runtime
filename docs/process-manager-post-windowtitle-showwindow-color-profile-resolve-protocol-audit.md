@@ -174,3 +174,12 @@ CGSShapeWindow                              held
 next step                                   static ResolveColorProfile protocol differential
 XNU                                         no change indicated
 ```
+
+
+## Completed static result — 2026-10-12
+
+Both returned reports pass their read-only validation and contain the expected architecture-specific CoreGraphics slices. The client helper is a clean generated-MIG release skew: Snow PPC `__CGSResolveColorProfile` sends request `0x74d7`, expects `0x753b`, uses bits `0x80001513`, option `0x3`, and `0x38 / 0x3c` send/receive sizes; Lion i386 preserves that envelope but uses `0x74d9 / 0x753d`. Both helpers accept `0x34` success and `0x24` error replies.
+
+The corresponding `__XResolveColorProfile` server stubs agree on the live-relevant request and success-reply shapes, and both dispatch to `__CGXResolveColorProfile`. The server implementations are not instruction-identical, but both perform the same causal checks relevant to the current failure: resolve the ColorProfile client, verify the associated task port, search for the requested profile ID, remap the profile data, attach the requesting PID, and return success; if the profile cannot be found, the resolve path returns failure. No static evidence supports synthesizing profile ID 1 or changing profile state.
+
+The static differential therefore authorizes only the next passive discriminator, not an adapter. Follow [process-manager-post-windowtitle-showwindow-color-profile-resolve-live-trace-experiment.md](process-manager-post-windowtitle-showwindow-color-profile-resolve-live-trace-experiment.md): build the prepared passive resolver tracer on Snow Leopard, require the Snow resolver transaction and full ShowWindow control to remain successful, repeat the accepted syscall-295 preflight, then run Lion exactly once with the already accepted ColorProfileClient adapter unchanged. Determine whether the unchanged PPC client sends legacy `0x74d7` and receives the legacy-facing `0x753b / -304` dispatch error before authorizing any `0x74d7 -> 0x74d9` conversion. No XNU change, kernel rebuild, or reboot is indicated.
