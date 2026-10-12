@@ -378,3 +378,57 @@ live translated-PPC rendezvous conversion   -> next step
 later FontServer RPCs                       -> trace-only / no adaptation
 XNU                                         -> no change indicated
 ```
+
+
+## Observed completed result — live rendezvous integration passed
+
+The returned Snow control, Lion syscall-295 gate, and Lion title integration all passed.
+
+The integration artifact was the expected v5 thin PPC build with a `0x10` `__interpose` section and matching SHA-256 `f7dbcb98cbf5d64f95a33af222432d5a86ba273b475f5e3de83fff6d6c3c931b`.
+
+Snow preserved the exact legacy path:
+
+```text
+rendezvous request                  0x32c8 / send 0x18 / receive 0x3c
+rendezvous compatibility mode      passthrough
+legacy reply                        0x332c / complex 0x34
+SetWindowTitleWithCFString          0
+ShowWindow                          not called
+RESULT                              POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_SNOW_CONTROL_PASS
+RESULT                              PASS
+```
+
+Lion exercised the live adapter exactly once:
+
+```text
+legacy request                      0x32c8 / 0x18 / 0x3c
+adapted native request              0x32e7 / receive 0x40
+native reply                        0x334b / complex 0x38
+descriptor count                    1
+descriptor size                     0x1000
+protocol version                    5
+explicit size                       0x1000
+legacy-facing reply                 0x332c / complex 0x34
+descriptor preserved                YES
+NDR preserved                       YES
+explicit size relocated             YES
+adapter PASS count                  1
+FontServer RPC request count        1
+FontServer RPC return count         1
+SetWindowTitleWithCFString          0
+SETWINDOWTITLE_PASS                 reached
+DisposeWindow / M24                 complete
+new diagnostics                     none
+protected hashes                    unchanged
+RESULT                              POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_INTEGRATION_PASS
+```
+
+No second FontServer RPC was reached or required in the successful title run. The rendezvous boundary is therefore closed for this path.
+
+The authoritative next procedure is:
+
+```text
+docs/process-manager-post-windowtitle-showwindow-validation-experiment.md
+```
+
+That experiment adds only one `ShowWindow(window)` call after the accepted title assignment. It does not add `SelectWindow`, visibility queries, timers, event-loop work, new CGS adapters, or XNU changes.
