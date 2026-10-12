@@ -144,6 +144,8 @@ if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
         fail "unsupported Snow post-window-title ShowWindow validation mode: $POST_WINDOWTITLE_SHOWWINDOW_MODE"
     [ "$POST_CREATEWINDOW_TITLE_MODE" = "snow-windowtitle-v1" ] ||
         fail "Snow ShowWindow validation requires the window-title validation mode"
+    [ "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" = "passthrough" ] ||
+        fail "Snow ShowWindow validation requires FontServer rendezvous passthrough"
     EXPECTED_SUBJECT_BUILD_ID="cps-showwindow-validation-v1"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
@@ -438,6 +440,9 @@ else
 fi
 if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
     echo "post_createwindow_title_validation_mode=$POST_CREATEWINDOW_TITLE_MODE" | /usr/bin/tee -a "$LOG"
+fi
+if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+    echo "post_windowtitle_showwindow_validation_mode=$POST_WINDOWTITLE_SHOWWINDOW_MODE" | /usr/bin/tee -a "$LOG"
 fi
 echo "private_dyld_sha256=$EXPECTED_DYLD_SHA" | /usr/bin/tee -a "$LOG"
 if [ -n "$HITOOLBOX_TRACE" ]; then
