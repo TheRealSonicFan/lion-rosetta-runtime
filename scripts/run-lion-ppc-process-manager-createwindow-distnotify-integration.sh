@@ -65,6 +65,7 @@ EXPECTED_HITOOLBOX_EXTRAS_RESOURCE_SHA="a0866d6cf2d48fac7787e8cf9e90264071642c0d
 SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_SCHEMA_AUDIT_REPORT:-}"
 POST_EXTRAS_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_EXTRAS_SCHEMA_AUDIT_REPORT:-}"
 POST_FONTSERVER_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_FONTSERVER_SCHEMA_AUDIT_REPORT:-}"
+POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT:-}"
 REAL_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE:-}"
 EXPECTED_REAL_REGISTRATION_COUNT=3
 if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
@@ -74,6 +75,9 @@ elif [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ]; then
 elif [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-post-createwindow-windowtitle-fontserver-schema-audit-broker-v1"
     EXPECTED_REAL_REGISTRATION_COUNT=4
+elif [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
+    EXPECTED_BROKER_BUILD_ID="distributed-notifications-post-windowtitle-showwindow-sixth-schema-audit-broker-v1"
+    EXPECTED_REAL_REGISTRATION_COUNT=5
 elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-post-createwindow-windowtitle-fontserver-registration-broker-v1"
     EXPECTED_REAL_REGISTRATION_COUNT=5
@@ -239,6 +243,15 @@ fi
 if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] && [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ]; then
     die 64 "post-Extras and post-FontServer schema-audit modes are mutually exclusive"
 fi
+if [ -n "$SCHEMA_AUDIT_REPORT" ] && [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
+    die 64 "initial and post-ShowWindow schema-audit modes are mutually exclusive"
+fi
+if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] && [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
+    die 64 "post-Extras and post-ShowWindow schema-audit modes are mutually exclusive"
+fi
+if [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ] && [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
+    die 64 "post-FontServer and post-ShowWindow schema-audit modes are mutually exclusive"
+fi
 if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] && [ -z "$REAL_REGISTRATION_MODE" ]; then
     die 64 "post-Extras schema audit requires the reviewed real-registration mode"
 fi
@@ -249,6 +262,18 @@ if [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ]; then
         die 64 "post-FontServer schema audit requires lion-fontserver-v1"
     [ "$POST_CREATEWINDOW_TITLE_MODE" = "lion-windowtitle-v1" ] ||
         die 64 "post-FontServer schema audit requires the window-title subject"
+fi
+if [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
+    [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] ||
+        die 64 "post-ShowWindow schema audit requires the reviewed exact-five registration mode"
+    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
+        die 64 "post-ShowWindow schema audit requires the ShowWindow subject"
+    [ "$FONTSERVER_COMPAT_MODE" = "lion-fontserver-v1" ] ||
+        die 64 "post-ShowWindow schema audit requires FontServer bootstrap compatibility"
+    [ "$FONTSERVER_RPC_TRACE_MODE" = "lion-passive-v1" ] ||
+        die 64 "post-ShowWindow schema audit requires FontServer passive tracing"
+    [ "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" = "lion-rendezvous-v1" ] ||
+        die 64 "post-ShowWindow schema audit requires FontServer rendezvous compatibility"
 fi
 if [ -n "$REAL_REGISTRATION_MODE" ] &&
    [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-register-v1" ] &&
@@ -281,6 +306,9 @@ if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] && [ -z "$HITOOLBOX_EXTRAS_COMPAT" 
 fi
 if [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ] && [ -z "$HITOOLBOX_EXTRAS_COMPAT" ]; then
     die 64 "post-FontServer schema audit requires the exact HIToolbox Extras compatibility path"
+fi
+if [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ] && [ -z "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    die 64 "post-ShowWindow schema audit requires the exact HIToolbox Extras compatibility path"
 fi
 
 if [ -n "$DOCKSERVER_COMPAT_MODE" ] && [ -z "$HITOOLBOX_EXTRAS_COMPAT" ]; then
@@ -537,6 +565,16 @@ if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
 fi
 /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq \
     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_BUILD_ID:$EXPECTED_BROKER_BUILD_ID" || die 68 "broker build marker missing"
+if [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
+    for marker in \
+        'PM_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SCHEMA_AUDIT_CAPTURE:' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SCHEMA_AUDIT_REJECT:' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SCHEMA_AUDIT_SUMMARY:' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:POST_SHOWWINDOW_AUDIT_PASS'; do
+        /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "post-ShowWindow schema-audit broker marker missing: $marker"
+    done
+fi
 /usr/bin/strings "$SEC_INTERPOSER" | /usr/bin/grep -Fq \
     "PM_SECURITY_SESSION_API_COMPAT_BUILD_ID:$EXPECTED_SEC_BUILD_ID" || die 68 "Security build marker missing"
 /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq \
@@ -643,6 +681,12 @@ if [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ]; then
         die 73 "could not initialize post-FontServer schema audit report: $POST_FONTSERVER_SCHEMA_AUDIT_REPORT"
     export ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_FONTSERVER_SCHEMA_AUDIT_REPORT="$POST_FONTSERVER_SCHEMA_AUDIT_REPORT"
     log "distributed_notifications_post_fontserver_schema_audit_report=$POST_FONTSERVER_SCHEMA_AUDIT_REPORT"
+fi
+if [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
+    : > "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ||
+        die 73 "could not initialize post-ShowWindow schema audit report: $POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT"
+    export ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT="$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT"
+    log "distributed_notifications_post_showwindow_schema_audit_report=$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT"
 fi
 if [ -n "$REAL_REGISTRATION_MODE" ]; then
     log "distributed_notifications_real_registration_mode=$REAL_REGISTRATION_MODE"
@@ -1096,6 +1140,36 @@ if [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ]; then
         exit 0
     fi
     log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_SCHEMA_AUDIT_INCOMPLETE"
+    exit 0
+fi
+
+if [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
+    POST_SHOWWINDOW_CAPTURE_COUNT="$(/usr/bin/grep -c 'PM_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SCHEMA_AUDIT_CAPTURE:index=' "$RAW_LOG" 2>/dev/null || true)"
+    REQUEST_COUNT="$(/usr/bin/grep -c 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:' "$RAW_LOG" 2>/dev/null || true)"
+    FIFTH_ACCEPT_COUNT="$(/usr/bin/grep -c 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=5 allowed=4 behavior=1 publicBehavior=4 anyObject=YES' "$RAW_LOG" 2>/dev/null || true)"
+    RENDEZVOUS_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "post_showwindow_schema_audit_capture_count=$POST_SHOWWINDOW_CAPTURE_COUNT"
+    log "legacy_mach_request_count=$REQUEST_COUNT"
+    log "fifth_notification_registration_accept_count=$FIFTH_ACCEPT_COUNT"
+    log "fontserver_rendezvous_compat_pass_count=$RENDEZVOUS_PASS_COUNT"
+    if [ -s "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ] &&
+       [ "$POST_SHOWWINDOW_CAPTURE_COUNT" -eq 1 ] &&
+       [ "$REQUEST_COUNT" -eq 6 ] &&
+       [ "$FIFTH_ACCEPT_COUNT" -eq 1 ] &&
+       [ "$RENDEZVOUS_PASS_COUNT" -eq 1 ] &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_STATUS:SetWindowTitleWithCFString=0' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_RESULT:SETWINDOWTITLE_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=6 bits=0x00001111 id=4 size=320 payload=287' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SCHEMA_AUDIT_REJECT:status=20 intentional=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SCHEMA_AUDIT_SUMMARY:captures=1 failures=0 unexpectedRejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=5 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:POST_SHOWWINDOW_AUDIT_PASS' "$RAW_LOG"; then
+        log "post_showwindow_schema_audit_output_sha256=$(sha256 "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT")"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SIXTH_NOTIFICATION_SCHEMA_AUDIT_PASS"
+        exit 0
+    fi
+    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SIXTH_NOTIFICATION_SCHEMA_AUDIT_INCOMPLETE"
     exit 0
 fi
 
