@@ -230,3 +230,45 @@ next step                                      -> static Snow-PPC vs Lion-i386 C
 live CGS adaptation                            -> not authorized
 XNU                                             -> no change indicated
 ```
+
+
+## Observed result — exact inline generated-MIG ID shift
+
+Both analyzer-v1 reports pass on their required architectures. The static contracts resolve the live ShowWindow boundary to the inline tracking-area helper, not the distinct non-inline helper.
+
+The exact inline differential is:
+
+```text
+                               Snow PPC              Lion i386
+helper                         __CGSAddTrackingAreaInline
+request / reply                0x7388 / 0x73ec      0x738e / 0x73f2
+header bits                    0x1513                0x1513
+mach_msg option                0x3                   0x3
+send size                      0x3c + 4*count        0x3c + 4*count
+receive size                   0x2c                  0x2c
+accepted reply size            0x24                  0x24
+count limit                    0x1000                0x1000
+NDR/result handling            equivalent             equivalent
+```
+
+The preceding passive trace captured `count=9`, which yields the observed `0x60` send size on both contracts. This is therefore a narrow generated-MIG routine-number shift with otherwise matching visible wire geometry.
+
+Lion also exposes a separate non-inline `__CGSAddTrackingArea` client using `0x72d8 / 0x733c`, complex bits `0x80001513`, and fixed send size `0x4c`. That helper does not match the live `0x7388 / 0x60` ShowWindow transaction and is not part of the compatibility rule.
+
+The static result and the already completed passive trace together now authorize one exact inline adapter for the observed request only:
+
+```text
+request ID   0x7388 -> 0x738e
+reply ID     0x73f2 -> 0x73ec
+count        9
+send/recv    0x60 / 0x2c
+body         unchanged
+```
+
+Current `main` prepares that guarded adapter and the authoritative next procedure:
+
+```text
+docs/process-manager-post-windowtitle-showwindow-cgs-add-tracking-area-compat-integration-experiment.md
+```
+
+Do not adapt the neighboring `0x72e7` or `0x72f2` transactions, the non-inline tracking-area helper, or the color-profile/window-context path in the same experiment. No XNU change is indicated.
