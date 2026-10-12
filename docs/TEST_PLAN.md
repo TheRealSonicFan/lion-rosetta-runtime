@@ -741,7 +741,7 @@ Every authoritative experiment document must contain the actual commands needed 
 
 Keep those commands portable and proportional:
 
-- use a small number of path variables such as `RUNTIME`, `ROSETTA_XNU`, and `XNU_SRC` rather than hard-coding one user's absolute checkout paths;
+- use a small number of path variables such as `RUNTIME`, `ROSETTA_XNU`, and `XNU_SRC` rather than hard-coding one user's absolute checkout paths; after `cd "$RUNTIME"`, prefer repo-relative `./...` paths for runtime-local payloads and resources so an unset or differently defined path variable cannot turn them into unintended root-level paths;
 - use shell builtins such as `[ ... ]` when a guard is useful; do not depend on a separate `/usr/bin/test` binary;
 - include the complete build command and complete runner command with every positional argument required by the current stage;
 - include all stage-specific `unset` and `export` settings that materially affect behavior;
