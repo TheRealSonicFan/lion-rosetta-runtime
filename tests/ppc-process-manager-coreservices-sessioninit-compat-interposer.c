@@ -3525,6 +3525,7 @@ trace_cgs_message(mach_msg_header_t *msg,
 #endif
 #ifdef PM_CGS_SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_INTEGRATION
     if (request_id == CGS_SET_FRONT_WINDOW_LEGACY_REQUEST_ID &&
+        send_size >= (mach_msg_size_t)CGS_SET_FRONT_WINDOW_SEND_SIZE &&
         get_u32(m + CGS_SET_FRONT_WINDOW_WINDOW_ID_OFF) != 0U) {
         mr = handle_cgs_set_front_window_compat(
             msg, option, send_size, rcv_size, rcv_name,
