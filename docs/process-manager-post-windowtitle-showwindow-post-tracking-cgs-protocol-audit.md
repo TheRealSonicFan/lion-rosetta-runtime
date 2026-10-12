@@ -222,3 +222,34 @@ next step                                         -> static post-tracking CGS pr
 live additional CGS adaptation                    -> not authorized
 XNU                                               -> no change indicated
 ```
+
+
+## Observed result — both remaining post-S00 failures are exact generated-MIG ID shifts
+
+Both read-only audits passed with the required platform slices and exact legacy anchors.
+
+The first remaining Lion failure is now attributed to the same generated helper on both releases:
+
+```text
+Snow PPC  __CGSOrderFrontConditionally  0x72e7 / 0x734b  bits 0x1513  option 0x3  send 0x34  recv 0x2c
+Lion i386 __CGSOrderFrontConditionally  0x72ea / 0x734e  bits 0x1513  option 0x3  send 0x34  recv 0x2c
+```
+
+Both clients use NDR plus five 32-bit request scalars and validate a simple `0x24` reply with the same result geometry. This is an ID-only `+3` release skew, not a color-profile RPC.
+
+The later remaining failure is also attributed exactly:
+
+```text
+Snow PPC  __CGSSetFrontWindow  0x72f2 / 0x7356  bits 0x1513  option 0x3  send 0x24  recv 0x2c
+Lion i386 __CGSSetFrontWindow  0x72f5 / 0x7359  bits 0x1513  option 0x3  send 0x24  recv 0x2c
+```
+
+That second helper is independently an ID-only `+3` skew, but it remains held. The compatibility investigation advances only the first causally ordered failure.
+
+The authoritative next procedure is:
+
+```text
+docs/process-manager-post-windowtitle-showwindow-cgs-order-front-conditionally-compat-integration-experiment.md
+```
+
+It performs a Snow passthrough control and exactly one Lion integration that converts only `CGSOrderFrontConditionally` `0x72e7 -> 0x72ea` and `0x734e -> 0x734b`. Do not adapt `CGSSetFrontWindow`, the earlier `CGSShapeWindow` rejection, or color-profile/window-context behavior in the same experiment.
