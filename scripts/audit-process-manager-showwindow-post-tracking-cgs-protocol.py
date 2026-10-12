@@ -128,6 +128,18 @@ def enclosing_symbol(symbols, addr):
         best = (i, item[0], item[1])
     return best
 
+def group_rows_by_symbol(rows, symbols):
+    groups = {}
+    if not symbols:
+        return groups
+    si = 0
+    for addr, line in rows:
+        while si + 1 < len(symbols) and symbols[si + 1][0] <= addr:
+            si += 1
+        if symbols[si][0] <= addr:
+            groups.setdefault(si, []).append((addr, line))
+    return groups
+
 def values_in_line(line):
     values = []
     for token in HEX_RE.findall(line):
@@ -175,9 +187,9 @@ def emit_cstrings(fp, thin):
     if len(hits) > 1600:
         write_line(fp, "additional_cstring_hits_omitted=%d" % (len(hits) - 1600))
 
-def emit_symbol(fp, rows, symbols, index):
+def emit_symbol(fp, rows, symbols, index, groups):
     start, name = symbols[index]
-    selected = symbol_window(rows, symbols, index)
+    selected = groups.get(index, [])
     write_line(fp)
     write_line(fp, "== candidate symbol: %s ==" % name)
     write_line(fp, "symbol_address=0x%x" % start)
@@ -323,12 +335,12 @@ def main():
                         else:
                             rows = parse_instructions(dis_out)
                             write_line(fp, "parsed_instruction_lines=%d" % len(rows))
+                            groups = group_rows_by_symbol(rows, symbols)
                             anchor_symbols, hit_counts = emit_anchor_context(
                                 fp, rows, symbols)
 
                             candidate_symbols = set(anchor_symbols)
-                            for i in range(len(symbols)):
-                                selected = symbol_window(rows, symbols, i)
+                            for i, selected in groups.items():
                                 has_mach = any("mach_msg" in line for addr, line in selected)
                                 if not has_mach:
                                     continue
@@ -345,7 +357,7 @@ def main():
                             write_line(fp, "candidate_symbol_count=%d" % len(candidate_symbols))
                             for i in sorted(candidate_symbols):
                                 start, name = symbols[i]
-                                selected = symbol_window(rows, symbols, i)
+                                selected = groups.get(i, [])
                                 ids = sorted(set(value
                                     for addr, line in selected
                                     for value in values_in_line(line)
@@ -355,7 +367,7 @@ def main():
                                             ",".join("0x%08x" % value for value in ids)))
 
                             for i in sorted(candidate_symbols):
-                                emit_symbol(fp, rows, symbols, i)
+                                emit_symbol(fp, rows, symbols, i, groups)
 
                             if not candidate_symbols:
                                 issues.append("no narrow generated-MIG candidates found")
