@@ -273,3 +273,40 @@ next step                                     -> exact-six registration integrat
 later notification/CGS work                  -> held
 XNU                                           -> no change indicated
 ```
+
+
+## Observed result — exact-six registration accepted; ShowWindow still does not return
+
+The integration run closes the sixth-registration gate. The new native broker built as i386 with the expected build ID and hash, syscall 295 remained healthy, and Lion accepted request 6 exactly as the reviewed second `AppleAquaColorVariantChanged` registration:
+
+```text
+index          6
+allowed        3
+behavior       4
+publicBehavior 2
+anyObject      YES
+counter        2
+entry          positive and distinct
+```
+
+The broker ended with:
+
+```text
+register=6
+callback=0
+rejects=0
+exact=YES
+RESULT: PASS
+```
+
+No seventh distributed-notification request appeared. All previously accepted FontServer rendezvous, NewWindow, release-backing, and create-alpha compatibility paths remained successful and protected hashes remained unchanged.
+
+The ShowWindow boundary itself remains open: `S00_BEFORE_ShowWindow` is reached, `S01_AFTER_ShowWindow` is absent, the process exits 139, and a new crash/core is generated. The raw log repeats the ShowWindow-side CoreGraphics failure cluster and specifically reports `MIG: server type check failure: CGSAddTrackingArea`.
+
+The authoritative next procedure is:
+
+```text
+docs/process-manager-post-windowtitle-showwindow-cgs-passive-transport-trace-experiment.md
+```
+
+That stage is behavior-preserving. It traces previously unclassified application-CGS Mach traffic during the ShowWindow call window on Snow and Lion, without adapting any request or reply. No seventh notification policy, color-profile/window-context fix, or XNU change is authorized.
