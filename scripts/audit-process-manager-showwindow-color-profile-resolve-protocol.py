@@ -339,14 +339,6 @@ def main():
                             write_line(fp, "parsed_instruction_lines=%d" % len(rows))
 
                             emit_indices = set(primary_indices)
-                            for i in support_indices:
-                                name = symbols[i][1]
-                                if ("ColorProfile" in name and
-                                    (name.startswith("_CGS") or
-                                     name.startswith("__CGS") or
-                                     name.startswith("__X") or
-                                     name.startswith("__CGX"))):
-                                    emit_indices.add(i)
 
                             write_line(fp, "emitted_symbol_window_count=%d" % len(emit_indices))
                             for i in sorted(emit_indices):
