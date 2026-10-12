@@ -35,6 +35,7 @@ OPACITY_ALPHA_TRACE_MODE="${ROSETTA_CGS_POST_RELEASEBACKING_OPACITY_TRACE_MODE:-
 OPACITY_ALPHA_CREATE_COMPAT_MODE="${ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE:-}"
 POST_CREATEWINDOW_TITLE_MODE="${ROSETTA_POST_CREATEWINDOW_TITLE_VALIDATION_MODE:-}"
 POST_WINDOWTITLE_SHOWWINDOW_MODE="${ROSETTA_POST_WINDOWTITLE_SHOWWINDOW_VALIDATION_MODE:-}"
+SHOWWINDOW_UNKNOWN_TRACE_MODE="${ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE:-}"
 
 TRANSLATOR="/usr/libexec/oah/translate"
 PRIVATE_DYLD="/usr/oah/dyld"
@@ -236,6 +237,17 @@ if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ]; } ||
         die 64 "ShowWindow validation requires the reviewed exact-five or exact-six notification broker"
     EXPECTED_SUBJECT_BUILD_ID="cps-showwindow-validation-v1"
+fi
+if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
+    [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "lion-passive-v1" ] ||
+        die 64 "unsupported ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE: $SHOWWINDOW_UNKNOWN_TRACE_MODE"
+    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
+        die 64 "ShowWindow CGS passive trace requires the ShowWindow subject"
+    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+        die 64 "ShowWindow CGS passive trace requires the accepted exact-six notification broker"
+    [ "$OPACITY_ALPHA_CREATE_COMPAT_MODE" = "lion-id-v1" ] ||
+        die 64 "ShowWindow CGS passive trace requires accepted opacity create-alpha compatibility"
+    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-unknown-trace-v1"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 
@@ -528,6 +540,17 @@ fi
     "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || die 68 "CoreServices CPS registration compatibility build marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_BUILD_ID:distributed-notifications-ppc-ingress-interposer-v2" || die 68 "embedded distributed-notifications ingress marker missing"
+if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
+    for marker in \
+        'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST:' \
+        'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST_HEX:' \
+        'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_MACH_RETURN:' \
+        'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_FAILURE_BUFFER_HEX:' \
+        'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REPLY_HEX:'; do
+        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "ShowWindow CGS passive trace marker missing: $marker"
+    done
+fi
 if [ -n "$NEWWINDOW_TRACE_MODE" ] || [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
     /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_CREATE_WINDOW_INLINE_LEGACY' ||
         die 68 "CGS NewWindow legacy trace marker missing"
@@ -756,6 +779,12 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
 fi
 if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
     log "post_windowtitle_showwindow_validation_mode=$POST_WINDOWTITLE_SHOWWINDOW_MODE"
+fi
+if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
+    log "showwindow_unknown_cgs_trace_mode=$SHOWWINDOW_UNKNOWN_TRACE_MODE"
+    export ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE="$SHOWWINDOW_UNKNOWN_TRACE_MODE"
+else
+    unset ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE
 fi
 
 MARKER="$(/usr/bin/mktemp /tmp/lion-createwindow-validation-marker.XXXXXX)" || die 73 "could not create diagnostic marker"
@@ -1850,7 +1879,21 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
             exit 0
         fi
         if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow' "$RAW_LOG"; then
-            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_NO_RETURN"
+            if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
+                SHOWWINDOW_UNKNOWN_REQUEST_COUNT="$(/usr/bin/grep -c 'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST:index=' "$RAW_LOG" 2>/dev/null || true)"
+                SHOWWINDOW_UNKNOWN_RETURN_COUNT="$(/usr/bin/grep -c 'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_MACH_RETURN:index=' "$RAW_LOG" 2>/dev/null || true)"
+                log "showwindow_unknown_cgs_trace_request_count=$SHOWWINDOW_UNKNOWN_REQUEST_COUNT"
+                log "showwindow_unknown_cgs_trace_return_count=$SHOWWINDOW_UNKNOWN_RETURN_COUNT"
+                if [ "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" -lt 1 ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_NOT_REACHED"
+                elif [ "$SHOWWINDOW_UNKNOWN_RETURN_COUNT" -ne "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_INCOMPLETE"
+                else
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_CAPTURED"
+                fi
+            else
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_NO_RETURN"
+            fi
             exit 0
         fi
         if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_RESULT:SHOWWINDOW_PASS' "$RAW_LOG"; then
@@ -1907,7 +1950,10 @@ if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:P
 fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
-    if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] &&
+    if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_SHOWWINDOW_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] &&
        [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
         log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SIXTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
     elif [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
