@@ -389,3 +389,16 @@ docs/process-manager-post-windowtitle-showwindow-sixth-distributed-notification-
 ```
 
 That stage reuses the accepted ShowWindow subject and compatibility artifacts unchanged, captures exactly the sixth 287-byte payload as binary plist plus XML, deliberately preserves status 20, and stops for review. No XNU change is indicated.
+
+
+## Follow-up — sixth schema closed; exact-six integration is now authoritative
+
+The sixth-request audit completed successfully and identifies the request as a second `AppleAquaColorVariantChanged` registration with the already reviewed AnyObject/behavior-4 filter, `counter=2`, and a distinct positive entry. The status-20 boundary was therefore caused by the deliberately narrow exact-five registration model, not by a new notification name or operation.
+
+The authoritative next procedure is now:
+
+```text
+docs/process-manager-post-windowtitle-showwindow-sixth-distributed-notification-registration-experiment.md
+```
+
+That run accepts only the exact six-request sequence and stops again on any seventh unreviewed request. The ShowWindow-side CoreGraphics diagnostics remain held unless all six registrations are accepted and `ShowWindow` still fails to return.
