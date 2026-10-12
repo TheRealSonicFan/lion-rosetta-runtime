@@ -40,6 +40,7 @@ SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_
 SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE:-}"
 SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE:-}"
 SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE="${ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE:-}"
+SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE:-}"
 
 TRANSLATOR="/usr/libexec/oah/translate"
 PRIVATE_DYLD="/usr/oah/dyld"
@@ -304,6 +305,19 @@ if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
     [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
         die 64 "ColorProfileClient trace requires the accepted exact-six notification broker"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-trace-v1"
+fi
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+    [ "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" = "lion-id-v1" ] ||
+        die 64 "unsupported ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE: $SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE"
+    [ -z "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ] ||
+        die 64 "ColorProfileClient compatibility and passive-trace runner modes are mutually exclusive"
+    [ "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" = "lion-id-v1" ] ||
+        die 64 "ColorProfileClient compatibility requires accepted CGSSetFrontWindow compatibility"
+    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
+        die 64 "ColorProfileClient compatibility requires the ShowWindow subject"
+    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+        die 64 "ColorProfileClient compatibility requires the accepted exact-six notification broker"
+    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-v1"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 
@@ -607,6 +621,28 @@ if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
             die 68 "ShowWindow CGS passive trace marker missing: $marker"
     done
 fi
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ] || [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+    for marker in \
+        'CGS_COLOR_PROFILE_CLIENT_LEGACY' \
+        'CGS_COLOR_PROFILE_CLIENT_LION' \
+        'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:' \
+        'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:'; do
+        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "ColorProfileClient trace marker missing: $marker"
+    done
+fi
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+    for marker in \
+        'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:' \
+        'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REQUEST:' \
+        'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_MACH_RETURN:' \
+        'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY:' \
+        'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:' \
+        'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS'; do
+        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "ColorProfileClient compatibility marker missing: $marker"
+    done
+fi
 if [ -n "$NEWWINDOW_TRACE_MODE" ] || [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
     /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_CREATE_WINDOW_INLINE_LEGACY' ||
         die 68 "CGS NewWindow legacy trace marker missing"
@@ -865,6 +901,12 @@ if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
     export ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE="$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE"
 else
     unset ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE
+fi
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+    log "showwindow_color_profile_client_compat_mode=$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE"
+    export ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE="$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE"
+else
+    unset ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE
 fi
 
 MARKER="$(/usr/bin/mktemp /tmp/lion-createwindow-validation-marker.XXXXXX)" || die 73 "could not create diagnostic marker"
@@ -1912,6 +1954,58 @@ if [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
     fi
 fi
 
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
+    COLOR_PROFILE_CLIENT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_color_profile_client_legacy_trace_count=$COLOR_PROFILE_CLIENT_TRACE_COUNT"
+    if [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -lt 1 ] ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY exact=YES bits=0x80001513 id=0x000074d4 send=0x00000034 recv=0x00000030' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000024 id=0x00007538 expected=0x00007538 idMatch=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000024 id=0x00007538 expected=0x00007538 resultRaw=0xd0feffff clientIdRaw=0x00000000' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LION' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_UNEXPECTED"
+        exit 0
+    fi
+    log "cgs_color_profile_client_live_result=LEGACY_MINUS304"
+fi
+
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+    COLOR_PROFILE_CLIENT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    COLOR_PROFILE_CLIENT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_color_profile_client_compat_call_count=$COLOR_PROFILE_CLIENT_COMPAT_COUNT"
+    log "cgs_color_profile_client_legacy_trace_count=$COLOR_PROFILE_CLIENT_TRACE_COUNT"
+    if [ "$COLOR_PROFILE_CLIENT_COMPAT_COUNT" -ne 1 ] || [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*descriptorCount=1 .*disposition=0x13 type=0x00 .*setFrontWindowCompatCalls=1 orderFrontCompatCalls=1 addTrackingCompatCalls=1 opacityCreateCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000074d4 lionId=0x000074d6 send=0x00000034 recv=0x00000030 changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*pid=[1-9][0-9]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000028 id=0x0000753a resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* replyClass=SUCCESS' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753a legacyId=0x00007538 size=0x00000028 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000028 id=0x00007538 expected=0x00007538 idMatch=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000028 id=0x00007538 expected=0x00007538 resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_color_profile_client_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000753a resultRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* clientIdRaw=0x00000000 replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753a legacyId=0x00007538 size=0x00000024 changedBytes=1 bodyChangedBytes=0 resultRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* clientIdRaw=0x00000000 replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "cgs_color_profile_client_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
 if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
     ORDER_FRONT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
     ORDER_FRONT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
@@ -2080,26 +2174,13 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
                 elif [ "$SHOWWINDOW_UNKNOWN_RETURN_COUNT" -ne "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" ]; then
                     log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_INCOMPLETE"
                 else
-                    if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
+                    if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+                        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                    elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
                         log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_LEGACY_MINUS304"
                     elif [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
                         log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
-                    elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
-    COLOR_PROFILE_CLIENT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
-    log "cgs_color_profile_client_legacy_trace_count=$COLOR_PROFILE_CLIENT_TRACE_COUNT"
-    if [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -lt 1 ] ||
-       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY exact=YES bits=0x80001513 id=0x000074d4 send=0x00000034 recv=0x00000030' "$RAW_LOG" ||
-       ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
-       ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000024 id=0x00007538 expected=0x00007538 idMatch=YES' "$RAW_LOG" ||
-       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000024 id=0x00007538 expected=0x00007538 resultRaw=0xd0feffff clientIdRaw=0x00000000' "$RAW_LOG" ||
-       /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LION' "$RAW_LOG"; then
-        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_UNEXPECTED"
-        exit 0
-    fi
-    log "cgs_color_profile_client_live_result=LEGACY_MINUS304"
-fi
-
-if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
+                    elif [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
                         log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
                     elif [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
                         log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
@@ -2166,7 +2247,10 @@ if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:P
 fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
-    if [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ] &&
+    if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ] &&
        [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
         log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_INTEGRATION_PASS"
     elif [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ] &&
