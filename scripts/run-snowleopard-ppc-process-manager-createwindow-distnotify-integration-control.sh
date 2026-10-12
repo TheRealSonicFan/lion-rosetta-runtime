@@ -19,6 +19,7 @@ HITOOLBOX_EXTRAS_MODE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE:-}"
 DOCKSERVER_COMPAT_MODE="${ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE:-}"
 FONTSERVER_COMPAT_MODE="${ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE:-}"
 FONTSERVER_RPC_TRACE_MODE="${ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE:-}"
+FONTSERVER_RENDEZVOUS_COMPAT_MODE="${ROSETTA_CGS_FONTSERVER_RENDEZVOUS_COMPAT_MODE:-}"
 NEWWINDOW_TRACE_MODE="${ROSETTA_CGS_NEWWINDOW_TRACE_MODE:-}"
 NEWWINDOW_COMPAT_MODE="${ROSETTA_CGS_NEWWINDOW_COMPAT_MODE:-}"
 RELEASEBACKING_TRACE_MODE="${ROSETTA_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE_MODE:-}"
@@ -62,6 +63,17 @@ if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
     [ -n "$POST_CREATEWINDOW_TITLE_MODE" ] ||
         fail "Snow FontServer RPC trace requires the window-title subject"
     EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-fontserver-compat-rpc-trace-v4"
+fi
+if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+    [ "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" = "passthrough" ] ||
+        fail "Snow FontServer rendezvous compatibility mode must be passthrough"
+    [ "$FONTSERVER_COMPAT_MODE" = "passthrough" ] ||
+        fail "Snow FontServer rendezvous compatibility requires FontServer bootstrap passthrough"
+    [ "$FONTSERVER_RPC_TRACE_MODE" = "snow-passive-v1" ] ||
+        fail "Snow FontServer rendezvous compatibility requires snow-passive-v1 RPC tracing"
+    [ "$POST_CREATEWINDOW_TITLE_MODE" = "snow-windowtitle-v1" ] ||
+        fail "Snow FontServer rendezvous compatibility requires the window-title subject"
+    EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-fontserver-rendezvous-compat-v5"
 fi
 if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
     [ "$NEWWINDOW_TRACE_MODE" = "passthrough" ] ||
@@ -303,6 +315,19 @@ if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
     /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REPLY:' ||
         fail "FontServer RPC trace reply marker missing"
 fi
+if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+    for marker in \
+        'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_CALL:' \
+        'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REQUEST:' \
+        'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_NATIVE_MACH_RETURN:' \
+        'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_NATIVE_REPLY:' \
+        'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REPLY:' \
+        'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:ADAPTER_PASS' \
+        'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:PASSTHROUGH'; do
+        /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq "$marker" ||
+            fail "FontServer rendezvous compatibility marker missing: $marker"
+    done
+fi
 if [ -n "$HITOOLBOX_TRACE" ]; then
     /usr/bin/strings "$HITOOLBOX_TRACE" | /usr/bin/grep -Fq \
         "PM_HITOOLBOX_CFBUNDLE_TRACE_BUILD_ID:$EXPECTED_HITOOLBOX_TRACE_BUILD_ID" ||
@@ -360,6 +385,12 @@ if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
     export ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE="$FONTSERVER_RPC_TRACE_MODE"
 else
     unset ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE
+fi
+if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+    echo "fontserver_rendezvous_compat_mode=$FONTSERVER_RENDEZVOUS_COMPAT_MODE" | /usr/bin/tee -a "$LOG"
+    export ROSETTA_CGS_FONTSERVER_RENDEZVOUS_COMPAT_MODE="$FONTSERVER_RENDEZVOUS_COMPAT_MODE"
+else
+    unset ROSETTA_CGS_FONTSERVER_RENDEZVOUS_COMPAT_MODE
 fi
 if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
     echo "cgs_newwindow_trace_mode=$NEWWINDOW_TRACE_MODE" | /usr/bin/tee -a "$LOG"
@@ -558,6 +589,17 @@ if [ "$RC" -eq 0 ] &&
             exit 1
         fi
     fi
+    if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+        FONTSERVER_RENDEZVOUS_COMPAT_CALLS="$(/usr/bin/grep -c 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_CALL:' "$LOG" 2>/dev/null || true)"
+        if [ "$FONTSERVER_RENDEZVOUS_COMPAT_CALLS" -ne 1 ] ||
+           ! /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_CALL:index=1 rpcIndex=1 mode=passthrough exact=YES' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:PASSTHROUGH' "$LOG" ||
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:ADAPTER_PASS' "$LOG"; then
+            echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
+            exit 1
+        fi
+        echo "fontserver_rendezvous_compat_call_count=$FONTSERVER_RENDEZVOUS_COMPAT_CALLS" | /usr/bin/tee -a "$LOG"
+    fi
     if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
         RELEASEBACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_RELEASEBACKING_COMPAT_CALL:' "$LOG" 2>/dev/null || true)"
         OPACITY_CREATE_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:' "$LOG" 2>/dev/null || true)"
@@ -580,7 +622,9 @@ if [ "$RC" -eq 0 ] &&
             echo "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT" | /usr/bin/tee -a "$LOG"
             echo "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT" | /usr/bin/tee -a "$LOG"
             if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
-                if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
+                if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+                    echo "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+                elif [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
                     echo "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
                 elif [ -n "$FONTSERVER_COMPAT_MODE" ]; then
                     echo "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
