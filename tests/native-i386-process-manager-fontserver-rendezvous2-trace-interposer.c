@@ -1,4 +1,5 @@
 #include <mach/mach.h>
+#include <mach/mig_errors.h>
 #include <servers/bootstrap.h>
 #include <stdint.h>
 #include <stdio.h>
