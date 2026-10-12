@@ -15,7 +15,8 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                          uint64_t);
 extern mach_port_t mig_get_reply_port(void);
 
-#if defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_INTEGRATION) || \
+#if defined(PM_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_INTEGRATION) || \
+    defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_INTEGRATION) || \
     defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-v2"
 #elif defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE)
@@ -81,6 +82,10 @@ static const char kDistributedNotificationsName[] =
 
 #if defined(PM_CPS_SETFRONT_COMPAT_INTEGRATION) && !defined(PM_CPS_SETFRONT_COMPAT_PROTOCOL)
 #define PM_CPS_SETFRONT_COMPAT_PROTOCOL 1
+#endif
+
+#if defined(PM_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_INTEGRATION) && !defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_INTEGRATION)
+#define PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_INTEGRATION 1
 #endif
 
 #if defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_INTEGRATION) && !defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION)
@@ -467,6 +472,33 @@ static const char kDistributedNotificationsName[] =
 #define CGS_COLOR_PROFILE_RESOLVE_MAX_ADAPTED_CALLS 4U
 #endif
 
+#ifdef PM_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_INTEGRATION
+#define CGS_WINDOW_BACKING_INFO_COMPAT_BUILD_ID "window-backing-info-id-compat-v1"
+#define CGS_WINDOW_BACKING_INFO_COMPAT_BUILD_MARKER "PM_CGS_WINDOW_BACKING_INFO_COMPAT_BUILD_ID:" CGS_WINDOW_BACKING_INFO_COMPAT_BUILD_ID
+#define CGS_WINDOW_BACKING_INFO_COMPAT_ENV "ROSETTA_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_MODE"
+#define CGS_WINDOW_BACKING_INFO_COMPAT_PASSTHROUGH "passthrough"
+#define CGS_WINDOW_BACKING_INFO_COMPAT_LION_V1 "lion-id-v1"
+#define CGS_WINDOW_BACKING_INFO_LEGACY_REQUEST_ID 0x00007263U
+#define CGS_WINDOW_BACKING_INFO_LEGACY_REPLY_ID 0x000072c7U
+#define CGS_WINDOW_BACKING_INFO_LION_REQUEST_ID 0x00007264U
+#define CGS_WINDOW_BACKING_INFO_LION_REPLY_ID 0x000072c8U
+#define CGS_WINDOW_BACKING_INFO_BITS 0x00001513U
+#define CGS_WINDOW_BACKING_INFO_MSG_OPTIONS 0x00000003U
+#define CGS_WINDOW_BACKING_INFO_SEND_SIZE 0x00000024U
+#define CGS_WINDOW_BACKING_INFO_RECV_SIZE 0x0000003cU
+#define CGS_WINDOW_BACKING_INFO_SUCCESS_REPLY_SIZE 0x00000034U
+#define CGS_WINDOW_BACKING_INFO_ERROR_REPLY_SIZE 0x00000024U
+#define CGS_WINDOW_BACKING_INFO_WINDOW_ID_OFF 0x20U
+#define CGS_WINDOW_BACKING_INFO_RESULT_OFF 0x20U
+#define CGS_WINDOW_BACKING_INFO_OUT0_LO_OFF 0x24U
+#define CGS_WINDOW_BACKING_INFO_OUT0_HI_OFF 0x28U
+#define CGS_WINDOW_BACKING_INFO_OUT1_LO_OFF 0x2cU
+#define CGS_WINDOW_BACKING_INFO_OUT1_HI_OFF 0x30U
+#define CGS_WINDOW_BACKING_INFO_REPLY_BITS 0x00001200U
+#define CGS_WINDOW_BACKING_INFO_PRIVATE_BUFFER_SIZE 0x00000040U
+#define CGS_WINDOW_BACKING_INFO_MAX_ADAPTED_CALLS 1U
+#endif
+
 #ifdef PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION
 #define CGS_SERVER_VERSION_COMPAT_ENV "ROSETTA_CGS_SERVER_VERSION_COMPAT_MODE"
 #define CGS_SERVER_VERSION_COMPAT_PASSTHROUGH "passthrough"
@@ -593,6 +625,10 @@ static uint32_t gCGSColorProfileClientCompatSemanticClientID = 0U;
 static mach_port_t gCGSColorProfileClientCompatRemotePort = MACH_PORT_NULL;
 static mach_port_t gCGSColorProfileClientCompatReplyPort = MACH_PORT_NULL;
 static mach_port_t gCGSColorProfileClientCompatDescriptorPort = MACH_PORT_NULL;
+#endif
+#ifdef PM_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_INTEGRATION
+static unsigned int gCGSWindowBackingInfoCompatCallCount = 0;
+static unsigned int gCGSWindowBackingInfoAdaptedCallCount = 0;
 #endif
 #ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
 static mach_port_t gCGSShowWindowTracePort = MACH_PORT_NULL;
@@ -3827,6 +3863,282 @@ handle_cgs_color_profile_resolve_compat(
 }
 #endif
 
+#ifdef PM_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_INTEGRATION
+static int
+is_exact_legacy_cgs_window_backing_info_request(
+    mach_msg_header_t *msg,
+    mach_msg_option_t option,
+    mach_msg_size_t send_size,
+    mach_msg_size_t rcv_size,
+    mach_port_name_t rcv_name,
+    mach_msg_timeout_t timeout,
+    mach_port_name_t notify)
+{
+    unsigned char *m = (unsigned char *)msg;
+
+    if (msg == NULL)
+        return 0;
+
+    return get_u32(m + 0x00U) == CGS_WINDOW_BACKING_INFO_BITS &&
+           get_u32(m + 0x08U) != 0U &&
+           get_u32(m + 0x0cU) == (uint32_t)rcv_name &&
+           rcv_name != MACH_PORT_NULL &&
+           get_u32(m + 0x14U) == CGS_WINDOW_BACKING_INFO_LEGACY_REQUEST_ID &&
+           option == (mach_msg_option_t)CGS_WINDOW_BACKING_INFO_MSG_OPTIONS &&
+           send_size == (mach_msg_size_t)CGS_WINDOW_BACKING_INFO_SEND_SIZE &&
+           rcv_size == (mach_msg_size_t)CGS_WINDOW_BACKING_INFO_RECV_SIZE &&
+           timeout == MACH_MSG_TIMEOUT_NONE &&
+           notify == MACH_PORT_NULL &&
+           get_u32(m + CGS_WINDOW_BACKING_INFO_WINDOW_ID_OFF) != 0U;
+}
+
+static mach_msg_return_t
+handle_cgs_window_backing_info_compat(
+    mach_msg_header_t *msg,
+    mach_msg_option_t option,
+    mach_msg_size_t send_size,
+    mach_msg_size_t rcv_size,
+    mach_port_name_t rcv_name,
+    mach_msg_timeout_t timeout,
+    mach_port_name_t notify)
+{
+    const char *mode;
+    unsigned char *m = (unsigned char *)msg;
+    uint32_t storage[
+        CGS_WINDOW_BACKING_INFO_PRIVATE_BUFFER_SIZE / sizeof(uint32_t)];
+    unsigned char *adapted = (unsigned char *)storage;
+    unsigned char source_before[CGS_WINDOW_BACKING_INFO_SEND_SIZE];
+    unsigned char native_reply_before[CGS_WINDOW_BACKING_INFO_SUCCESS_REPLY_SIZE];
+    mach_msg_return_t mr;
+    uint32_t native_reply_bits;
+    uint32_t native_reply_size;
+    uint32_t native_reply_id;
+    uint32_t native_result_raw = 0U;
+    uint32_t native_out0_lo_raw = 0U;
+    uint32_t native_out0_hi_raw = 0U;
+    uint32_t native_out1_lo_raw = 0U;
+    uint32_t native_out1_hi_raw = 0U;
+    uint32_t off;
+    unsigned int request_changed = 0U;
+    unsigned int request_body_changed = 0U;
+    unsigned int source_changed = 0U;
+    unsigned int reply_changed = 0U;
+    unsigned int reply_body_changed = 0U;
+    int exact;
+    int application_port_exact;
+    const char *reply_class = "UNEXPECTED";
+
+    ++gCGSWindowBackingInfoCompatCallCount;
+    mode = getenv(CGS_WINDOW_BACKING_INFO_COMPAT_ENV);
+    exact = is_exact_legacy_cgs_window_backing_info_request(
+        msg, option, send_size, rcv_size, rcv_name, timeout, notify);
+    application_port_exact =
+        gCGSShowWindowTracePort != MACH_PORT_NULL &&
+        get_u32(m + 0x08U) == (uint32_t)gCGSShowWindowTracePort;
+
+    fprintf(stderr, "%s\n", CGS_WINDOW_BACKING_INFO_COMPAT_BUILD_MARKER);
+    fprintf(stderr,
+            "PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=%u adapted=%u mode=%s exact=%s applicationPortExact=%s applicationPort=0x%08lx remotePort=0x%08lx replyPort=0x%08lx windowId=%lu newWindowCompatCalls=%u releaseBackingCompatCalls=%u opacityCreateCompatCalls=%u orderFrontCompatCalls=%u addTrackingCompatCalls=%u setFrontWindowCompatCalls=%u colorProfileClientCompatCalls=%u colorProfileResolveCompatCalls=%u\n",
+            gCGSWindowBackingInfoCompatCallCount,
+            gCGSWindowBackingInfoAdaptedCallCount,
+            mode ? mode : "(unset)",
+            exact ? "YES" : "NO",
+            application_port_exact ? "YES" : "NO",
+            (unsigned long)(uint32_t)gCGSShowWindowTracePort,
+            (unsigned long)get_u32(m + 0x08U),
+            (unsigned long)rcv_name,
+            (unsigned long)get_u32(m + CGS_WINDOW_BACKING_INFO_WINDOW_ID_OFF),
+            gCGSNewWindowCompatCallCount,
+            gCGSReleaseBackingCompatCallCount,
+            gCGSOpacityAlphaCreateCompatCallCount,
+            gCGSOrderFrontConditionallyCompatCallCount,
+            gCGSAddTrackingAreaCompatCallCount,
+            gCGSSetFrontWindowCompatCallCount,
+            gCGSColorProfileClientCompatCallCount,
+            gCGSColorProfileResolveCompatCallCount);
+    fflush(stderr);
+
+    if (mode != NULL &&
+        strcmp(mode, CGS_WINDOW_BACKING_INFO_COMPAT_PASSTHROUGH) == 0) {
+        fprintf(stderr,
+                "PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:PASSTHROUGH\n");
+        fflush(stderr);
+        return call_original_mach_msg(msg, option, send_size,
+                                      rcv_size, rcv_name,
+                                      timeout, notify);
+    }
+
+    if (mode == NULL ||
+        strcmp(mode, CGS_WINDOW_BACKING_INFO_COMPAT_LION_V1) != 0 ||
+        !exact ||
+        !application_port_exact ||
+        gCGSWindowBackingInfoCompatCallCount != 1U ||
+        gCGSWindowBackingInfoAdaptedCallCount >=
+            CGS_WINDOW_BACKING_INFO_MAX_ADAPTED_CALLS ||
+        gCGSNewWindowCompatCallCount != 1U ||
+        gCGSReleaseBackingCompatCallCount != 1U ||
+        gCGSOpacityAlphaCreateCompatCallCount != 1U ||
+        gCGSOrderFrontConditionallyCompatCallCount != 0U ||
+        gCGSAddTrackingAreaCompatCallCount != 0U ||
+        gCGSSetFrontWindowCompatCallCount != 0U ||
+        gCGSColorProfileClientCompatCallCount != 0U ||
+        gCGSColorProfileResolveCompatCallCount != 0U) {
+        fprintf(stderr,
+                "PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:PREDICATE_REJECTED_PASSTHROUGH\n");
+        fflush(stderr);
+        return call_original_mach_msg(msg, option, send_size,
+                                      rcv_size, rcv_name,
+                                      timeout, notify);
+    }
+
+    memset(storage, 0, sizeof(storage));
+    memcpy(source_before, m, CGS_WINDOW_BACKING_INFO_SEND_SIZE);
+    memcpy(adapted, m, CGS_WINDOW_BACKING_INFO_SEND_SIZE);
+    put_u32(adapted + 0x14U, CGS_WINDOW_BACKING_INFO_LION_REQUEST_ID);
+
+    for (off = 0U; off < CGS_WINDOW_BACKING_INFO_SEND_SIZE; ++off) {
+        if (adapted[off] != source_before[off]) {
+            ++request_changed;
+            if (off < 0x14U || off >= 0x18U)
+                ++request_body_changed;
+        }
+        if (m[off] != source_before[off])
+            ++source_changed;
+    }
+
+    if (request_changed != 1U ||
+        request_body_changed != 0U ||
+        source_changed != 0U ||
+        get_u32(adapted + 0x14U) != CGS_WINDOW_BACKING_INFO_LION_REQUEST_ID) {
+        fprintf(stderr,
+                "PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:REQUEST_POSTCHECK_FAILED_PASSTHROUGH\n");
+        fflush(stderr);
+        return call_original_mach_msg(msg, option, send_size,
+                                      rcv_size, rcv_name,
+                                      timeout, notify);
+    }
+
+    ++gCGSWindowBackingInfoAdaptedCallCount;
+    fprintf(stderr,
+            "PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REQUEST:index=%u legacyId=0x%08lx lionId=0x%08lx send=0x%08lx recv=0x%08lx changedBytes=%u bodyChangedBytes=%u sourceChangedBytes=%u windowId=%lu\n",
+            gCGSWindowBackingInfoAdaptedCallCount,
+            (unsigned long)get_u32(source_before + 0x14U),
+            (unsigned long)get_u32(adapted + 0x14U),
+            (unsigned long)send_size,
+            (unsigned long)rcv_size,
+            request_changed,
+            request_body_changed,
+            source_changed,
+            (unsigned long)get_u32(
+                adapted + CGS_WINDOW_BACKING_INFO_WINDOW_ID_OFF));
+    fflush(stderr);
+
+    mr = call_original_mach_msg((mach_msg_header_t *)adapted,
+                                option, send_size, rcv_size,
+                                rcv_name, timeout, notify);
+    fprintf(stderr,
+            "PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_MACH_RETURN:index=%u kr=%ld hex=0x%08lx\n",
+            gCGSWindowBackingInfoAdaptedCallCount,
+            (long)mr,
+            (unsigned long)(uint32_t)mr);
+    fflush(stderr);
+
+    if (mr != MACH_MSG_SUCCESS)
+        return mr;
+
+    native_reply_bits = get_u32(adapted + 0x00U);
+    native_reply_size = get_u32(adapted + 0x04U);
+    native_reply_id = get_u32(adapted + 0x14U);
+    if (native_reply_size >= CGS_WINDOW_BACKING_INFO_ERROR_REPLY_SIZE)
+        native_result_raw =
+            get_u32(adapted + CGS_WINDOW_BACKING_INFO_RESULT_OFF);
+    if (native_reply_size >= CGS_WINDOW_BACKING_INFO_SUCCESS_REPLY_SIZE) {
+        native_out0_lo_raw =
+            get_u32(adapted + CGS_WINDOW_BACKING_INFO_OUT0_LO_OFF);
+        native_out0_hi_raw =
+            get_u32(adapted + CGS_WINDOW_BACKING_INFO_OUT0_HI_OFF);
+        native_out1_lo_raw =
+            get_u32(adapted + CGS_WINDOW_BACKING_INFO_OUT1_LO_OFF);
+        native_out1_hi_raw =
+            get_u32(adapted + CGS_WINDOW_BACKING_INFO_OUT1_HI_OFF);
+    }
+
+    if (native_reply_size == CGS_WINDOW_BACKING_INFO_SUCCESS_REPLY_SIZE &&
+        native_result_raw == 0U)
+        reply_class = "SUCCESS";
+    else if (native_reply_size == CGS_WINDOW_BACKING_INFO_ERROR_REPLY_SIZE &&
+             native_result_raw != 0U)
+        reply_class = "ERROR";
+
+    fprintf(stderr,
+            "PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_REPLY:index=%u bits=0x%08lx size=0x%08lx id=0x%08lx resultRaw=0x%08lx out0LoRaw=0x%08lx out0HiRaw=0x%08lx out1LoRaw=0x%08lx out1HiRaw=0x%08lx replyClass=%s\n",
+            gCGSWindowBackingInfoAdaptedCallCount,
+            (unsigned long)native_reply_bits,
+            (unsigned long)native_reply_size,
+            (unsigned long)native_reply_id,
+            (unsigned long)native_result_raw,
+            (unsigned long)native_out0_lo_raw,
+            (unsigned long)native_out0_hi_raw,
+            (unsigned long)native_out1_lo_raw,
+            (unsigned long)native_out1_hi_raw,
+            reply_class);
+    fflush(stderr);
+
+    if (native_reply_bits != CGS_WINDOW_BACKING_INFO_REPLY_BITS ||
+        native_reply_id != CGS_WINDOW_BACKING_INFO_LION_REPLY_ID ||
+        strcmp(reply_class, "UNEXPECTED") == 0) {
+        if (native_reply_size > 0U &&
+            native_reply_size <= CGS_WINDOW_BACKING_INFO_PRIVATE_BUFFER_SIZE)
+            memcpy(m, adapted, native_reply_size);
+        fprintf(stderr,
+                "PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:NATIVE_REPLY_REJECTED\n");
+        fflush(stderr);
+        return mr;
+    }
+
+    memcpy(native_reply_before, adapted, native_reply_size);
+    put_u32(adapted + 0x14U, CGS_WINDOW_BACKING_INFO_LEGACY_REPLY_ID);
+
+    for (off = 0U; off < native_reply_size; ++off) {
+        if (adapted[off] != native_reply_before[off]) {
+            ++reply_changed;
+            if (off < 0x14U || off >= 0x18U)
+                ++reply_body_changed;
+        }
+    }
+
+    if (reply_changed != 1U ||
+        reply_body_changed != 0U ||
+        get_u32(adapted + 0x14U) != CGS_WINDOW_BACKING_INFO_LEGACY_REPLY_ID) {
+        memcpy(m, native_reply_before, native_reply_size);
+        fprintf(stderr,
+                "PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:REPLY_POSTCHECK_FAILED_NATIVE_COPIED\n");
+        fflush(stderr);
+        return mr;
+    }
+
+    memcpy(m, adapted, native_reply_size);
+    fprintf(stderr,
+            "PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REPLY:index=%u nativeId=0x%08lx legacyId=0x%08lx size=0x%08lx changedBytes=%u bodyChangedBytes=%u resultRaw=0x%08lx out0LoRaw=0x%08lx out0HiRaw=0x%08lx out1LoRaw=0x%08lx out1HiRaw=0x%08lx replyClass=%s\n",
+            gCGSWindowBackingInfoAdaptedCallCount,
+            (unsigned long)CGS_WINDOW_BACKING_INFO_LION_REPLY_ID,
+            (unsigned long)get_u32(m + 0x14U),
+            (unsigned long)get_u32(m + 0x04U),
+            reply_changed,
+            reply_body_changed,
+            (unsigned long)native_result_raw,
+            (unsigned long)native_out0_lo_raw,
+            (unsigned long)native_out0_hi_raw,
+            (unsigned long)native_out1_lo_raw,
+            (unsigned long)native_out1_hi_raw,
+            reply_class);
+    fprintf(stderr,
+            "PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS\n");
+    fflush(stderr);
+    return mr;
+}
+#endif
+
 #if defined(PM_CGS_CONNECTION_TRACE) || defined(PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION)
 static const char *
 cgs_trace_kind(uint32_t request_id)
@@ -3896,6 +4208,12 @@ cgs_trace_kind(uint32_t request_id)
         return "CGS_COLOR_PROFILE_RESOLVE_LEGACY";
     if (request_id == CGS_COLOR_PROFILE_RESOLVE_LION_REQUEST_ID)
         return "CGS_COLOR_PROFILE_RESOLVE_LION";
+#endif
+#ifdef PM_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_INTEGRATION
+    if (request_id == CGS_WINDOW_BACKING_INFO_LEGACY_REQUEST_ID)
+        return "CGS_WINDOW_BACKING_INFO_LEGACY";
+    if (request_id == CGS_WINDOW_BACKING_INFO_LION_REQUEST_ID)
+        return "CGS_WINDOW_BACKING_INFO_LION";
 #endif
 #ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
     if (gCGSShowWindowTracePort != MACH_PORT_NULL)
@@ -3973,6 +4291,12 @@ cgs_trace_expected_reply(uint32_t request_id)
     if (request_id == CGS_COLOR_PROFILE_RESOLVE_LION_REQUEST_ID)
         return CGS_COLOR_PROFILE_RESOLVE_LION_REPLY_ID;
 #endif
+#ifdef PM_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_INTEGRATION
+    if (request_id == CGS_WINDOW_BACKING_INFO_LEGACY_REQUEST_ID)
+        return CGS_WINDOW_BACKING_INFO_LEGACY_REPLY_ID;
+    if (request_id == CGS_WINDOW_BACKING_INFO_LION_REQUEST_ID)
+        return CGS_WINDOW_BACKING_INFO_LION_REPLY_ID;
+#endif
 #ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
     if (gCGSShowWindowTracePort != MACH_PORT_NULL)
         return request_id + 0x64U;
@@ -4042,6 +4366,11 @@ is_cgs_trace_candidate(mach_msg_header_t *msg)
 #ifdef PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_TRACE
     if (request_id == CGS_COLOR_PROFILE_RESOLVE_LEGACY_REQUEST_ID ||
         request_id == CGS_COLOR_PROFILE_RESOLVE_LION_REQUEST_ID)
+        return 1;
+#endif
+#ifdef PM_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_INTEGRATION
+    if (request_id == CGS_WINDOW_BACKING_INFO_LEGACY_REQUEST_ID ||
+        request_id == CGS_WINDOW_BACKING_INFO_LION_REQUEST_ID)
         return 1;
 #endif
     return 0;
@@ -4366,6 +4695,13 @@ trace_cgs_message(mach_msg_header_t *msg,
 #ifdef PM_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_INTEGRATION
     if (request_id == CGS_ADD_TRACKING_AREA_INLINE_LEGACY_REQUEST_ID) {
         mr = handle_cgs_add_tracking_area_compat(
+            msg, option, send_size, rcv_size, rcv_name,
+            timeout, notify);
+    } else
+#endif
+#ifdef PM_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_INTEGRATION
+    if (request_id == CGS_WINDOW_BACKING_INFO_LEGACY_REQUEST_ID) {
+        mr = handle_cgs_window_backing_info_compat(
             msg, option, send_size, rcv_size, rcv_name,
             timeout, notify);
     } else
