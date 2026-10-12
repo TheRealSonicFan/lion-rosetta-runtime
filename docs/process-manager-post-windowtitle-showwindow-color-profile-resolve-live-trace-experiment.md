@@ -343,3 +343,36 @@ CGWindowContext/CoreUI/RawCamera           downstream/held
 CGSShapeWindow                             held
 XNU                                        no change indicated
 ```
+
+
+## Completed result — live generated-MIG skew proven
+
+The returned passive-trace artifacts complete this experiment.
+
+Snow Leopard remained behavior-preserving. Its first legacy resolver request was for profile ID 2 and succeeded with `0x753b / 0x34 / result 0`; the passive target predicate reports that request as `exact=NO` only because this experiment's target discriminator deliberately requires profile ID 1. The later profile-ID-1 resolver request was `exact=YES` and also succeeded with `0x753b / 0x34 / result 0`. The control reached M24 and final PASS.
+
+The Lion syscall-295 preflight remained on the accepted `EBADF` / no-`SIGSYS` path. In the single Lion run, the accepted ColorProfileClient adapter succeeded exactly once. Lion returned a nonzero client ID whose NDR-decoded semantic value was 55, and the immediately following legacy ResolveColorProfile request carried the same semantic client ID 55 with profile ID 1.
+
+That first Lion resolver request was the exact legacy `0x74d7`, with the proven `0x38 / 0x3c` complex envelope. Mach transport succeeded, but the PPC-facing response was `0x753b / 0x24` with raw result `0xd0feffff` (-304). The same exact profile-ID-1 resolver failure occurred four times in the run. This satisfies the experiment's generated-MIG-dispatch branch and proves that the active Lion boundary is the resolver routine-ID skew rather than a Lion-native profile-state rejection.
+
+Runtime therefore advances to the narrowly gated ID-only compatibility experiment in:
+
+```text
+docs/process-manager-post-windowtitle-showwindow-color-profile-resolve-compat-experiment.md
+```
+
+That experiment may change only the request ID `0x74d7 -> 0x74d9` in a private request copy and the native reply ID `0x753d -> 0x753b`, while preserving descriptor, NDR, client ID, profile ID, result, and output data. It is additionally gated to state captured from the successful ColorProfileClient transaction and to at most the four target resolver calls observed in this baseline. No release-routine adapter, profile synthesis, downstream graphics workaround, or XNU change is authorized by this result.
+
+## Completed boundary
+
+```text
+ColorProfileClient adapter                 accepted PASS
+Snow resolver profile 1                    0x74d7 -> 0x753b / 0x34 / result 0
+Lion resolver passive                      0x74d7 -> 0x753b / 0x24 / -304
+resolver generated-MIG skew                live-proven
+next step                                  narrow ID-only resolver compatibility
+CGSReleaseColorProfile                     held
+CGWindowContext/CoreUI/RawCamera           downstream/held
+CGSShapeWindow                             held
+XNU                                        no change indicated
+```
