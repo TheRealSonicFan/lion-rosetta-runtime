@@ -232,3 +232,51 @@ CGSShapeWindow                                     earlier/held
 next step                                          static backing-lock protocol/ABI audit
 XNU                                                no change indicated
 ```
+
+
+## Observed result — GetWindowBackingInfo collides with Lion GetWindowInfo
+
+Both read-only audits pass with the required platform slices and exact anchors.
+
+The generated client helpers establish a one-slot routine-family shift:
+
+```text
+Snow PPC  __CGSGetWindowInfo          0x7262 / 0x72c6
+Snow PPC  __CGSGetWindowBackingInfo   0x7263 / 0x72c7
+
+Lion i386 __CGSGetWindowInfo          0x7263 / 0x72c7
+Lion i386 __CGSGetWindowBackingInfo   0x7264 / 0x72c8
+```
+
+The Snow and Lion `__CGSGetWindowBackingInfo` clients otherwise match in the live-relevant contract: bits `0x1513`, option `0x3`, send `0x24`, receive `0x3c`, one 32-bit window ID, `0x34 / 0x24` success/error replies, result at `0x20`, and two paired 32-bit success-output words at `0x24/0x28` and `0x2c/0x30`. Both generated clients perform the same NDR-based swapping and return the two output pairs to their callers.
+
+The server side confirms the collision. Snow's `__XGetWindowBackingInfo` is routine `0x7263`; Lion's `__XGetWindowBackingInfo` is routine `0x7264`. Lion routine `0x7263` is `__XGetWindowInfo`. Thus the live PPC `0x7263` request on Lion is not rejected: it is accepted as the wrong semantic routine and can legitimately return `0x72c7 / 0x34 / result 0` with four output words that are not backing-info outputs.
+
+The corresponding `__CGXGetWindowBackingInfo` / `_CGXGetWindowBackingInfo` implementations remain semantically aligned across the releases. They resolve the target window/connection, require output storage, obtain the window's backing object, and copy two paired backing-state values into the success reply. Release-specific object-field offsets differ, but the same semantic helper produces the same output shape.
+
+This static result explains the prior live failure without requiring any output synthesis: the PPC client consumes Lion GetWindowInfo outputs as GetWindowBackingInfo data, then `_CGSBindWindowBacking` attempts to map invalid shared-memory references.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-post-windowtitle-showwindow-window-backing-info-compat-experiment.md
+scripts/build-ppc-process-manager-post-windowtitle-showwindow-window-backing-info-compat-on-snowleopard.sh
+```
+
+It tests exactly one ID-only correction at the first backing-info call: request `0x7263 -> 0x7264`, native reply `0x72c8 -> 0x72c7`, preserving the window ID, NDR, result, and both output pairs byte-for-byte. The one-call cap is deliberate because the Snow control uses one successful backing-info transaction, while the repeated Lion calls follow the failed bind. Do not adapt `CGSGetWindowInfo`, rewrite shared-memory outputs, expand the notification broker, revisit ShapeWindow, or change XNU in the same experiment.
+
+## Completed boundary
+
+```text
+Snow GetWindowInfo                               0x7262 / 0x72c6
+Snow GetWindowBackingInfo                        0x7263 / 0x72c7
+Lion GetWindowInfo                               0x7263 / 0x72c7
+Lion GetWindowBackingInfo                        0x7264 / 0x72c8
+backing-info wire geometry                       equivalent
+live Lion 0x7263                                 wrong-routine success collision
+next step                                        one-call ID-only WBI compatibility
+shared-memory output synthesis                   not authorized
+seventh notification registration                held
+CGSShapeWindow                                   held
+XNU                                              no change indicated
+```
