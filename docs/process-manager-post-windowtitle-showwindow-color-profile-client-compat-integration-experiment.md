@@ -30,7 +30,7 @@ Snow Leopard  ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE=passthroug
 Lion          ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE=lion-id-v1
 ```
 
-The Lion adapter is eligible only for the first exact legacy ColorProfileClient request after the accepted ShowWindow compatibility sequence. The request must retain the proven complex-MIG geometry:
+The Lion adapter is eligible only for the first exact legacy ColorProfileClient request in the `S00_BEFORE_ShowWindow` interval. The live ordering is itself part of the predicate: Lion reaches this first ColorProfileClient call after the accepted NewWindow, release-backing, and create-alpha conversions, but before OrderFrontConditionally, AddTrackingArea, or SetFrontWindow has been called. The later three legacy ColorProfileClient retries remain out of scope. The request must retain the proven complex-MIG geometry:
 
 ```text
 request ID               0x74d4
@@ -44,13 +44,21 @@ descriptor type          0x00
 descriptor port          nonzero
 PID                      nonzero
 CGS server port          nonzero and distinct from the application CGS port
+NewWindow compat calls   1
+release-backing calls    1
+create-alpha calls       1
+OrderFront calls         0
+AddTrackingArea calls    0
+SetFrontWindow calls     0
 ```
+
+Snow has different ordering: its one successful legacy ColorProfileClient initialization is observed at `M20_BEFORE_CreateNewWindow`, before the NewWindow/release/create-alpha calls. Snow therefore runs the compatibility-capable interposer strictly in `passthrough` mode and is required to preserve that earlier successful transaction without using Lion's ordering predicate.
 
 The adapter copies the request to private storage and changes only the request ID `0x74d4 -> 0x74d6`. The source request, descriptor, PID, and all body bytes must remain unchanged.
 
 For a native Lion reply, the adapter accepts only reply ID `0x753a` with the established simple-reply bits. A success reply must be size `0x28`, raw result zero, and return a nonzero client ID; an error reply must be size `0x24` with a nonzero raw result. The adapter changes only `0x753a -> 0x7538` before returning to the PPC client and preserves the complete reply body, including result and client-ID bytes.
 
-A second exact legacy ColorProfileClient request is not adapted by this stage. If the first conversion succeeds but the client still retries, stop and preserve the run rather than broadening the predicate.
+A second exact legacy ColorProfileClient request is not adapted by this stage. If the first conversion succeeds but the client still retries, the runner reports `POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_RETRY_AFTER_ADAPTER`; stop and preserve that run rather than broadening the predicate.
 
 ## Safety constraints
 
@@ -173,7 +181,7 @@ export ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE=snow-force-external-v1
   ./ppc-process-manager-post-windowtitle-showwindow-color-profile-client-compat-snowleopard-control.log || exit 1
 ```
 
-Require exactly one ColorProfileClient compatibility call with `mode=passthrough` and `exact=YES`, no adapter PASS marker, and the established Snow transaction unchanged:
+Require exactly one ColorProfileClient compatibility call with `mode=passthrough` and `exact=YES`, with the logged NewWindow/release-backing/create-alpha/OrderFront/AddTrackingArea/SetFrontWindow compatibility counts all still zero at that Snow call, no adapter PASS marker, and the established Snow transaction unchanged:
 
 ```text
 request                    0x74d4
@@ -284,7 +292,7 @@ Do not run the Lion subject a second time.
 
 ### ColorProfileClient adapter succeeds
 
-The leading expected result is one exact compatibility call with:
+The leading expected result is one exact compatibility call at the first Lion ShowWindow color-profile attempt, with NewWindow/release-backing/create-alpha compatibility counts equal to 1 and OrderFront/AddTrackingArea/SetFrontWindow counts equal to 0:
 
 ```text
 legacy request             0x74d4
