@@ -144,7 +144,7 @@ SOURCE_SHA="$(/usr/bin/shasum -a 256 "$SRC" | /usr/bin/awk '{print $1}')"
     echo "$OT"
     echo
     echo "== Process Manager imports =="
-    /usr/bin/nm -u "$OUT" | /usr/bin/grep -E '(_GetProcessForPID|_GetProcessPID|_TransformProcessType|_SetFrontProcess|_GetFrontProcess|_GetCurrentProcess|_CreateNewWindow|_DisposeWindow)' || true
+    /usr/bin/nm -u "$OUT" | /usr/bin/grep -E '(_GetProcessForPID|_GetProcessPID|_TransformProcessType|_SetFrontProcess|_GetFrontProcess|_GetCurrentProcess|_CreateNewWindow|_CFStringCreateWithCString|_SetWindowTitleWithCFString|_ShowWindow|_CFRelease|_DisposeWindow)' || true
     echo
     echo "== SHA-256 =="
     /usr/bin/shasum -a 256 "$OUT"
