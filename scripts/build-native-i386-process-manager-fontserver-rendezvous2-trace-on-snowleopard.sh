@@ -81,7 +81,7 @@ for sym in _bootstrap_look_up _mach_msg; do
 done
 
 for marker in \
-    'PM_NATIVE_FONTSERVER_RENDEZVOUS2_TRACE_BUILD_ID:native-i386-fontserver-rendezvous2-trace-v1' \
+    'PM_NATIVE_FONTSERVER_RENDEZVOUS2_TRACE_BUILD_ID:native-i386-fontserver-rendezvous2-trace-v2' \
     'PM_NATIVE_FONTSERVER_RENDEZVOUS2_REQUEST:' \
     'PM_NATIVE_FONTSERVER_RENDEZVOUS2_REPLY:' \
     'PM_NATIVE_FONTSERVER_RENDEZVOUS2_FIELDS:' \
