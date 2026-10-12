@@ -752,3 +752,10 @@ Keep those commands portable and proportional:
 - where transport between machines is inherently site-specific, list the exact files and required destination rather than pretending one transfer command is universal.
 
 The current authoritative document must be self-contained for build and execution logic, but it should not become a machine-specific transcript.
+
+
+## ShowWindow color-profile/window-context static gate
+
+The SetFrontWindow compatibility conversion passed exactly on Lion: `0x72f2 -> 0x72f5`, native `0x7359 / result 0`, PPC-facing `0x7356 / result 0`, with no body changes. OrderFrontConditionally, AddTrackingArea, and the unchanged `0x7268 / 0x72cc` transaction also passed. ShowWindow still does not return, and no later application-CGS transport mismatch is observed.
+
+The remaining first-order evidence is the repeated CoreGraphics color-profile/window-context failure, which predates OrderFrontConditionally and persists after SetFrontWindow succeeds. Run only `docs/process-manager-post-windowtitle-showwindow-color-profile-window-context-audit.md` next. Generate one static report on Snow Leopard PPC7400 and one on Lion i386 using the prepared analyzer; do not launch the PPC subject or add a color-profile, CoreUI, RawCamera, ShapeWindow, or XNU compatibility rule until those reports are reviewed.
