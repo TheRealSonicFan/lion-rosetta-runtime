@@ -15,7 +15,8 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                          uint64_t);
 extern mach_port_t mig_get_reply_port(void);
 
-#if defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION)
+#if defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_INTEGRATION) || \
+    defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-v2"
 #elif defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-trace-v1"
@@ -80,6 +81,14 @@ static const char kDistributedNotificationsName[] =
 
 #if defined(PM_CPS_SETFRONT_COMPAT_INTEGRATION) && !defined(PM_CPS_SETFRONT_COMPAT_PROTOCOL)
 #define PM_CPS_SETFRONT_COMPAT_PROTOCOL 1
+#endif
+
+#if defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_INTEGRATION) && !defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION)
+#define PM_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION 1
+#endif
+
+#if defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_INTEGRATION) && !defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_TRACE)
+#define PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_TRACE 1
 #endif
 
 #if defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION) && !defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE)
@@ -448,6 +457,16 @@ static const char kDistributedNotificationsName[] =
 #define CGS_COLOR_PROFILE_RESOLVE_OUT1_HI_OFF 0x30U
 #endif
 
+#ifdef PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_INTEGRATION
+#define CGS_COLOR_PROFILE_RESOLVE_COMPAT_BUILD_ID "color-profile-resolve-id-compat-v1"
+#define CGS_COLOR_PROFILE_RESOLVE_COMPAT_BUILD_MARKER "PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_BUILD_ID:" CGS_COLOR_PROFILE_RESOLVE_COMPAT_BUILD_ID
+#define CGS_COLOR_PROFILE_RESOLVE_COMPAT_ENV "ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_MODE"
+#define CGS_COLOR_PROFILE_RESOLVE_COMPAT_PASSTHROUGH "passthrough"
+#define CGS_COLOR_PROFILE_RESOLVE_COMPAT_LION_V1 "lion-id-v1"
+#define CGS_COLOR_PROFILE_RESOLVE_PRIVATE_BUFFER_SIZE 0x00000040U
+#define CGS_COLOR_PROFILE_RESOLVE_MAX_ADAPTED_CALLS 4U
+#endif
+
 #ifdef PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION
 #define CGS_SERVER_VERSION_COMPAT_ENV "ROSETTA_CGS_SERVER_VERSION_COMPAT_MODE"
 #define CGS_SERVER_VERSION_COMPAT_PASSTHROUGH "passthrough"
@@ -566,6 +585,15 @@ static unsigned int gCGSSetFrontWindowCompatCallCount = 0;
 #ifdef PM_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION
 static unsigned int gCGSColorProfileClientCompatCallCount = 0;
 #endif
+#ifdef PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_INTEGRATION
+static unsigned int gCGSColorProfileResolveCompatCallCount = 0;
+static unsigned int gCGSColorProfileResolveAdaptedCallCount = 0;
+static int gCGSColorProfileClientCompatAdapterPassed = 0;
+static uint32_t gCGSColorProfileClientCompatSemanticClientID = 0U;
+static mach_port_t gCGSColorProfileClientCompatRemotePort = MACH_PORT_NULL;
+static mach_port_t gCGSColorProfileClientCompatReplyPort = MACH_PORT_NULL;
+static mach_port_t gCGSColorProfileClientCompatDescriptorPort = MACH_PORT_NULL;
+#endif
 #ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
 static mach_port_t gCGSShowWindowTracePort = MACH_PORT_NULL;
 static unsigned int gCGSShowWindowUnknownTraceCount = 0;
@@ -586,6 +614,25 @@ get_u32(const unsigned char *p)
     memcpy(&value, p, sizeof(value));
     return value;
 }
+
+#ifdef PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_INTEGRATION
+static uint32_t
+cgs_color_profile_decode_u32(const unsigned char *message,
+                             uint32_t ndr_off,
+                             uint32_t value_off)
+{
+    const unsigned char *local_ndr = (const unsigned char *)&NDR_record;
+    uint32_t value = get_u32(message + value_off);
+
+    if (message[ndr_off + 4U] != local_ndr[4]) {
+        value = ((value & 0x000000ffU) << 24) |
+                ((value & 0x0000ff00U) << 8) |
+                ((value & 0x00ff0000U) >> 8) |
+                ((value & 0xff000000U) >> 24);
+    }
+    return value;
+}
+#endif
 
 #ifdef PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION
 static uint32_t
@@ -3448,6 +3495,32 @@ handle_cgs_color_profile_client_compat(
     }
 
     memcpy(m, adapted, native_reply_size);
+#ifdef PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_INTEGRATION
+    if (strcmp(reply_class, "SUCCESS") == 0) {
+        gCGSColorProfileClientCompatAdapterPassed = 1;
+        gCGSColorProfileClientCompatSemanticClientID =
+            cgs_color_profile_decode_u32(
+                native_reply_before,
+                CGS_COLOR_PROFILE_CLIENT_REPLY_NDR_OFF,
+                CGS_COLOR_PROFILE_CLIENT_ID_OFF);
+        gCGSColorProfileClientCompatRemotePort =
+            (mach_port_t)get_u32(source_before + 0x08U);
+        gCGSColorProfileClientCompatReplyPort = rcv_name;
+        gCGSColorProfileClientCompatDescriptorPort =
+            (mach_port_t)get_u32(
+                source_before + CGS_COLOR_PROFILE_CLIENT_DESC_PORT_OFF);
+        fprintf(stderr,
+                "%s\n",
+                CGS_COLOR_PROFILE_RESOLVE_COMPAT_BUILD_MARKER);
+        fprintf(stderr,
+                "PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_PREREQ:cpcAdapterPassed=YES clientId=%lu remotePort=0x%08lx replyPort=0x%08lx descriptorPort=0x%08lx\n",
+                (unsigned long)gCGSColorProfileClientCompatSemanticClientID,
+                (unsigned long)(uint32_t)gCGSColorProfileClientCompatRemotePort,
+                (unsigned long)(uint32_t)gCGSColorProfileClientCompatReplyPort,
+                (unsigned long)(uint32_t)gCGSColorProfileClientCompatDescriptorPort);
+        fflush(stderr);
+    }
+#endif
     fprintf(stderr,
             "PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:index=%u nativeId=0x%08lx legacyId=0x%08lx size=0x%08lx changedBytes=%u bodyChangedBytes=%u resultRaw=0x%08lx clientIdRaw=0x%08lx replyClass=%s\n",
             gCGSColorProfileClientCompatCallCount,
@@ -3461,6 +3534,294 @@ handle_cgs_color_profile_client_compat(
             reply_class);
     fprintf(stderr,
             "PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS\n");
+    fflush(stderr);
+    return mr;
+}
+#endif
+
+#ifdef PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_INTEGRATION
+static int
+is_exact_legacy_cgs_color_profile_resolve_request(
+    mach_msg_header_t *msg,
+    mach_msg_option_t option,
+    mach_msg_size_t send_size,
+    mach_msg_size_t rcv_size,
+    mach_port_name_t rcv_name,
+    mach_msg_timeout_t timeout,
+    mach_port_name_t notify)
+{
+    unsigned char *m = (unsigned char *)msg;
+
+    if (msg == NULL)
+        return 0;
+
+    return get_u32(m + 0x00U) == CGS_COLOR_PROFILE_RESOLVE_BITS &&
+           get_u32(m + 0x08U) != 0U &&
+           get_u32(m + 0x0cU) == (uint32_t)rcv_name &&
+           rcv_name != MACH_PORT_NULL &&
+           get_u32(m + 0x14U) == CGS_COLOR_PROFILE_RESOLVE_LEGACY_REQUEST_ID &&
+           option == (mach_msg_option_t)CGS_COLOR_PROFILE_RESOLVE_MSG_OPTIONS &&
+           send_size == (mach_msg_size_t)CGS_COLOR_PROFILE_RESOLVE_SEND_SIZE &&
+           rcv_size == (mach_msg_size_t)CGS_COLOR_PROFILE_RESOLVE_RECV_SIZE &&
+           timeout == MACH_MSG_TIMEOUT_NONE &&
+           notify == MACH_PORT_NULL &&
+           get_u32(m + CGS_COLOR_PROFILE_RESOLVE_DESC_COUNT_OFF) == 1U &&
+           get_u32(m + CGS_COLOR_PROFILE_RESOLVE_DESC_PORT_OFF) != 0U &&
+           m[CGS_COLOR_PROFILE_RESOLVE_DESC_DISPOSITION_OFF] == 0x13U &&
+           m[CGS_COLOR_PROFILE_RESOLVE_DESC_TYPE_OFF] == 0x00U &&
+           cgs_color_profile_decode_u32(
+               m,
+               CGS_COLOR_PROFILE_RESOLVE_NDR_OFF,
+               CGS_COLOR_PROFILE_RESOLVE_CLIENT_ID_OFF) != 0U &&
+           cgs_color_profile_decode_u32(
+               m,
+               CGS_COLOR_PROFILE_RESOLVE_NDR_OFF,
+               CGS_COLOR_PROFILE_RESOLVE_PROFILE_ID_OFF) == 1U;
+}
+
+static mach_msg_return_t
+handle_cgs_color_profile_resolve_compat(
+    mach_msg_header_t *msg,
+    mach_msg_option_t option,
+    mach_msg_size_t send_size,
+    mach_msg_size_t rcv_size,
+    mach_port_name_t rcv_name,
+    mach_msg_timeout_t timeout,
+    mach_port_name_t notify)
+{
+    const char *mode;
+    unsigned char *m = (unsigned char *)msg;
+    uint32_t storage[
+        CGS_COLOR_PROFILE_RESOLVE_PRIVATE_BUFFER_SIZE / sizeof(uint32_t)];
+    unsigned char *adapted = (unsigned char *)storage;
+    unsigned char source_before[CGS_COLOR_PROFILE_RESOLVE_SEND_SIZE];
+    unsigned char native_reply_before[CGS_COLOR_PROFILE_RESOLVE_SUCCESS_REPLY_SIZE];
+    mach_msg_return_t mr;
+    uint32_t native_reply_bits;
+    uint32_t native_reply_size;
+    uint32_t native_reply_id;
+    uint32_t request_client_id;
+    uint32_t request_profile_id;
+    uint32_t native_result_raw = 0U;
+    uint32_t native_out0_lo_raw = 0U;
+    uint32_t native_out0_hi_raw = 0U;
+    uint32_t native_out1_lo_raw = 0U;
+    uint32_t native_out1_hi_raw = 0U;
+    uint32_t off;
+    unsigned int request_changed = 0U;
+    unsigned int request_body_changed = 0U;
+    unsigned int source_changed = 0U;
+    unsigned int reply_changed = 0U;
+    unsigned int reply_body_changed = 0U;
+    int exact;
+    int provenance_exact;
+
+    ++gCGSColorProfileResolveCompatCallCount;
+    mode = getenv(CGS_COLOR_PROFILE_RESOLVE_COMPAT_ENV);
+    exact = is_exact_legacy_cgs_color_profile_resolve_request(
+        msg, option, send_size, rcv_size, rcv_name, timeout, notify);
+    request_client_id = exact ?
+        cgs_color_profile_decode_u32(
+            m,
+            CGS_COLOR_PROFILE_RESOLVE_NDR_OFF,
+            CGS_COLOR_PROFILE_RESOLVE_CLIENT_ID_OFF) : 0U;
+    request_profile_id = exact ?
+        cgs_color_profile_decode_u32(
+            m,
+            CGS_COLOR_PROFILE_RESOLVE_NDR_OFF,
+            CGS_COLOR_PROFILE_RESOLVE_PROFILE_ID_OFF) : 0U;
+    provenance_exact =
+        exact &&
+        gCGSColorProfileClientCompatAdapterPassed &&
+        gCGSColorProfileClientCompatSemanticClientID != 0U &&
+        request_client_id == gCGSColorProfileClientCompatSemanticClientID &&
+        get_u32(m + 0x08U) ==
+            (uint32_t)gCGSColorProfileClientCompatRemotePort &&
+        rcv_name == gCGSColorProfileClientCompatReplyPort &&
+        get_u32(m + CGS_COLOR_PROFILE_RESOLVE_DESC_PORT_OFF) ==
+            (uint32_t)gCGSColorProfileClientCompatDescriptorPort;
+
+    fprintf(stderr, "%s\n", CGS_COLOR_PROFILE_RESOLVE_COMPAT_BUILD_MARKER);
+    fprintf(stderr,
+            "PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:index=%u adapted=%u mode=%s exact=%s provenanceExact=%s clientId=%lu expectedClientId=%lu profileId=%lu remotePort=0x%08lx expectedRemotePort=0x%08lx replyPort=0x%08lx expectedReplyPort=0x%08lx descriptorPort=0x%08lx expectedDescriptorPort=0x%08lx\n",
+            gCGSColorProfileResolveCompatCallCount,
+            gCGSColorProfileResolveAdaptedCallCount,
+            mode ? mode : "(unset)",
+            exact ? "YES" : "NO",
+            provenance_exact ? "YES" : "NO",
+            (unsigned long)request_client_id,
+            (unsigned long)gCGSColorProfileClientCompatSemanticClientID,
+            (unsigned long)request_profile_id,
+            (unsigned long)get_u32(m + 0x08U),
+            (unsigned long)(uint32_t)gCGSColorProfileClientCompatRemotePort,
+            (unsigned long)rcv_name,
+            (unsigned long)(uint32_t)gCGSColorProfileClientCompatReplyPort,
+            (unsigned long)get_u32(
+                m + CGS_COLOR_PROFILE_RESOLVE_DESC_PORT_OFF),
+            (unsigned long)(uint32_t)gCGSColorProfileClientCompatDescriptorPort);
+    fflush(stderr);
+
+    if (mode != NULL &&
+        strcmp(mode, CGS_COLOR_PROFILE_RESOLVE_COMPAT_PASSTHROUGH) == 0) {
+        fprintf(stderr,
+                "PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:PASSTHROUGH\n");
+        fflush(stderr);
+        return call_original_mach_msg(msg, option, send_size,
+                                      rcv_size, rcv_name,
+                                      timeout, notify);
+    }
+
+    if (mode == NULL ||
+        strcmp(mode, CGS_COLOR_PROFILE_RESOLVE_COMPAT_LION_V1) != 0 ||
+        !provenance_exact ||
+        gCGSColorProfileClientCompatCallCount != 1U ||
+        gCGSColorProfileResolveAdaptedCallCount >=
+            CGS_COLOR_PROFILE_RESOLVE_MAX_ADAPTED_CALLS) {
+        fprintf(stderr,
+                "PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:PREDICATE_REJECTED_PASSTHROUGH\n");
+        fflush(stderr);
+        return call_original_mach_msg(msg, option, send_size,
+                                      rcv_size, rcv_name,
+                                      timeout, notify);
+    }
+
+    memset(storage, 0, sizeof(storage));
+    memcpy(source_before, m, CGS_COLOR_PROFILE_RESOLVE_SEND_SIZE);
+    memcpy(adapted, m, CGS_COLOR_PROFILE_RESOLVE_SEND_SIZE);
+    put_u32(adapted + 0x14U, CGS_COLOR_PROFILE_RESOLVE_LION_REQUEST_ID);
+
+    for (off = 0U; off < CGS_COLOR_PROFILE_RESOLVE_SEND_SIZE; ++off) {
+        if (adapted[off] != source_before[off]) {
+            ++request_changed;
+            if (off < 0x14U || off >= 0x18U)
+                ++request_body_changed;
+        }
+        if (m[off] != source_before[off])
+            ++source_changed;
+    }
+
+    if (request_changed != 1U ||
+        request_body_changed != 0U ||
+        source_changed != 0U ||
+        get_u32(adapted + 0x14U) !=
+            CGS_COLOR_PROFILE_RESOLVE_LION_REQUEST_ID) {
+        fprintf(stderr,
+                "PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:REQUEST_POSTCHECK_FAILED_PASSTHROUGH\n");
+        fflush(stderr);
+        return call_original_mach_msg(msg, option, send_size,
+                                      rcv_size, rcv_name,
+                                      timeout, notify);
+    }
+
+    ++gCGSColorProfileResolveAdaptedCallCount;
+    fprintf(stderr,
+            "PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_ADAPTED_REQUEST:index=%u legacyId=0x%08lx lionId=0x%08lx send=0x%08lx recv=0x%08lx changedBytes=%u bodyChangedBytes=%u sourceChangedBytes=%u clientId=%lu profileId=%lu\n",
+            gCGSColorProfileResolveAdaptedCallCount,
+            (unsigned long)get_u32(source_before + 0x14U),
+            (unsigned long)get_u32(adapted + 0x14U),
+            (unsigned long)send_size,
+            (unsigned long)rcv_size,
+            request_changed,
+            request_body_changed,
+            source_changed,
+            (unsigned long)request_client_id,
+            (unsigned long)request_profile_id);
+    fflush(stderr);
+
+    mr = call_original_mach_msg((mach_msg_header_t *)adapted,
+                                option, send_size, rcv_size,
+                                rcv_name, timeout, notify);
+    fprintf(stderr,
+            "PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_NATIVE_MACH_RETURN:index=%u kr=%ld hex=0x%08lx\n",
+            gCGSColorProfileResolveAdaptedCallCount,
+            (long)mr,
+            (unsigned long)(uint32_t)mr);
+    fflush(stderr);
+
+    if (mr != MACH_MSG_SUCCESS)
+        return mr;
+
+    native_reply_bits = get_u32(adapted + 0x00U);
+    native_reply_size = get_u32(adapted + 0x04U);
+    native_reply_id = get_u32(adapted + 0x14U);
+    if (native_reply_size >= CGS_COLOR_PROFILE_RESOLVE_ERROR_REPLY_SIZE)
+        native_result_raw =
+            get_u32(adapted + CGS_COLOR_PROFILE_RESOLVE_RESULT_OFF);
+    if (native_reply_size >= CGS_COLOR_PROFILE_RESOLVE_SUCCESS_REPLY_SIZE) {
+        native_out0_lo_raw =
+            get_u32(adapted + CGS_COLOR_PROFILE_RESOLVE_OUT0_LO_OFF);
+        native_out0_hi_raw =
+            get_u32(adapted + CGS_COLOR_PROFILE_RESOLVE_OUT0_HI_OFF);
+        native_out1_lo_raw =
+            get_u32(adapted + CGS_COLOR_PROFILE_RESOLVE_OUT1_LO_OFF);
+        native_out1_hi_raw =
+            get_u32(adapted + CGS_COLOR_PROFILE_RESOLVE_OUT1_HI_OFF);
+    }
+
+    fprintf(stderr,
+            "PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_NATIVE_REPLY:index=%u bits=0x%08lx size=0x%08lx id=0x%08lx resultRaw=0x%08lx out0LoRaw=0x%08lx out0HiRaw=0x%08lx out1LoRaw=0x%08lx out1HiRaw=0x%08lx\n",
+            gCGSColorProfileResolveAdaptedCallCount,
+            (unsigned long)native_reply_bits,
+            (unsigned long)native_reply_size,
+            (unsigned long)native_reply_id,
+            (unsigned long)native_result_raw,
+            (unsigned long)native_out0_lo_raw,
+            (unsigned long)native_out0_hi_raw,
+            (unsigned long)native_out1_lo_raw,
+            (unsigned long)native_out1_hi_raw);
+    fflush(stderr);
+
+    if (native_reply_bits != 0x00001200U ||
+        native_reply_id != CGS_COLOR_PROFILE_RESOLVE_LION_REPLY_ID ||
+        (native_reply_size != CGS_COLOR_PROFILE_RESOLVE_SUCCESS_REPLY_SIZE &&
+         native_reply_size != CGS_COLOR_PROFILE_RESOLVE_ERROR_REPLY_SIZE)) {
+        if (native_reply_size > 0U &&
+            native_reply_size <= CGS_COLOR_PROFILE_RESOLVE_PRIVATE_BUFFER_SIZE)
+            memcpy(m, adapted, native_reply_size);
+        fprintf(stderr,
+                "PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:NATIVE_REPLY_REJECTED\n");
+        fflush(stderr);
+        return mr;
+    }
+
+    memcpy(native_reply_before, adapted, native_reply_size);
+    put_u32(adapted + 0x14U, CGS_COLOR_PROFILE_RESOLVE_LEGACY_REPLY_ID);
+
+    for (off = 0U; off < native_reply_size; ++off) {
+        if (adapted[off] != native_reply_before[off]) {
+            ++reply_changed;
+            if (off < 0x14U || off >= 0x18U)
+                ++reply_body_changed;
+        }
+    }
+
+    if (reply_changed != 1U ||
+        reply_body_changed != 0U ||
+        get_u32(adapted + 0x14U) !=
+            CGS_COLOR_PROFILE_RESOLVE_LEGACY_REPLY_ID) {
+        memcpy(m, native_reply_before, native_reply_size);
+        fprintf(stderr,
+                "PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:REPLY_POSTCHECK_FAILED_NATIVE_COPIED\n");
+        fflush(stderr);
+        return mr;
+    }
+
+    memcpy(m, adapted, native_reply_size);
+    fprintf(stderr,
+            "PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_ADAPTED_REPLY:index=%u nativeId=0x%08lx legacyId=0x%08lx size=0x%08lx changedBytes=%u bodyChangedBytes=%u resultRaw=0x%08lx out0LoRaw=0x%08lx out0HiRaw=0x%08lx out1LoRaw=0x%08lx out1HiRaw=0x%08lx\n",
+            gCGSColorProfileResolveAdaptedCallCount,
+            (unsigned long)CGS_COLOR_PROFILE_RESOLVE_LION_REPLY_ID,
+            (unsigned long)get_u32(m + 0x14U),
+            (unsigned long)get_u32(m + 0x04U),
+            reply_changed,
+            reply_body_changed,
+            (unsigned long)native_result_raw,
+            (unsigned long)native_out0_lo_raw,
+            (unsigned long)native_out0_hi_raw,
+            (unsigned long)native_out1_lo_raw,
+            (unsigned long)native_out1_hi_raw);
+    fprintf(stderr,
+            "PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS\n");
     fflush(stderr);
     return mr;
 }
@@ -4005,6 +4366,13 @@ trace_cgs_message(mach_msg_header_t *msg,
 #ifdef PM_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_INTEGRATION
     if (request_id == CGS_ADD_TRACKING_AREA_INLINE_LEGACY_REQUEST_ID) {
         mr = handle_cgs_add_tracking_area_compat(
+            msg, option, send_size, rcv_size, rcv_name,
+            timeout, notify);
+    } else
+#endif
+#ifdef PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_INTEGRATION
+    if (request_id == CGS_COLOR_PROFILE_RESOLVE_LEGACY_REQUEST_ID) {
+        mr = handle_cgs_color_profile_resolve_compat(
             msg, option, send_size, rcv_size, rcv_name,
             timeout, notify);
     } else
