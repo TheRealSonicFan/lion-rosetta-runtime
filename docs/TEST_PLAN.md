@@ -759,3 +759,10 @@ The current authoritative document must be self-contained for build and executio
 The SetFrontWindow compatibility conversion passed exactly on Lion: `0x72f2 -> 0x72f5`, native `0x7359 / result 0`, PPC-facing `0x7356 / result 0`, with no body changes. OrderFrontConditionally, AddTrackingArea, and the unchanged `0x7268 / 0x72cc` transaction also passed. ShowWindow still does not return, and no later application-CGS transport mismatch is observed.
 
 The remaining first-order evidence is the repeated CoreGraphics color-profile/window-context failure, which predates OrderFrontConditionally and persists after SetFrontWindow succeeds. Run only `docs/process-manager-post-windowtitle-showwindow-color-profile-window-context-audit.md` next. Generate one static report on Snow Leopard PPC7400 and one on Lion i386 using the prepared analyzer; do not launch the PPC subject or add a color-profile, CoreUI, RawCamera, ShapeWindow, or XNU compatibility rule until those reports are reviewed.
+
+
+## ShowWindow ColorProfileClient live discriminator
+
+The static Snow/Lion CoreGraphics audit passed and proves an exact generated-MIG ColorProfileClient protocol differential: Snow PPC `0x74d4 / 0x7538`, Lion i386 `0x74d6 / 0x753a`, with otherwise matching `0x80001513` request bits, `0x34 / 0x30` send/receive geometry, one port descriptor, NDR/PID layout, and `0x28 / 0x24` success/error replies. Caller control flow proves that failure of this helper is the source of the observed color-profile-client initialization error.
+
+Follow `docs/process-manager-post-windowtitle-showwindow-color-profile-client-live-trace-experiment.md`. Build the target-only passive tracer on Snow, require the legacy `0x74d4` call to return `0x7538 / result 0` with a nonzero client ID while ShowWindow still passes, repeat syscall 295, then run Lion exactly once. The leading expected discriminator is a legacy `0x74d4` transaction returning a simple `0x7538 / -304` error without any `0x74d6` request. Do not implement the statically indicated `+2` adapter until that live result is confirmed.
