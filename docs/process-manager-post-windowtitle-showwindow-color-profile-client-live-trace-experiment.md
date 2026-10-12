@@ -326,3 +326,14 @@ CGSShapeWindow                                   held
 next step                                        exact passive ColorProfileClient live trace
 XNU                                              no change indicated
 ```
+
+
+## Completed result — 2026-10-12
+
+The returned Snow and Lion artifacts satisfy the decision gate exactly.
+
+Snow Leopard emitted one exact legacy ColorProfileClient transaction: request `0x74d4`, successful Mach transport, legacy reply `0x7538` of size `0x28`, raw result zero, and a nonzero returned client ID. `ShowWindow` returned, the ShowWindow PASS marker was reached, disposal completed, and the Snow control ended in PASS.
+
+Lion emitted four exact legacy `0x74d4` transactions on the non-application CGS server port. Each had the same complex request geometry as the Snow control, Mach transport returned success, and each received a simple legacy-facing `0x7538 / 0x24` error reply with raw result `0xd0feffff` (legacy-visible `-304`) and no client ID. No Lion-native `0x74d6` request was observed. The accepted NewWindow, release-backing, create-alpha, AddTrackingArea, OrderFrontConditionally, and SetFrontWindow adapters remained successful, the exact-six distributed-notifications broker passed, and protected hashes remained unchanged. The repeated failures were followed immediately by `CGSColorProfileCreateWithColorProfileID: Cannot initialize color profile client`, invalid color-profile ID, and window-context creation errors.
+
+This proves the live failure is the statically predicted ColorProfileClient routine-ID boundary and authorizes the narrow user-space compatibility conversion. The next experiment is [Process Manager ShowWindow ColorProfileClient compatibility integration](process-manager-post-windowtitle-showwindow-color-profile-client-compat-integration-experiment.md): translate only request ID `0x74d4 -> 0x74d6` in a private copy, map only native reply ID `0x753a -> 0x7538`, and preserve the descriptor, PID, request body, result, and returned client-ID bytes unchanged. No XNU change, kernel rebuild, or reboot is indicated.
