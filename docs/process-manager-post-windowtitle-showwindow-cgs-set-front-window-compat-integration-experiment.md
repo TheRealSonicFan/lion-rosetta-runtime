@@ -389,3 +389,31 @@ color-profile/window-context diagnostics          held
 next step                                        one exact SetFrontWindow integration
 XNU                                              no change indicated
 ```
+
+
+## Observed result — SetFrontWindow adapter passed; color-profile/window-context path is now primary
+
+The Snow control passed completely. The exact nonzero-window SetFrontWindow call matched once in passthrough mode and returned legacy `0x7356 / result 0`; the known later zero-window disposal-time `0x72f2` request remained outside the compatibility-call count and also passed natively.
+
+The Lion run accepted the full upstream stack. OrderFrontConditionally and AddTrackingArea both remained adapter PASS, `0x7268 / 0x72cc` succeeded unchanged, and the exact SetFrontWindow predicate matched once with window ID `0x344`. The adapter changed only `0x72f2 -> 0x72f5`, received native `0x7359 / 0x24 / result 0`, and changed only the reply ID back to `0x7356`. The SetFrontWindow adapter therefore passed exactly as designed.
+
+ShowWindow still did not reach `S01_AFTER_ShowWindow`; the process exited 139 and generated crash/core diagnostics. No additional application-CGS request/reply mismatch was observed after the successful SetFrontWindow conversion. The exact-six broker remained `register=6 callback=0 rejects=0 exact=YES`, and protected hashes were unchanged.
+
+The remaining first-order failure is the persistent CoreGraphics cluster:
+
+```text
+CGSColorProfileCreateWithColorProfileID: Cannot initialize color profile client
+_CGSWindowColorProfile: Invalid color profile id = 0x1
+Failed to create window context color transform
+CGWindowContextCreate: failed to create context delegate.
+```
+
+That cluster was already present before OrderFrontConditionally and continues after SetFrontWindow succeeds, followed by null-context drawing failures and CoreUI/RawCamera activity. Do not add another CGS ID adapter from this run.
+
+The authoritative next step is:
+
+```text
+docs/process-manager-post-windowtitle-showwindow-color-profile-window-context-audit.md
+```
+
+Run only the static Snow/Lion CoreGraphics differential and return the two reports before any further live compatibility change.
