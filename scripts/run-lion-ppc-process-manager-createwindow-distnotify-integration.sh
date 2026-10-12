@@ -34,6 +34,7 @@ RELEASEBACKING_COMPAT_MODE="${ROSETTA_CGS_RELEASEBACKING_COMPAT_MODE:-}"
 OPACITY_ALPHA_TRACE_MODE="${ROSETTA_CGS_POST_RELEASEBACKING_OPACITY_TRACE_MODE:-}"
 OPACITY_ALPHA_CREATE_COMPAT_MODE="${ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE:-}"
 POST_CREATEWINDOW_TITLE_MODE="${ROSETTA_POST_CREATEWINDOW_TITLE_VALIDATION_MODE:-}"
+POST_WINDOWTITLE_SHOWWINDOW_MODE="${ROSETTA_POST_WINDOWTITLE_SHOWWINDOW_VALIDATION_MODE:-}"
 
 TRANSLATOR="/usr/libexec/oah/translate"
 PRIVATE_DYLD="/usr/oah/dyld"
@@ -212,6 +213,17 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
     [ -z "$OPACITY_ALPHA_TRACE_MODE" ] ||
         die 64 "post-CreateNewWindow title validation requires opacity passive trace unset"
     EXPECTED_SUBJECT_BUILD_ID="cps-windowtitle-validation-v1"
+fi
+if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
+        die 64 "unsupported ROSETTA_POST_WINDOWTITLE_SHOWWINDOW_VALIDATION_MODE: $POST_WINDOWTITLE_SHOWWINDOW_MODE"
+    [ "$POST_CREATEWINDOW_TITLE_MODE" = "lion-windowtitle-v1" ] ||
+        die 64 "ShowWindow validation requires the accepted window-title validation mode"
+    [ "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" = "lion-rendezvous-v1" ] ||
+        die 64 "ShowWindow validation requires the accepted FontServer rendezvous compatibility mode"
+    [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] ||
+        die 64 "ShowWindow validation requires the reviewed exact-five notification broker"
+    EXPECTED_SUBJECT_BUILD_ID="cps-showwindow-validation-v1"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 
@@ -465,6 +477,15 @@ echo "$BROKER_ARCH" | /usr/bin/grep -Eq '(^|[[:space:]])i386([[:space:]]|$)' ||
 
 /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq \
     "PM_CPS_CREATEWINDOW_BUILD_ID:$EXPECTED_SUBJECT_BUILD_ID" || die 68 "subject build marker missing"
+if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+    for marker in \
+        'PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow' \
+        'PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow' \
+        'PM_POSTWINDOWSHOW_RESULT:SHOWWINDOW_PASS'; do
+        /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "ShowWindow subject marker missing: $marker"
+    done
+fi
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
     "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || die 68 "CoreServices CPS registration compatibility build marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
@@ -673,6 +694,9 @@ else
 fi
 if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
     log "post_createwindow_title_validation_mode=$POST_CREATEWINDOW_TITLE_MODE"
+fi
+if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+    log "post_windowtitle_showwindow_validation_mode=$POST_WINDOWTITLE_SHOWWINDOW_MODE"
 fi
 
 MARKER="$(/usr/bin/mktemp /tmp/lion-createwindow-validation-marker.XXXXXX)" || die 73 "could not create diagnostic marker"
@@ -1717,6 +1741,20 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_ERROR"
         exit 0
     fi
+    if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_RESULT:SHOWWINDOW_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_MARKER_INCOMPLETE"
+            exit 0
+        fi
+    fi
     if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T04_BEFORE_CFRelease' "$RAW_LOG" ||
        ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T05_AFTER_CFRelease' "$RAW_LOG"; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFRELEASE_INCOMPLETE"
@@ -1766,7 +1804,9 @@ if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:P
 fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
-    if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+    if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_VALIDATION_PASS"
+    elif [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_INTEGRATION_PASS"
     elif [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_TITLE_PASS"
