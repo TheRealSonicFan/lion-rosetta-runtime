@@ -1974,11 +1974,11 @@ if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
     COLOR_PROFILE_CLIENT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
     log "cgs_color_profile_client_compat_call_count=$COLOR_PROFILE_CLIENT_COMPAT_COUNT"
     log "cgs_color_profile_client_legacy_trace_count=$COLOR_PROFILE_CLIENT_TRACE_COUNT"
-    if [ "$COLOR_PROFILE_CLIENT_COMPAT_COUNT" -ne 1 ] || [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -ne 1 ]; then
+    if [ "$COLOR_PROFILE_CLIENT_COMPAT_COUNT" -lt 1 ] || [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -lt 1 ]; then
         log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_PREDICATE_NOT_REACHED"
         exit 0
     fi
-    if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*descriptorCount=1 .*disposition=0x13 type=0x00 .*setFrontWindowCompatCalls=1 orderFrontCompatCalls=1 addTrackingCompatCalls=1 opacityCreateCompatCalls=1' "$RAW_LOG" ||
+    if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*descriptorCount=1 .*disposition=0x13 type=0x00 .*newWindowCompatCalls=1 releaseBackingCompatCalls=1 opacityCreateCompatCalls=1 orderFrontCompatCalls=0 addTrackingCompatCalls=0 setFrontWindowCompatCalls=0' "$RAW_LOG" ||
        ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000074d4 lionId=0x000074d6 send=0x00000034 recv=0x00000030 changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*pid=[1-9][0-9]*' "$RAW_LOG" ||
        ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
         log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
@@ -1994,6 +1994,10 @@ if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
             exit 0
         fi
         log "cgs_color_profile_client_native_reply_class=SUCCESS"
+        if [ "$COLOR_PROFILE_CLIENT_COMPAT_COUNT" -ne 1 ] || [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_RETRY_AFTER_ADAPTER"
+            exit 0
+        fi
     elif /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000753a resultRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* clientIdRaw=0x00000000 replyClass=ERROR' "$RAW_LOG" &&
          /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753a legacyId=0x00007538 size=0x00000024 changedBytes=1 bodyChangedBytes=0 resultRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* clientIdRaw=0x00000000 replyClass=ERROR' "$RAW_LOG" &&
          /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
