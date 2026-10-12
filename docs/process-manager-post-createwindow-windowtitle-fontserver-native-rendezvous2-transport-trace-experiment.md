@@ -275,3 +275,49 @@ The corrected tracer:
 - fixes the result-marker newline so the exit-status line is separate.
 
 Pull current `main`, rebuild the probe/tracer with Phase B, transfer the new artifacts, and repeat exactly one Phase-D native Lion trace. Return the same five evidence files with the newly built tracer provenance. Do not run the translated-PPC title path and do not advance to a copied-buffer rendezvous proof until the corrected native reply is captured.
+
+
+## Observed completed result — native Lion Rendezvous2 dynamically confirmed
+
+The corrected v2 run fully satisfies the native-server decision gate.
+
+Observed request:
+
+```text
+FontServer bootstrap                  kr=0, nonzero port
+trace build marker                    native-i386-fontserver-rendezvous2-trace-v2
+request ID                            0x32e7
+bits                                  0x1513
+send / receive                        0x18 / 0x40
+mach_msg option                       0x3
+```
+
+Observed reply:
+
+```text
+mach_msg                              0
+reply ID                              0x334b
+bits                                  0x80001200
+size                                  0x38
+complex                               YES
+descriptor count                      1
+OOL address                           0x000b7000
+descriptor size                       0x00001000
+descriptor flags                      0x01000101
+protocol version                      5
+explicit payload size                 0x00001000
+result                                CAPTURED_COMPLEX_V5
+native probe exit                     0
+```
+
+This dynamically confirms the complete native Lion Rendezvous2 success geometry predicted by the static audit. The OOL address is per-run and is not a compatibility predicate.
+
+The returned trace `.info.txt` sidecar still printed `build_id=native-i386-fontserver-rendezvous2-trace-v1`. That line was a build-script metadata defect: the running dylib itself emitted the embedded v2 build marker twice, and the info/SHA sidecars agree on dylib SHA-256 `b48567470e18a453059ee26c265b0d8ed28340e707c2d31ddd5d9aa98e100437`. Runtime `main` now fixes the info-sidecar build-ID line for future builds. The successful protocol capture does not need to be rerun for that metadata-only correction.
+
+The authoritative next stage is:
+
+```text
+docs/process-manager-post-createwindow-windowtitle-fontserver-rendezvous-compat-protocol-adapter-experiment.md
+```
+
+That stage is a standalone PPC no-Mach-IPC copied-buffer proof. It must prove the request ID/receive-envelope conversion and the structural `0x38 -> 0x34` complex-reply conversion that removes protocol version 5 while preserving the OOL descriptor, NDR, and explicit payload size. Do not rerun the translated-PPC title path or integrate a live FontServer adapter until that local proof is reviewed.
