@@ -29,6 +29,7 @@ OPACITY_ALPHA_CREATE_COMPAT_MODE="${ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE
 POST_CREATEWINDOW_TITLE_MODE="${ROSETTA_POST_CREATEWINDOW_TITLE_VALIDATION_MODE:-}"
 POST_WINDOWTITLE_SHOWWINDOW_MODE="${ROSETTA_POST_WINDOWTITLE_SHOWWINDOW_VALIDATION_MODE:-}"
 SHOWWINDOW_UNKNOWN_TRACE_MODE="${ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE:-}"
+SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE:-}"
 
 PRIVATE_DYLD="/usr/oah/dyld"
 EXPECTED_DYLD_SHA="963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb"
@@ -157,6 +158,17 @@ if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     [ "$OPACITY_ALPHA_CREATE_COMPAT_MODE" = "passthrough" ] ||
         fail "Snow ShowWindow CGS passive trace requires opacity create-alpha passthrough"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-unknown-trace-v1"
+fi
+if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+    [ "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" = "passthrough" ] ||
+        fail "Snow CGSAddTrackingArea compatibility mode must be passthrough"
+    [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "snow-passive-v1" ] ||
+        fail "Snow CGSAddTrackingArea compatibility control requires snow-passive-v1 ShowWindow CGS tracing"
+    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "snow-showwindow-v1" ] ||
+        fail "Snow CGSAddTrackingArea compatibility control requires the ShowWindow subject"
+    [ "$OPACITY_ALPHA_CREATE_COMPAT_MODE" = "passthrough" ] ||
+        fail "Snow CGSAddTrackingArea compatibility control requires opacity create-alpha passthrough"
+    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-compat-v1"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 abspath() {
@@ -471,6 +483,12 @@ if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
 else
     unset ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE
 fi
+if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+    echo "showwindow_add_tracking_area_compat_mode=$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" | /usr/bin/tee -a "$LOG"
+    export ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE="$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE"
+else
+    unset ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE
+fi
 echo "private_dyld_sha256=$EXPECTED_DYLD_SHA" | /usr/bin/tee -a "$LOG"
 if [ -n "$HITOOLBOX_TRACE" ]; then
     echo "hitoolbox_cfbundle_trace_path=$HITOOLBOX_TRACE_ABS" | /usr/bin/tee -a "$LOG"
@@ -678,6 +696,24 @@ if [ "$RC" -eq 0 ] &&
            ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:' "$LOG"; then
             echo "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT" | /usr/bin/tee -a "$LOG"
             echo "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT" | /usr/bin/tee -a "$LOG"
+            if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+                ADD_TRACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ADD_TRACKING_AREA_COMPAT_CALL:index=' "$LOG" 2>/dev/null || true)"
+                ADD_TRACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY' "$LOG" 2>/dev/null || true)"
+                echo "cgs_add_tracking_area_compat_call_count=$ADD_TRACKING_COMPAT_COUNT" | /usr/bin/tee -a "$LOG"
+                echo "cgs_add_tracking_area_legacy_trace_count=$ADD_TRACKING_TRACE_COUNT" | /usr/bin/tee -a "$LOG"
+                if [ "$ADD_TRACKING_COMPAT_COUNT" -ne 1 ] ||
+                   [ "$ADD_TRACKING_TRACE_COUNT" -ne 1 ] ||
+                   ! /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_CALL:index=1 mode=passthrough exact=YES .*count=9 opacityCreateCompatCalls=1' "$LOG" ||
+                   ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_RESULT:PASSTHROUGH' "$LOG" ||
+                   /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_RESULT:ADAPTER_PASS' "$LOG" ||
+                   ! /usr/bin/grep -Fq 'kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY bits=0x00001513' "$LOG" ||
+                   ! /usr/bin/grep -Fq 'id=0x00007388 expectedReply=0x000073ec option=0x00000003 send=0x00000060 recv=0x0000002c' "$LOG" ||
+                   ! /usr/bin/grep -Fq 'kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY kr=0 hex=0x00000000' "$LOG" ||
+                   ! /usr/bin/grep -Fq 'kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY bits=0x00001200 size=0x00000024 id=0x000073ec expected=0x000073ec idMatch=YES' "$LOG"; then
+                    echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
+                    exit 1
+                fi
+            fi
             if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
                 if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
                     if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
@@ -690,7 +726,11 @@ if [ "$RC" -eq 0 ] &&
                             echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
                             exit 1
                         fi
-                        echo "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+                        if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+                            echo "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+                        else
+                            echo "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+                        fi
                     else
                         echo "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
                     fi
