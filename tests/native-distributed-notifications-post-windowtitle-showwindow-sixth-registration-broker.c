@@ -13,6 +13,8 @@
 #define BUILD_ID "distributed-notifications-post-windowtitle-showwindow-sixth-registration-broker-v1"
 #define BUILD_MARKER \
     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_BUILD_ID:" BUILD_ID
+#define POLICY_MARKER \
+    "PM_DISTRIBUTED_NOTIFICATIONS_SHOWWINDOW_SIXTH_REGISTRATION_POLICY:index=6 allowed=3 counter=2"
 
 #define FRAME_MAGIC 0x44504e31U
 #define FRAME_VERSION 1U
@@ -683,6 +685,7 @@ main(int argc, char **argv)
     int exact;
 
     fprintf(stderr, "%s\n", BUILD_MARKER);
+    fprintf(stderr, "%s\n", POLICY_MARKER);
     fflush(stderr);
 
     if (argc != 3 || strcmp(argv[1], "--ipc-fd") != 0) {
