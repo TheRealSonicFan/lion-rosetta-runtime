@@ -15,7 +15,9 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                          uint64_t);
 extern mach_port_t mig_get_reply_port(void);
 
-#if defined(PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_INTEGRATION)
+#if defined(PM_CGS_SHOWWINDOW_UNKNOWN_TRACE)
+#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-unknown-trace-v1"
+#elif defined(PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_INTEGRATION)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-v1"
 #elif defined(PM_CGS_POST_RELEASEBACKING_OPACITY_TRACE)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-trace-v1"
@@ -92,6 +94,18 @@ static const char kDistributedNotificationsName[] =
 
 #if defined(PM_CGS_POST_NEWWINDOW_RELEASEBACKING_TRACE) && !defined(PM_CGS_CONNECTION_TRACE)
 #define PM_CGS_CONNECTION_TRACE 1
+#endif
+
+#if defined(PM_CGS_SHOWWINDOW_UNKNOWN_TRACE) && !defined(PM_CGS_CONNECTION_TRACE)
+#define PM_CGS_CONNECTION_TRACE 1
+#endif
+
+#ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
+#define CGS_SHOWWINDOW_UNKNOWN_TRACE_ENV "ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE"
+#define CGS_SHOWWINDOW_UNKNOWN_TRACE_SNOW_V1 "snow-passive-v1"
+#define CGS_SHOWWINDOW_UNKNOWN_TRACE_LION_V1 "lion-passive-v1"
+#define CGS_SHOWWINDOW_UNKNOWN_TRACE_MAX 128U
+#define CGS_SHOWWINDOW_UNKNOWN_TRACE_HEX_MAX 0x100U
 #endif
 
 #define LOOKUP_REQUEST_ID 0x00000194U
@@ -382,6 +396,10 @@ static unsigned int gCGSReleaseBackingCompatCallCount = 0;
 #endif
 #ifdef PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_INTEGRATION
 static unsigned int gCGSOpacityAlphaCreateCompatCallCount = 0;
+#endif
+#ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
+static mach_port_t gCGSShowWindowTracePort = MACH_PORT_NULL;
+static unsigned int gCGSShowWindowUnknownTraceCount = 0;
 #endif
 static mach_port_t gCoreServicesServerPort = MACH_PORT_NULL;
 static mach_port_t gServerCheckinReplyPort = MACH_PORT_NULL;
@@ -2155,6 +2173,10 @@ cgs_trace_kind(uint32_t request_id)
     if (request_id == CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY_REQUEST_ID)
         return "CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY";
 #endif
+#ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
+    if (gCGSShowWindowTracePort != MACH_PORT_NULL)
+        return "CGS_SHOWWINDOW_UNKNOWN";
+#endif
     return "UNKNOWN";
 }
 
@@ -2196,6 +2218,10 @@ cgs_trace_expected_reply(uint32_t request_id)
         return CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY_REPLY_ID;
     if (request_id == CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY_REQUEST_ID)
         return CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY_REPLY_ID;
+#endif
+#ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
+    if (gCGSShowWindowTracePort != MACH_PORT_NULL)
+        return request_id + 0x64U;
 #endif
     return 0U;
 }
@@ -2242,6 +2268,75 @@ is_cgs_trace_candidate(mach_msg_header_t *msg)
     return 0;
 }
 
+#ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
+static int
+cgs_showwindow_unknown_trace_mode_enabled(void)
+{
+    const char *mode = getenv(CGS_SHOWWINDOW_UNKNOWN_TRACE_ENV);
+
+    return mode != NULL &&
+           (strcmp(mode, CGS_SHOWWINDOW_UNKNOWN_TRACE_SNOW_V1) == 0 ||
+            strcmp(mode, CGS_SHOWWINDOW_UNKNOWN_TRACE_LION_V1) == 0);
+}
+
+static int
+is_cgs_showwindow_unknown_trace_candidate(mach_msg_header_t *msg,
+                                           mach_msg_option_t option,
+                                           mach_msg_size_t send_size,
+                                           mach_msg_size_t rcv_size,
+                                           mach_port_name_t rcv_name,
+                                           mach_msg_timeout_t timeout,
+                                           mach_port_name_t notify)
+{
+    unsigned char *m = (unsigned char *)msg;
+
+    if (msg == NULL ||
+        !cgs_showwindow_unknown_trace_mode_enabled() ||
+        gCGSShowWindowTracePort == MACH_PORT_NULL ||
+        gCGSOpacityAlphaCreateCompatCallCount == 0U ||
+        gCGSShowWindowUnknownTraceCount >= CGS_SHOWWINDOW_UNKNOWN_TRACE_MAX)
+        return 0;
+
+    if ((mach_port_t)get_u32(m + 0x08U) != gCGSShowWindowTracePort ||
+        send_size < 0x18U ||
+        rcv_size < 0x18U ||
+        rcv_name == MACH_PORT_NULL ||
+        timeout != MACH_MSG_TIMEOUT_NONE ||
+        notify != MACH_PORT_NULL)
+        return 0;
+
+    if ((option & MACH_SEND_MSG) == 0 || (option & MACH_RCV_MSG) == 0)
+        return 0;
+
+    return !is_cgs_trace_candidate(msg);
+}
+
+static void
+emit_cgs_showwindow_unknown_hex(const char *label,
+                                unsigned int index,
+                                const unsigned char *bytes,
+                                uint32_t length)
+{
+    uint32_t emitted = length;
+    uint32_t off;
+
+    if (emitted > CGS_SHOWWINDOW_UNKNOWN_TRACE_HEX_MAX)
+        emitted = CGS_SHOWWINDOW_UNKNOWN_TRACE_HEX_MAX;
+
+    fprintf(stderr,
+            "PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_%s_HEX:index=%u length=0x%08lx emitted=0x%08lx truncated=%s data=",
+            label,
+            index,
+            (unsigned long)length,
+            (unsigned long)emitted,
+            emitted < length ? "YES" : "NO");
+    for (off = 0U; off < emitted; ++off)
+        fprintf(stderr, "%02x", (unsigned int)bytes[off]);
+    fprintf(stderr, "\n");
+    fflush(stderr);
+}
+#endif
+
 static mach_msg_return_t
 trace_cgs_message(mach_msg_header_t *msg,
                   mach_msg_option_t option,
@@ -2265,6 +2360,12 @@ trace_cgs_message(mach_msg_header_t *msg,
 #endif
 
     request_id = get_u32(m + 0x14);
+#ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
+    if (request_id == CGS_CREATE_WINDOW_INLINE_LEGACY_REQUEST_ID &&
+        get_u32(m + 0x08U) != 0U)
+        gCGSShowWindowTracePort =
+            (mach_port_t)get_u32(m + 0x08U);
+#endif
     expected_reply = cgs_trace_expected_reply(request_id);
 #ifdef PM_CGS_SERVER_VERSION_COMPAT_INTEGRATION
     if (request_id == CGS_SERVER_VERSION_REQUEST_ID) {
@@ -2281,6 +2382,32 @@ trace_cgs_message(mach_msg_header_t *msg,
     }
 #endif
     ++gCGSTraceCallCount;
+
+#ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
+    if (!is_cgs_trace_candidate(msg)) {
+        const char *showwindow_mode =
+            getenv(CGS_SHOWWINDOW_UNKNOWN_TRACE_ENV);
+        ++gCGSShowWindowUnknownTraceCount;
+        fprintf(stderr,
+                "PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST:index=%u mode=%s traceIndex=%u bits=0x%08lx id=0x%08lx expectedReply=0x%08lx option=0x%08lx send=0x%08lx recv=0x%08lx remotePort=0x%08lx replyPort=0x%08lx\n",
+                gCGSShowWindowUnknownTraceCount,
+                showwindow_mode ? showwindow_mode : "(unset)",
+                gCGSTraceCallCount,
+                (unsigned long)get_u32(m + 0x00U),
+                (unsigned long)request_id,
+                (unsigned long)expected_reply,
+                (unsigned long)(uint32_t)option,
+                (unsigned long)send_size,
+                (unsigned long)rcv_size,
+                (unsigned long)get_u32(m + 0x08U),
+                (unsigned long)rcv_name);
+        emit_cgs_showwindow_unknown_hex(
+            "REQUEST",
+            gCGSShowWindowUnknownTraceCount,
+            m,
+            (uint32_t)send_size);
+    }
+#endif
 
     fprintf(stderr, "%s\n", COMPAT_BUILD_MARKER);
     fprintf(stderr,
@@ -2374,6 +2501,24 @@ trace_cgs_message(mach_msg_header_t *msg,
             (unsigned long)(uint32_t)mr);
     fflush(stderr);
 
+#ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
+    if (!is_cgs_trace_candidate(msg)) {
+        fprintf(stderr,
+                "PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_MACH_RETURN:index=%u id=0x%08lx kr=%ld hex=0x%08lx\n",
+                gCGSShowWindowUnknownTraceCount,
+                (unsigned long)request_id,
+                (long)mr,
+                (unsigned long)(uint32_t)mr);
+        fflush(stderr);
+        if (mr != MACH_MSG_SUCCESS)
+            emit_cgs_showwindow_unknown_hex(
+                "FAILURE_BUFFER",
+                gCGSShowWindowUnknownTraceCount,
+                m,
+                (uint32_t)rcv_size);
+    }
+#endif
+
 #ifdef PM_CGS_POST_RELEASEBACKING_OPACITY_TRACE
     if (mr != MACH_MSG_SUCCESS &&
         (request_id == CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY_REQUEST_ID ||
@@ -2411,6 +2556,16 @@ trace_cgs_message(mach_msg_header_t *msg,
             (unsigned long)expected_reply,
             reply_id == expected_reply ? "YES" : "NO");
     fflush(stderr);
+
+#ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
+    if (!is_cgs_trace_candidate(msg))
+        emit_cgs_showwindow_unknown_hex(
+            "REPLY",
+            gCGSShowWindowUnknownTraceCount,
+            m,
+            reply_size <= (uint32_t)rcv_size ?
+                reply_size : (uint32_t)rcv_size);
+#endif
 
     limit = reply_size;
     if (limit > (uint32_t)rcv_size)
@@ -2977,6 +3132,14 @@ rosetta_mach_msg(mach_msg_header_t *msg,
             return trace_cgs_message(msg, option, send_size,
                                      rcv_size, rcv_name,
                                      timeout, notify);
+#ifdef PM_CGS_SHOWWINDOW_UNKNOWN_TRACE
+        if (is_cgs_showwindow_unknown_trace_candidate(
+                msg, option, send_size, rcv_size, rcv_name,
+                timeout, notify))
+            return trace_cgs_message(msg, option, send_size,
+                                     rcv_size, rcv_name,
+                                     timeout, notify);
+#endif
 #endif
         return call_original_mach_msg(msg, option, send_size,
                                       rcv_size, rcv_name,
