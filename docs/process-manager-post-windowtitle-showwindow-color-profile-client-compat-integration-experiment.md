@@ -360,3 +360,16 @@ CGWindowContext/CoreUI/RawCamera            downstream/held
 CGSShapeWindow                              held
 XNU                                         no change indicated
 ```
+
+
+## Completed v2 integration result — 2026-10-12
+
+The rebuilt Snow Leopard v2 control passed. It observed exactly one legacy ColorProfileClient compatibility call in strict `passthrough` mode, preserved the successful `0x74d4 -> 0x7538 / 0x28` transaction with result 0 and a nonzero client ID, reached `S01_AFTER_ShowWindow`, completed disposal, and ended with both the ColorProfileClient Snow-control PASS marker and `RESULT: PASS`.
+
+The Lion syscall-295 preflight also passed with the accepted kernel SHA: syscall 295 returned `-1 / errno=9` with no SIGSYS and the probe exited 0.
+
+The single Lion compatibility run then satisfied the exact v2 predicate. The first legacy ColorProfileClient request had `exact=YES`, `lionPortExact=YES`, a distinct nonzero server port, NewWindow/release/create-alpha call counts of 1, and OrderFront/AddTrackingArea/SetFrontWindow counts of 0. The adapter changed only request ID `0x74d4 -> 0x74d6`; Lion returned native `0x753a / 0x28`, result 0, with a nonzero client ID; the adapter changed only reply ID `0x753a -> 0x7538` and returned the body unchanged. The adapter reported PASS. No second ColorProfileClient compatibility call occurred, so the earlier repeated client-initialization retries are eliminated.
+
+The first-order failure has moved downstream. Immediately after the successful PPC-facing `0x7538 / 0x28` reply, CoreGraphics now reports `CGSColorProfileCreateWithColorProfileID: Cannot resolve color profile id(1)`, followed by the invalid-window-profile and window-context failure cascade. The accepted OrderFrontConditionally, AddTrackingArea, unchanged `0x7268 / 0x72cc`, SetFrontWindow, exact-six notification broker, FontServer, and upstream compatibility paths remain successful; protected hashes remain unchanged. `S01_AFTER_ShowWindow` is still absent and the process exits 139, producing the named crash/plist/core diagnostics. The runner correctly classifies the result as `POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN`.
+
+Existing static CoreGraphics evidence shows that `CGSColorProfileCreateWithColorProfileID` calls `__CGSResolveColorProfile` after successful ColorProfileClient initialization on both Snow Leopard and Lion. Therefore the ColorProfileClient compatibility rule is complete and must not be broadened. The authoritative next gate is the read-only [ColorProfile resolve protocol audit](process-manager-post-windowtitle-showwindow-color-profile-resolve-protocol-audit.md). It compares the Snow PPC and Lion i386 `__CGSResolveColorProfile` client helper and corresponding server-side resolve/release family before any new live trace or adapter is authorized. No XNU change, kernel rebuild, or reboot is indicated.
