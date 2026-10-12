@@ -656,3 +656,10 @@ The corrected Lion server audit exposes zero true protocol-range immediates in `
 The first native-i386 Rendezvous2 attempt is not a protocol result. It reached the expected Lion request `0x32e7` with bits `0x1513`, `mach_msg` send/receive arguments `0x18/0x40`, and option `0x3`, but trace v1 rejected the call before IPC because it also required the pre-wrapper `msgh_size` field to equal `0x18`. Static disassembly shows the generated stub does not initialize that header word before calling `mach_msg`; the send-size argument is authoritative at this interposition layer.
 
 Runtime `main` now carries trace v2 and revised instructions in `docs/process-manager-post-createwindow-windowtitle-fontserver-native-rendezvous2-transport-trace-experiment.md`. Rebuild and perform exactly one corrected native Lion capture. Do not advance to a rendezvous copied-buffer proof until an actual `0x334b` server reply has been observed.
+
+
+## FontServer Rendezvous2 native success confirmed; local conversion proof next
+
+The corrected native-i386 Lion capture passed: request `0x32e7`, bits `0x1513`, send/receive `0x18/0x40`, Mach success, reply `0x334b`, complex size `0x38`, descriptor count 1, protocol version `5`, and explicit payload size `0x1000`. The prior server-dispatch ambiguity is therefore closed dynamically.
+
+Current runtime `main` advances only to `docs/process-manager-post-createwindow-windowtitle-fontserver-rendezvous-compat-protocol-adapter-experiment.md`. That stage performs no Mach IPC and proves the request copy/envelope change plus the structural native-success-to-legacy-success reply conversion, including simple-error preservation. Do not integrate live FontServer translation, adapt later `0x32d9/0x32db` operations, or change XNU before the local policy proof is reviewed.
