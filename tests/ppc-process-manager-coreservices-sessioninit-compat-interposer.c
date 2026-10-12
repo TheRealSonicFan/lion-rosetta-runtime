@@ -3227,7 +3227,7 @@ handle_cgs_color_profile_client_compat(
         msg, option, send_size, rcv_size, rcv_name, timeout, notify);
 
     fprintf(stderr,
-            "PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=%u mode=%s exact=%s bits=0x%08lx id=0x%08lx send=0x%08lx recv=0x%08lx remotePort=0x%08lx replyPort=0x%08lx descriptorCount=%lu descriptorPort=0x%08lx disposition=0x%02x type=0x%02x pid=%lu setFrontWindowCompatCalls=%u orderFrontCompatCalls=%u addTrackingCompatCalls=%u opacityCreateCompatCalls=%u\n",
+            "PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=%u mode=%s exact=%s bits=0x%08lx id=0x%08lx send=0x%08lx recv=0x%08lx remotePort=0x%08lx replyPort=0x%08lx descriptorCount=%lu descriptorPort=0x%08lx disposition=0x%02x type=0x%02x pid=%lu newWindowCompatCalls=%u releaseBackingCompatCalls=%u opacityCreateCompatCalls=%u orderFrontCompatCalls=%u addTrackingCompatCalls=%u setFrontWindowCompatCalls=%u\n",
             gCGSColorProfileClientCompatCallCount,
             mode ? mode : "(unset)",
             exact ? "YES" : "NO",
@@ -3242,10 +3242,12 @@ handle_cgs_color_profile_client_compat(
             (unsigned int)m[CGS_COLOR_PROFILE_CLIENT_DESC_DISPOSITION_OFF],
             (unsigned int)m[CGS_COLOR_PROFILE_CLIENT_DESC_TYPE_OFF],
             (unsigned long)get_u32(m + CGS_COLOR_PROFILE_CLIENT_PID_OFF),
-            gCGSSetFrontWindowCompatCallCount,
+            gCGSNewWindowCompatCallCount,
+            gCGSReleaseBackingCompatCallCount,
+            gCGSOpacityAlphaCreateCompatCallCount,
             gCGSOrderFrontConditionallyCompatCallCount,
             gCGSAddTrackingAreaCompatCallCount,
-            gCGSOpacityAlphaCreateCompatCallCount);
+            gCGSSetFrontWindowCompatCallCount);
     fflush(stderr);
 
     if (mode != NULL &&
@@ -3262,10 +3264,12 @@ handle_cgs_color_profile_client_compat(
         strcmp(mode, CGS_COLOR_PROFILE_CLIENT_COMPAT_LION_V1) != 0 ||
         !exact ||
         gCGSColorProfileClientCompatCallCount != 1U ||
-        gCGSSetFrontWindowCompatCallCount != 1U ||
-        gCGSOrderFrontConditionallyCompatCallCount != 1U ||
-        gCGSAddTrackingAreaCompatCallCount != 1U ||
-        gCGSOpacityAlphaCreateCompatCallCount != 1U) {
+        gCGSNewWindowCompatCallCount != 1U ||
+        gCGSReleaseBackingCompatCallCount != 1U ||
+        gCGSOpacityAlphaCreateCompatCallCount != 1U ||
+        gCGSOrderFrontConditionallyCompatCallCount != 0U ||
+        gCGSAddTrackingAreaCompatCallCount != 0U ||
+        gCGSSetFrontWindowCompatCallCount != 0U) {
         fprintf(stderr,
                 "PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:PREDICATE_REJECTED_PASSTHROUGH\n");
         fflush(stderr);
