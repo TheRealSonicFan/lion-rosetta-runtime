@@ -866,7 +866,7 @@ if [ "$RC" -eq 0 ] &&
                 echo "cgs_color_profile_client_legacy_trace_count=$COLOR_PROFILE_CLIENT_TRACE_COUNT" | /usr/bin/tee -a "$LOG"
                 if [ "$COLOR_PROFILE_CLIENT_COMPAT_COUNT" -ne 1 ] ||
                    [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -ne 1 ] ||
-                   ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=1 mode=passthrough exact=YES .*descriptorCount=1 .*disposition=0x13 type=0x00 .*setFrontWindowCompatCalls=1 orderFrontCompatCalls=1 addTrackingCompatCalls=1 opacityCreateCompatCalls=1' "$LOG" ||
+                   ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=1 mode=passthrough exact=YES .*descriptorCount=1 .*disposition=0x13 type=0x00 .*newWindowCompatCalls=0 releaseBackingCompatCalls=0 opacityCreateCompatCalls=0 orderFrontCompatCalls=0 addTrackingCompatCalls=0 setFrontWindowCompatCalls=0' "$LOG" ||
                    ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:PASSTHROUGH' "$LOG" ||
                    /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$LOG" ||
                    ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY kr=0 hex=0x00000000' "$LOG" ||
