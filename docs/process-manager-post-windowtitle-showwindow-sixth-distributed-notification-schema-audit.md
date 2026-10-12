@@ -297,3 +297,31 @@ next step                                    -> capture/decode exact sixth binar
 SelectWindow / visibility / event loop       -> held
 XNU                                          -> no change indicated
 ```
+
+
+## Observed result — sixth request is a second reviewed Aqua-variant registration
+
+The audit passed exactly once. The captured 287-byte binary plist decodes as an eight-key `register` dictionary:
+
+```text
+message_type  register
+client        ppc-process-manager-cgs-session-bootstrap-integration-private-dyld
+name          AppleAquaColorVariantChanged
+object        kCFNotificationAnyObject
+behavior      4
+counter       2
+entry         3829184 / 0x003a6dc0 in the captured run
+sessionid     78 in the captured run
+```
+
+This is not a sixth notification name. It is a second registration for the already reviewed `AppleAquaColorVariantChanged` filter. The first registration for that filter in the same run was request index 4 with behavior 4, AnyObject scope, counter 1, and entry `0x003a6d60`; the sixth entry is distinct and the counter advances to 2.
+
+The existing ABI model already treats Snow `entry/counter` as per-registration callback identity retained by the bridge. The exact next policy therefore does not relax the broker to arbitrary duplicates or arbitrary counters: it permits only the observed six-request sequence, with request 6 fixed to allowed tuple 3 and counter 2, a positive unique entry, and the established session.
+
+The authoritative next procedure is:
+
+```text
+docs/process-manager-post-windowtitle-showwindow-sixth-distributed-notification-registration-experiment.md
+```
+
+Build only the new native exact-six broker on Lion, repeat syscall 295, and rerun the unchanged ShowWindow subject exactly once. If a seventh notification request appears, reject it and stop for another schema audit; if no further notification request is rejected but `ShowWindow` still does not return, only then advance to a passive ShowWindow-side CGS/window-context discriminator. No XNU change is indicated.
