@@ -28,6 +28,7 @@ OPACITY_ALPHA_TRACE_MODE="${ROSETTA_CGS_POST_RELEASEBACKING_OPACITY_TRACE_MODE:-
 OPACITY_ALPHA_CREATE_COMPAT_MODE="${ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE:-}"
 POST_CREATEWINDOW_TITLE_MODE="${ROSETTA_POST_CREATEWINDOW_TITLE_VALIDATION_MODE:-}"
 POST_WINDOWTITLE_SHOWWINDOW_MODE="${ROSETTA_POST_WINDOWTITLE_SHOWWINDOW_VALIDATION_MODE:-}"
+SHOWWINDOW_UNKNOWN_TRACE_MODE="${ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE:-}"
 
 PRIVATE_DYLD="/usr/oah/dyld"
 EXPECTED_DYLD_SHA="963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb"
@@ -147,6 +148,15 @@ if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
     [ "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" = "passthrough" ] ||
         fail "Snow ShowWindow validation requires FontServer rendezvous passthrough"
     EXPECTED_SUBJECT_BUILD_ID="cps-showwindow-validation-v1"
+fi
+if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
+    [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "snow-passive-v1" ] ||
+        fail "Snow ShowWindow CGS passive trace mode must be snow-passive-v1"
+    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "snow-showwindow-v1" ] ||
+        fail "Snow ShowWindow CGS passive trace requires the ShowWindow subject"
+    [ "$OPACITY_ALPHA_CREATE_COMPAT_MODE" = "passthrough" ] ||
+        fail "Snow ShowWindow CGS passive trace requires opacity create-alpha passthrough"
+    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-unknown-trace-v1"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 abspath() {
@@ -278,6 +288,17 @@ fi
     "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || fail "CoreServices CPS registration compatibility build marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_BUILD_ID:distributed-notifications-ppc-ingress-interposer-v2" || fail "embedded distributed-notifications ingress marker missing"
+if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
+    for marker in \
+        'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST:' \
+        'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST_HEX:' \
+        'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_MACH_RETURN:' \
+        'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_FAILURE_BUFFER_HEX:' \
+        'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REPLY_HEX:'; do
+        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
+            fail "ShowWindow CGS passive trace marker missing: $marker"
+    done
+fi
 if [ -n "$NEWWINDOW_TRACE_MODE" ] || [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
     /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_CREATE_WINDOW_INLINE_LEGACY' ||
         fail "CGS NewWindow legacy trace marker missing"
@@ -443,6 +464,12 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
 fi
 if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
     echo "post_windowtitle_showwindow_validation_mode=$POST_WINDOWTITLE_SHOWWINDOW_MODE" | /usr/bin/tee -a "$LOG"
+fi
+if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
+    echo "showwindow_unknown_cgs_trace_mode=$SHOWWINDOW_UNKNOWN_TRACE_MODE" | /usr/bin/tee -a "$LOG"
+    export ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE="$SHOWWINDOW_UNKNOWN_TRACE_MODE"
+else
+    unset ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE
 fi
 echo "private_dyld_sha256=$EXPECTED_DYLD_SHA" | /usr/bin/tee -a "$LOG"
 if [ -n "$HITOOLBOX_TRACE" ]; then
@@ -653,7 +680,20 @@ if [ "$RC" -eq 0 ] &&
             echo "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT" | /usr/bin/tee -a "$LOG"
             if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
                 if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
-                    echo "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+                    if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
+                        SHOWWINDOW_UNKNOWN_REQUEST_COUNT="$(/usr/bin/grep -c 'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST:index=' "$LOG" 2>/dev/null || true)"
+                        SHOWWINDOW_UNKNOWN_RETURN_COUNT="$(/usr/bin/grep -c 'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_MACH_RETURN:index=' "$LOG" 2>/dev/null || true)"
+                        echo "showwindow_unknown_cgs_trace_request_count=$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" | /usr/bin/tee -a "$LOG"
+                        echo "showwindow_unknown_cgs_trace_return_count=$SHOWWINDOW_UNKNOWN_RETURN_COUNT" | /usr/bin/tee -a "$LOG"
+                        if [ "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" -lt 1 ] ||
+                           [ "$SHOWWINDOW_UNKNOWN_RETURN_COUNT" -ne "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" ]; then
+                            echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
+                            exit 1
+                        fi
+                        echo "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+                    else
+                        echo "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+                    fi
                 elif [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
                     echo "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
                 elif [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
