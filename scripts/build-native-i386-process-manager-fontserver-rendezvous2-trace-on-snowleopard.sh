@@ -123,7 +123,7 @@ RUNTIME_GIT_HEAD="$(cd "$ROOT" 2>/dev/null &&
 
 {
     echo "== Native i386 FontServer Rendezvous2 one-shot trace interposer =="
-    echo "build_id=native-i386-fontserver-rendezvous2-trace-v1"
+    echo "build_id=native-i386-fontserver-rendezvous2-trace-v2"
     echo "compiler=$CC_SELECTED"
     echo "source=$TRACE_SRC"
     echo "runtime_git_head=$RUNTIME_GIT_HEAD"
