@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-OUT="${1:-./ppc-process-manager-coreservices-sessioninit-cps-registration-setfront-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-resolve-trace.dylib}"
+# Short artifact name is deliberate: CPC = ColorProfileClient, CPR = ColorProfile resolve.
+OUT="${1:-./pm-cpc-compat-cpr-trace.dylib}"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -9,6 +10,15 @@ CORE_SRC="$ROOT/tests/ppc-process-manager-coreservices-sessioninit-compat-interp
 INGRESS_SRC="$ROOT/tests/ppc-distributed-notifications-ingress-interposer.c"
 INFO="$OUT.info.txt"
 SHA="$OUT.sha256"
+
+# Keep each generated path component comfortably below legacy HFS+/POSIX NAME_MAX.
+for generated in "$OUT" "$INFO" "$SHA"; do
+    generated_name="$(/usr/bin/basename "$generated")"
+    [ "${#generated_name}" -le 240 ] || {
+        echo "error: artifact filename too long: $generated_name" >&2
+        exit 64
+    }
+done
 
 EXPECTED_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-v2"
 EXPECTED_INGRESS_BUILD_ID="distributed-notifications-ppc-ingress-interposer-v2"
