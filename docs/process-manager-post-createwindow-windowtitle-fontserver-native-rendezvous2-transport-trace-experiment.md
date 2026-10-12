@@ -54,9 +54,12 @@ It remembers only the successfully resolved `com.apple.FontServer` service port.
 ```text
 request ID       0x32e7
 bits             0x1513
-header/send      0x18
-receive          0x40
+send argument    0x18
+receive argument 0x40
+mach_msg option  0x3
 ```
+
+Important: the generated MIG stub does **not** initialize the in-buffer `msgh_size` word or the reserved header word before calling the public `mach_msg` wrapper. The authoritative request length at this interception point is the `send_size` argument passed to `mach_msg`, not the pre-wrapper value stored at header offset `0x04`. The corrected tracer records those two header words only as non-authoritative observations and must not reject the request because they contain stale stack bytes.
 
 It then records the request, calls the original `mach_msg`, records exactly one reply, validates the expected `0x334b` reply family, and terminates the native process immediately. A complex `0x38` reply is decoded only far enough to report descriptor count, OOL address/descriptor size, the protocol-version scalar at reply offset `0x30`, and the explicit payload-size scalar at `0x34`. The process exits before FontRegistry can issue any later FontServer request.
 
@@ -170,7 +173,7 @@ Require:
 
 ```text
 PM_NATIVE_FONTSERVER_RENDEZVOUS2_BOOTSTRAP:kr=0 ... nonzero port
-PM_NATIVE_FONTSERVER_RENDEZVOUS2_REQUEST:index=1 id=0x000032e7 bits=0x00001513 headerSize=0x00000018 send=0x00000018 recv=0x00000040
+PM_NATIVE_FONTSERVER_RENDEZVOUS2_REQUEST:index=1 id=0x000032e7 bits=0x00001513 ... headerPreWrapperAuthoritative=NO send=0x00000018 recv=0x00000040 ... option=0x00000003
 PM_NATIVE_FONTSERVER_RENDEZVOUS2_MACH_RETURN:kr=0
 PM_NATIVE_FONTSERVER_RENDEZVOUS2_REPLY:... size=0x00000038 id=0x0000334b complex=YES
 PM_NATIVE_FONTSERVER_RENDEZVOUS2_FIELDS:descriptorCount=1 ... protocolVersion=5 ...
@@ -236,3 +239,39 @@ next step                                 -> one-shot native-i386 Lion Rendezvou
 ```
 
 No additional XNU change is indicated.
+
+
+## Observed first attempt — pre-`mach_msg` header-size validator was invalid
+
+The first native Lion attempt reached the intended path and proved several prerequisites before the tracer stopped itself:
+
+```text
+CreateNewWindow                         -> 0, nonzero WindowRef
+CFStringCreateWithCString               -> PASS
+com.apple.FontServer bootstrap lookup   -> kr=0, nonzero port
+first FontServer request ID             -> 0x32e7
+request bits                            -> 0x1513
+mach_msg send argument                  -> 0x18
+mach_msg receive argument               -> 0x40
+mach_msg option                         -> 0x3
+```
+
+The v1 tracer then reported `REQUEST_CONTRACT_MISMATCH` only because it also required `msg->msgh_size == 0x18` before calling the original `mach_msg`. The observed value was `0x6c707061` and the raw request contained the byte words `appl` at header offset `0x04` and `rver` at offset `0x10`. That is consistent with the shipped Lion i386 `_XTSendRendezvous2` stub already captured by the static audit: it initializes the header bits, remote port, reply port, and request ID, then passes `0x18` and `0x40` as the authoritative `mach_msg` send/receive arguments without first storing either `msgh_size` or the reserved word in the request buffer.
+
+Therefore this result is a tracer-validation defect, not a FontServer protocol mismatch. The v1 run never called the original `mach_msg`, so it produced no server reply and does not satisfy the native-server decision gate.
+
+Current runtime `main` contains corrected trace build:
+
+```text
+native-i386-fontserver-rendezvous2-trace-v2
+```
+
+The corrected tracer:
+
+- treats the pre-wrapper `msgh_size` and reserved words as observational only;
+- validates request ID `0x32e7`, bits `0x1513`, send `0x18`, receive `0x40`, option `0x3`, and reply-port consistency;
+- still captures only the first exact FontServer-port transaction;
+- still exits immediately after its first reply;
+- fixes the result-marker newline so the exit-status line is separate.
+
+Pull current `main`, rebuild the probe/tracer with Phase B, transfer the new artifacts, and repeat exactly one Phase-D native Lion trace. Return the same five evidence files with the newly built tracer provenance. Do not run the translated-PPC title path and do not advance to a copied-buffer rendezvous proof until the corrected native reply is captured.
