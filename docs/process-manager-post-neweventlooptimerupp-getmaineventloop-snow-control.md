@@ -238,7 +238,9 @@ The Snow control passes completely on 10.6.8 / 10K549. The exact PPC7400 subject
 
 The inherited Snow stack remains transparent: both OrderFront calls pass through with exactly one SelectWindow-bounded call, all six titlebar targets remain passthrough with zero unexpected action, and no compatibility family emits `ADAPTER_PASS`. This does not justify a GetMainEventLoop-specific adapter.
 
-Current `main` therefore advances only to the guarded Lion procedure in `docs/process-manager-post-neweventlooptimerupp-getmaineventloop-lion-integration.md`. Transfer the exact Snow-proven subject, retain the already accepted NewEventLoopTimerUPP-era user-space stack unchanged, rebuild the exact-seven native broker, repeat the fresh syscall-295 preflight, and execute exactly one Lion `GetMainEventLoop()` run. Do not install a timer or enter the event loop until that result is reviewed.
+The subsequent guarded Lion `GetMainEventLoop()` run also passes with the exact Snow-proven subject. Lion reaches S08/S09, returns a nonzero EventLoopRef (`0x004a6da0`), emits `GETMAINEVENTLOOP_PASS`, reaches `M24_SUCCESS`, exits 0, preserves exact-seven and all accepted user-space compatibility counts, changes no protected hash, creates no new diagnostic, and ends with `POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_VALIDATION_PASS`.
+
+Current `main` therefore advances only to the Snow-first `InstallEventLoopTimer` procedure in `docs/process-manager-post-getmaineventloop-installeventlooptimer-snow-control.md`. The new subject reuses the already proven UPP and EventLoopRef, installs a one-shot timer with the historical 2-second delay, requires status 0 and a nonzero timer reference, and requires that the callback has not fired because the event loop is not entered. Do not run the event loop, remove the timer, or dispose the UPP until that result is reviewed.
 
 ## Current boundary
 
@@ -249,9 +251,11 @@ IsWindowVisible on Lion                          LIVE-PROVEN PASS
 NewEventLoopTimerUPP on Snow                     PASS
 NewEventLoopTimerUPP on Lion                     LIVE-PROVEN PASS
 GetMainEventLoop on Snow                         PASS
-GetMainEventLoop on Lion                         NEXT: one guarded run
-InstallEventLoopTimer                            HELD
+GetMainEventLoop on Lion                         LIVE-PROVEN PASS
+InstallEventLoopTimer                            NEXT: Snow control only
+timer callback invocation                       HELD
 RunApplicationEventLoop                         HELD
+RemoveEventLoopTimer / DisposeEventLoopTimerUPP  HELD
 new compatibility families                      NO
 titlebar policy broadening                      NO
 XNU                                              no change indicated
