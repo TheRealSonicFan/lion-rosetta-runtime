@@ -14,7 +14,7 @@ TMP_LOG="$(/usr/bin/mktemp /tmp/pm-titlebar-bsearch.XXXXXX.log)"
 trap 'rm -f "$TMP_DYLIB" "$TMP_LOG"' EXIT HUP INT TERM
 
 [ -f "$SRC" ] || { echo "error: missing source: $SRC" >&2; exit 66; }
-/usr/bin/grep -Fq "#define BUILD_ID \\"$EXPECTED_BUILD_ID\\"" "$SRC" || {
+/usr/bin/grep -Fq "#define BUILD_ID \"$EXPECTED_BUILD_ID\"" "$SRC" || {
     echo "error: stale titlebar bsearch interposer source; pull current runtime main" >&2
     exit 66
 }
