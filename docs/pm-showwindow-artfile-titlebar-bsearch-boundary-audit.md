@@ -241,17 +241,24 @@ Stop. The old PPC call path is not sufficiently proven for a narrow interposer. 
 
 Stop. Do not load an interposer into a Lion environment whose shared cache or ArtFile identity differs from the accepted state.
 
+## Completed result
+
+Both returned boundary reports pass. Snow re-proves the accepted PPC CoreUI image and exact internal/external call structure: `CUIElement::Load -> LoadFromArtFile` is a direct internal branch at `0x29c80`, while `LoadFromArtFile` reaches one undefined lazy-bound libSystem `bsearch` stub at `0x294f4` with comparator `0x25c08`. Lion re-proves the identical Rosetta-cache contract, the accepted 10.7.5 / 11G63 ArtFile identity and geometry, and the absence of a PPC slice in the on-disk Lion CoreUI.
+
+The integration boundary is therefore closed positively. Current `main` advances to `docs/pm-showwindow-artfile-titlebar-bsearch-compat-integration.md`. The prepared PPC dylib interposes only `bsearch`, requires the exact old CoreUI call relationship plus archive geometry, translates only the three already-proven Snow keys into a temporary search-record copy, and leaves CoreUI's source path and ArtFile mapping untouched. A Snow passthrough control is mandatory before the single authorized Lion ShowWindow run.
+
 ## Current boundary
 
 ```text
 exact three-key translation policy                PROVEN
-Lion release/resource guard                       PROVEN
+Snow/Lion release-resource guards                 PROVEN
 non-target identity behavior                      PROVEN
-old Load -> LoadFromArtFile call                  to be re-proven static
-old LoadFromArtFile -> bsearch stub               to be re-proven static
-candidate interposition boundary                  libSystem bsearch
-live bsearch interposer                           NOT AUTHORIZED
-PPC ShowWindow rerun                              NO
+old Load -> LoadFromArtFile call                  DIRECT INTERNAL BRANCH
+old LoadFromArtFile -> bsearch stub               PROVEN / one lazy-bound external
+chosen interposition boundary                     libSystem bsearch
+live bsearch interposer                           PREPARED / NOT YET LIVE-PROVEN
+Snow passthrough control                          next
+Lion PPC ShowWindow rerun                         one run after Snow PASS
 CoreUI/ArtFile patch                              NO
 XNU                                               no change indicated
 ```
