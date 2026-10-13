@@ -10,8 +10,8 @@ import subprocess
 import sys
 import tempfile
 
-ANALYZER_VERSION = "1"
-AUDIT_CONTRACT = "titlebar-state-semantics-v1"
+ANALYZER_VERSION = "2"
+AUDIT_CONTRACT = "titlebar-state-semantics-v2"
 COREUI = "/System/Library/PrivateFrameworks/CoreUI.framework/Versions/A/CoreUI"
 ARTFILE = "/System/Library/PrivateFrameworks/CoreUI.framework/Versions/A/Resources/ArtFile.bin"
 
@@ -55,6 +55,19 @@ EXPECTED = {
             "regularwin": 0x7a,
             "zoom": 0xb6,
         },
+        "variant_selector_semantics": [
+            ("0x14c", "utilwin.variant1"),
+            ("0x14d", "utilwin.variant2"),
+            ("other", "regularwin"),
+        ],
+        "variant_markers": [
+            "cmpwi\tcr7,r4,0x14c",
+            "cmpwi\tcr7,r4,0x14d",
+            "li\tr4,0xaf",
+            "li\tr5,0xb0",
+            "li\tr5,0xb1",
+            "li\tr0,0x7a",
+        ],
         "branch_markers": [
             "li\tr4,0xa6",
             "li\tr4,0x13",
@@ -89,6 +102,19 @@ EXPECTED = {
             "regularwin": 0x72,
             "zoom": 0xa9,
         },
+        "variant_selector_semantics": [
+            ("0x175", "utilwin.variant1"),
+            ("0x176", "utilwin.variant2"),
+            ("other", "regularwin"),
+        ],
+        "variant_markers": [
+            "cmpl\t$0x00000175,%eax",
+            "cmpl\t$0x00000176,%eax",
+            "$0x000000a1",
+            "$0x000000a2",
+            "$0x000000a3",
+            "$0x72",
+        ],
         "branch_markers": [
             "$0x00000099",
             "$0x00000014",
@@ -276,9 +302,9 @@ def helper_semantic_hits(body_text, arch, semantic_ids):
 
 
 def main():
-    report = sys.argv[1] if len(sys.argv) > 1 else "./pm-art-titlebar-path.txt"
+    report = sys.argv[1] if len(sys.argv) > 1 else "./pm-art-titlebar-state-semantics.txt"
     issues = []
-    tempdir = tempfile.mkdtemp(prefix="pm-art-titlebar-path.")
+    tempdir = tempfile.mkdtemp(prefix="pm-art-titlebar-state-semantics.")
 
     try:
         _, product_out = run(["/usr/bin/sw_vers", "-productVersion"])
@@ -418,6 +444,11 @@ def main():
                     variant_body_text, arch,
                     dict((name, dictionary[name]) for name in VARIANT_SEMANTICS)
                 )
+                for marker in expected["variant_markers"]:
+                    if not marker_present(variant_body_text, marker):
+                        issues.append(
+                            "AppendWindowVariant marker missing: %s" % marker
+                        )
                 for name in VARIANT_SEMANTICS:
                     if not variant_hits.get(name, False):
                         issues.append(
@@ -485,6 +516,14 @@ def main():
                     "titlebar_branch_call_count_%s=%d" %
                     (call_name, branch_call_counts.get(call_name, 0))
                 )
+
+            write_line(fp)
+            write_line(fp, "== Window variant selector semantics ==")
+            if expected is not None:
+                for selector, semantic in expected["variant_selector_semantics"]:
+                    write_line(
+                        fp, "variant_selector_%s=%s" % (selector, semantic)
+                    )
 
             write_line(fp)
             write_line(fp, "== Semantic surface summary ==")
