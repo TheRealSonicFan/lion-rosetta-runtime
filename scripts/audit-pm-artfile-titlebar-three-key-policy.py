@@ -305,7 +305,7 @@ def main():
         target = bytes_from_ids(lion_ids)
         source_hits = [r for r in records if r["key"] == source]
         target_hits = [r for r in records if r["key"] == target]
-        target_payload_valid = all(
+        target_payload_valid = bool(target_hits) and all(
             r["payload_off"] >= 0 and r["payload_off"] + 0x68 <= len(data)
             for r in target_hits
         )
@@ -333,6 +333,8 @@ def main():
                 issues.append("%s Lion target-key hit count != 1" % label)
             if not target_payload_valid:
                 issues.append("%s Lion target payload is invalid" % label)
+            if decode_key(target, by_id) != semantics:
+                issues.append("%s Lion target semantic decode mismatch" % label)
             guarded_out, guarded_action = translate_key(source, guard_enabled)
             if guarded_out != target:
                 issues.append("%s Lion guarded mapping failed" % label)
