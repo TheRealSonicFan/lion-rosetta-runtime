@@ -879,8 +879,21 @@ The corrected path-builder audit proves Snow's titlebar branch uses inline `Appe
 
 The corrected semantic-state analyzer v3 then proves the emitted-state surfaces and input provenance. Snow uses primary state from arg5/descriptor+`0x18`, has no dedicated titlebar-secondary input, and emits `active`, `disabled`, `inactive`, `key`, `pressed`, and `rollover` but not `activenokey`. Lion uses primary state from arg5/descriptor+`0x28`, additionally passes descriptor+`0x2c` to the dedicated titlebar-state helper, and can emit the shared Snow states plus `activenokey`.
 
-## Current step — titlebar state transition/provenance audit
+## Titlebar state transition correspondence proven
 
-Current `main` advances to `docs/pm-showwindow-artfile-titlebar-state-transition-audit.md` using `scripts/audit-pm-artfile-titlebar-state-transitions.py` (analyzer v1, contract `titlebar-state-transition-v1`). This read-only analyzer enumerates Snow's titlebar transitions across primary state and window-variant classes and decodes Lion's two native titlebar helper jump tables across primary, dedicated-secondary, and window-variant classes.
+The completed transition audit passes on Snow Leopard 10.6.8 and Lion 10.7.5. Under Lion's neutral/other dedicated titlebar-secondary class, the complete Snow primary range maps exactly by `Lion primary = Snow primary + 0x0a`:
 
-Run it once on Snow Leopard and once on Lion and return exactly `pm-art-titlebar-state-transition-snow.txt` and `pm-art-titlebar-state-transition-lion.txt`. Do not rerun the PPC ShowWindow subject, globally remap CoreUI IDs, patch CoreUI/ArtFile resources, suppress diagnostics, install a titlebar path interposer, or change XNU. A live translator remains unauthorized until the transition tables establish the precise semantic correspondence and a later static Lion-ArtFile translated-path feasibility audit passes.
+```text
+a3->ad  a4->ae  a5->af  a6->b0
+a7->b1  a8->b2  a9->b3  aa->b4
+```
+
+For each pair, `regularwin`, `variant1`, and `variant2` produce the same semantic output. Lion's additional secondary classes remain additive state distinctions; they do not invalidate the neutral mapping. Because Snow resolves the titlebar state into the final eight-byte path before the old `LoadFromArtFile` consumer sees it, descriptor-state reconstruction is not required for an exact path-key compatibility policy.
+
+## Current step — translated Lion ArtFile path feasibility
+
+Current `main` advances to `docs/pm-showwindow-artfile-titlebar-translated-path-feasibility.md` using `scripts/audit-pm-artfile-titlebar-translated-paths.py` (analyzer v1, contract `titlebar-translated-path-feasibility-v1`).
+
+The analyzer parses the legacy ArtFile lookup index directly from the accepted archive header: record count at `0x00`, eight-byte path length at `0x02`, index start at `0x10`, payload base at `0x14`, and record width `path_length+4`. Snow is a positive control for the three exact captured paths; Lion is tested for semantic-equivalent direct lookup records and valid payload references.
+
+Run it on Snow Leopard and Lion and return exactly `pm-art-titlebar-translated-paths-snow.txt` and `pm-art-titlebar-translated-paths-lion.txt`. Do not rerun the PPC ShowWindow subject, patch CoreUI/ArtFile, globally remap component IDs, suppress diagnostics, substitute resources, install a titlebar path interposer, or change XNU. A live compatibility policy remains unauthorized until all three Lion translated keys are proven to be real lookup-index entries.
