@@ -33,6 +33,7 @@ POST_CREATEWINDOW_TITLE_MODE="${ROSETTA_POST_CREATEWINDOW_TITLE_VALIDATION_MODE:
 POST_WINDOWTITLE_SHOWWINDOW_MODE="${ROSETTA_POST_WINDOWTITLE_SHOWWINDOW_VALIDATION_MODE:-}"
 POST_SHOWWINDOW_SELECTWINDOW_MODE="${ROSETTA_POST_SHOWWINDOW_SELECTWINDOW_VALIDATION_MODE:-}"
 POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE="${ROSETTA_POST_SELECTWINDOW_ISWINDOWVISIBLE_VALIDATION_MODE:-}"
+POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE="${ROSETTA_POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_VALIDATION_MODE:-}"
 SHOWWINDOW_UNKNOWN_TRACE_MODE="${ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE:-}"
 SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE:-}"
 SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE:-}"
@@ -173,6 +174,13 @@ if [ -n "$POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE" ]; then
     [ "$POST_SHOWWINDOW_SELECTWINDOW_MODE" = "snow-selectwindow-v1" ] ||
         fail "Snow IsWindowVisible validation requires the SelectWindow validation mode"
     EXPECTED_SUBJECT_BUILD_ID="cps-iswindowvisible-validation-v1"
+fi
+if [ -n "$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" ]; then
+    [ "$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" = "snow-neweventlooptimerupp-v1" ] ||
+        fail "unsupported Snow post-IsWindowVisible NewEventLoopTimerUPP validation mode: $POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE"
+    [ "$POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE" = "snow-iswindowvisible-v1" ] ||
+        fail "Snow NewEventLoopTimerUPP validation requires the IsWindowVisible validation mode"
+    EXPECTED_SUBJECT_BUILD_ID="cps-neweventlooptimerupp-validation-v1"
 fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "snow-passive-v1" ] ||
@@ -412,6 +420,16 @@ if [ -n "$POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE" ]; then
             fail "IsWindowVisible subject marker missing: $marker"
     done
 fi
+if [ -n "$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" ]; then
+    for marker in \
+        'PM_POSTWINDOWTIMERUPP_MILESTONE:S06_BEFORE_NewEventLoopTimerUPP' \
+        'PM_POSTWINDOWTIMERUPP_MILESTONE:S07_AFTER_NewEventLoopTimerUPP' \
+        'PM_POSTWINDOWTIMERUPP_POINTER:pointer=' \
+        'PM_POSTWINDOWTIMERUPP_RESULT:NEWEVENTLOOPTIMERUPP_PASS'; do
+        /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq "$marker" ||
+            fail "NewEventLoopTimerUPP subject marker missing: $marker"
+    done
+fi
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
     "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || fail "CoreServices CPS registration compatibility build marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
@@ -627,6 +645,9 @@ if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
 fi
 if [ -n "$POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE" ]; then
     echo "post_selectwindow_iswindowvisible_validation_mode=$POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE" | /usr/bin/tee -a "$LOG"
+fi
+if [ -n "$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" ]; then
+    echo "post_iswindowvisible_neweventlooptimerupp_validation_mode=$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" | /usr/bin/tee -a "$LOG"
 fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     echo "showwindow_unknown_cgs_trace_mode=$SHOWWINDOW_UNKNOWN_TRACE_MODE" | /usr/bin/tee -a "$LOG"
@@ -891,6 +912,16 @@ if [ "$RC" -eq 0 ] &&
             exit 1
         fi
     fi
+    if [ -n "$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_MILESTONE:S06_BEFORE_NewEventLoopTimerUPP' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_MILESTONE:S07_AFTER_NewEventLoopTimerUPP' "$LOG" ||
+           ! /usr/bin/grep -Eq 'PM_POSTWINDOWTIMERUPP_POINTER:pointer=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_RESULT:NEWEVENTLOOPTIMERUPP_PASS' "$LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_RESULT:NEWEVENTLOOPTIMERUPP_NULL' "$LOG"; then
+            echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
+            exit 1
+        fi
+    fi
     if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
         FONTSERVER_RENDEZVOUS_COMPAT_CALLS="$(/usr/bin/grep -c 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_CALL:' "$LOG" 2>/dev/null || true)"
         if [ "$FONTSERVER_RENDEZVOUS_COMPAT_CALLS" -ne 1 ] ||
@@ -1036,7 +1067,9 @@ if [ "$RC" -eq 0 ] &&
                             echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
                             exit 1
                         fi
-                        if [ -n "$POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE" ]; then
+                        if [ -n "$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" ]; then
+                            echo "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+                        elif [ -n "$POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE" ]; then
                             echo "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
                         elif [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
                             echo "RESULT: POST_SHOWWINDOW_SELECTWINDOW_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
