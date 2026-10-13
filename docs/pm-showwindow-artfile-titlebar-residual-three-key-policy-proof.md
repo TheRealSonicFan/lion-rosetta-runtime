@@ -184,11 +184,11 @@ pm-art-titlebar-residual-three-key-policy-lion.txt
 
 Do not return ArtFile binaries or core.9821.
 
-## Review gate
+## Completed result
 
-If both reports pass, the next stage may design a six-key policy update by combining the already-live original three keys with these residual three keys, followed by a mandatory static combined-policy proof before any new compatibility dylib or Lion PPC run.
+Both returned residual policy reports pass. Snow keeps the Lion-only guard disabled, finds one direct source-index hit for each residual Snow key, changes zero local records, passes all 6,120 single-byte near misses, and has zero overlap with the original exact-three source/target sets. Lion enables the exact 10.7.5/11G63 accepted-ArtFile guard, finds no residual Snow source keys, finds exactly one semantic-equivalent target for active-clear, active-minus, and active-zoom, validates all three payload references, changes zero local records, and passes the same near-miss, overlap, and idempotence gates.
 
-If either report fails, stop and preserve the current three-key live policy unchanged.
+The residual exact-three mapping set is therefore static-proven. Current `main` advances to `docs/pm-showwindow-artfile-titlebar-combined-six-key-policy-proof.md`, which proves the original live-proven three mappings and these residual three mappings together under one exact six-key policy before any interposer update or Lion PPC rerun.
 
 ## Current boundary
 
@@ -196,8 +196,9 @@ If either report fails, stop and preserve the current three-key live policy unch
 original exact-three live translation              PASS
 post-translation crash class                       same CoreUI diagnostic-helper fault
 residual exact-three source keys                   OBSERVED LIVE
-residual semantic candidate mappings               STATIC DICTIONARY-DERIVED
-residual direct-index/payload proof                 NEXT
+residual semantic mappings                         STATIC-PROVEN
+residual direct-index/payload proof                 PASS
+combined exact-six static proof                    NEXT
 core.9821                                           PRESERVE; NOT REQUIRED NOW
 live six-key policy                                 NOT AUTHORIZED
 PPC Lion rerun                                      NO
