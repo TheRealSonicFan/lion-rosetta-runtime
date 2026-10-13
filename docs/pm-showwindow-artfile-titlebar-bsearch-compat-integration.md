@@ -43,7 +43,7 @@ Source identities:
 ```text
 compat build ID   coreui-titlebar-bsearch-exact-three-v1
 source git blob   ced22138eb0b02a0e0474f933bebe4abce0b286f
-builder git blob  7837cecb1353f36a0357a9b9a8b78752aced929c
+builder git blob  91dcca963ddcd8517ba518726657545fe974fe3c
 Lion runner blob  d689159a2c0e1ece527b9c9552dca166e4a00be4
 Snow runner blob  bb0cc234b4243eda5d0b9086353c83cdddac6c3e
 ```
@@ -128,7 +128,7 @@ test "$LOCAL_HEAD" = "$REMOTE_HEAD" || exit 1
 
 test "$(git hash-object ./tests/ppc-coreui-titlebar-bsearch-compat-interposer.c)" =   "ced22138eb0b02a0e0474f933bebe4abce0b286f" || exit 1
 
-test "$(git hash-object ./scripts/build-ppc-coreui-titlebar-bsearch-compat-on-snowleopard.sh)" =   "7837cecb1353f36a0357a9b9a8b78752aced929c" || exit 1
+test "$(git hash-object ./scripts/build-ppc-coreui-titlebar-bsearch-compat-on-snowleopard.sh)" =   "91dcca963ddcd8517ba518726657545fe974fe3c" || exit 1
 
 /bin/bash -n ./scripts/build-ppc-coreui-titlebar-bsearch-compat-on-snowleopard.sh || exit 1
 /bin/bash -n ./scripts/run-snowleopard-ppc-process-manager-createwindow-distnotify-integration-control.sh || exit 1
@@ -144,6 +144,8 @@ git pull --ff-only origin main || exit 1
 ```
 
 ## Phase B — build the compatibility dylib on Snow Leopard
+
+The builder preflight was corrected on current `main`: the earlier revision over-escaped the quoted `BUILD_ID` literal and could falsely report a current source file as stale. A current checkout must therefore use builder blob `91dcca963ddcd8517ba518726657545fe974fe3c` before running this phase.
 
 On Snow Leopard 10.6.8:
 
