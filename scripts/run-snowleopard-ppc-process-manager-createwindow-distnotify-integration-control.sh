@@ -31,6 +31,7 @@ OPACITY_ALPHA_TRACE_MODE="${ROSETTA_CGS_POST_RELEASEBACKING_OPACITY_TRACE_MODE:-
 OPACITY_ALPHA_CREATE_COMPAT_MODE="${ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE:-}"
 POST_CREATEWINDOW_TITLE_MODE="${ROSETTA_POST_CREATEWINDOW_TITLE_VALIDATION_MODE:-}"
 POST_WINDOWTITLE_SHOWWINDOW_MODE="${ROSETTA_POST_WINDOWTITLE_SHOWWINDOW_VALIDATION_MODE:-}"
+POST_SHOWWINDOW_SELECTWINDOW_MODE="${ROSETTA_POST_SHOWWINDOW_SELECTWINDOW_VALIDATION_MODE:-}"
 SHOWWINDOW_UNKNOWN_TRACE_MODE="${ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE:-}"
 SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE:-}"
 SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE:-}"
@@ -157,6 +158,13 @@ if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
     [ "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" = "passthrough" ] ||
         fail "Snow ShowWindow validation requires FontServer rendezvous passthrough"
     EXPECTED_SUBJECT_BUILD_ID="cps-showwindow-validation-v1"
+fi
+if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+    [ "$POST_SHOWWINDOW_SELECTWINDOW_MODE" = "snow-selectwindow-v1" ] ||
+        fail "unsupported Snow post-ShowWindow SelectWindow validation mode: $POST_SHOWWINDOW_SELECTWINDOW_MODE"
+    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "snow-showwindow-v1" ] ||
+        fail "Snow SelectWindow validation requires the ShowWindow validation mode"
+    EXPECTED_SUBJECT_BUILD_ID="cps-selectwindow-validation-v1"
 fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "snow-passive-v1" ] ||
@@ -377,6 +385,15 @@ if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
             fail "ShowWindow subject marker missing: $marker"
     done
 fi
+if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+    for marker in \
+        'PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow' \
+        'PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow' \
+        'PM_POSTWINDOWSELECT_RESULT:SELECTWINDOW_PASS'; do
+        /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq "$marker" ||
+            fail "SelectWindow subject marker missing: $marker"
+    done
+fi
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
     "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || fail "CoreServices CPS registration compatibility build marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
@@ -586,6 +603,9 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
 fi
 if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
     echo "post_windowtitle_showwindow_validation_mode=$POST_WINDOWTITLE_SHOWWINDOW_MODE" | /usr/bin/tee -a "$LOG"
+fi
+if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+    echo "post_showwindow_selectwindow_validation_mode=$POST_SHOWWINDOW_SELECTWINDOW_MODE" | /usr/bin/tee -a "$LOG"
 fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     echo "showwindow_unknown_cgs_trace_mode=$SHOWWINDOW_UNKNOWN_TRACE_MODE" | /usr/bin/tee -a "$LOG"
@@ -831,6 +851,15 @@ if [ "$RC" -eq 0 ] &&
             echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
             exit 1
         fi
+    fi
+    if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_RESULT:SELECTWINDOW_PASS' "$LOG"; then
+            echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
+            exit 1
+        fi
+        echo "RESULT: POST_SHOWWINDOW_SELECTWINDOW_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
     fi
     if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
         FONTSERVER_RENDEZVOUS_COMPAT_CALLS="$(/usr/bin/grep -c 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_CALL:' "$LOG" 2>/dev/null || true)"
