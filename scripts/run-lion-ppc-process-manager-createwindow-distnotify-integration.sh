@@ -23,6 +23,9 @@ HITOOLBOX_EXTRAS_COMPAT="${ROSETTA_HITOOLBOX_EXTRAS_COMPAT_PATH:-}"
 HITOOLBOX_EXTRAS_COMPAT_SHA_FILE="${ROSETTA_HITOOLBOX_EXTRAS_COMPAT_SHA256_FILE:-}"
 HITOOLBOX_EXTRAS_RESOURCE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH:-}"
 HITOOLBOX_EXTRAS_MODE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE:-}"
+TITLEBAR_BSEARCH_COMPAT="${ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_PATH:-}"
+TITLEBAR_BSEARCH_SHA_FILE="${ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_SHA256_FILE:-}"
+TITLEBAR_BSEARCH_MODE="${ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_MODE:-}"
 DOCKSERVER_COMPAT_MODE="${ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE:-}"
 FONTSERVER_COMPAT_MODE="${ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE:-}"
 FONTSERVER_RPC_TRACE_MODE="${ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE:-}"
@@ -68,6 +71,9 @@ EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-compat-v1"
 EXPECTED_HITOOLBOX_TRACE_BUILD_ID="hitoolbox-cfbundle-resource-trace-v1"
 EXPECTED_HITOOLBOX_EXTRAS_COMPAT_BUILD_ID="hitoolbox-extras-resource-compat-v1"
 EXPECTED_HITOOLBOX_EXTRAS_RESOURCE_SHA="a0866d6cf2d48fac7787e8cf9e90264071642c0d39aa809636e7d478016a9197"
+EXPECTED_TITLEBAR_BSEARCH_BUILD_ID="coreui-titlebar-bsearch-exact-three-v1"
+TITLEBAR_ARTFILE="/System/Library/PrivateFrameworks/CoreUI.framework/Versions/A/Resources/ArtFile.bin"
+EXPECTED_TITLEBAR_ARTFILE_SHA="0cc8e1491be49fb015cb8b290fe9c289e4587bde570804a44a43e2b35e4b19f4"
 SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_SCHEMA_AUDIT_REPORT:-}"
 POST_EXTRAS_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_EXTRAS_SCHEMA_AUDIT_REPORT:-}"
 POST_FONTSERVER_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_FONTSERVER_SCHEMA_AUDIT_REPORT:-}"
@@ -75,6 +81,13 @@ POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_SH
 POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT:-}"
 REAL_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE:-}"
 EXPECTED_REAL_REGISTRATION_COUNT=3
+if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
+    log "coreui_titlebar_bsearch_compat_absolute_path=$TITLEBAR_BSEARCH_ABS"
+    log "coreui_titlebar_bsearch_compat_sha256=$TITLEBAR_BSEARCH_BEFORE"
+    log "coreui_titlebar_bsearch_mode=$TITLEBAR_BSEARCH_MODE"
+    log "coreui_titlebar_artfile_sha256=$TITLEBAR_ARTFILE_BEFORE"
+    export ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_MODE="$TITLEBAR_BSEARCH_MODE"
+fi
 if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-createwindow-schema-audit-broker-v1"
 elif [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ]; then
@@ -462,6 +475,18 @@ if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ] || [ -n "$HITOOLBOX_EXTRAS_COMPAT_SHA_FILE"
         die 64 "Lion Extras compatibility mode must be lion-fallback-external-v1"
 fi
 
+if [ -n "$TITLEBAR_BSEARCH_COMPAT" ] || [ -n "$TITLEBAR_BSEARCH_SHA_FILE" ] ||
+   [ -n "$TITLEBAR_BSEARCH_MODE" ]; then
+    [ -n "$TITLEBAR_BSEARCH_COMPAT" ] || die 64 "set ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_PATH"
+    [ -n "$TITLEBAR_BSEARCH_SHA_FILE" ] || die 64 "set ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_SHA256_FILE"
+    [ "$TITLEBAR_BSEARCH_MODE" = "lion-exact-three-v1" ] ||
+        die 64 "Lion titlebar bsearch mode must be lion-exact-three-v1"
+    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
+        die 64 "titlebar bsearch compatibility requires the ShowWindow subject"
+    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] ||
+        die 64 "titlebar bsearch compatibility requires the accepted exact-seven notification mode"
+fi
+
 abspath() {
     file="$1"
     dir="$(/usr/bin/dirname "$file")"
@@ -539,6 +564,13 @@ if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
     EXPECTED_HITOOLBOX_EXTRAS_COMPAT_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$HITOOLBOX_EXTRAS_COMPAT_SHA_FILE")"
 fi
 
+if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
+    [ -e "$TITLEBAR_BSEARCH_COMPAT" ] || die 66 "missing titlebar bsearch compatibility dylib: $TITLEBAR_BSEARCH_COMPAT"
+    [ -e "$TITLEBAR_BSEARCH_SHA_FILE" ] || die 66 "missing titlebar bsearch compatibility SHA file: $TITLEBAR_BSEARCH_SHA_FILE"
+    [ -f "$TITLEBAR_ARTFILE" ] || die 66 "missing Lion ArtFile.bin"
+    EXPECTED_TITLEBAR_BSEARCH_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$TITLEBAR_BSEARCH_SHA_FILE")"
+fi
+
 KERNEL_BEFORE="$(sha256 /mach_kernel)"
 TRANSLATOR_BEFORE="$(sha256 "$TRANSLATOR")"
 PRIVATE_BEFORE="$(sha256 "$PRIVATE_DYLD")"
@@ -564,6 +596,23 @@ fi
 if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
     HITOOLBOX_EXTRAS_COMPAT_BEFORE="$(sha256 "$HITOOLBOX_EXTRAS_COMPAT")"
     HITOOLBOX_EXTRAS_RESOURCE_BEFORE="$(sha256 "$HITOOLBOX_EXTRAS_RESOURCE")"
+fi
+
+if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
+    TITLEBAR_BSEARCH_BEFORE="$(sha256 "$TITLEBAR_BSEARCH_COMPAT")"
+    TITLEBAR_ARTFILE_BEFORE="$(sha256 "$TITLEBAR_ARTFILE")"
+    [ "$TITLEBAR_BSEARCH_BEFORE" = "$EXPECTED_TITLEBAR_BSEARCH_SHA" ] ||
+        die 68 "titlebar bsearch compatibility hash mismatch"
+    [ "$TITLEBAR_ARTFILE_BEFORE" = "$EXPECTED_TITLEBAR_ARTFILE_SHA" ] ||
+        die 68 "Lion ArtFile.bin hash mismatch for titlebar compatibility"
+    has_ppc32_arch "$TITLEBAR_BSEARCH_COMPAT" ||
+        die 68 "titlebar bsearch compatibility dylib is not 32-bit PPC"
+    /usr/bin/strings "$TITLEBAR_BSEARCH_COMPAT" |
+        /usr/bin/grep -Fq "PM_COREUI_TITLEBAR_BSEARCH_BUILD_ID:$EXPECTED_TITLEBAR_BSEARCH_BUILD_ID" ||
+        die 68 "titlebar bsearch compatibility build marker missing"
+    TITLEBAR_INTERPOSE_SECTION="$(/usr/bin/otool -l "$TITLEBAR_BSEARCH_COMPAT" | /usr/bin/grep -A10 -B2 '__interpose' || true)"
+    echo "$TITLEBAR_INTERPOSE_SECTION" | /usr/bin/grep -Fq 'size 0x00000008' ||
+        die 68 "titlebar bsearch compatibility does not contain exactly one PPC interpose tuple"
 fi
 
 log "mach_kernel_sha256_before=$KERNEL_BEFORE"
@@ -842,6 +891,11 @@ if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
     [ -n "$HITOOLBOX_EXTRAS_RESOURCE_ABS" ] || die 68 "could not resolve staged Extras.rsrc path"
     INSERTED="$INSERTED:$HITOOLBOX_EXTRAS_COMPAT_ABS"
 fi
+if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
+    TITLEBAR_BSEARCH_ABS="$(abspath "$TITLEBAR_BSEARCH_COMPAT")"
+    [ -n "$TITLEBAR_BSEARCH_ABS" ] || die 68 "could not resolve titlebar bsearch compatibility path"
+    INSERTED="$INSERTED:$TITLEBAR_BSEARCH_ABS"
+fi
 log "coreservices_cps_registration_compat_absolute_path=$CORE_ABS"
 log "security_interposer_absolute_path=$SEC_ABS"
 log "cgs_interposer_absolute_path=$CGS_ABS"
@@ -999,6 +1053,24 @@ RC=$?
 
 /bin/cat "$RAW_LOG" | /usr/bin/tee -a "$REPORT"
 log "createwindow_validation_exec_status=$RC"
+
+if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
+    TITLEBAR_CLEAR_TRANSLATED="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=clear mode=lion-exact-three-v1 action=TRANSLATED' "$RAW_LOG" 2>/dev/null || true)"
+    TITLEBAR_MINUS_TRANSLATED="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=minus mode=lion-exact-three-v1 action=TRANSLATED' "$RAW_LOG" 2>/dev/null || true)"
+    TITLEBAR_ZOOM_TRANSLATED="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=zoom mode=lion-exact-three-v1 action=TRANSLATED' "$RAW_LOG" 2>/dev/null || true)"
+    TITLEBAR_GUARD_REJECTS="$(/usr/bin/grep -c 'GUARD_REJECT_PASSTHROUGH' "$RAW_LOG" 2>/dev/null || true)"
+    log "coreui_titlebar_clear_translated_count=$TITLEBAR_CLEAR_TRANSLATED"
+    log "coreui_titlebar_minus_translated_count=$TITLEBAR_MINUS_TRANSLATED"
+    log "coreui_titlebar_zoom_translated_count=$TITLEBAR_ZOOM_TRANSLATED"
+    log "coreui_titlebar_guard_reject_count=$TITLEBAR_GUARD_REJECTS"
+    if [ "$TITLEBAR_CLEAR_TRANSLATED" -lt 1 ] ||
+       [ "$TITLEBAR_MINUS_TRANSLATED" -lt 1 ] ||
+       [ "$TITLEBAR_ZOOM_TRANSLATED" -lt 1 ] ||
+       [ "$TITLEBAR_GUARD_REJECTS" -ne 0 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COREUI_TITLEBAR_BSEARCH_COMPAT_PREDICATE_NOT_PASSED"
+        exit 0
+    fi
+fi
 
 /bin/sleep 3
 log ""
