@@ -890,10 +890,20 @@ a7->b1  a8->b2  a9->b3  aa->b4
 
 For each pair, `regularwin`, `variant1`, and `variant2` produce the same semantic output. Lion's additional secondary classes remain additive state distinctions; they do not invalidate the neutral mapping. Because Snow resolves the titlebar state into the final eight-byte path before the old `LoadFromArtFile` consumer sees it, descriptor-state reconstruction is not required for an exact path-key compatibility policy.
 
-## Current step — translated Lion ArtFile path feasibility
+## Translated Lion ArtFile path feasibility proven
 
-Current `main` advances to `docs/pm-showwindow-artfile-titlebar-translated-path-feasibility.md` using `scripts/audit-pm-artfile-titlebar-translated-paths.py` (analyzer v1, contract `titlebar-translated-path-feasibility-v1`).
+The Snow positive control passes with all three source keys as direct index hits. Lion also passes the feasibility gate: each untranslated Snow key has zero Lion index hits, while each semantic-equivalent Lion key has exactly one direct hit with a valid payload reference.
 
-The analyzer parses the legacy ArtFile lookup index directly from the accepted archive header: record count at `0x00`, eight-byte path length at `0x02`, index start at `0x10`, payload base at `0x14`, and record width `path_length+4`. Snow is a positive control for the three exact captured paths; Lion is tested for semantic-equivalent direct lookup records and valid payload references.
+```text
+clear  a613161f7a000000 -> 9914172272000000
+minus  a6161f567a000000 -> 9917225572000000
+zoom   a6161f7ab6000000 -> 99172272a9000000
+```
 
-Run it on Snow Leopard and Lion and return exactly `pm-art-titlebar-translated-paths-snow.txt` and `pm-art-titlebar-translated-paths-lion.txt`. Do not rerun the PPC ShowWindow subject, patch CoreUI/ArtFile, globally remap component IDs, suppress diagnostics, substitute resources, install a titlebar path interposer, or change XNU. A live compatibility policy remains unauthorized until all three Lion translated keys are proven to be real lookup-index entries.
+This closes the question of whether the three exact crash-time semantics exist in Lion's legacy ArtFile. It does not yet authorize live CoreUI interception.
+
+## Current step — exact-three-key policy proof
+
+Current `main` advances to `docs/pm-showwindow-artfile-titlebar-three-key-policy-proof.md` using `scripts/audit-pm-artfile-titlebar-three-key-policy.py` (analyzer v1, contract `titlebar-three-key-policy-v1`).
+
+Run the static analyzer once on Snow Leopard and once on Lion and return exactly `pm-art-titlebar-three-key-policy-snow.txt` and `pm-art-titlebar-three-key-policy-lion.txt`. Snow must prove the Lion guard stays disabled and all local paths remain identity. Lion must prove the guard enables only for 10.7.5/11G63 with the accepted ArtFile identity, the policy contains exactly the three mappings above, 6,120 single-byte near misses remain identity, every local index record remains unchanged, and the three outputs are idempotent valid target keys. Do not rerun the PPC ShowWindow subject, build/install a CoreUI interposer, patch ArtFile/CoreUI, broaden component mapping, suppress diagnostics, or change XNU.
