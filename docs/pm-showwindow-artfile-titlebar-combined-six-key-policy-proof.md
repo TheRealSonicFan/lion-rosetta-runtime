@@ -194,20 +194,22 @@ pm-art-titlebar-combined-six-key-policy-lion.txt
 
 Do not return ArtFile binaries, the compatibility dylib, or `core.9821`.
 
-## Review gate
+## Completed result
 
-If both reports pass, the next stage may update the process-local `bsearch` compatibility source from exactly three to exactly six proven keys and prepare a mandatory Snow passthrough control before considering one new Lion run. That implementation stage must preserve the existing callsite/comparator, archive-geometry, release/resource, prefix, exact-seven notification, and non-target identity guards.
+Both returned combined-policy reports pass. Snow Leopard keeps the Lion-only guard disabled, contains one direct source-index hit for every one of the six Snow keys, changes zero of 3,324 local records, and passes all 12,240 single-byte near-miss cases with zero failures. Lion enables only under the accepted 10.7.5/11G63 ArtFile identity, contains none of the six untranslated Snow sources, and contains exactly one valid semantic-equivalent direct target for every disabled/active clear/minus/zoom mapping. The six outputs are not policy inputs, the original/residual source and target sets are disjoint, idempotence passes, and zero of 2,674 Lion local index records are changed by the policy proof.
 
-If either report fails, stop. Keep the currently live-proven three-key artifact and all other compatibility components unchanged.
+The combined exact-six byte policy is therefore static-proven. Current `main` has advanced the process-local compatibility source to build ID `coreui-titlebar-bsearch-exact-six-v2`, but Lion execution remains blocked. The next authoritative stage is `docs/pm-showwindow-artfile-titlebar-six-key-snow-control.md`: build the new artifact on Snow Leopard and run the mandatory six-key passthrough control only. Do not transfer or run it on Lion until that Snow evidence is reviewed.
 
 ## Current boundary
 
 ```text
 original exact-three policy                    LIVE-PROVEN
 residual exact-three policy                    STATIC-PROVEN
-combined exact-six mapping set                 DEFINED
-combined exact-six static proof                NEXT
-live six-key interposer                        NOT AUTHORIZED
+combined exact-six mapping set                 STATIC-PROVEN
+combined exact-six near-miss proof             PASS: 12240 / 0 failures
+exact-six compatibility source                 PREPARED
+exact-six Snow passthrough control             NEXT
+Lion runner exact-six enablement               NOT YET PREPARED
 PPC Lion rerun                                 NO
 core.9821                                      preserve; not required now
 CoreUI/ArtFile patch                           NO
