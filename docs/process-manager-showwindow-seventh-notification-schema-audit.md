@@ -345,3 +345,66 @@ CGSShapeWindow                                 held
 RawCamera / CoreUI                             held
 XNU                                            no change indicated
 ```
+
+
+## Observed result — seventh request is ColorSync display-profile registration
+
+The corrected audit procedure completed successfully. The native broker was i386, used build ID `distributed-notifications-showwindow-seventh-schema-audit-broker-v1`, and the returned broker SHA matched its sidecar. Syscall 295 remained on the accepted kernel path and returned EBADF without SIGSYS.
+
+The Lion subject preserved the accepted compatibility chain: WindowBackingInfo, ColorProfileClient, ResolveColorProfile, and FontServer rendezvous each passed their exact existing adapters; the former backing-data shmem mapping and `_CGSLockWindow` failures did not recur; and the first six notification registrations were accepted.
+
+Exactly one seventh legacy request was captured:
+
+```text
+Mach bits      0x1111
+message id     4
+message size   356
+payload size   322
+```
+
+The binary plist decodes as:
+
+```text
+message_type  register
+client        ppc-process-manager-cgs-session-bootstrap-integration-private-dyld
+name          com.apple.ColorSync.DisplayProfileNotification
+object        kCFNotificationAnyObject
+behavior      4
+counter       1
+entry         3540864 / 0x003606c0 in this run
+sessionid     78 in this run
+```
+
+The broker intentionally preserved status 25 for that unreviewed name, reported `register=6 callback=0 rejects=0 exact=YES`, exactly one capture, zero capture failures, zero unexpected rejects, and `POST_SHOWWINDOW_SEVENTH_AUDIT_PASS`. Protected hashes remained unchanged. The subject still exited 139 after the deliberate seventh-request rejection; RawCamera loading and CoreUI invalid-art-file diagnostics remain downstream of that closed boundary.
+
+This exact schema is sufficient to prepare one narrow sequence extension. It does not authorize arbitrary ColorSync names, objects, behaviors, counters, or an eighth request.
+
+The authoritative next procedure is:
+
+```text
+docs/process-manager-showwindow-seventh-notification-registration.md
+```
+
+Build only the new short native exact-seven broker, repeat syscall 295, and perform exactly one Lion run with all accepted ShowWindow compatibility modes unchanged. Accept only the reviewed seventh tuple above. Reject any eighth request and stop for another schema audit; if no eighth request appears but ShowWindow still does not return, preserve the first later diagnostic and crash/core evidence for review. No XNU change is indicated.
+
+## Completed boundary
+
+```text
+seventh schema audit                          PASS
+seventh request operation                     register
+seventh name                                  com.apple.ColorSync.DisplayProfileNotification
+seventh object                                kCFNotificationAnyObject
+seventh behavior                              4 / Coalesce
+seventh counter                               1
+seventh entry                                 positive per-run identity
+seventh session                               established session
+WindowBackingInfo compatibility               PASS
+ColorProfileClient compatibility              PASS
+ResolveColorProfile compatibility             PASS
+backing-map failure                           absent
+next step                                     exact-seven registration run
+eighth notification request                   unreviewed / reject
+CGSShapeWindow                                held
+RawCamera / CoreUI                            held
+XNU                                           unchanged
+```
