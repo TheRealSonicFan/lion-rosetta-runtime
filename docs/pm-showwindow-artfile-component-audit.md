@@ -220,3 +220,41 @@ PPC subject rerun                                 NO
 resource substitution                             NO
 XNU                                                no change indicated
 ```
+
+
+## Observed result — active titlebar namespace is broadly reindexed
+
+Both returned component-dictionary audits complete `RESULT: PASS` and satisfy their release-specific provenance gates.
+
+The decisive result is broader than the original `0xb6` boundary. The three captured Snow paths decode under Snow's own dictionary as:
+
+```text
+a6 13 16 1f 7a          titlebarcontrols.close.colorsryg.disabled.regularwin
+a6 16 1f 56 7a          titlebarcontrols.colorsryg.disabled.minimize.regularwin
+a6 16 1f 7a b6          titlebarcontrols.colorsryg.disabled.regularwin.zoom
+```
+
+Every active semantic exists uniquely in Lion, but every numeric ID changed:
+
+```text
+Snow  Lion  semantic
+a6    99    titlebarcontrols
+13    14    close
+16    17    colorsryg
+1f    22    disabled
+56    55    minimize
+7a    72    regularwin
+b6    a9    zoom
+```
+
+Thus the previously visible Lion strings such as `west.colorsrgb.determinate.scrollbars` are not the Snow path's intended semantics. They are artifacts of old Snow-PPC path bytes being decoded through Lion's differently indexed component dictionary. The third path crashes only because Snow's final `0xb6` falls beyond Lion's shorter `0xa9` table.
+
+This rules out a one-byte `0xb6 -> 0xa9` fix. A compatibility layer must preserve the whole semantic path, not remap only the terminal token.
+
+The authoritative next procedure is:
+
+```text
+docs/pm-showwindow-artfile-titlebar-path-audit.md
+```
+
+Run its read-only path-builder/helper audit once on Snow Leopard and once on Lion and return `pm-art-titlebar-path-snow.txt` and `pm-art-titlebar-path-lion.txt`. Do not rerun the PPC subject or apply any component translation yet.
