@@ -232,3 +232,62 @@ CGSShapeWindow                                    held
 next step                                         Snow/Lion CoreUI + HIToolbox static differential
 XNU                                               no change indicated
 ```
+
+
+## Observed result — Rosetta uses Snow PPC code against Lion CoreUI resources
+
+Both reports pass. The Rosetta shared cache and its map are byte-for-byte identical on Snow Leopard and Lion:
+
+```text
+dyld_shared_cache_rosetta
+2968123ebb467633929398c692cfa68e8a13925ead683c5b1a04581c0aee6911
+
+dyld_shared_cache_rosetta.map
+66e8940757eb909ffb1920ac1510134afafbd5d2d649a9cc7d750753333153f9
+```
+
+Snow Leopard's on-disk CoreUI and HIToolbox contain `ppc7400` slices. Lion's on-disk copies contain only `i386,x86_64`. The preserved Lion crash frames nevertheless line up exactly with the Snow PPC symbol inventory.
+
+For CoreUI, the Snow PPC symbols are:
+
+```text
+ShowArtFilePathToStdErr(unsigned char const*)      0x291e8
+CUIElement::LoadFromArtFile(unsigned char const*)  0x29408
+CUIElement::Load(_QSIContext*,...)                 0x29c00
+CUIRenderer::Draw1Piece(...)                       0x11b6c
+CUIRenderer::Draw(...)                             0x174c4
+```
+
+Subtracting each Snow PPC symbol address and the crash report's per-function offset from the corresponding Lion absolute crash address produces one exact image base, `0x923de000`, for all five frames. Repeating the same calculation for the observed HIToolbox frames produces one exact base, `0x98a77000`, for titlebar drawing, visibility preparation, `__ShowHideWindows`, and `ShowWindow`.
+
+This closes the code-provenance question: the failing Lion Rosetta process is executing the Snow-era PPC CoreUI/HIToolbox code represented by the unchanged Rosetta cache, not Lion's on-disk native implementations.
+
+The resource side is release-specific. Snow CoreUI 114 carries:
+
+```text
+ArtFile.bin   5,946,480 bytes
+SArtFile.bin    811,436 bytes
+UI.bundle/Contents/Recipes/scrollbars.xml
+219 resource files
+```
+
+Lion CoreUI 165.11 carries:
+
+```text
+ArtFile.bin     4,765,184 bytes
+ArtFile200.bin 18,101,720 bytes
+SArtFile.bin    9,370,228 bytes
+6 resource files
+```
+
+The code contract changed at the same boundary. Snow PPC exports `ShowArtFilePathToStdErr(unsigned char const*)` and one `ArtFileSetupOnce()`; Lion native i386 exports `ShowArtFilePathToStdErr(ArtFileInfo*, unsigned char const*)`, separate `ArtFile10SetupOnce()` / `ArtFile20SetupOnce()`, and `GetArtFileInfoForScaleFactor(float)`.
+
+The leading explanation is therefore a Snow-PPC-CoreUI versus Lion-CoreUI-resource/archive contract mismatch. The current reports do not yet identify which archive contains the three failing `west...scrollbars` keys or the exact old-loader field/path interpretation. No resource substitution is justified yet.
+
+The authoritative next procedure is:
+
+```text
+docs/pm-showwindow-coreui-artfile-audit.md
+```
+
+Run its targeted static analyzer on Snow Leopard and Lion and return only `pm-art-snow.txt` and `pm-art-lion.txt`. Do not rerun the PPC subject and do not copy Snow CoreUI resources onto Lion.
