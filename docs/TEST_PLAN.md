@@ -865,3 +865,22 @@ Current `main` advances to the read-only `docs/pm-showwindow-coreui-artfile-audi
 The targeted Snow/Lion ArtFile audit now shows that the visible `west...scrollbars` diagnostics are synthesized from component IDs rather than stored as literal archive strings. The exact dotted strings occur zero times in the audited ArtFile/SArtFile resources, while component names such as `colorsrgb`, `scrollbars`, and `titlebarcontrols` are present. The old Snow-PPC diagnostic helper decodes path bytes through global archive tables; Lion's native helper instead takes an `ArtFileInfo*`, supports separate ArtFile10/ArtFile20 setup, and applies per-archive validation. The static reports do not yet prove that `ArtFile200.bin` participates in the crashing call.
 
 Current `main` advances to `docs/pm-showwindow-art-core.md` using `scripts/collect-pm-art-core.py`. It analyzes only the preserved exact-seven core and Lion's current `ArtFile.bin`, recovers the old PPC CoreUI global archive pointers and the active `CUIElement::Load` path buffer, and emulates the old component lookup to identify the exact crash-time path/table result. Do not rerun the PPC subject or substitute Snow resources.
+
+
+## Preserved ArtFile decode proves the exact titlebar component-table overrun
+
+The preserved exact-seven core decode proves that Snow-PPC CoreUI consumed Lion's legacy `ArtFile.bin` and that the active Snow titlebar path `a6 16 1f 7a b6 00 00 00` drives the old unchecked component lookup beyond Lion's shorter component table. Snow component `0xb6` is valid `zoom`; Lion's table ends at `0xa9`, so the old helper reads string-pool bytes as an offset and computes the exact bad pointer preserved in the crash.
+
+The component dictionary audit then proves a full semantic namespace shift rather than an isolated terminal-token mismatch. The titlebar prefix/state/variant components are all reindexed between Snow and Lion, so a one-byte `b6->a9` patch is rejected.
+
+## Titlebar path-builder and emitted-state surfaces proven
+
+The corrected path-builder audit proves Snow's titlebar branch uses inline `AppendState` while Lion uses `AppendWindowTitlebarButtonState`. The semantic prefix components and `AppendWindowVariant` outputs correspond by name, but raw IDs and raw window-variant selectors differ by release.
+
+The corrected semantic-state analyzer v3 then proves the emitted-state surfaces and input provenance. Snow uses primary state from arg5/descriptor+`0x18`, has no dedicated titlebar-secondary input, and emits `active`, `disabled`, `inactive`, `key`, `pressed`, and `rollover` but not `activenokey`. Lion uses primary state from arg5/descriptor+`0x28`, additionally passes descriptor+`0x2c` to the dedicated titlebar-state helper, and can emit the shared Snow states plus `activenokey`.
+
+## Current step — titlebar state transition/provenance audit
+
+Current `main` advances to `docs/pm-showwindow-artfile-titlebar-state-transition-audit.md` using `scripts/audit-pm-artfile-titlebar-state-transitions.py` (analyzer v1, contract `titlebar-state-transition-v1`). This read-only analyzer enumerates Snow's titlebar transitions across primary state and window-variant classes and decodes Lion's two native titlebar helper jump tables across primary, dedicated-secondary, and window-variant classes.
+
+Run it once on Snow Leopard and once on Lion and return exactly `pm-art-titlebar-state-transition-snow.txt` and `pm-art-titlebar-state-transition-lion.txt`. Do not rerun the PPC ShowWindow subject, globally remap CoreUI IDs, patch CoreUI/ArtFile resources, suppress diagnostics, install a titlebar path interposer, or change XNU. A live translator remains unauthorized until the transition tables establish the precise semantic correspondence and a later static Lion-ArtFile translated-path feasibility audit passes.
