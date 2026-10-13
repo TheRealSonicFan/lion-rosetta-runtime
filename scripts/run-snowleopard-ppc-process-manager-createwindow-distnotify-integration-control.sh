@@ -47,7 +47,7 @@ EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-compat-v1"
 EXPECTED_HITOOLBOX_TRACE_BUILD_ID="hitoolbox-cfbundle-resource-trace-v1"
 EXPECTED_HITOOLBOX_EXTRAS_COMPAT_BUILD_ID="hitoolbox-extras-resource-compat-v1"
 EXPECTED_HITOOLBOX_EXTRAS_RESOURCE_SHA="a0866d6cf2d48fac7787e8cf9e90264071642c0d39aa809636e7d478016a9197"
-EXPECTED_TITLEBAR_BSEARCH_BUILD_ID="coreui-titlebar-bsearch-exact-three-v1"
+EXPECTED_TITLEBAR_BSEARCH_BUILD_ID="coreui-titlebar-bsearch-exact-six-v2"
 
 fail() {
     echo "error: $*" | /usr/bin/tee -a "$LOG" >&2
@@ -659,17 +659,26 @@ RC=$?
 echo "control_status=$RC" | /usr/bin/tee -a "$LOG"
 
 if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
-    TITLEBAR_CLEAR_PASSTHROUGH="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=clear mode=passthrough action=PASSTHROUGH' "$LOG" 2>/dev/null || true)"
-    TITLEBAR_MINUS_PASSTHROUGH="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=minus mode=passthrough action=PASSTHROUGH' "$LOG" 2>/dev/null || true)"
-    TITLEBAR_ZOOM_PASSTHROUGH="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=zoom mode=passthrough action=PASSTHROUGH' "$LOG" 2>/dev/null || true)"
+    TITLEBAR_DISABLED_CLEAR_PASSTHROUGH="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=disabled-clear mode=passthrough action=PASSTHROUGH' "$LOG" 2>/dev/null || true)"
+    TITLEBAR_DISABLED_MINUS_PASSTHROUGH="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=disabled-minus mode=passthrough action=PASSTHROUGH' "$LOG" 2>/dev/null || true)"
+    TITLEBAR_DISABLED_ZOOM_PASSTHROUGH="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=disabled-zoom mode=passthrough action=PASSTHROUGH' "$LOG" 2>/dev/null || true)"
+    TITLEBAR_ACTIVE_CLEAR_PASSTHROUGH="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=active-clear mode=passthrough action=PASSTHROUGH' "$LOG" 2>/dev/null || true)"
+    TITLEBAR_ACTIVE_MINUS_PASSTHROUGH="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=active-minus mode=passthrough action=PASSTHROUGH' "$LOG" 2>/dev/null || true)"
+    TITLEBAR_ACTIVE_ZOOM_PASSTHROUGH="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=active-zoom mode=passthrough action=PASSTHROUGH' "$LOG" 2>/dev/null || true)"
     TITLEBAR_UNEXPECTED="$(/usr/bin/grep -Ec 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:.*action=(TRANSLATED|GUARD_REJECT_PASSTHROUGH)' "$LOG" 2>/dev/null || true)"
-    echo "coreui_titlebar_clear_passthrough_count=$TITLEBAR_CLEAR_PASSTHROUGH" | /usr/bin/tee -a "$LOG"
-    echo "coreui_titlebar_minus_passthrough_count=$TITLEBAR_MINUS_PASSTHROUGH" | /usr/bin/tee -a "$LOG"
-    echo "coreui_titlebar_zoom_passthrough_count=$TITLEBAR_ZOOM_PASSTHROUGH" | /usr/bin/tee -a "$LOG"
+    echo "coreui_titlebar_disabled_clear_passthrough_count=$TITLEBAR_DISABLED_CLEAR_PASSTHROUGH" | /usr/bin/tee -a "$LOG"
+    echo "coreui_titlebar_disabled_minus_passthrough_count=$TITLEBAR_DISABLED_MINUS_PASSTHROUGH" | /usr/bin/tee -a "$LOG"
+    echo "coreui_titlebar_disabled_zoom_passthrough_count=$TITLEBAR_DISABLED_ZOOM_PASSTHROUGH" | /usr/bin/tee -a "$LOG"
+    echo "coreui_titlebar_active_clear_passthrough_count=$TITLEBAR_ACTIVE_CLEAR_PASSTHROUGH" | /usr/bin/tee -a "$LOG"
+    echo "coreui_titlebar_active_minus_passthrough_count=$TITLEBAR_ACTIVE_MINUS_PASSTHROUGH" | /usr/bin/tee -a "$LOG"
+    echo "coreui_titlebar_active_zoom_passthrough_count=$TITLEBAR_ACTIVE_ZOOM_PASSTHROUGH" | /usr/bin/tee -a "$LOG"
     echo "coreui_titlebar_unexpected_action_count=$TITLEBAR_UNEXPECTED" | /usr/bin/tee -a "$LOG"
-    if [ "$TITLEBAR_CLEAR_PASSTHROUGH" -lt 1 ] ||
-       [ "$TITLEBAR_MINUS_PASSTHROUGH" -lt 1 ] ||
-       [ "$TITLEBAR_ZOOM_PASSTHROUGH" -lt 1 ] ||
+    if [ "$TITLEBAR_DISABLED_CLEAR_PASSTHROUGH" -lt 1 ] ||
+       [ "$TITLEBAR_DISABLED_MINUS_PASSTHROUGH" -lt 1 ] ||
+       [ "$TITLEBAR_DISABLED_ZOOM_PASSTHROUGH" -lt 1 ] ||
+       [ "$TITLEBAR_ACTIVE_CLEAR_PASSTHROUGH" -lt 1 ] ||
+       [ "$TITLEBAR_ACTIVE_MINUS_PASSTHROUGH" -lt 1 ] ||
+       [ "$TITLEBAR_ACTIVE_ZOOM_PASSTHROUGH" -lt 1 ] ||
        [ "$TITLEBAR_UNEXPECTED" -ne 0 ]; then
         echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
         exit 1
