@@ -18,7 +18,7 @@ extern mach_port_t mig_get_reply_port(void);
 #if defined(PM_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_INTEGRATION) || \
     defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_INTEGRATION) || \
     defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION)
-#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-v2"
+#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-selectwindow-orderfront-compat-v3"
 #elif defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-trace-v1"
 #elif defined(PM_CGS_SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_INTEGRATION)
@@ -365,6 +365,7 @@ static const char kDistributedNotificationsName[] =
 #define CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ENV "ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE"
 #define CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_PASSTHROUGH "passthrough"
 #define CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_LION_V1 "lion-id-v1"
+#define CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_LION_SELECTWINDOW_V1 "lion-selectwindow-id-v1"
 #define CGS_ORDER_FRONT_CONDITIONALLY_LEGACY_REQUEST_ID 0x000072e7U
 #define CGS_ORDER_FRONT_CONDITIONALLY_LEGACY_REPLY_ID 0x0000734bU
 #define CGS_ORDER_FRONT_CONDITIONALLY_LION_REQUEST_ID 0x000072eaU
@@ -1902,6 +1903,9 @@ handle_cgs_releasebacking_compat(mach_msg_header_t *msg,
     unsigned int reply_changed = 0U;
     unsigned int reply_body_changed = 0U;
     int exact;
+    int lion_showwindow_mode;
+    int lion_selectwindow_mode;
+    int call_index_ok;
     int reply_swapped = 0;
     const char *reply_class = "UNEXPECTED";
 
@@ -2777,6 +2781,19 @@ handle_cgs_order_front_conditionally_compat(
     mode = getenv(CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ENV);
     exact = is_exact_legacy_cgs_order_front_conditionally_request(
         msg, option, send_size, rcv_size, rcv_name, timeout, notify);
+    lion_showwindow_mode =
+        mode != NULL &&
+        strcmp(mode, CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_LION_V1) == 0;
+    lion_selectwindow_mode =
+        mode != NULL &&
+        strcmp(mode,
+               CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_LION_SELECTWINDOW_V1) == 0;
+    call_index_ok =
+        (gCGSOrderFrontConditionallyCompatCallCount == 1U &&
+         gCGSAddTrackingAreaCompatCallCount == 0U) ||
+        (lion_selectwindow_mode &&
+         gCGSOrderFrontConditionallyCompatCallCount == 2U &&
+         gCGSAddTrackingAreaCompatCallCount == 1U);
 
     fprintf(stderr,
             "PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=%u mode=%s exact=%s bits=0x%08lx id=0x%08lx send=0x%08lx recv=0x%08lx remotePort=0x%08lx replyPort=0x%08lx arg0=0x%08lx arg1=0x%08lx windowId=0x%08lx arg3=0x%08lx arg4=0x%08lx opacityCreateCompatCalls=%u addTrackingCompatCalls=%u\n",
@@ -2814,12 +2831,10 @@ handle_cgs_order_front_conditionally_compat(
                                       timeout, notify);
     }
 
-    if (mode == NULL ||
-        strcmp(mode, CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_LION_V1) != 0 ||
+    if ((!lion_showwindow_mode && !lion_selectwindow_mode) ||
         !exact ||
-        gCGSOrderFrontConditionallyCompatCallCount != 1U ||
-        gCGSOpacityAlphaCreateCompatCallCount != 1U ||
-        gCGSAddTrackingAreaCompatCallCount != 0U) {
+        !call_index_ok ||
+        gCGSOpacityAlphaCreateCompatCallCount != 1U) {
         fprintf(stderr,
                 "PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:PREDICATE_REJECTED_PASSTHROUGH\n");
         fflush(stderr);
