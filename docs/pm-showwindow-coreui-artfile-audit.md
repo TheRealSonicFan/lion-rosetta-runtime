@@ -353,3 +353,48 @@ PPC subject rerun                                 NO
 RawCamera / ShapeWindow                           held
 XNU                                                no change indicated
 ```
+
+
+## Observed result — old PPC path decode still depends on Lion ArtFile tables
+
+Both targeted reports complete `RESULT: PASS`.
+
+The exact Snow-PPC crash address mapping remains exact at CoreUI base `0x923de000` and HIToolbox base `0x98a77000`.
+
+The old and new diagnostic contracts differ more sharply than a filename change:
+
+```text
+Snow PPC:
+  ShowArtFilePathToStdErr(unsigned char const*)
+  ArtFileSetupOnce()
+  global archive tables
+
+Lion native:
+  ShowArtFilePathToStdErr(ArtFileInfo*, unsigned char const*)
+  ArtFile10SetupOnce()
+  ArtFile20SetupOnce()
+  per-archive ArtFileInfo state and bounds checks
+```
+
+Snow `CUIElement::Load` creates its ArtFile path into a stack buffer at `SP+0x44`, passes that buffer to `LoadFromArtFile`, and the old diagnostic helper later decodes each path byte through global archive tables. Lion's helper instead receives the active `ArtFileInfo*` and checks archive metadata before resolving component strings.
+
+The three visible dotted diagnostic names are **not literal strings** in either release's audited archives. On Snow and Lion, `ArtFile.bin` contains component strings such as `colorsrgb`, `scrollbars`, and `titlebarcontrols`, while the exact complete `west...scrollbars` byte strings have count zero. The same exact complete strings also have count zero in the audited `SArtFile.bin` files and in Lion `ArtFile200.bin`. Therefore the messages are synthesized from component IDs, and simple literal-resource search cannot identify the crashing record.
+
+Lion's resource generation remains materially different:
+
+```text
+ArtFile.bin     4,765,184 bytes
+ArtFile200.bin 18,101,720 bytes
+SArtFile.bin    9,370,228 bytes
+scrollbars.xml  absent
+```
+
+The current evidence still does **not** prove that `ArtFile200.bin` participates in the failing call. It proves that the old PPC decoder is operating in a release where CoreUI now supports multiple ArtFile contexts. The next discriminator must recover the actual crash-time path bytes and the old global table pointers from the preserved core.
+
+The authoritative next procedure is:
+
+```text
+docs/pm-showwindow-art-core.md
+```
+
+It uses the preserved exact-seven core only. It does not rerun the PPC subject.
