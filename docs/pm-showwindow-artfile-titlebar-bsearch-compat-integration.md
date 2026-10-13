@@ -452,7 +452,7 @@ The returned evidence closes the prepared exact-three integration gate positivel
   - `a601167ab6000000`
 - the runner named a new crash report, crash plist, and `/cores/core.9821`.
 
-This proves the original exact-three bsearch compatibility policy is live and correctly reached; it also proves that the original three keys were not the complete titlebar ArtFile lookup surface exercised by this ShowWindow path. Do **not** add the residual three keys to the policy yet. The next step is evidence review of the newly named crash report/core to determine whether the termination is still the same CoreUI helper fault or a downstream failure. No further Lion PPC run is authorized until those diagnostics are reviewed.
+This proves the original exact-three bsearch compatibility policy is live and correctly reached; it also proves that the original three keys were not the complete titlebar ArtFile lookup surface exercised by this ShowWindow path. The returned crash report has now classified the termination: it is the same CoreUI diagnostic-helper fault class, with the same `ShowArtFilePathToStdErr +220 -> LoadFromArtFile +1840 -> Load +132` chain and the same Rosetta host `EIP=0x8bea0843`, now faulting at `0x7872a1c4`. The 500+ MB core is therefore not required for this classification stage; preserve it but do not upload it now. Do **not** add the residual three keys to the live policy yet. The next authoritative stage is the read-only residual three-key policy proof in `docs/pm-showwindow-artfile-titlebar-residual-three-key-policy-proof.md`. No further Lion PPC run is authorized until that static proof is reviewed.
 
 ## Current boundary
 
@@ -468,8 +468,9 @@ Snow passthrough control                          PASS
 Lion exact-three live proof                       PASS: all three translated, zero guard rejects
 ShowWindow return                                 NO: exit 139
 residual invalid ArtFile keys                      a60113167a / a60116567a / a601167ab6
-next evidence gate                                new crash report + plist + core.9821 review
-PPC Lion rerun                                    NOT AUTHORIZED BEFORE CRASH/CORE REVIEW
+next evidence gate                                residual exact-three static policy proof
+core.9821                                         preserve; not required now
+PPC Lion rerun                                    NOT AUTHORIZED BEFORE STATIC PROOF REVIEW
 CoreUI/ArtFile patch                              NO
 XNU                                               no change indicated
 ```
