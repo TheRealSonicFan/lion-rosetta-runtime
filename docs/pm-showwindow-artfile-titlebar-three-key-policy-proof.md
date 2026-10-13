@@ -223,6 +223,12 @@ Do not perform a live ShowWindow run merely because the static policy proof pass
 
 Stop. Do not build a live interposer. Return the failing report and preserve the existing compatibility environment unchanged.
 
+## Completed result
+
+Both returned policy reports pass. Snow keeps the Lion-specific guard disabled, preserves all three Snow source keys as real source-index entries, exercises 6,120 single-byte near misses with zero translations, changes zero local ArtFile records, and passes idempotence. Lion enables the exact 10.7.5 / 11G63 / accepted-ArtFile guard, finds zero untranslated Snow-key records, finds one valid target record for each of clear/minus/zoom, exercises the same 6,120 near misses with zero failures, changes zero local index records, and passes idempotence.
+
+The policy itself is therefore proven. The next authoritative stage is `docs/pm-showwindow-artfile-titlebar-bsearch-boundary-audit.md`, using `scripts/audit-pm-artfile-titlebar-bsearch-boundary.py`. That stage remains non-live: it must prove the narrow mechanical interception boundary before any compatibility dylib is built or loaded.
+
 ## Current boundary
 
 ```text
@@ -231,9 +237,10 @@ window-variant semantic reindex                 PROVEN
 state transition neutral correspondence         PROVEN
 exact crash-time Snow paths                     PROVEN
 Lion semantic-equivalent index keys             PROVEN
-exact three-key translation table               DEFINED
-release/resource guard                           TO BE STATICALLY PROVEN
-non-target identity behavior                     TO BE STATICALLY PROVEN
+exact three-key translation table               PROVEN
+release/resource guard                           PROVEN
+non-target identity behavior                     PROVEN
+candidate integration boundary                  static audit next
 live path translator                            NOT AUTHORIZED
 PPC subject rerun                               NO
 CoreUI/ArtFile patch                            NO
