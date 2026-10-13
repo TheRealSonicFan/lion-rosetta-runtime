@@ -159,7 +159,7 @@ main(void)
     pid_t self;
     pid_t roundtrip_pid = (pid_t)-1;
     OSStatus status;
-    Boolean visible = false;
+    Boolean visible = 0;
 
     marker("PM_POSTIDENTITY_MILESTONE:M00_MAIN_ENTER");
 #if defined(PM_CPS_WINDOWTITLE_VALIDATION) || \
