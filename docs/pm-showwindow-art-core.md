@@ -310,3 +310,29 @@ resource substitution                             NO
 RawCamera / ShapeWindow                           held
 XNU                                                no change indicated
 ```
+
+
+## Observed result — exact component-table overrun and crash pointer proven
+
+Analyzer v2 completes all three GDB passes and ends `RESULT: PASS`. The shared-cache relocation is now resolved correctly: the live globals are at `0xa028c...`, the mapped archive is page-aligned at `0x030fb000`, and the recovered header/table/string pointers match Lion's on-disk `ArtFile.bin` exactly.
+
+The active path is confirmed as:
+
+```text
+a6 16 1f 7a b6 00 00 00
+west.colorsrgb.determinate.scrollbars.<invalid-0xb6>
+```
+
+Lion's legacy ArtFile component table contains `0xa9` / 169 entries and ends at file offset `0x560`. Old Snow-PPC CoreUI nevertheless indexes component `0xb6` / 182 at `0x5c0`, which is `0x60` bytes inside Lion's string pool. The unchecked legacy lookup reads `0x75626c65` there as a relative string offset and computes runtime pointer `0x787221c5`.
+
+That exact pointer is already present in the earlier preserved crash as PPC `r3` and `r25`; the faulting address is `0x787221c4`, also present as PPC `r9` and host `ECX/CR2`. The ArtFile component-table overrun therefore explains the exact invalid pointer reaching the translated `fprintf/vfprintf` path. This is no longer only a nearby or circumstantial archive mismatch.
+
+Do not suppress the diagnostic or add a blind bounds check as the compatibility fix. The diagnostic crash is downstream of a real semantic mismatch: Snow-PPC path construction emitted a component ID that Lion's legacy ArtFile table does not define.
+
+The authoritative next procedure is:
+
+```text
+docs/pm-showwindow-artfile-component-audit.md
+```
+
+Run its read-only analyzer once on Snow Leopard and once on Lion and return `pm-art-components-snow.txt` and `pm-art-components-lion.txt`. The goal is to identify the Snow semantic name for component `0xb6` and determine whether Lion retains the same semantic under a different ID or removed it entirely. No PPC rerun, resource substitution, or XNU change is indicated.
