@@ -30,7 +30,7 @@ Snow control runner blob
 aff24e231e7c8915065973aaf2db9419ea8f90ae
 
 Lion integration runner blob
-356a04c149c43a4ced783536b0ef630fcea54de9
+8c4056dffbb510dcd0b4c6a118c162b59eda382b
 
 SelectWindow subject source blob
 6d873470f27e99de997301ef2d0c757ac6b61a6a
@@ -55,6 +55,14 @@ eaecc9bfbf4d780664c7e66471a832a0289aebb6
 ```
 
 The corrected Snow artifact carries the accepted `color-profile-resolve-passive-trace-v1`, `color-profile-resolve-id-compat-v1`, and `window-backing-info-id-compat-v1` modules. Snow observed two ResolveColorProfile passthrough calls, one WindowBackingInfo passthrough call, two OrderFront passthrough calls with exactly one bounded by SelectWindow, all six titlebar keys as passthrough, `SELECTWINDOW_PASS`, `M24_SUCCESS`, and final PASS.
+
+## Reviewed first Lion invocation — pre-execution runner failure
+
+The first invocation did **not** launch the PPC subject. The consolidated report stops immediately after preflight state and records zero WindowBackingInfo and zero ResolveColorProfile calls followed by `POST_SHOWWINDOW_SELECTWINDOW_ACCEPTED_FULL_STACK_COUNT_MISMATCH`; the raw transcript is empty. The fresh syscall-295 probe passed independently.
+
+This was a runner-ordering defect introduced by the new full-stack guard: it inspected the still-empty raw transcript before the single PPC execution point. Current `main` moves that unchanged WBI/Resolve validation block to the post-execution validation section, after the raw transcript is populated and before the two-OrderFront discriminator. No compatibility policy, request mapping, artifact, subject, broker, titlebar rule, or XNU code changed.
+
+Because the subject was never executed, the one-run Lion SelectWindow budget has not been consumed. For the retry, pull current runtime `main`, verify the updated runner blob below, repeat the fresh syscall-295 preflight, and then repeat Phase E exactly once with the already verified artifacts and exact-seven broker. Rebuilding or retransferring unchanged artifacts is not required if their hashes still match. Stop again after that single actual PPC execution.
 
 ## Safety constraints
 
@@ -91,7 +99,7 @@ test "$(git hash-object ./tests/ppc-process-manager-coreservices-sessioninit-com
   "2c167877c92e6777189c0b4f8657f5570e1a0acb" || exit 1
 
 test "$(git hash-object ./scripts/run-lion-ppc-process-manager-createwindow-distnotify-integration.sh)" = \
-  "356a04c149c43a4ced783536b0ef630fcea54de9" || exit 1
+  "8c4056dffbb510dcd0b4c6a118c162b59eda382b" || exit 1
 
 test "$(git hash-object ./tests/native-dn-showwindow-7-registration-broker.c)" = \
   "9d137becc45bac476fa70218db4839b28be0e219" || exit 1
