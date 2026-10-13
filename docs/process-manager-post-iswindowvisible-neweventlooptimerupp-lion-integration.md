@@ -346,7 +346,7 @@ The guarded Lion 10.7.5 / 11G63 run passes completely with the exact Snow-proven
 
 After the inherited ShowWindow/SelectWindow/IsWindowVisible path succeeds, S06 and S07 both execute, `NewEventLoopTimerUPP(ProbeTimer)` returns the same nonzero pointer value `0x000021e4`, and `NEWEVENTLOOPTIMERUPP_PASS` is emitted. Cleanup reaches `M24_SUCCESS`, the PPC execution status is 0, exact-seven remains `register=7 callback=0 rejects=0 exact=YES`, all six titlebar translations occur once with zero guard rejects, WindowBackingInfo and ResolveColorProfile each preserve one successful adapter call, both OrderFront calls preserve successful adaptation with exactly one SelectWindow-bounded call, protected hashes remain unchanged, no new diagnostic is created, and the runner ends with `POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_VALIDATION_PASS`.
 
-This closes UPP construction as a live Lion boundary without a new compatibility rule. The historical next timer expression nests `GetMainEventLoop()` inside `InstallEventLoopTimer(...)`; to avoid conflating those two calls, current `main` advances first to the isolated Snow-only `GetMainEventLoop()` control in `docs/process-manager-post-neweventlooptimerupp-getmaineventloop-snow-control.md`. Do not install a timer or enter the event loop until that pointer-acquisition result is reviewed.
+This closes UPP construction as a live Lion boundary without a new compatibility rule. The historical next timer expression nests `GetMainEventLoop()` inside `InstallEventLoopTimer(...)`; that nested call has now been isolated on Snow and passes with a nonzero EventLoopRef and no new compatibility behavior. Current `main` therefore advances to `docs/process-manager-post-neweventlooptimerupp-getmaineventloop-lion-integration.md` for exactly one guarded Lion `GetMainEventLoop()` run. Do not install a timer or enter the event loop until that Lion pointer-acquisition result is reviewed.
 
 ## Current boundary
 
@@ -356,7 +356,8 @@ SelectWindow on Lion                             LIVE-PROVEN PASS
 IsWindowVisible on Lion                          LIVE-PROVEN PASS
 NewEventLoopTimerUPP on Snow                     PASS
 NewEventLoopTimerUPP on Lion                     LIVE-PROVEN PASS
-GetMainEventLoop                                 NEXT: Snow control only
+GetMainEventLoop on Snow                         PASS
+GetMainEventLoop on Lion                         NEXT: one guarded run
 InstallEventLoopTimer                            HELD
 RunApplicationEventLoop                         HELD
 new compatibility families                      NO
