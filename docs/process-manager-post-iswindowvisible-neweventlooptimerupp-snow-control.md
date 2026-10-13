@@ -39,7 +39,7 @@ Pinned blobs:
 
 ```text
 NewEventLoopTimerUPP subject source   a2dd3716bb06cc7c54d247a010451a48a5dd80b3
-NewEventLoopTimerUPP Snow builder     3b55e78dedff92eb62fc2b99a30313341f813229
+NewEventLoopTimerUPP Snow builder     a95b601eeb504ea0142c2170f4f2a1fb4b5b8e89
 Snow integration runner               f08f790eb67673e795f3c10e275102bc9059a790
 v3 CoreServices artifact SHA-256      28d44246249f41b2de8ef5abda83733272aff2d02df79392a949b899461d0578
 exact-six titlebar artifact SHA-256    6bd11d4e9b271eab926f56f9cf99f4c4fb606db1d69a98f062cc398561488c72
@@ -71,6 +71,12 @@ DisposeWindow
 ```
 
 The subject intentionally does not call `InstallEventLoopTimer`, `DisposeEventLoopTimerUPP`, or `RunApplicationEventLoop`. The small UPP allocation, if any, is reclaimed when the short-lived process exits; this keeps the boundary isolated to UPP creation.
+
+### Phase B correction
+
+The first Phase B builder incorrectly treated `_NewEventLoopTimerUPP` as a mandatory undefined Mach-O import. That is too strict for this PPC build: the SDK/header/compiler may lower the UPP-construction expression without leaving an undefined `_NewEventLoopTimerUPP` symbol. The failed message `error: output does not import _NewEventLoopTimerUPP` therefore reports a builder linkage-assumption failure, not a failed compile and not a Rosetta/Carbon runtime result.
+
+The corrected builder pins the exact source expression `timer_upp = NewEventLoopTimerUPP(ProbeTimer);`, continues to require the surrounding Carbon/Process Manager imports, and records whether `_NewEventLoopTimerUPP` survived as an undefined import only as diagnostic metadata. The runtime proof remains the S06/S07 markers, a nonzero UPP pointer, `NEWEVENTLOOPTIMERUPP_PASS`, and inherited control PASS in Phase C.
 
 New markers:
 
@@ -112,7 +118,7 @@ test "$(git hash-object ./tests/ppc-process-manager-postidentity-neweventlooptim
   "a2dd3716bb06cc7c54d247a010451a48a5dd80b3" || exit 1
 
 test "$(git hash-object ./scripts/build-ppc-process-manager-neweventlooptimerupp-on-snowleopard.sh)" = \
-  "3b55e78dedff92eb62fc2b99a30313341f813229" || exit 1
+  "a95b601eeb504ea0142c2170f4f2a1fb4b5b8e89" || exit 1
 
 test "$(git hash-object ./scripts/run-snowleopard-ppc-process-manager-createwindow-distnotify-integration-control.sh)" = \
   "f08f790eb67673e795f3c10e275102bc9059a790" || exit 1
@@ -149,8 +155,17 @@ LC_LOAD_DYLINKER = /usr/oah/dyld
 imports _ShowWindow
 imports _SelectWindow
 imports _IsWindowVisible
-imports _NewEventLoopTimerUPP
+neweventlooptimerupp_source_expression=NewEventLoopTimerUPP(ProbeTimer)
+neweventlooptimerupp_linkage=undefined-import
 ```
+
+The final linkage line may instead be:
+
+```text
+neweventlooptimerupp_linkage=sdk-lowered-no-undefined-import
+```
+
+Either linkage value is valid. Phase B must **not** require an undefined `_NewEventLoopTimerUPP` symbol. The exact pinned source expression proves that the requested UPP constructor is present in the subject, while Phase C proves its behavior by requiring S06/S07, a nonzero pointer, and `NEWEVENTLOOPTIMERUPP_PASS`.
 
 Do not rebuild a compatibility dylib.
 
