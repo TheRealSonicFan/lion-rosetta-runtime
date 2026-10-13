@@ -232,6 +232,14 @@ pm-getmaineventloop-snow.log
 
 Do not transfer or execute this new subject on Lion until the Snow evidence is reviewed.
 
+## Reviewed Snow result
+
+The Snow control passes completely on 10.6.8 / 10K549. The exact PPC7400 subject has SHA-256 `27a91765c2815bd885828a1785776cb0fa0c30f146b92d682be84b0691e724f8`, uses `/usr/oah/dyld`, carries the undefined `_GetMainEventLoop` import, and preserves the SDK-lowered `NewEventLoopTimerUPP(ProbeTimer)` form. After inherited ShowWindow/SelectWindow/IsWindowVisible/NewEventLoopTimerUPP PASS, S08 and S09 both execute, `GetMainEventLoop()` returns the nonzero EventLoopRef `0x0040ce70`, and `GETMAINEVENTLOOP_PASS` is emitted. Cleanup reaches `M24_SUCCESS`, `control_status=0`, and the final result is `POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_SNOW_CONTROL_PASS` / `PASS`.
+
+The inherited Snow stack remains transparent: both OrderFront calls pass through with exactly one SelectWindow-bounded call, all six titlebar targets remain passthrough with zero unexpected action, and no compatibility family emits `ADAPTER_PASS`. This does not justify a GetMainEventLoop-specific adapter.
+
+Current `main` therefore advances only to the guarded Lion procedure in `docs/process-manager-post-neweventlooptimerupp-getmaineventloop-lion-integration.md`. Transfer the exact Snow-proven subject, retain the already accepted NewEventLoopTimerUPP-era user-space stack unchanged, rebuild the exact-seven native broker, repeat the fresh syscall-295 preflight, and execute exactly one Lion `GetMainEventLoop()` run. Do not install a timer or enter the event loop until that result is reviewed.
+
 ## Current boundary
 
 ```text
@@ -240,7 +248,8 @@ SelectWindow on Lion                             LIVE-PROVEN PASS
 IsWindowVisible on Lion                          LIVE-PROVEN PASS
 NewEventLoopTimerUPP on Snow                     PASS
 NewEventLoopTimerUPP on Lion                     LIVE-PROVEN PASS
-GetMainEventLoop                                 NEXT: Snow control only
+GetMainEventLoop on Snow                         PASS
+GetMainEventLoop on Lion                         NEXT: one guarded run
 InstallEventLoopTimer                            HELD
 RunApplicationEventLoop                         HELD
 new compatibility families                      NO
