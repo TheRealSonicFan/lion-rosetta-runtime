@@ -45,7 +45,7 @@ Pinned identities:
 CoreServices compat source blob  2c167877c92e6777189c0b4f8657f5570e1a0acb
 SelectWindow compat builder blob c0e0b4c363595b3781305f8da785e1708ba2d41a
 Snow runner blob                 aff24e231e7c8915065973aaf2db9419ea8f90ae
-Lion runner blob                 689c5def8a4bc32e2ad0756a8d66e1a4c6aa2056
+Lion runner blob                 356a04c149c43a4ced783536b0ef630fcea54de9
 SelectWindow subject source      6d873470f27e99de997301ef2d0c757ac6b61a6a
 SelectWindow subject builder     421b427360da6412c14231f0839495cd4ab15bc1
 subject SHA-256                  cde220a44e8c68f16681b128898ff48b6bbe7dc94e139b6b5ad13216d6a88259
@@ -111,7 +111,7 @@ test "$(git hash-object ./scripts/run-snowleopard-ppc-process-manager-createwind
   "aff24e231e7c8915065973aaf2db9419ea8f90ae" || exit 1
 
 test "$(git hash-object ./scripts/run-lion-ppc-process-manager-createwindow-distnotify-integration.sh)" = \
-  "689c5def8a4bc32e2ad0756a8d66e1a4c6aa2056" || exit 1
+  "356a04c149c43a4ced783536b0ef630fcea54de9" || exit 1
 
 /bin/bash -n ./scripts/build-ppc-process-manager-post-showwindow-selectwindow-order-front-compat-on-snowleopard.sh || exit 1
 /bin/bash -n ./scripts/run-snowleopard-ppc-process-manager-createwindow-distnotify-integration-control.sh || exit 1
