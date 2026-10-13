@@ -42,7 +42,7 @@ Pinned identities:
 ```text
 subject source blob       6d873470f27e99de997301ef2d0c757ac6b61a6a
 SelectWindow builder blob 421b427360da6412c14231f0839495cd4ab15bc1
-Snow runner blob          6debd0b119ee3211dd33f15964f8eade39d734e8
+Snow runner blob          0543b841e27b452a1b4992ed092715257a4f0841
 Lion runner blob          2fa50e8637feff16ffd267e6d6ad09cfcb2c717e
 subject build ID          cps-selectwindow-validation-v1
 required basename         ppc-process-manager-cgs-session-bootstrap-integration-private-dyld
@@ -99,7 +99,7 @@ test "$(git hash-object ./tests/ppc-process-manager-postidentity-windowtitle.c)"
 
 test "$(git hash-object ./scripts/build-ppc-process-manager-selectwindow-on-snowleopard.sh)" =   "421b427360da6412c14231f0839495cd4ab15bc1" || exit 1
 
-test "$(git hash-object ./scripts/run-snowleopard-ppc-process-manager-createwindow-distnotify-integration-control.sh)" =   "6debd0b119ee3211dd33f15964f8eade39d734e8" || exit 1
+test "$(git hash-object ./scripts/run-snowleopard-ppc-process-manager-createwindow-distnotify-integration-control.sh)" =   "0543b841e27b452a1b4992ed092715257a4f0841" || exit 1
 
 /bin/bash -n ./scripts/build-ppc-process-manager-selectwindow-on-snowleopard.sh || exit 1
 /bin/bash -n ./scripts/run-snowleopard-ppc-process-manager-createwindow-distnotify-integration-control.sh || exit 1
@@ -137,6 +137,29 @@ ppc-process-manager-cgs-session-bootstrap-integration-private-dyld
 ppc-process-manager-cgs-session-bootstrap-integration-private-dyld.info.txt
 ppc-process-manager-cgs-session-bootstrap-integration-private-dyld.sha256
 ```
+
+## Reviewed Phase C failure — runner predicate corrected
+
+The first SelectWindow Snow run did **not** fail in the subject or compatibility stack. It reached `S01_AFTER_ShowWindow`, entered and returned from `SelectWindow`, emitted `SELECTWINDOW_PASS`, reached `M24_SUCCESS`, exited with `control_status=0`, and preserved all six titlebar keys in passthrough. The failure was in the control runner: it retained the earlier ShowWindow-only assertion that exactly one `CGSOrderFrontConditionally` call must occur.
+
+The new API adds one additional, native Snow `CGSOrderFrontConditionally` transaction while `SelectWindow` executes. The reviewed first control observed:
+
+```text
+ShowWindow OrderFrontConditionally              index 1, passthrough, exact YES
+SelectWindow S02                                reached
+SelectWindow OrderFrontConditionally            index 2, passthrough, exact YES
+SelectWindow-bounded OrderFrontConditionally    exactly 1
+SelectWindow S03                                reached
+SELECTWINDOW_PASS                               reached
+total OrderFrontConditionally calls             2
+total matching legacy traces                    2
+```
+
+The corrected runner keeps the historical exact-one predicate for every non-SelectWindow control, but under `snow-selectwindow-v1` requires exactly two total calls, exactly two matching legacy traces, exactly two passthrough results, and exactly one call bounded between `S02_BEFORE_SelectWindow` and `S03_AFTER_SelectWindow`. That bounded call must be `index=2`, `mode=passthrough`, `exact=YES`, with `opacityCreateCompatCalls=1 addTrackingCompatCalls=1`. It does not authorize or add a compatibility rule.
+
+The prior runner also emitted `RESULT: POST_SHOWWINDOW_SELECTWINDOW_SNOW_CONTROL_PASS` before finishing the inherited CGS assertions. That marker has been moved to the final success branch, so it can no longer precede a later `RESULT: FAIL`.
+
+If the already-built subject still matches the returned SHA-256 `cde220a44e8c68f16681b128898ff48b6bbe7dc94e139b6b5ad13216d6a88259`, do **not** rebuild it for the retry. Pull current `main`, re-run Phase A's runner hash/syntax checks, then repeat Phase C only.
 
 ## Phase C — Snow positive control
 
@@ -207,6 +230,12 @@ coreui_titlebar_active_minus_passthrough_count >= 1
 coreui_titlebar_active_zoom_passthrough_count >= 1
 coreui_titlebar_unexpected_action_count=0
 
+cgs_order_front_conditionally_compat_call_count=2
+cgs_order_front_conditionally_legacy_trace_count=2
+cgs_order_front_conditionally_passthrough_count=2
+selectwindow_order_front_conditionally_call_count=1
+PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=2 mode=passthrough exact=YES ... opacityCreateCompatCalls=1 addTrackingCompatCalls=1
+
 RESULT: POST_SHOWWINDOW_SELECTWINDOW_SNOW_CONTROL_PASS
 RESULT: PASS
 ```
@@ -234,7 +263,7 @@ CreateNewWindow                                  PASS
 SetWindowTitleWithCFString                       PASS
 ShowWindow on Lion                               LIVE-PROVEN PASS
 exact-six CoreUI titlebar compatibility          LIVE-PROVEN
-SelectWindow                                     NEXT: Snow control only
+SelectWindow                                     API PASS observed; corrected Snow runner retry NEXT
 IsWindowVisible / timers / event loop             HELD
 new CGS/titlebar compatibility                    NO
 XNU                                               no change indicated
