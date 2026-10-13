@@ -65,7 +65,24 @@ zoom=0xa9
 
 The earlier preserved-core audit already tied Snow's `0xb6` lookup against Lion's shorter table to runtime pointer `0x787221c5`, adjacent to the exact fault address `0x787221c4`.
 
-The existing static disassemblies also show the same structural path-builder shape in both releases: titlebar branches call `CUIPath::AppendToken(s)`, then `AppendWindowVariant`, then `AppendWindowTitlebarButtonState`. Snow's titlebar branches visibly contain the Snow IDs; Lion's contain the corresponding Lion IDs. The new audit extracts only those exact regions plus both helper bodies so the remaining variant/state constants can be reviewed without another broad CoreUI dump.
+The existing static disassemblies show a shared high-level titlebar path-builder shape but an important implementation difference: both releases append titlebar tokens and call `CUIPath::AppendWindowVariant`, but Snow Leopard has **no** `CUIPath::AppendWindowTitlebarButtonState(long,long,long)` symbol. Snow performs the titlebar button-state selection inline in `CreateQSIImagePath` using direct `AppendState` calls and out-of-line continuation blocks. Lion introduces the dedicated `AppendWindowTitlebarButtonState` helper and calls it from the close/minimize/zoom branches. The corrected audit models those release-specific forms explicitly.
+
+
+## Analyzer-v1 correction after the first Phase C run
+
+The first Snow Leopard run failed only because analyzer v1 incorrectly required Lion's later `CUIPath::AppendWindowTitlebarButtonState(long,long,long)` helper to exist on Snow.
+
+The returned report otherwise passes every provenance and semantic-ID check: Snow 10.6.8 / 10K549, the accepted PPC CoreUI slice SHA-256, the accepted Snow `ArtFile.bin`, and all seven expected Snow component IDs are exact. The extracted titlebar branches also show the intended Snow implementation directly: each branch calls `AppendWindowVariant` and then performs button-state handling with `AppendState`. The helper symbol is genuinely absent; this is a release implementation difference, not a corrupt binary or an audit failure.
+
+Analyzer v2 therefore:
+
+- keeps `AppendWindowVariant` required on both releases;
+- treats Snow as `INLINE_APPEND_STATE` and requires the dedicated titlebar-state helper to be absent;
+- validates Snow's direct `AppendState` calls and additionally captures the titlebar-state continuation range at `0x28e78..0x28ec0`;
+- treats Lion as `HELPER` and still requires `AppendWindowTitlebarButtonState` plus its titlebar callsites;
+- reports the strategy, helper presence expectation, and per-branch call counts explicitly.
+
+Use the same static inputs. No PPC application rerun is needed.
 
 ## Prepared analyzer
 
@@ -78,7 +95,7 @@ scripts/audit-pm-artfile-titlebar-path-builder.py
 Analyzer version:
 
 ```text
-1
+2
 ```
 
 It is Python-2-compatible and read-only. On each release it:
@@ -90,9 +107,10 @@ It is Python-2-compatible and read-only. On each release it:
 5. decodes the local ArtFile dictionary and requires the seven titlebar semantics at the already-proven release-specific IDs;
 6. extracts only the titlebar section of `CUIElement::CreateQSIImagePath`;
 7. requires the known release-specific close/minimize/zoom/color/titlebar constants and helper calls to remain present;
-8. emits the complete bodies of `CUIPath::AppendWindowVariant(long)` and `CUIPath::AppendWindowTitlebarButtonState(long,long,long)`;
-9. marks which of the seven semantic IDs appear as immediates in each helper;
-10. modifies nothing outside its temporary architecture slice.
+8. models Snow's titlebar state logic as inline `AppendState` plus its continuation blocks, while requiring Lion's dedicated `AppendWindowTitlebarButtonState(long,long,long)` helper;
+9. emits the complete `AppendWindowVariant(long)` body on both releases and the titlebar-state helper body only when that helper is expected to exist;
+10. reports strategy/helper presence and call counts so an absent Snow helper is a validated structural finding rather than a failure;
+11. modifies nothing outside its temporary architecture slice.
 
 ## Safety constraints
 
@@ -145,6 +163,7 @@ cd "$RUNTIME" || exit 1
 Require:
 
 ```text
+analyzer_version=2
 product_version=10.6.8
 required_arch=ppc7400
 semantic=titlebarcontrols id=0xa6
@@ -154,8 +173,13 @@ semantic=disabled id=0x1f
 semantic=minimize id=0x56
 semantic=regularwin id=0x7a
 semantic=zoom id=0xb6
+titlebar_state_strategy=INLINE_APPEND_STATE
+titlebar_state_helper_expected=NO
+titlebar_state_helper_present=NO
 RESULT: PASS
 ```
+
+Also require nonzero direct `AppendState` calls in the titlebar extraction and the emitted inline continuation range `0x28e78..0x28ec0`.
 
 ## Phase D — Lion path-builder audit
 
@@ -171,6 +195,7 @@ cd "$RUNTIME" || exit 1
 Require:
 
 ```text
+analyzer_version=2
 product_version=10.7.5
 required_arch=i386
 semantic=titlebarcontrols id=0x99
@@ -180,8 +205,13 @@ semantic=disabled id=0x22
 semantic=minimize id=0x55
 semantic=regularwin id=0x72
 semantic=zoom id=0xa9
+titlebar_state_strategy=HELPER
+titlebar_state_helper_expected=YES
+titlebar_state_helper_present=YES
 RESULT: PASS
 ```
+
+The Lion titlebar branch must call `AppendWindowTitlebarButtonState`; unlike Snow, this helper is a required Lion structure.
 
 ## Phase E — return evidence
 
@@ -202,9 +232,13 @@ If the Lion close/minimize/zoom branches and the two helper routines resolve to 
 
 Do not globally translate arbitrary CoreUI IDs.
 
-### Variant/state helpers differ structurally
+### Titlebar state implementation differs structurally
 
-If `AppendWindowVariant` or `AppendWindowTitlebarButtonState` changed more than their component constants, stop before a live shim. The next step must model the semantic state/variant transformation rather than apply a flat byte map.
+This difference is now already established: Snow inlines the titlebar button-state logic through `AppendState`, while Lion factors it into `AppendWindowTitlebarButtonState`. That difference alone is not an analyzer failure. The v2 reports must be compared semantically: if the Lion helper implements the same state choices under Lion's reindexed component namespace, a narrowly scoped semantic translator may still be justified; if the state choices differ, stop before a live shim and model the state transformation explicitly.
+
+### Variant helper differs semantically
+
+If `AppendWindowVariant` changes its state/variant meaning rather than merely its component constants, stop before a live shim. Do not apply a flat byte map.
 
 ### Lion no longer constructs one of the Snow semantics
 
@@ -226,8 +260,12 @@ Lion titlebarcontrols semantic                     0x99
 Snow colorsryg / disabled / regularwin             0x16 / 0x1f / 0x7a
 Lion colorsryg / disabled / regularwin             0x17 / 0x22 / 0x72
 numeric-only Lion diagnostic names                 misleading by dictionary reindexing
+
+Snow titlebar-state implementation                 inline AppendState; dedicated helper absent
+Lion titlebar-state implementation                 dedicated helper expected
+analyzer-v1 Phase C failure                        analyzer modeling error, not Snow binary failure
 exact crash pointer                                already proven
-next step                                          static titlebar path-builder/helper audit
+next step                                          rerun analyzer v2 on Snow, then run Lion static path-builder/helper audit
 PPC subject rerun                                  NO
 resource substitution                              NO
 component remap                                    NOT YET
