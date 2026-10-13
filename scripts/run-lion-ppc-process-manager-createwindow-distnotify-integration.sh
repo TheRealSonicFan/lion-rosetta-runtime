@@ -88,6 +88,9 @@ elif [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
 elif [ -n "$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-showwindow-seventh-schema-audit-broker-v1"
     EXPECTED_REAL_REGISTRATION_COUNT=6
+elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; then
+    EXPECTED_BROKER_BUILD_ID="distributed-notifications-showwindow-seventh-registration-broker-v1"
+    EXPECTED_REAL_REGISTRATION_COUNT=7
 elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-post-windowtitle-showwindow-sixth-registration-broker-v1"
     EXPECTED_REAL_REGISTRATION_COUNT=6
@@ -130,8 +133,9 @@ if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
         die 64 "FontServer compatibility requires the post-CreateNewWindow window-title subject"
     { [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] ||
       [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] ||
-      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ]; } ||
-        die 64 "FontServer compatibility requires the reviewed exact-four, exact-five, or exact-six notification broker"
+      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
+        die 64 "FontServer compatibility requires the reviewed exact-four, exact-five, exact-six, or exact-seven notification broker"
     EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-fontserver-compat-v3"
 fi
 if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
@@ -140,8 +144,9 @@ if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
     [ "$FONTSERVER_COMPAT_MODE" = "lion-fontserver-v1" ] ||
         die 64 "FontServer RPC trace requires lion-fontserver-v1"
     { [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] ||
-      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ]; } ||
-        die 64 "FontServer RPC trace requires the reviewed exact-five or exact-six notification broker"
+      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
+        die 64 "FontServer RPC trace requires the reviewed exact-five, exact-six, or exact-seven notification broker"
     [ "$POST_CREATEWINDOW_TITLE_MODE" = "lion-windowtitle-v1" ] ||
         die 64 "FontServer RPC trace requires the window-title subject"
     EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-fontserver-compat-rpc-trace-v4"
@@ -154,8 +159,9 @@ if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
     [ "$FONTSERVER_RPC_TRACE_MODE" = "lion-passive-v1" ] ||
         die 64 "FontServer rendezvous compatibility requires lion-passive-v1 RPC tracing"
     { [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] ||
-      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ]; } ||
-        die 64 "FontServer rendezvous compatibility requires the reviewed exact-five or exact-six notification broker"
+      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
+        die 64 "FontServer rendezvous compatibility requires the reviewed exact-five, exact-six, or exact-seven notification broker"
     [ "$POST_CREATEWINDOW_TITLE_MODE" = "lion-windowtitle-v1" ] ||
         die 64 "FontServer rendezvous compatibility requires the window-title subject"
     EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-dockserver-fontserver-rendezvous-compat-v5"
@@ -176,8 +182,9 @@ if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
         die 64 "CGS NewWindow compatibility integration requires lion-dockserver-v1"
     { [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] ||
       [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] ||
-      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ]; } ||
-        die 64 "CGS NewWindow compatibility integration requires the reviewed exact-four, exact-five, or exact-six registration mode"
+      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
+        die 64 "CGS NewWindow compatibility integration requires the reviewed exact-four, exact-five, exact-six, or exact-seven registration mode"
     [ "$HITOOLBOX_EXTRAS_MODE" = "lion-fallback-external-v1" ] ||
         die 64 "CGS NewWindow compatibility integration requires lion-fallback-external-v1"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-v1"
@@ -243,8 +250,9 @@ if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
     [ "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" = "lion-rendezvous-v1" ] ||
         die 64 "ShowWindow validation requires the accepted FontServer rendezvous compatibility mode"
     { [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] ||
-      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ]; } ||
-        die 64 "ShowWindow validation requires the reviewed exact-five or exact-six notification broker"
+      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
+        die 64 "ShowWindow validation requires the reviewed exact-five, exact-six, or exact-seven notification broker"
     EXPECTED_SUBJECT_BUILD_ID="cps-showwindow-validation-v1"
 fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
@@ -252,8 +260,9 @@ if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
         die 64 "unsupported ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE: $SHOWWINDOW_UNKNOWN_TRACE_MODE"
     [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
         die 64 "ShowWindow CGS passive trace requires the ShowWindow subject"
-    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
-        die 64 "ShowWindow CGS passive trace requires the accepted exact-six notification broker"
+    { [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
+        die 64 "ShowWindow CGS passive trace requires the accepted exact-six or exact-seven notification broker"
     [ "$OPACITY_ALPHA_CREATE_COMPAT_MODE" = "lion-id-v1" ] ||
         die 64 "ShowWindow CGS passive trace requires accepted opacity create-alpha compatibility"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-unknown-trace-v1"
@@ -265,8 +274,9 @@ if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
         die 64 "CGSAddTrackingArea compatibility requires lion-passive-v1 ShowWindow CGS tracing"
     [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
         die 64 "CGSAddTrackingArea compatibility requires the ShowWindow subject"
-    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
-        die 64 "CGSAddTrackingArea compatibility requires the accepted exact-six notification broker"
+    { [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
+        die 64 "CGSAddTrackingArea compatibility requires the accepted exact-six or exact-seven notification broker"
     [ "$OPACITY_ALPHA_CREATE_COMPAT_MODE" = "lion-id-v1" ] ||
         die 64 "CGSAddTrackingArea compatibility requires accepted opacity create-alpha compatibility"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-compat-v1"
@@ -280,8 +290,9 @@ if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
         die 64 "CGSOrderFrontConditionally compatibility requires lion-passive-v1 ShowWindow CGS tracing"
     [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
         die 64 "CGSOrderFrontConditionally compatibility requires the ShowWindow subject"
-    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
-        die 64 "CGSOrderFrontConditionally compatibility requires the accepted exact-six notification broker"
+    { [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
+        die 64 "CGSOrderFrontConditionally compatibility requires the accepted exact-six or exact-seven notification broker"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-compat-v1"
 fi
 if [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
@@ -295,8 +306,9 @@ if [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
         die 64 "CGSSetFrontWindow compatibility requires lion-passive-v1 ShowWindow CGS tracing"
     [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
         die 64 "CGSSetFrontWindow compatibility requires the ShowWindow subject"
-    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
-        die 64 "CGSSetFrontWindow compatibility requires the accepted exact-six notification broker"
+    { [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
+        die 64 "CGSSetFrontWindow compatibility requires the accepted exact-six or exact-seven notification broker"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat-v1"
 fi
 if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
@@ -306,8 +318,9 @@ if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
         die 64 "ColorProfileClient trace requires accepted CGSSetFrontWindow compatibility"
     [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
         die 64 "ColorProfileClient trace requires the ShowWindow subject"
-    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
-        die 64 "ColorProfileClient trace requires the accepted exact-six notification broker"
+    { [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
+        die 64 "ColorProfileClient trace requires the accepted exact-six or exact-seven notification broker"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-trace-v1"
 fi
 if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
@@ -319,8 +332,9 @@ if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
         die 64 "ColorProfileClient compatibility requires accepted CGSSetFrontWindow compatibility"
     [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
         die 64 "ColorProfileClient compatibility requires the ShowWindow subject"
-    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
-        die 64 "ColorProfileClient compatibility requires the accepted exact-six notification broker"
+    { [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
+        die 64 "ColorProfileClient compatibility requires the accepted exact-six or exact-seven notification broker"
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-v2"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
@@ -392,15 +406,17 @@ if [ -n "$REAL_REGISTRATION_MODE" ] &&
    [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-register-v1" ] &&
    [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-post-extras-register-v1" ] &&
    [ "$REAL_REGISTRATION_MODE" != "lion-windowtitle-fontserver-register-v1" ] &&
-   [ "$REAL_REGISTRATION_MODE" != "lion-showwindow-sixth-register-v1" ]; then
+   [ "$REAL_REGISTRATION_MODE" != "lion-showwindow-sixth-register-v1" ] &&
+   [ "$REAL_REGISTRATION_MODE" != "lion-showwindow-seventh-register-v1" ]; then
     die 64 "unsupported ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE: $REAL_REGISTRATION_MODE"
 fi
 
 if [ -n "$DOCKSERVER_COMPAT_MODE" ] &&
    [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-post-extras-register-v1" ] &&
    [ "$REAL_REGISTRATION_MODE" != "lion-windowtitle-fontserver-register-v1" ] &&
-   [ "$REAL_REGISTRATION_MODE" != "lion-showwindow-sixth-register-v1" ]; then
-    die 64 "DockServer bootstrap compatibility requires the reviewed exact-four, exact-five, or exact-six registration mode"
+   [ "$REAL_REGISTRATION_MODE" != "lion-showwindow-sixth-register-v1" ] &&
+   [ "$REAL_REGISTRATION_MODE" != "lion-showwindow-seventh-register-v1" ]; then
+    die 64 "DockServer bootstrap compatibility requires the reviewed exact-four, exact-five, exact-six, or exact-seven registration mode"
 fi
 if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] &&
    [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-register-v1" ]; then
@@ -716,7 +732,14 @@ if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
 fi
 /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq \
     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_BUILD_ID:$EXPECTED_BROKER_BUILD_ID" || die 68 "broker build marker missing"
-if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ]; then
+if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; then
+    /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq \
+        'PM_DISTRIBUTED_NOTIFICATIONS_SHOWWINDOW_SIXTH_REGISTRATION_POLICY:index=6 allowed=3 counter=2' ||
+        die 68 "exact-seven broker missing inherited exact-six policy marker"
+    /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq \
+        'PM_DISTRIBUTED_NOTIFICATIONS_SHOWWINDOW_SEVENTH_REGISTRATION_POLICY:index=7 allowed=5 counter=1' ||
+        die 68 "exact-seven ShowWindow registration policy marker missing"
+elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ]; then
     /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq \
         'PM_DISTRIBUTED_NOTIFICATIONS_SHOWWINDOW_SIXTH_REGISTRATION_POLICY:index=6 allowed=3 counter=2' ||
         die 68 "exact-six ShowWindow registration policy marker missing"
@@ -1461,13 +1484,22 @@ if [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ]; th
     fi
 fi
 
-if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ]; then
+if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+   [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; then
     FIFTH_ACCEPT_COUNT="$(/usr/bin/grep -c 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=5 allowed=4 behavior=1 publicBehavior=4 anyObject=YES' "$RAW_LOG" 2>/dev/null || true)"
     SIXTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=6 allowed=3 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x2$' "$RAW_LOG" 2>/dev/null || true)"
     log "fifth_notification_registration_accept_count=$FIFTH_ACCEPT_COUNT"
     log "sixth_notification_registration_accept_count=$SIXTH_ACCEPT_COUNT"
     if [ "$FIFTH_ACCEPT_COUNT" -ne 1 ] || [ "$SIXTH_ACCEPT_COUNT" -ne 1 ]; then
         log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SIXTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+fi
+if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; then
+    SEVENTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=7 allowed=5 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    log "seventh_notification_registration_accept_count=$SEVENTH_ACCEPT_COUNT"
+    if [ "$SEVENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
         exit 0
     fi
 fi
@@ -1533,7 +1565,10 @@ if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REJECT:' "$R
    /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_REQUEST:FAIL' "$RAW_LOG" ||
    /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_CALLBACK:REJECT' "$RAW_LOG" ||
    /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
-    if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] &&
+    if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=7 allowed=5 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_PASS_EIGHTH_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] &&
        /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=6 allowed=3 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x2$' "$RAW_LOG"; then
         log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SIXTH_NOTIFICATION_REGISTRATION_PASS_SEVENTH_PROTOCOL_REJECTED"
     elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] &&
@@ -2252,7 +2287,10 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
             exit 0
         fi
         if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow' "$RAW_LOG"; then
-            if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ] &&
+            if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+               /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=7 allowed=5 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG"; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_PASS_SHOWWINDOW_NO_RETURN"
+            elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ] &&
                /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
                 log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
             elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
@@ -2334,7 +2372,10 @@ if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:P
 fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
-    if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ] &&
+    if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ] &&
        [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
         log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION_PASS"
     elif [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ] &&
