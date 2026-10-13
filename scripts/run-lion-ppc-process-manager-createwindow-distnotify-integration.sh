@@ -71,7 +71,7 @@ EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-compat-v1"
 EXPECTED_HITOOLBOX_TRACE_BUILD_ID="hitoolbox-cfbundle-resource-trace-v1"
 EXPECTED_HITOOLBOX_EXTRAS_COMPAT_BUILD_ID="hitoolbox-extras-resource-compat-v1"
 EXPECTED_HITOOLBOX_EXTRAS_RESOURCE_SHA="a0866d6cf2d48fac7787e8cf9e90264071642c0d39aa809636e7d478016a9197"
-EXPECTED_TITLEBAR_BSEARCH_BUILD_ID="coreui-titlebar-bsearch-exact-three-v1"
+EXPECTED_TITLEBAR_BSEARCH_BUILD_ID="coreui-titlebar-bsearch-exact-six-v2"
 TITLEBAR_ARTFILE="/System/Library/PrivateFrameworks/CoreUI.framework/Versions/A/Resources/ArtFile.bin"
 EXPECTED_TITLEBAR_ARTFILE_SHA="0cc8e1491be49fb015cb8b290fe9c289e4587bde570804a44a43e2b35e4b19f4"
 SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_SCHEMA_AUDIT_REPORT:-}"
@@ -472,8 +472,8 @@ if [ -n "$TITLEBAR_BSEARCH_COMPAT" ] || [ -n "$TITLEBAR_BSEARCH_SHA_FILE" ] ||
    [ -n "$TITLEBAR_BSEARCH_MODE" ]; then
     [ -n "$TITLEBAR_BSEARCH_COMPAT" ] || die 64 "set ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_PATH"
     [ -n "$TITLEBAR_BSEARCH_SHA_FILE" ] || die 64 "set ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_SHA256_FILE"
-    [ "$TITLEBAR_BSEARCH_MODE" = "lion-exact-three-v1" ] ||
-        die 64 "Lion titlebar bsearch mode must be lion-exact-three-v1"
+    [ "$TITLEBAR_BSEARCH_MODE" = "lion-exact-six-v1" ] ||
+        die 64 "Lion titlebar bsearch mode must be lion-exact-six-v1"
     [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
         die 64 "titlebar bsearch compatibility requires the ShowWindow subject"
     [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] ||
@@ -1055,17 +1055,26 @@ RC=$?
 log "createwindow_validation_exec_status=$RC"
 
 if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
-    TITLEBAR_CLEAR_TRANSLATED="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=clear mode=lion-exact-three-v1 action=TRANSLATED' "$RAW_LOG" 2>/dev/null || true)"
-    TITLEBAR_MINUS_TRANSLATED="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=minus mode=lion-exact-three-v1 action=TRANSLATED' "$RAW_LOG" 2>/dev/null || true)"
-    TITLEBAR_ZOOM_TRANSLATED="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=zoom mode=lion-exact-three-v1 action=TRANSLATED' "$RAW_LOG" 2>/dev/null || true)"
+    TITLEBAR_DISABLED_CLEAR_TRANSLATED="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=disabled-clear mode=lion-exact-six-v1 action=TRANSLATED' "$RAW_LOG" 2>/dev/null || true)"
+    TITLEBAR_DISABLED_MINUS_TRANSLATED="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=disabled-minus mode=lion-exact-six-v1 action=TRANSLATED' "$RAW_LOG" 2>/dev/null || true)"
+    TITLEBAR_DISABLED_ZOOM_TRANSLATED="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=disabled-zoom mode=lion-exact-six-v1 action=TRANSLATED' "$RAW_LOG" 2>/dev/null || true)"
+    TITLEBAR_ACTIVE_CLEAR_TRANSLATED="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=active-clear mode=lion-exact-six-v1 action=TRANSLATED' "$RAW_LOG" 2>/dev/null || true)"
+    TITLEBAR_ACTIVE_MINUS_TRANSLATED="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=active-minus mode=lion-exact-six-v1 action=TRANSLATED' "$RAW_LOG" 2>/dev/null || true)"
+    TITLEBAR_ACTIVE_ZOOM_TRANSLATED="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=active-zoom mode=lion-exact-six-v1 action=TRANSLATED' "$RAW_LOG" 2>/dev/null || true)"
     TITLEBAR_GUARD_REJECTS="$(/usr/bin/grep -c 'GUARD_REJECT_PASSTHROUGH' "$RAW_LOG" 2>/dev/null || true)"
-    log "coreui_titlebar_clear_translated_count=$TITLEBAR_CLEAR_TRANSLATED"
-    log "coreui_titlebar_minus_translated_count=$TITLEBAR_MINUS_TRANSLATED"
-    log "coreui_titlebar_zoom_translated_count=$TITLEBAR_ZOOM_TRANSLATED"
+    log "coreui_titlebar_disabled_clear_translated_count=$TITLEBAR_DISABLED_CLEAR_TRANSLATED"
+    log "coreui_titlebar_disabled_minus_translated_count=$TITLEBAR_DISABLED_MINUS_TRANSLATED"
+    log "coreui_titlebar_disabled_zoom_translated_count=$TITLEBAR_DISABLED_ZOOM_TRANSLATED"
+    log "coreui_titlebar_active_clear_translated_count=$TITLEBAR_ACTIVE_CLEAR_TRANSLATED"
+    log "coreui_titlebar_active_minus_translated_count=$TITLEBAR_ACTIVE_MINUS_TRANSLATED"
+    log "coreui_titlebar_active_zoom_translated_count=$TITLEBAR_ACTIVE_ZOOM_TRANSLATED"
     log "coreui_titlebar_guard_reject_count=$TITLEBAR_GUARD_REJECTS"
-    if [ "$TITLEBAR_CLEAR_TRANSLATED" -lt 1 ] ||
-       [ "$TITLEBAR_MINUS_TRANSLATED" -lt 1 ] ||
-       [ "$TITLEBAR_ZOOM_TRANSLATED" -lt 1 ] ||
+    if [ "$TITLEBAR_DISABLED_CLEAR_TRANSLATED" -lt 1 ] ||
+       [ "$TITLEBAR_DISABLED_MINUS_TRANSLATED" -lt 1 ] ||
+       [ "$TITLEBAR_DISABLED_ZOOM_TRANSLATED" -lt 1 ] ||
+       [ "$TITLEBAR_ACTIVE_CLEAR_TRANSLATED" -lt 1 ] ||
+       [ "$TITLEBAR_ACTIVE_MINUS_TRANSLATED" -lt 1 ] ||
+       [ "$TITLEBAR_ACTIVE_ZOOM_TRANSLATED" -lt 1 ] ||
        [ "$TITLEBAR_GUARD_REJECTS" -ne 0 ]; then
         log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COREUI_TITLEBAR_BSEARCH_COMPAT_PREDICATE_NOT_PASSED"
         exit 0
