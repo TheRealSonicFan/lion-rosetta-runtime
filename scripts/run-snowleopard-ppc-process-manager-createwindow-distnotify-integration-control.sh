@@ -16,6 +16,9 @@ HITOOLBOX_EXTRAS_COMPAT="${ROSETTA_HITOOLBOX_EXTRAS_COMPAT_PATH:-}"
 HITOOLBOX_EXTRAS_COMPAT_SHA_FILE="${ROSETTA_HITOOLBOX_EXTRAS_COMPAT_SHA256_FILE:-}"
 HITOOLBOX_EXTRAS_RESOURCE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH:-}"
 HITOOLBOX_EXTRAS_MODE="${ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE:-}"
+TITLEBAR_BSEARCH_COMPAT="${ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_PATH:-}"
+TITLEBAR_BSEARCH_SHA_FILE="${ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_SHA256_FILE:-}"
+TITLEBAR_BSEARCH_MODE="${ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_MODE:-}"
 DOCKSERVER_COMPAT_MODE="${ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE:-}"
 FONTSERVER_COMPAT_MODE="${ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE:-}"
 FONTSERVER_RPC_TRACE_MODE="${ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE:-}"
@@ -44,6 +47,7 @@ EXPECTED_CGS_BUILD_ID="cgs-session-bootstrap-compat-v1"
 EXPECTED_HITOOLBOX_TRACE_BUILD_ID="hitoolbox-cfbundle-resource-trace-v1"
 EXPECTED_HITOOLBOX_EXTRAS_COMPAT_BUILD_ID="hitoolbox-extras-resource-compat-v1"
 EXPECTED_HITOOLBOX_EXTRAS_RESOURCE_SHA="a0866d6cf2d48fac7787e8cf9e90264071642c0d39aa809636e7d478016a9197"
+EXPECTED_TITLEBAR_BSEARCH_BUILD_ID="coreui-titlebar-bsearch-exact-three-v1"
 
 fail() {
     echo "error: $*" | /usr/bin/tee -a "$LOG" >&2
@@ -258,6 +262,16 @@ if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ] || [ -n "$HITOOLBOX_EXTRAS_COMPAT_SHA_FILE"
         fail "Snow Extras compatibility mode must be snow-force-external-v1"
 fi
 
+if [ -n "$TITLEBAR_BSEARCH_COMPAT" ] || [ -n "$TITLEBAR_BSEARCH_SHA_FILE" ] ||
+   [ -n "$TITLEBAR_BSEARCH_MODE" ]; then
+    [ -n "$TITLEBAR_BSEARCH_COMPAT" ] || fail "set ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_PATH"
+    [ -n "$TITLEBAR_BSEARCH_SHA_FILE" ] || fail "set ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_SHA256_FILE"
+    [ "$TITLEBAR_BSEARCH_MODE" = "passthrough" ] ||
+        fail "Snow titlebar bsearch mode must be passthrough"
+    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "snow-showwindow-v1" ] ||
+        fail "titlebar bsearch passthrough control requires the ShowWindow subject"
+fi
+
 PRODUCT_VERSION="$(/usr/bin/sw_vers -productVersion 2>/dev/null || true)"
 BUILD_VERSION="$(/usr/bin/sw_vers -buildVersion 2>/dev/null || true)"
 echo "product_version=$PRODUCT_VERSION" | /usr/bin/tee -a "$LOG"
@@ -296,6 +310,12 @@ if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
     [ -f "$HITOOLBOX_EXTRAS_RESOURCE" ] || fail "missing staged Snow Leopard Extras.rsrc: $HITOOLBOX_EXTRAS_RESOURCE"
 fi
 
+if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
+    [ -e "$TITLEBAR_BSEARCH_COMPAT" ] || fail "missing titlebar bsearch compatibility dylib: $TITLEBAR_BSEARCH_COMPAT"
+    [ -e "$TITLEBAR_BSEARCH_SHA_FILE" ] || fail "missing titlebar bsearch compatibility SHA file: $TITLEBAR_BSEARCH_SHA_FILE"
+    EXPECTED_TITLEBAR_BSEARCH_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$TITLEBAR_BSEARCH_SHA_FILE")"
+fi
+
 EXPECTED_SUBJECT_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$SUBJECT_SHA_FILE")"
 EXPECTED_CORE_COMPAT_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$CORE_COMPAT_SHA_FILE")"
 EXPECTED_SEC_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$SEC_SHA_FILE")"
@@ -321,6 +341,19 @@ if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
         fail "HIToolbox Extras compatibility hash mismatch"
     [ "$(sha256 "$HITOOLBOX_EXTRAS_RESOURCE")" = "$EXPECTED_HITOOLBOX_EXTRAS_RESOURCE_SHA" ] ||
         fail "staged Snow Leopard Extras.rsrc hash mismatch"
+fi
+
+if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
+    [ "$(sha256 "$TITLEBAR_BSEARCH_COMPAT")" = "$EXPECTED_TITLEBAR_BSEARCH_SHA" ] ||
+        fail "titlebar bsearch compatibility hash mismatch"
+    has_ppc32_arch "$TITLEBAR_BSEARCH_COMPAT" ||
+        fail "titlebar bsearch compatibility dylib is not 32-bit PPC"
+    /usr/bin/strings "$TITLEBAR_BSEARCH_COMPAT" |
+        /usr/bin/grep -Fq "PM_COREUI_TITLEBAR_BSEARCH_BUILD_ID:$EXPECTED_TITLEBAR_BSEARCH_BUILD_ID" ||
+        fail "titlebar bsearch compatibility build marker missing"
+    TITLEBAR_INTERPOSE_SECTION="$(/usr/bin/otool -l "$TITLEBAR_BSEARCH_COMPAT" | /usr/bin/grep -A10 -B2 '__interpose' || true)"
+    echo "$TITLEBAR_INTERPOSE_SECTION" | /usr/bin/grep -Fq 'size 0x00000008' ||
+        fail "titlebar bsearch compatibility does not contain exactly one PPC interpose tuple"
 fi
 
 for p in "$SUBJECT" "$CORE_COMPAT" "$SEC_INTERPOSER" "$CGS_INTERPOSER"; do
@@ -490,6 +523,12 @@ if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
     INSERTED="$INSERTED:$HITOOLBOX_EXTRAS_COMPAT_ABS"
 fi
 
+if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
+    TITLEBAR_BSEARCH_ABS="$(abspath "$TITLEBAR_BSEARCH_COMPAT")"
+    [ -n "$TITLEBAR_BSEARCH_ABS" ] || fail "could not resolve titlebar bsearch compatibility path"
+    INSERTED="$INSERTED:$TITLEBAR_BSEARCH_ABS"
+fi
+
 echo "subject_sha256=$EXPECTED_SUBJECT_SHA" | /usr/bin/tee -a "$LOG"
 echo "coreservices_cps_registration_compat_sha256=$EXPECTED_CORE_COMPAT_SHA" | /usr/bin/tee -a "$LOG"
 echo "security_interposer_sha256=$EXPECTED_SEC_SHA" | /usr/bin/tee -a "$LOG"
@@ -598,6 +637,13 @@ if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
     export ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH="$HITOOLBOX_EXTRAS_RESOURCE_ABS"
 fi
 
+if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
+    echo "coreui_titlebar_bsearch_compat_absolute_path=$TITLEBAR_BSEARCH_ABS" | /usr/bin/tee -a "$LOG"
+    echo "coreui_titlebar_bsearch_compat_sha256=$EXPECTED_TITLEBAR_BSEARCH_SHA" | /usr/bin/tee -a "$LOG"
+    echo "coreui_titlebar_bsearch_mode=$TITLEBAR_BSEARCH_MODE" | /usr/bin/tee -a "$LOG"
+    export ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_MODE="$TITLEBAR_BSEARCH_MODE"
+fi
+
 echo "== Snow Leopard restored-stack CreateNewWindow validation control ==" | /usr/bin/tee -a "$LOG"
 ROSETTA_CORESERVICES_COMPAT_MODE=passthrough \
 ROSETTA_SECURITY_SESSION_API_COMPAT_MODE=passthrough \
@@ -611,6 +657,24 @@ DYLD_PRINT_INTERPOSING=1 DYLD_PRINT_LIBRARIES=1 \
 "$SUBJECT" >> "$LOG" 2>&1
 RC=$?
 echo "control_status=$RC" | /usr/bin/tee -a "$LOG"
+
+if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
+    TITLEBAR_CLEAR_PASSTHROUGH="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=clear mode=passthrough action=PASSTHROUGH' "$LOG" 2>/dev/null || true)"
+    TITLEBAR_MINUS_PASSTHROUGH="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=minus mode=passthrough action=PASSTHROUGH' "$LOG" 2>/dev/null || true)"
+    TITLEBAR_ZOOM_PASSTHROUGH="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=zoom mode=passthrough action=PASSTHROUGH' "$LOG" 2>/dev/null || true)"
+    TITLEBAR_UNEXPECTED="$(/usr/bin/grep -Ec 'PM_COREUI_TITLEBAR_BSEARCH_TARGET:.*action=(TRANSLATED|GUARD_REJECT_PASSTHROUGH)' "$LOG" 2>/dev/null || true)"
+    echo "coreui_titlebar_clear_passthrough_count=$TITLEBAR_CLEAR_PASSTHROUGH" | /usr/bin/tee -a "$LOG"
+    echo "coreui_titlebar_minus_passthrough_count=$TITLEBAR_MINUS_PASSTHROUGH" | /usr/bin/tee -a "$LOG"
+    echo "coreui_titlebar_zoom_passthrough_count=$TITLEBAR_ZOOM_PASSTHROUGH" | /usr/bin/tee -a "$LOG"
+    echo "coreui_titlebar_unexpected_action_count=$TITLEBAR_UNEXPECTED" | /usr/bin/tee -a "$LOG"
+    if [ "$TITLEBAR_CLEAR_PASSTHROUGH" -lt 1 ] ||
+       [ "$TITLEBAR_MINUS_PASSTHROUGH" -lt 1 ] ||
+       [ "$TITLEBAR_ZOOM_PASSTHROUGH" -lt 1 ] ||
+       [ "$TITLEBAR_UNEXPECTED" -ne 0 ]; then
+        echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
+        exit 1
+    fi
+fi
 
 if /usr/bin/grep -Fq 'kind=SERVER_VERSION' "$LOG"; then
     echo "server_version_observed=YES" | /usr/bin/tee -a "$LOG"
