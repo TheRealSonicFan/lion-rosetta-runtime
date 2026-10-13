@@ -254,17 +254,47 @@ payload/lion-titlebar-bsearch-six-key.raw.log
 
 Also return every new crash report or crash plist explicitly named by the Lion runner. Do not upload a large core unless requested after the crash report is reviewed.
 
+## Observed result — exact-six ShowWindow gate closed
+
+The returned Lion evidence passes this integration completely:
+
+```text
+Lion release/build                             10.7.5 / 11G63
+kernel SHA                                     accepted
+syscall 295                                    EBADF / no SIGSYS / PASS
+exact-seven broker                             PASS
+exact-seven registrations                      7 / rejects 0 / exact YES
+exact-six artifact SHA                         6bd11d4e9b271eab926f56f9cf99f4c4fb606db1d69a98f062cc398561488c72
+disabled-clear/minus/zoom                      translated once each
+active-clear/minus/zoom                        translated once each
+titlebar guard rejects                         0
+CoreUI Invalid ArtFile Path                    none
+S01_AFTER_ShowWindow                           reached
+SHOWWINDOW_PASS                                reached
+DisposeWindow / M24_SUCCESS                    reached
+subject exit                                   0
+new crash/core diagnostics                     none
+protected hashes                               unchanged
+final runner result                            POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS
+```
+
+This live-proves the exact-six CoreUI titlebar translation boundary and closes ShowWindow as the active blocker. A transient `_CGSLockWindow: Cannot synchronize window backing store` diagnostic remains visible during the successful call, but it is no longer a blocking boundary because ShowWindow returns and the process completes normally; do not expand CGS compatibility from that diagnostic alone.
+
+The next isolated public API discriminator is `SelectWindow(window)`. Current `main` provides a new subject mode and a Snow-only control in `docs/process-manager-post-showwindow-selectwindow-snow-control.md`. Do not run the SelectWindow subject on Lion until that Snow control has been reviewed.
+
 ## Current boundary
 
 ```text
 combined exact-six static policy               PASS
 exact-six Snow passthrough                     PASS
-exact-six artifact SHA                         6bd11d4e9b271eab926f56f9cf99f4c4fb606db1d69a98f062cc398561488c72
-Lion exact-six runner                          PREPARED
-syscall-295 preflight                          NEXT
-single Lion exact-six ShowWindow run           AUTHORIZED AFTER PREFLIGHT
+exact-six Lion live translation                PASS: all six once
+ShowWindow                                     PASS
+exact-seven notifications                      PASS
+new crash/core diagnostics                     none
+SelectWindow                                   NEXT: Snow control only
+IsWindowVisible / timers / event loop           HELD
 six-key policy broadening                      NO
-core.9821                                      preserve; not required now
+core.9821                                      preserve; historical
 CoreUI/ArtFile patch                           NO
 XNU                                            no change indicated
 ```
