@@ -253,6 +253,18 @@ If any path reports `SEMANTIC_PATH_MISSING`, stop. Do not synthesize an ArtFile 
 
 The index model is not sufficiently validated. Stop and correct the static parser before using Lion results.
 
+## Completed result
+
+The returned Snow report passes the source-archive positive control. All three exact Snow keys are direct source-index hits with valid payload references. The returned Lion report also passes: each untranslated Snow key is absent, while each semantic-equivalent Lion key is a unique direct index hit with a valid payload reference:
+
+```text
+clear  a613161f7a000000 -> 9914172272000000
+minus  a6161f567a000000 -> 9917225572000000
+zoom   a6161f7ab6000000 -> 99172272a9000000
+```
+
+Therefore the translated-path feasibility gate is closed positively. The next authoritative stage is the non-live exact-three-key policy proof in `docs/pm-showwindow-artfile-titlebar-three-key-policy-proof.md`, using `scripts/audit-pm-artfile-titlebar-three-key-policy.py`. It must prove the exact three-entry mapping, Lion-only release/resource guard, idempotence, and identity behavior for non-target paths before any live CoreUI integration is designed.
+
 ## Current boundary
 
 ```text
@@ -262,8 +274,10 @@ state transition neutral correspondence         PROVEN
 Snow primary -> Lion primary                    +0x0a for 0xa3..0xaa
 Lion extra titlebar-secondary distinctions      additive and preserved
 exact crash-time Snow paths                     PROVEN
-Lion semantic-equivalent index keys             NOT YET TESTED
-live path translator                            NOT YET AUTHORIZED
+Lion semantic-equivalent index keys             PROVEN
+exact three-key translation table               DEFINED
+next step                                       static policy proof
+live path translator                            NOT AUTHORIZED
 PPC subject rerun                               NO
 CoreUI/ArtFile patch                            NO
 XNU                                             no change indicated
