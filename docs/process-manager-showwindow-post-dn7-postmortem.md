@@ -267,3 +267,52 @@ CGSShapeWindow                                     held
 CoreUI / RawCamera modification                    held
 XNU                                                no change indicated
 ```
+
+
+## Observed result — CoreUI theme-art diagnostic path is the crash
+
+The read-only postmortem collector completed with all three GDB passes at status 0, produced the expected 512-byte crash window, and ended `RESULT: PASS`. The returned crash-window file and sidecar both hash to:
+
+```text
+17010dbf591b2c3b6dbdbd5d9912ce75b27ce69e09b7f5c12b5079ff0a6fefe1
+```
+
+The preserved exact-seven crash is:
+
+```text
+Exception Type:  EXC_BAD_ACCESS (SIGSEGV)
+Exception Codes: KERN_INVALID_ADDRESS at 0x00000000787221c4
+```
+
+The PPC main-thread path is no longer ambiguous:
+
+```text
+ShowWindow
+  -> __ShowHideWindows
+  -> WindowData::PrepareForVisibility
+  -> PaintWindow
+  -> HIView composited drawing
+  -> HIWindowButtonView::DrawSelf
+  -> __HIThemeDrawTitleBarWidgetInRect
+  -> CUIRenderer::Draw
+  -> CUIRenderer::Draw1Piece
+  -> CUIElement::Load
+  -> CUIElement::LoadFromArtFile
+  -> ShowArtFilePathToStdErr
+  -> fprintf / vfprintf
+  -> SIGSEGV
+```
+
+The PPC crash state contains `r3=0x787221c5` and `r9=0x787221c4`. The Rosetta host state has `EAX=0x787221c5`, `ECX=0x787221c4`, `CR2=0x787221c4`, and `EIP=0x8bea0843`. The instruction at that EIP is a 32-bit load through ECX. Thus the immediate fault is a translated PPC load from the invalid art-path/string address while libc is servicing CoreUI's diagnostic output.
+
+`RawCamera` does not appear in the postmortem report or crash stack. Its earlier load event is therefore not the current causal boundary. The crash instead localizes directly to the CoreUI/HIToolbox titlebar/theme-art path.
+
+This result does not yet prove whether the invalid pointer originates from a CoreUI descriptor/path representation change, resource/archive difference, ownership/lifetime difference, or an upstream HIToolbox titlebar descriptor. Do not suppress `fprintf` or replace CoreUI resources.
+
+The authoritative next procedure is:
+
+```text
+docs/pm-showwindow-coreui-theme-audit.md
+```
+
+Run its read-only static analyzer once on Snow Leopard and once on Lion and return only the two generated text reports. No new PPC run and no XNU change are indicated.
