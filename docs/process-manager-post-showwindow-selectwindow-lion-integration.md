@@ -356,17 +356,29 @@ payload/lion-selectwindow-orderfront-v3.raw.log
 
 Also return every new crash report or crash plist explicitly named by the runner. Do not upload a large core unless requested.
 
+## Reviewed Lion result
+
+The guarded Lion SelectWindow integration passes completely on 10.7.5 / 11G63. The exact transferred subject and v3 artifact hashes match their Snow-proven values, the exact-seven native broker is unchanged, and the fresh syscall-295 probe again returns EBADF without SIGSYS.
+
+The live public sequence now returns from both `ShowWindow` and `SelectWindow`. OrderFront call 1 runs in `lion-selectwindow-id-v1` with `opacityCreateCompatCalls=1 addTrackingCompatCalls=0`; OrderFront call 2 occurs strictly between S02/S03 with the same exact legacy request shape and `addTrackingCompatCalls=1`. Both requests translate only their message IDs, receive native success replies, translate reply IDs back, and emit `ADAPTER_PASS`. The runner records exactly two OrderFront compatibility calls, two legacy traces, two adapter passes, and exactly one SelectWindow-bounded call.
+
+The previously accepted Lion baseline remains intact: WindowBackingInfo is exactly one successful adapted call, ResolveColorProfile is exactly one successful adapted call, ColorProfileClient succeeds, all six exact titlebar keys translate once with zero guard rejects, exact-seven notifications complete with no eighth request, `M24_SUCCESS` is reached, the subject exits 0, no new diagnostic is detected, and protected hashes remain unchanged. Final result is `POST_SHOWWINDOW_SELECTWINDOW_VALIDATION_PASS`.
+
+This closes SelectWindow as a live compatibility boundary. The next isolated public operation is `IsWindowVisible(window)`, beginning with the Snow-only control in `docs/process-manager-post-selectwindow-iswindowvisible-snow-control.md`. Do not run the new visibility subject on Lion until that Snow evidence is reviewed.
+
 ## Current boundary
 
 ```text
 SelectWindow Snow API control                   PASS
 corrected full-stack v3 Snow control            PASS
+SelectWindow on Lion                            LIVE-PROVEN PASS
+SelectWindow second OrderFront adaptation       LIVE-PROVEN
 WindowBackingInfo Lion baseline                 LIVE-PROVEN
 ResolveColorProfile Lion baseline               LIVE-PROVEN
 exact-six titlebar Lion baseline                LIVE-PROVEN
 exact-seven notifications                      LIVE-PROVEN
-SelectWindow second OrderFront adaptation       NEXT: one Lion run
-IsWindowVisible / timers / event loop            HELD
+IsWindowVisible                                 NEXT: Snow control only
+timers / event loop                             HELD
 new compatibility families                      NO
 XNU                                              no change indicated
 ```
