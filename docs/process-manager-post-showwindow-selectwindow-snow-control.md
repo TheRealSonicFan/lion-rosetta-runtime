@@ -256,6 +256,14 @@ pm-selectwindow-snow.log
 
 Do not transfer or execute the SelectWindow subject on Lion until this evidence is reviewed.
 
+## Completed result
+
+The corrected Snow control now passes completely. The subject remains the previously built `cps-selectwindow-validation-v1` PPC7400 executable with SHA-256 `cde220a44e8c68f16681b128898ff48b6bbe7dc94e139b6b5ad13216d6a88259`. Snow returned from `ShowWindow`, entered and returned from `SelectWindow`, emitted `SELECTWINDOW_PASS`, reached `M24_SUCCESS`, and exited with `control_status=0`. The exact-six CoreUI titlebar wrapper remained pure passthrough for all six keys with zero unexpected actions.
+
+The corrected discriminator also passes exactly as intended: two total `CGSOrderFrontConditionally` calls, two matching legacy traces, two passthrough results, and exactly one call bounded by the SelectWindow S02/S03 markers. The second call is `index=2`, `mode=passthrough`, `exact=YES`, with `opacityCreateCompatCalls=1 addTrackingCompatCalls=1`. Final results are `POST_SHOWWINDOW_SELECTWINDOW_SNOW_CONTROL_PASS` and `PASS`.
+
+This closes the Snow public-API control. It also proves that Lion cannot safely reuse the old one-call `lion-id-v1` OrderFront adapter unchanged: the existing compatibility source deliberately adapts only call index 1 and would reject/pass through the second SelectWindow call. Current `main` therefore introduces a separately guarded `lion-selectwindow-id-v1` mode and a new v3 combined compatibility build. The next stage is the Snow build/passthrough gate in `docs/process-manager-post-showwindow-selectwindow-orderfront-compat-snow-control.md`; no Lion SelectWindow run is authorized yet.
+
 ## Current boundary
 
 ```text
@@ -263,8 +271,12 @@ CreateNewWindow                                  PASS
 SetWindowTitleWithCFString                       PASS
 ShowWindow on Lion                               LIVE-PROVEN PASS
 exact-six CoreUI titlebar compatibility          LIVE-PROVEN
-SelectWindow                                     API PASS observed; corrected Snow runner retry NEXT
+SelectWindow on Snow                             PASS
+SelectWindow OrderFront call #2                  PROVEN: one bounded legacy call
+new Lion SelectWindow OrderFront mode            PREPARED
+new combined v3 compatibility artifact           NEXT: Snow build/control
+Lion SelectWindow                                NOT YET AUTHORIZED
 IsWindowVisible / timers / event loop             HELD
-new CGS/titlebar compatibility                    NO
+new titlebar compatibility                        NO
 XNU                                               no change indicated
 ```
