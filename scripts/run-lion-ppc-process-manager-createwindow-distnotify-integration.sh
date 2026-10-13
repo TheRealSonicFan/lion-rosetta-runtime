@@ -38,6 +38,7 @@ OPACITY_ALPHA_TRACE_MODE="${ROSETTA_CGS_POST_RELEASEBACKING_OPACITY_TRACE_MODE:-
 OPACITY_ALPHA_CREATE_COMPAT_MODE="${ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE:-}"
 POST_CREATEWINDOW_TITLE_MODE="${ROSETTA_POST_CREATEWINDOW_TITLE_VALIDATION_MODE:-}"
 POST_WINDOWTITLE_SHOWWINDOW_MODE="${ROSETTA_POST_WINDOWTITLE_SHOWWINDOW_VALIDATION_MODE:-}"
+POST_SHOWWINDOW_SELECTWINDOW_MODE="${ROSETTA_POST_SHOWWINDOW_SELECTWINDOW_VALIDATION_MODE:-}"
 SHOWWINDOW_UNKNOWN_TRACE_MODE="${ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE:-}"
 SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE:-}"
 SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE:-}"
@@ -260,6 +261,15 @@ if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
         die 64 "ShowWindow validation requires the reviewed exact-five, exact-six, or exact-seven notification broker"
     EXPECTED_SUBJECT_BUILD_ID="cps-showwindow-validation-v1"
+fi
+if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+    [ "$POST_SHOWWINDOW_SELECTWINDOW_MODE" = "lion-selectwindow-v1" ] ||
+        die 64 "unsupported ROSETTA_POST_SHOWWINDOW_SELECTWINDOW_VALIDATION_MODE: $POST_SHOWWINDOW_SELECTWINDOW_MODE"
+    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
+        die 64 "SelectWindow validation requires the accepted ShowWindow validation mode"
+    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] ||
+        die 64 "SelectWindow validation requires the accepted exact-seven notification broker"
+    EXPECTED_SUBJECT_BUILD_ID="cps-selectwindow-validation-v1"
 fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "lion-passive-v1" ] ||
@@ -690,6 +700,15 @@ if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
             die 68 "ShowWindow subject marker missing: $marker"
     done
 fi
+if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+    for marker in \
+        'PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow' \
+        'PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow' \
+        'PM_POSTWINDOWSELECT_RESULT:SELECTWINDOW_PASS'; do
+        /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "SelectWindow subject marker missing: $marker"
+    done
+fi
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
     "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || die 68 "CoreServices CPS registration compatibility build marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
@@ -990,6 +1009,9 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
 fi
 if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
     log "post_windowtitle_showwindow_validation_mode=$POST_WINDOWTITLE_SHOWWINDOW_MODE"
+fi
+if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+    log "post_showwindow_selectwindow_validation_mode=$POST_SHOWWINDOW_SELECTWINDOW_MODE"
 fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     log "showwindow_unknown_cgs_trace_mode=$SHOWWINDOW_UNKNOWN_TRACE_MODE"
@@ -2416,6 +2438,20 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
             exit 0
         fi
     fi
+    if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_RESULT:SELECTWINDOW_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_MARKER_INCOMPLETE"
+            exit 0
+        fi
+    fi
     if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T04_BEFORE_CFRelease' "$RAW_LOG" ||
        ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T05_AFTER_CFRelease' "$RAW_LOG"; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFRELEASE_INCOMPLETE"
@@ -2466,6 +2502,9 @@ fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
     if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
        [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
         log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
     elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ] &&
