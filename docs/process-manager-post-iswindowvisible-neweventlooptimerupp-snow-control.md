@@ -275,13 +275,22 @@ pm-neweventlooptimerupp-snow.log
 
 Do not transfer or execute this new subject on Lion until the Snow evidence is reviewed.
 
+## Reviewed Snow result
+
+The Snow control passes completely on 10.6.8 / 10K549. The exact PPC7400 subject has SHA-256 `73a02dac78c61531ab1f1922011de7116f1a384ede55616c1c16bf6bc966020b`, uses `/usr/oah/dyld`, and records `neweventlooptimerupp_linkage=sdk-lowered-no-undefined-import`. After the already successful ShowWindow/SelectWindow/IsWindowVisible sequence, S06 and S07 both execute, the returned UPP pointer is nonzero (`0x000021e4`), and `NEWEVENTLOOPTIMERUPP_PASS` is emitted. Cleanup reaches `M24_SUCCESS`, `control_status=0`, and the final result is `POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_SNOW_CONTROL_PASS` / `PASS`.
+
+The inherited Snow stack remains transparent: both OrderFront calls pass through with exactly one SelectWindow-bounded call, WindowBackingInfo and ResolveColorProfile remain passthrough, all six titlebar keys remain passthrough with zero unexpected action, and no compatibility family emits `ADAPTER_PASS`. This does not justify a timer-specific adapter.
+
+Current `main` therefore advances only to the guarded Lion procedure in `docs/process-manager-post-iswindowvisible-neweventlooptimerupp-lion-integration.md`. Transfer the exact Snow-proven subject, retain the already accepted IsWindowVisible-era user-space stack unchanged, rebuild the exact-seven native broker, repeat the fresh syscall-295 preflight, and execute exactly one Lion UPP-creation run. Do not install a timer or enter the event loop until that result is reviewed.
+
 ## Current boundary
 
 ```text
 ShowWindow on Lion                               LIVE-PROVEN PASS
 SelectWindow on Lion                             LIVE-PROVEN PASS
 IsWindowVisible on Lion                          LIVE-PROVEN PASS
-NewEventLoopTimerUPP                             NEXT: Snow control only
+NewEventLoopTimerUPP on Snow                     PASS
+NewEventLoopTimerUPP on Lion                     NEXT: one guarded run
 InstallEventLoopTimer                            HELD
 RunApplicationEventLoop                         HELD
 new compatibility families                      NO
