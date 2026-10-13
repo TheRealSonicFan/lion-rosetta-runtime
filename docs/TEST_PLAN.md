@@ -902,8 +902,12 @@ zoom   a6161f7ab6000000 -> 99172272a9000000
 
 This closes the question of whether the three exact crash-time semantics exist in Lion's legacy ArtFile. It does not yet authorize live CoreUI interception.
 
-## Current step — exact-three-key policy proof
+## Exact-three-key policy proof passed
 
-Current `main` advances to `docs/pm-showwindow-artfile-titlebar-three-key-policy-proof.md` using `scripts/audit-pm-artfile-titlebar-three-key-policy.py` (analyzer v1, contract `titlebar-three-key-policy-v1`).
+Both returned reports satisfy the complete static policy contract. Snow records `guard_enabled=NO`, one source-index hit for each Snow key, 6,120 near-miss cases with zero failures, zero changed local index records, and passing idempotence. Lion records `guard_enabled=YES`, zero untranslated-source hits, exactly one valid semantic target for each of clear/minus/zoom, the same 6,120/0 near-miss result, zero changed local index records, and passing idempotence.
 
-Run the static analyzer once on Snow Leopard and once on Lion and return exactly `pm-art-titlebar-three-key-policy-snow.txt` and `pm-art-titlebar-three-key-policy-lion.txt`. Snow must prove the Lion guard stays disabled and all local paths remain identity. Lion must prove the guard enables only for 10.7.5/11G63 with the accepted ArtFile identity, the policy contains exactly the three mappings above, 6,120 single-byte near misses remain identity, every local index record remains unchanged, and the three outputs are idempotent valid target keys. Do not rerun the PPC ShowWindow subject, build/install a CoreUI interposer, patch ArtFile/CoreUI, broaden component mapping, suppress diagnostics, or change XNU.
+## Current step — bsearch integration-boundary audit
+
+Current `main` advances to `docs/pm-showwindow-artfile-titlebar-bsearch-boundary-audit.md` using `scripts/audit-pm-artfile-titlebar-bsearch-boundary.py` (analyzer v1, contract `titlebar-bsearch-boundary-v1`).
+
+Run the read-only analyzer once on Snow Leopard and once on Lion and return exactly `pm-art-titlebar-bsearch-boundary-snow.txt` and `pm-art-titlebar-bsearch-boundary-lion.txt`. Snow must prove the old PPC `CUIElement::Load -> LoadFromArtFile` edge is a direct internal branch, ordinary `LoadFromArtFile` symbol interposition is therefore not the narrow boundary, and the actual ArtFile search reaches libSystem `bsearch` through exactly one undefined lazy-bound external stub with the expected argument setup/comparator. Lion must prove the identical Rosetta-cache contract and accepted ArtFile environment. Do not rerun ShowWindow or build/load the live interposer until this boundary audit passes.
