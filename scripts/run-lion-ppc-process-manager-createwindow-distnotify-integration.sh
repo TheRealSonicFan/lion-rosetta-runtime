@@ -45,6 +45,8 @@ SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ORDER
 SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE:-}"
 SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE="${ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE:-}"
 SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE:-}"
+SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_MODE:-}"
+SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_MODE:-}"
 
 TRANSLATOR="/usr/libexec/oah/translate"
 PRIVATE_DYLD="/usr/oah/dyld"
@@ -269,6 +271,10 @@ if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
         die 64 "SelectWindow validation requires the accepted ShowWindow validation mode"
     [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] ||
         die 64 "SelectWindow validation requires the accepted exact-seven notification broker"
+    [ "$SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_MODE" = "lion-id-v1" ] ||
+        die 64 "SelectWindow validation requires accepted ResolveColorProfile compatibility"
+    [ "$SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_MODE" = "lion-id-v1" ] ||
+        die 64 "SelectWindow validation requires accepted WindowBackingInfo compatibility"
     EXPECTED_SUBJECT_BUILD_ID="cps-selectwindow-validation-v1"
 fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
@@ -720,6 +726,16 @@ fi
     "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || die 68 "CoreServices CPS registration compatibility build marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
     "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_BUILD_ID:distributed-notifications-ppc-ingress-interposer-v2" || die 68 "embedded distributed-notifications ingress marker missing"
+if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+    for marker in \
+        'PM_CGS_COLOR_PROFILE_RESOLVE_TRACE_BUILD_ID:color-profile-resolve-passive-trace-v1' \
+        'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_BUILD_ID:color-profile-resolve-id-compat-v1' \
+        'PM_CGS_WINDOW_BACKING_INFO_COMPAT_BUILD_ID:window-backing-info-id-compat-v1' \
+        'lion-selectwindow-id-v1'; do
+        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "SelectWindow full-stack compatibility marker missing: $marker"
+    done
+fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     for marker in \
         'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST:' \
@@ -1032,6 +1048,42 @@ if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
 else
     unset ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE
 fi
+if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+    WBI_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASSTHROUGH_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:PASSTHROUGH' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASSTHROUGH_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:PASSTHROUGH' "$RAW_LOG" 2>/dev/null || true)"
+    log "window_backing_info_compat_call_count=$WBI_COMPAT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_resolve_compat_call_count=$CPR_COMPAT_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    if [ "$WBI_COMPAT_COUNT" -ne 1 ] || [ "$WBI_PASS_COUNT" -ne 1 ] || [ "$WBI_PASSTHROUGH_COUNT" -ne 0 ] ||
+       [ "$CPR_COMPAT_COUNT" -ne 1 ] || [ "$CPR_PASS_COUNT" -ne 1 ] || [ "$CPR_PASSTHROUGH_COUNT" -ne 0 ]; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_ACCEPTED_FULL_STACK_COUNT_MISMATCH"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=1 adapted=0 mode=lion-id-v1 exact=YES applicationPortExact=YES .*newWindowCompatCalls=1 releaseBackingCompatCalls=1 opacityCreateCompatCalls=1 orderFrontCompatCalls=0 addTrackingCompatCalls=0 setFrontWindowCompatCalls=0 colorProfileClientCompatCalls=0 colorProfileResolveCompatCalls=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007263 lionId=0x00007264 send=0x00000024 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 windowId=[1-9][0-9]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000034 id=0x000072c8 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072c8 legacyId=0x000072c7 size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG"; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_WINDOW_BACKING_INFO_BASELINE_NOT_PASSED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:index=1 adapted=0 mode=lion-id-v1 exact=YES provenanceExact=YES clientId=[1-9][0-9]* expectedClientId=[1-9][0-9]* profileId=1 .*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000074d7 lionId=0x000074d9 send=0x00000038 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 clientId=[1-9][0-9]* profileId=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000034 id=0x0000753d resultRaw=0x00000000 ' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753d legacyId=0x0000753b size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 ' "$RAW_LOG"; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_COLOR_PROFILE_RESOLVE_BASELINE_NOT_PASSED"
+        exit 0
+    fi
+    log "window_backing_info_native_reply_class=SUCCESS"
+    log "color_profile_resolve_native_reply_class=SUCCESS"
+fi
+
 if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
     log "showwindow_order_front_conditionally_compat_mode=$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE"
     export ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE="$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE"
@@ -1055,6 +1107,18 @@ if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
     export ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE="$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE"
 else
     unset ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE
+fi
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_MODE" ]; then
+    log "showwindow_color_profile_resolve_compat_mode=$SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_MODE"
+    export ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_MODE="$SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_MODE"
+else
+    unset ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_MODE
+fi
+if [ -n "$SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_MODE" ]; then
+    log "showwindow_window_backing_info_compat_mode=$SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_MODE"
+    export ROSETTA_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_MODE="$SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_MODE"
+else
+    unset ROSETTA_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_MODE
 fi
 
 MARKER="$(/usr/bin/mktemp /tmp/lion-createwindow-validation-marker.XXXXXX)" || die 73 "could not create diagnostic marker"
