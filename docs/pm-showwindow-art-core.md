@@ -109,6 +109,23 @@ Load-frame SP + 0x44
 
 That lets the preserved PPC stack identify the exact eight-byte path used by the crashing call.
 
+## Analyzer-v1 correction after the first Phase D run
+
+The first Phase D report is useful evidence, but its final `RESULT: FAIL` came from an analyzer addressing error rather than a new Rosetta runtime failure.
+
+Analyzer v1 took writable-data/global offsets from the standalone Snow Leopard PPC CoreUI slice, added the observed shared-cache CoreUI text base `0x923de000`, and treated those results as live global addresses. That assumption is invalid for the Rosetta dyld shared cache: code and writable data can be placed independently, and the cached PPC instructions contain the relocated PIC references that must be used at runtime.
+
+The failed report itself exposes the mistake:
+
+- both GDB passes succeeded;
+- the PPC backchain still recovered one unique `CUIElement::Load` frame;
+- the active path bytes were recovered as `a6 16 1f 7a b6 00 00 00`;
+- the supposed legacy header/global values decode as PPC instruction words, and the supposed mapped-ArtFile head is executable PPC code rather than an ArtFile header.
+
+Therefore the fixed addresses from analyzer v1 are retained only as an **uncached-reference diagnostic**. Analyzer v2 derives the actual runtime global addresses from the cached PPC instructions preserved in the same core and cross-checks the references used by `ShowArtFilePathToStdErr` and `ArtFileSetupOnce`.
+
+Keep the same `/cores/core.89664` and matching crash report. Do not rerun the PPC subject to correct this collector bug.
+
 ## Prepared collector
 
 Current runtime `main` provides:
@@ -120,7 +137,7 @@ scripts/collect-pm-art-core.py
 Analyzer version:
 
 ```text
-1
+2
 ```
 
 The collector is Python-2-compatible and read-only. It:
@@ -130,18 +147,19 @@ The collector is Python-2-compatible and read-only. It:
 3. verifies Lion `ArtFile.bin` size and SHA-256 from the prior audit;
 4. verifies the matching crash report contains the exact fault and the expected Snow-PPC CoreUI frames;
 5. opens only the preserved core with Apple GDB in batch mode;
-6. dumps a small fixed CoreUI global-state range and a bounded PPC guest-stack range to temporary files;
-7. decodes the old PPC CoreUI globals as big-endian guest values;
-8. reads the old archive header pointers that `ArtFileSetupOnce()` stored;
-9. performs a second read-only GDB pass for only the first 256 bytes at the recovered mmap base;
-10. requires those bytes to match Lion's on-disk `ArtFile.bin`;
-11. requires the old PPC parsed-header globals and derived table/string pointers to match the Lion `ArtFile.bin` header;
-12. follows the PPC stack backchain from the recorded crash SP;
-13. identifies the unique `CUIElement::Load` frame via saved LR `0x92407c84`;
-14. recovers the path buffer at that frame's SP plus `0x44`;
-15. emulates the old PPC helper's component-table lookup against Lion `ArtFile.bin`;
-16. reports each path byte, table entry, string offset, runtime pointer, decoded component, file-bounds state, and relation to fault address `0x787221c4`;
-17. deletes all temporary memory dumps before exit.
+6. dumps the small Snow-PPC CoreUI code window containing `ShowArtFilePathToStdErr` / `ArtFileSetupOnce` plus a bounded PPC guest-stack range;
+7. decodes the cached PPC `addis` + D-form instruction pairs to recover the **runtime** CoreUI global addresses, then cross-checks the header/table/string globals derived independently from the helper and setup code;
+8. performs a second read-only GDB pass for only those recovered global words/header bytes;
+9. decodes the old PPC CoreUI global values as big-endian guest data;
+10. performs a third read-only GDB pass for only the first 256 bytes at the recovered mmap base;
+11. requires the recovered mmap base to be page-aligned and those bytes to match Lion's on-disk `ArtFile.bin`;
+12. requires the old PPC parsed-header globals and derived table/string pointers to match the Lion `ArtFile.bin` header;
+13. follows the PPC stack backchain from the recorded crash SP;
+14. identifies the unique `CUIElement::Load` frame via saved LR `0x92407c84`;
+15. recovers the path buffer at that frame's SP plus `0x44`;
+16. emulates the old PPC helper's component lookup while separately validating the component ID against Lion's header count and the computed table entry against the table/string-pool boundary;
+17. reports both safe decoded components and the unsafe legacy lookup value/pointer for any out-of-range component, including its delta from fault address `0x787221c4`;
+18. deletes all temporary memory dumps before exit.
 
 Only the final text report is retained.
 
@@ -220,13 +238,19 @@ RESULT: PASS
 The report should also contain:
 
 ```text
+analyzer_version=2
+runtime_global_address_decode=PASS
+shared_cache_data_relocated=YES
+mapped_base_page_aligned=YES
 core_header_matches_lion_disk=YES
 legacy_derived_pointers_match_lion_header=YES
 core_mapped_head_matches_lion_disk=YES
 load_frame_match_count=1
 ```
 
-Those four gates establish that the old Snow-PPC CoreUI instance in the crash was initialized from Lion's current `ArtFile.bin` and that the active path buffer was recovered from the correct stack frame.
+These gates establish that the collector decoded the shared-cache relocation correctly, that the old Snow-PPC CoreUI instance in the crash was initialized from Lion's current `ArtFile.bin`, and that the active path buffer was recovered from the correct stack frame. `shared_cache_data_relocated=YES` is expected because analyzer v1 already demonstrated that the uncached data addresses do not contain the live globals.
+
+A successful report may still contain `invalid_component_id_count` or `invalid_component_pointer_count` greater than zero. Those are **compatibility findings**, not collector failures, once the provenance gates above pass.
 
 ## Phase E — return evidence
 
@@ -240,21 +264,27 @@ Do not return the full core, temporary stack/global dumps, Lion `ArtFile.bin`, o
 
 ## Review gates
 
-### One decoded component produces an out-of-file pointer
+### A path component exceeds Lion's legacy component count or crosses the table boundary
 
-If the recovered path contains a component whose legacy table lookup resolves outside Lion `ArtFile.bin`, that is the first exact failing archive-contract discriminator. The next compatibility experiment must be scoped to that lookup/record interpretation; do not replace the whole archive.
+This is now the highest-value discriminator. Lion's legacy-decoded `ArtFile.bin` header reports component maximum/count field `0xa9` (169), while the analyzer-v1 stack recovery produced path byte `0xb6` (182). For Lion's header layout, the old helper's `0xb6` entry address lands after the component table and inside the string pool. Analyzer v2 must confirm this against the correctly recovered runtime globals before it is treated as final proof.
 
-### Fault address matches or lies inside one decoded component string
+If confirmed with `id_within_component_count=NO` and `entry_within_component_table=NO`, the archive-contract mismatch is exact: Snow-PPC CoreUI is indexing a component ID that Lion's legacy ArtFile table does not define. The next compatibility experiment must be scoped to that one path/table semantic boundary; do not replace the whole archive.
 
-If `0x787221c4` equals or falls inside a reconstructed component-string pointer range, the old PPC diagnostic helper's incompatible table decode is directly proven. The next stage can be designed around the smallest path/table compatibility boundary.
+### Unsafe legacy lookup matches or is adjacent to the fault address
+
+For an invalid component, analyzer v2 still emulates the unchecked legacy read and reports the resulting unsafe runtime pointer and signed fault delta. If it equals `0x787221c4`, lies inside the referenced bytes, or is immediately adjacent in a way explained by the failing `fprintf` load, the old PPC diagnostic helper's incompatible table decode is directly linked to the SIGSEGV. Preserve the exact delta for the next design step.
 
 ### All decoded path components are valid Lion ArtFile strings
 
-If every component pointer is in-bounds and the fault address does not correspond to any decoded component, the crash is later in the old diagnostic/formatting path. Preserve the recovered path and move the next postmortem discriminator to the exact `fprintf` arguments/saved PPC registers; do not infer that the ArtFile archive itself needs replacement.
+If every component ID/table entry is valid and the fault address does not correspond to any decoded component, the crash is later in the old diagnostic/formatting path. Preserve the recovered path and move the next postmortem discriminator to the exact `fprintf` arguments/saved PPC registers; do not infer that the ArtFile archive itself needs replacement.
 
-### Core global state does not match Lion ArtFile.bin
+### Runtime-global decode fails
 
-Treat this as an evidence/provenance result, not a compatibility failure. The mapped object may be another archive or the assumed old-global offsets may need correction. Update only the read-only collector and repeat against the same preserved core.
+Keep the same core. This means the cached instruction-reference decoder needs refinement; it is not evidence that the ArtFile resource is incompatible. Do not fall back to analyzer-v1 fixed addresses.
+
+### Runtime globals decode, but ArtFile provenance does not match
+
+Treat this as an evidence/provenance result. The mapped object may be another archive or the recovered field interpretation may still need correction. Update only the read-only collector and repeat against the same preserved core.
 
 ### PPC backchain does not uniquely recover the Load frame
 
@@ -268,10 +298,13 @@ Lion crash code                                   exact Snow-PPC CoreUI/HIToolbo
 old PPC diagnostic helper                         global archive tables; no ArtFileInfo
 native Lion diagnostic helper                     ArtFileInfo-aware and bounds-checked
 Lion ArtFile generation                           structurally changed
-visible dotted diagnostics                        synthesized from component IDs
-exact crash-time path bytes                       recoverable from preserved core
-exact bad component/table lookup                  not yet proven
-next step                                         preserved-core path/table decode
+analyzer-v1 fixed global-address assumption       disproven by first Phase D report
+shared-cache runtime globals                      derive from cached PPC PIC references
+recovered crash-time path                         a6 16 1f 7a b6 00 00 00 (v1; revalidate in v2)
+Lion legacy component max                         0xa9 / 169
+candidate incompatible component                  0xb6 / 182
+exact bad component/table lookup                  pending analyzer-v2 provenance gates
+next step                                         rerun analyzer v2 on same preserved core
 PPC subject rerun                                 NO
 resource substitution                             NO
 RawCamera / ShapeWindow                           held
