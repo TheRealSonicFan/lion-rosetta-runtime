@@ -34,7 +34,7 @@ scripts/run-lion-ppc-process-manager-createwindow-distnotify-integration.sh
 Pinned identities:
 
 ```text
-CoreServices compat source blob  15fcf96748dc8e5641e07ea4665c72d1b1791bb4
+CoreServices compat source blob  2c167877c92e6777189c0b4f8657f5570e1a0acb
 SelectWindow compat builder blob b77fce15136424bb2f4eb76b09614c3c2b89696a
 Snow runner blob                 aff24e231e7c8915065973aaf2db9419ea8f90ae
 Lion runner blob                 689c5def8a4bc32e2ad0756a8d66e1a4c6aa2056
@@ -94,7 +94,7 @@ REMOTE_HEAD="$(git rev-parse origin/main)" || exit 1
 test "$LOCAL_HEAD" = "$REMOTE_HEAD" || exit 1
 
 test "$(git hash-object ./tests/ppc-process-manager-coreservices-sessioninit-compat-interposer.c)" = \
-  "15fcf96748dc8e5641e07ea4665c72d1b1791bb4" || exit 1
+  "2c167877c92e6777189c0b4f8657f5570e1a0acb" || exit 1
 
 test "$(git hash-object ./scripts/build-ppc-process-manager-post-showwindow-selectwindow-order-front-compat-on-snowleopard.sh)" = \
   "b77fce15136424bb2f4eb76b09614c3c2b89696a" || exit 1
