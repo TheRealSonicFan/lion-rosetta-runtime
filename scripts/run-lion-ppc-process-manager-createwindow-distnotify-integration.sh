@@ -298,8 +298,13 @@ if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-compat-v1"
 fi
 if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
-    [ "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" = "lion-id-v1" ] ||
-        die 64 "unsupported ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE: $SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE"
+    if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        [ "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" = "lion-selectwindow-id-v1" ] ||
+            die 64 "SelectWindow validation requires lion-selectwindow-id-v1 OrderFront compatibility"
+    else
+        [ "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" = "lion-id-v1" ] ||
+            die 64 "unsupported ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE: $SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE"
+    fi
     [ "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" = "lion-inline-id-v1" ] ||
         die 64 "CGSOrderFrontConditionally compatibility requires accepted CGSAddTrackingArea compatibility"
     [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "lion-passive-v1" ] ||
@@ -314,7 +319,9 @@ fi
 if [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
     [ "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" = "lion-id-v1" ] ||
         die 64 "unsupported ROSETTA_CGS_SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE: $SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE"
-    [ "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" = "lion-id-v1" ] ||
+    { [ "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" = "lion-id-v1" ] ||
+      { [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ] &&
+        [ "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" = "lion-selectwindow-id-v1" ]; }; } ||
         die 64 "CGSSetFrontWindow compatibility requires accepted CGSOrderFrontConditionally compatibility"
     [ "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" = "lion-inline-id-v1" ] ||
         die 64 "CGSSetFrontWindow compatibility requires accepted CGSAddTrackingArea compatibility"
@@ -351,7 +358,7 @@ if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
     { [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
         die 64 "ColorProfileClient compatibility requires the accepted exact-six or exact-seven notification broker"
-    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-compat-v2"
+    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-selectwindow-orderfront-compat-v3"
 fi
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 
