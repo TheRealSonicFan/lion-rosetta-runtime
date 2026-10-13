@@ -10,8 +10,8 @@ import subprocess
 import sys
 import tempfile
 
-ANALYZER_VERSION = "2"
-AUDIT_CONTRACT = "titlebar-state-semantics-v2"
+ANALYZER_VERSION = "3"
+AUDIT_CONTRACT = "titlebar-state-semantics-v3"
 COREUI = "/System/Library/PrivateFrameworks/CoreUI.framework/Versions/A/CoreUI"
 ARTFILE = "/System/Library/PrivateFrameworks/CoreUI.framework/Versions/A/Resources/ArtFile.bin"
 
@@ -42,6 +42,29 @@ EXPECTED = {
         "state_strategy": "INLINE_APPEND_STATE",
         "state_helper_expected": False,
         "state_continuation_ranges": [(0x28e78, 0x28ec0)],
+        "state_prologue_range": (0x25cbc, 0x25d40),
+        "state_prologue_markers": [
+            "or\tr28,r8,r8",
+            "lwz\tr28,0x18(r27)",
+            "li\tr28,0xa3",
+            "or\tr29,r9,r9",
+            "lwz\tr29,0x1c(r27)",
+        ],
+        "state_input_summary": [
+            ("primary_source", "arg5-or-descriptor+0x18"),
+            ("primary_default", "0xa3"),
+            ("secondary_source", "arg6-or-descriptor+0x1c"),
+            ("dedicated_titlebar_secondary", "NONE"),
+        ],
+        "expected_state_surface": {
+            "active": True,
+            "activenokey": False,
+            "disabled": True,
+            "inactive": True,
+            "key": True,
+            "pressed": True,
+            "rollover": True,
+        },
         "minimum_branch_calls": {
             APPEND_VARIANT: 3,
             APPEND_STATE: 3,
@@ -89,6 +112,30 @@ EXPECTED = {
         "state_strategy": "HELPER",
         "state_helper_expected": True,
         "state_continuation_ranges": [],
+        "state_prologue_range": (0x3d39a, 0x3d413),
+        "state_prologue_markers": [
+            "movl\t0x1c(%ebp),%eax",
+            "movl\t%eax,0xcc(%ebp)",
+            "movl\t0x28(%eax),%eax",
+            "movl\t$0x000000ad,0xcc(%ebp)",
+            "movl\t0x2c(%ecx),%ecx",
+            "movl\t%ecx,0xc4(%ebp)",
+        ],
+        "state_input_summary": [
+            ("primary_source", "arg5-or-descriptor+0x28"),
+            ("primary_default", "0xad"),
+            ("secondary_source", "arg6-or-descriptor+0x30"),
+            ("dedicated_titlebar_secondary", "descriptor+0x2c"),
+        ],
+        "expected_state_surface": {
+            "active": True,
+            "activenokey": True,
+            "disabled": True,
+            "inactive": True,
+            "key": True,
+            "pressed": True,
+            "rollover": True,
+        },
         "minimum_branch_calls": {
             APPEND_VARIANT: 3,
             APPEND_TITLEBAR_STATE: 3,
@@ -301,6 +348,24 @@ def helper_semantic_hits(body_text, arch, semantic_ids):
     return hits
 
 
+def emitted_state_ids(rows, arch):
+    ids = set()
+    if arch == "ppc7400":
+        for _, line in rows:
+            match = re.search(r"\bli\s+r(?:11|4),0x([0-9a-fA-F]+)", line)
+            if match:
+                ids.add(int(match.group(1), 16))
+    else:
+        for _, line in rows:
+            match = re.search(
+                r"\bmovb\s+\$0x([0-9a-fA-F]+),(?:%dl|\(%ecx,%eax\))",
+                line
+            )
+            if match:
+                ids.add(int(match.group(1), 16))
+    return ids
+
+
 def main():
     report = sys.argv[1] if len(sys.argv) > 1 else "./pm-art-titlebar-state-semantics.txt"
     issues = []
@@ -357,12 +422,14 @@ def main():
         rows = []
         branch_rows = []
         state_continuation_rows = []
+        state_prologue_rows = []
         helper_rows = {}
         branch_call_counts = {}
         titlebar_state_helper_present = False
         prefix_hits = {}
         variant_hits = {}
         state_hits = {}
+        emitted_state_components = []
 
         if arch and os.path.isfile(COREUI):
             thin = os.path.join(tempdir, "CoreUI.%s" % arch)
@@ -408,6 +475,17 @@ def main():
                 branch_rows = rows_in_range(
                     rows, expected["branch_start"], expected["branch_end"]
                 )
+                state_prologue_rows = rows_in_range(
+                    rows,
+                    expected["state_prologue_range"][0],
+                    expected["state_prologue_range"][1]
+                )
+                state_prologue_text = "\n".join(
+                    line for _, line in state_prologue_rows
+                )
+                for marker in expected["state_prologue_markers"]:
+                    if not marker_present(state_prologue_text, marker):
+                        issues.append("state input prologue marker missing: %s" % marker)
                 for start, end in expected["state_continuation_ranges"]:
                     state_continuation_rows.extend(rows_in_range(rows, start, end))
 
@@ -462,13 +540,26 @@ def main():
                         branch_rows + state_continuation_rows +
                         helper_rows.get(APPEND_STATE, [])
                     )
-                state_body_text = "\n".join(line for _, line in state_rows)
-                state_hits = helper_semantic_hits(
-                    state_body_text, arch,
-                    dict((name, dictionary[name]) for name in STATE_SEMANTICS)
+
+                emitted_ids = emitted_state_ids(state_rows, arch)
+                reverse_dictionary = dict((ident, name) for name, ident in dictionary.items())
+                emitted_state_components = [
+                    (ident, reverse_dictionary.get(ident, "<unknown>"))
+                    for ident in sorted(emitted_ids)
+                    if ident in reverse_dictionary
+                ]
+                state_hits = dict(
+                    (name, dictionary[name] in emitted_ids)
+                    for name in STATE_SEMANTICS
                 )
-                if not state_hits.get("disabled", False):
-                    issues.append("titlebar state surface lacks disabled semantic immediate")
+                for name, required in sorted(expected["expected_state_surface"].items()):
+                    actual = state_hits.get(name, False)
+                    if actual != required:
+                        issues.append(
+                            "titlebar emitted-state surface mismatch for %s: got %s expected %s" %
+                            (name, "YES" if actual else "NO",
+                             "YES" if required else "NO")
+                        )
         else:
             if not os.path.isfile(COREUI):
                 issues.append("CoreUI missing")
@@ -518,6 +609,18 @@ def main():
                 )
 
             write_line(fp)
+            write_line(fp, "== State input provenance ==")
+            if expected is not None:
+                write_line(
+                    fp, "state_prologue_range=0x%x..0x%x" %
+                    expected["state_prologue_range"]
+                )
+                for key, value in expected["state_input_summary"]:
+                    write_line(fp, "state_input_%s=%s" % (key, value))
+            for _, line in state_prologue_rows:
+                write_line(fp, line)
+
+            write_line(fp)
             write_line(fp, "== Window variant selector semantics ==")
             if expected is not None:
                 for selector, semantic in expected["variant_selector_semantics"]:
@@ -541,6 +644,11 @@ def main():
                 write_line(
                     fp, "state_semantic_%s=%s" %
                     (name, "YES" if state_hits.get(name, False) else "NO")
+                )
+            for ident, semantic in emitted_state_components:
+                write_line(
+                    fp, "emitted_state_component=0x%02x semantic=%s" %
+                    (ident, semantic)
                 )
 
             write_line(fp)
