@@ -859,7 +859,6 @@ if [ "$RC" -eq 0 ] &&
             echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
             exit 1
         fi
-        echo "RESULT: POST_SHOWWINDOW_SELECTWINDOW_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
     fi
     if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
         FONTSERVER_RENDEZVOUS_COMPAT_CALLS="$(/usr/bin/grep -c 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_CALL:' "$LOG" 2>/dev/null || true)"
@@ -914,17 +913,31 @@ if [ "$RC" -eq 0 ] &&
             if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
                 ORDER_FRONT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=' "$LOG" 2>/dev/null || true)"
                 ORDER_FRONT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY' "$LOG" 2>/dev/null || true)"
+                ORDER_FRONT_PASSTHROUGH_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:PASSTHROUGH' "$LOG" 2>/dev/null || true)"
+                ORDER_FRONT_EXPECTED_COUNT=1
+                SELECTWINDOW_ORDER_FRONT_COUNT=0
+                if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+                    ORDER_FRONT_EXPECTED_COUNT=2
+                    SELECTWINDOW_ORDER_FRONT_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow/{seen=1; next} seen && /PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow/{exit} seen && /PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=/{n++} END{print n+0}' "$LOG" 2>/dev/null)"
+                fi
                 echo "cgs_order_front_conditionally_compat_call_count=$ORDER_FRONT_COMPAT_COUNT" | /usr/bin/tee -a "$LOG"
                 echo "cgs_order_front_conditionally_legacy_trace_count=$ORDER_FRONT_TRACE_COUNT" | /usr/bin/tee -a "$LOG"
-                if [ "$ORDER_FRONT_COMPAT_COUNT" -ne 1 ] ||
-                   [ "$ORDER_FRONT_TRACE_COUNT" -ne 1 ] ||
+                echo "cgs_order_front_conditionally_passthrough_count=$ORDER_FRONT_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$LOG"
+                if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+                    echo "selectwindow_order_front_conditionally_call_count=$SELECTWINDOW_ORDER_FRONT_COUNT" | /usr/bin/tee -a "$LOG"
+                fi
+                if [ "$ORDER_FRONT_COMPAT_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+                   [ "$ORDER_FRONT_TRACE_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+                   [ "$ORDER_FRONT_PASSTHROUGH_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
                    ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=1 mode=passthrough exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=0' "$LOG" ||
-                   ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:PASSTHROUGH' "$LOG" ||
                    /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$LOG" ||
                    ! /usr/bin/grep -Fq 'kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY bits=0x00001513' "$LOG" ||
                    ! /usr/bin/grep -Fq 'id=0x000072e7 expectedReply=0x0000734b option=0x00000003 send=0x00000034 recv=0x0000002c' "$LOG" ||
                    ! /usr/bin/grep -Fq 'kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY kr=0 hex=0x00000000' "$LOG" ||
-                   ! /usr/bin/grep -Fq 'kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY bits=0x00001200 size=0x00000024 id=0x0000734b expected=0x0000734b idMatch=YES' "$LOG"; then
+                   ! /usr/bin/grep -Fq 'kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY bits=0x00001200 size=0x00000024 id=0x0000734b expected=0x0000734b idMatch=YES' "$LOG" ||
+                   { [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ] &&
+                     { [ "$SELECTWINDOW_ORDER_FRONT_COUNT" -ne 1 ] ||
+                       ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=2 mode=passthrough exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=1' "$LOG"; }; }; then
                     echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
                     exit 1
                 fi
@@ -992,7 +1005,9 @@ if [ "$RC" -eq 0 ] &&
                             echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
                             exit 1
                         fi
-                        if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+                        if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+                            echo "RESULT: POST_SHOWWINDOW_SELECTWINDOW_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+                        elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
                             echo "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
                         elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
                             echo "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
