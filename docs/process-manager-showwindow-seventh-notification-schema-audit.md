@@ -186,6 +186,14 @@ probe_exit_status=0
 RESULT: PASS
 ```
 
+## Runner syntax correction
+
+A runner-generation defect in runtime commit `f8583686c3e2d9b20ffaf08690903140654aa3b1` duplicated part of the integration runner and truncated the single-quoted request-6 regular expression. On Lion this presents at the Phase D syntax gate as an unexpected EOF while looking for a matching single quote.
+
+Runtime commit `3c1bdfcaefef4a83a4a6b7f5a9bb9f19ca056a95` repairs the runner by removing the duplicated tail and restoring the complete seventh-audit result block. The repaired runner blob is `ad74ae6a1639d291056f1f9038373b1326e87a01`. Repository-side lexical validation confirms balanced shell quoting, one terminal runner block, one seventh-audit result block, and no truncated request-6 expression.
+
+If Phase D stopped at `/bin/bash -n` with the quoted EOF error, no PPC subject run occurred. Pull current `main`, confirm the repaired runtime head is present, and resume Phase D at the syntax-check command. Do not repeat the Phase B broker build or Phase C syscall-295 preflight solely because of this parser failure if those phases already passed and their artifacts remain unchanged.
+
 ## Phase D — exactly one Lion seventh-request audit
 
 On Lion:
