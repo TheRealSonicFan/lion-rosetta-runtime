@@ -81,13 +81,6 @@ POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_SH
 POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT:-}"
 REAL_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE:-}"
 EXPECTED_REAL_REGISTRATION_COUNT=3
-if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
-    log "coreui_titlebar_bsearch_compat_absolute_path=$TITLEBAR_BSEARCH_ABS"
-    log "coreui_titlebar_bsearch_compat_sha256=$TITLEBAR_BSEARCH_BEFORE"
-    log "coreui_titlebar_bsearch_mode=$TITLEBAR_BSEARCH_MODE"
-    log "coreui_titlebar_artfile_sha256=$TITLEBAR_ARTFILE_BEFORE"
-    export ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_MODE="$TITLEBAR_BSEARCH_MODE"
-fi
 if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-createwindow-schema-audit-broker-v1"
 elif [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ]; then
@@ -908,6 +901,13 @@ if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
     log "hitoolbox_extras_resource_absolute_path=$HITOOLBOX_EXTRAS_RESOURCE_ABS"
     export ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE="$HITOOLBOX_EXTRAS_MODE"
     export ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH="$HITOOLBOX_EXTRAS_RESOURCE_ABS"
+fi
+if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
+    log "coreui_titlebar_bsearch_compat_absolute_path=$TITLEBAR_BSEARCH_ABS"
+    log "coreui_titlebar_bsearch_compat_sha256=$TITLEBAR_BSEARCH_BEFORE"
+    log "coreui_titlebar_bsearch_mode=$TITLEBAR_BSEARCH_MODE"
+    log "coreui_titlebar_artfile_sha256=$TITLEBAR_ARTFILE_BEFORE"
+    export ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_MODE="$TITLEBAR_BSEARCH_MODE"
 fi
 if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
     : > "$SCHEMA_AUDIT_REPORT" || die 73 "could not initialize schema audit report: $SCHEMA_AUDIT_REPORT"
