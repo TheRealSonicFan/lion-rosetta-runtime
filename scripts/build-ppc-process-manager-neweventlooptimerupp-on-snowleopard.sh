@@ -84,98 +84,7 @@ for sym in _GetProcessForPID _GetProcessPID _TransformProcessType _SetFrontProce
     }
 done
 
-if /usr/bin/nm -u "$OUT" | /usr/bin/grep -Eq '(^|[[:space:]])_NewEventLoopTimerUPP
-for marker in \
-    "PM_CPS_CREATEWINDOW_BUILD_ID:$EXPECTED_BUILD_ID" \
-    'PM_POSTIDENTITY_RESULT:GETPROCESSFORPID_PASS' \
-    'PM_POSTIDENTITY_RESULT:GETPROCESSPID_ROUNDTRIP_PASS' \
-    'PM_POSTIDENTITY_RESULT:TRANSFORMPROCESSTYPE_PASS' \
-    'PM_POSTIDENTITY_RESULT:SETFRONTPROCESS_PASS' \
-    'PM_POSTIDENTITY_MILESTONE:M14_BEFORE_GetFrontProcess' \
-    'PM_POSTIDENTITY_MILESTONE:M15_AFTER_GetFrontProcess' \
-    'PM_POSTIDENTITY_STATUS:GetFrontProcess=' \
-    'PM_POSTIDENTITY_FRONT_PSN:' \
-    'PM_POSTIDENTITY_RESULT:GETFRONTPROCESS_MATCH_PASS' \
-    'PM_POSTIDENTITY_MILESTONE:M16_GETFRONTPROCESS_SUCCESS' \
-    'PM_POSTIDENTITY_MILESTONE:M17_BEFORE_GetCurrentProcess' \
-    'PM_POSTIDENTITY_MILESTONE:M18_AFTER_GetCurrentProcess' \
-    'PM_POSTIDENTITY_STATUS:GetCurrentProcess=' \
-    'PM_POSTIDENTITY_CURRENT_PSN:' \
-    'PM_POSTIDENTITY_RESULT:GETCURRENTPROCESS_MATCH_PASS' \
-    'PM_POSTIDENTITY_MILESTONE:M19_GETCURRENTPROCESS_SUCCESS' \
-    'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' \
-    'PM_POSTIDENTITY_MILESTONE:M21_AFTER_CreateNewWindow' \
-    'PM_POSTIDENTITY_STATUS:CreateNewWindow=' \
-    'PM_POSTIDENTITY_WINDOW:' \
-    'PM_POSTIDENTITY_RESULT:CREATENEWWINDOW_PASS' \
-    'PM_POSTWINDOWTITLE_MILESTONE:T00_BEFORE_CFStringCreateWithCString' \
-    'PM_POSTWINDOWTITLE_MILESTONE:T01_AFTER_CFStringCreateWithCString' \
-    'PM_POSTWINDOWTITLE_CFSTRING:' \
-    'PM_POSTWINDOWTITLE_RESULT:CFSTRING_PASS' \
-    'PM_POSTWINDOWTITLE_MILESTONE:T02_BEFORE_SetWindowTitleWithCFString' \
-    'PM_POSTWINDOWTITLE_MILESTONE:T03_AFTER_SetWindowTitleWithCFString' \
-    'PM_POSTWINDOWTITLE_STATUS:SetWindowTitleWithCFString=' \
-    'PM_POSTWINDOWTITLE_RESULT:SETWINDOWTITLE_PASS' \
-    'PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow' \
-    'PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow' \
-    'PM_POSTWINDOWSHOW_RESULT:SHOWWINDOW_PASS' \
-    'PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow' \
-    'PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow' \
-    'PM_POSTWINDOWSELECT_RESULT:SELECTWINDOW_PASS' \
-    'PM_POSTWINDOWVISIBLE_MILESTONE:S04_BEFORE_IsWindowVisible' \
-    'PM_POSTWINDOWVISIBLE_MILESTONE:S05_AFTER_IsWindowVisible' \
-    'PM_POSTWINDOWVISIBLE_VALUE:visible=' \
-    'PM_POSTWINDOWVISIBLE_RESULT:ISWINDOWVISIBLE_PASS' \
-    'PM_POSTWINDOWTIMERUPP_MILESTONE:S06_BEFORE_NewEventLoopTimerUPP' \
-    'PM_POSTWINDOWTIMERUPP_MILESTONE:S07_AFTER_NewEventLoopTimerUPP' \
-    'PM_POSTWINDOWTIMERUPP_POINTER:pointer=' \
-    'PM_POSTWINDOWTIMERUPP_RESULT:NEWEVENTLOOPTIMERUPP_PASS' \
-    'PM_POSTWINDOWTITLE_MILESTONE:T04_BEFORE_CFRelease' \
-    'PM_POSTWINDOWTITLE_MILESTONE:T05_AFTER_CFRelease' \
-    'PM_POSTIDENTITY_MILESTONE:M22_BEFORE_DisposeWindow' \
-    'PM_POSTIDENTITY_MILESTONE:M23_AFTER_DisposeWindow' \
-    'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS'; do
-    /usr/bin/strings "$OUT" | /usr/bin/grep -Fq "$marker" || {
-        echo "error: required subject marker missing: $marker" >&2
-        exit 72
-    }
-done
-
-RUNTIME_GIT_HEAD="$(cd "$ROOT" 2>/dev/null && /usr/bin/git rev-parse HEAD 2>/dev/null || true)"
-[ -n "$RUNTIME_GIT_HEAD" ] || RUNTIME_GIT_HEAD="UNAVAILABLE_NON_GIT_CHECKOUT"
-SOURCE_SHA="$(/usr/bin/shasum -a 256 "$SRC" | /usr/bin/awk '{print $1}')"
-
-{
-    echo "== PPC restored-stack post-IsWindowVisible NewEventLoopTimerUPP validation subject =="
-    echo "compiler=$CC_SELECTED"
-    echo "source=$SRC"
-    echo "runtime_git_head=$RUNTIME_GIT_HEAD"
-    echo "source_sha256=$SOURCE_SHA"
-    echo "build_id=$EXPECTED_BUILD_ID"
-    echo "required_basename=$EXPECTED_BASENAME"
-    echo "neweventlooptimerupp_source_expression=NewEventLoopTimerUPP(ProbeTimer)"
-    echo "neweventlooptimerupp_linkage=$NEWEVENTLOOPTIMERUPP_LINKAGE"
-    /usr/bin/file "$OUT"
-    /usr/bin/lipo -info "$OUT" 2>/dev/null || true
-    echo
-    echo "== LC_LOAD_DYLINKER =="
-    echo "$OT"
-    echo
-    echo "== Process Manager imports =="
-    /usr/bin/nm -u "$OUT" | /usr/bin/grep -E '(_GetProcessForPID|_GetProcessPID|_TransformProcessType|_SetFrontProcess|_GetFrontProcess|_GetCurrentProcess|_CreateNewWindow|_CFStringCreateWithCString|_SetWindowTitleWithCFString|_ShowWindow|_SelectWindow|_IsWindowVisible|_NewEventLoopTimerUPP|_CFRelease|_DisposeWindow)' || true
-    echo
-    echo "== SHA-256 =="
-    /usr/bin/shasum -a 256 "$OUT"
-} > "$INFO"
-
-/usr/bin/shasum -a 256 "$OUT" > "$SHA"
-BUILD_COMPLETE=1
-
-echo "Created:"
-echo "  $OUT"
-echo "  $INFO"
-echo "  $SHA"
-; then
+if /usr/bin/nm -u "$OUT" | /usr/bin/grep -Eq '(^|[[:space:]])_NewEventLoopTimerUPP$'; then
     NEWEVENTLOOPTIMERUPP_LINKAGE="undefined-import"
 else
     NEWEVENTLOOPTIMERUPP_LINKAGE="sdk-lowered-no-undefined-import"
@@ -249,6 +158,8 @@ SOURCE_SHA="$(/usr/bin/shasum -a 256 "$SRC" | /usr/bin/awk '{print $1}')"
     echo "source_sha256=$SOURCE_SHA"
     echo "build_id=$EXPECTED_BUILD_ID"
     echo "required_basename=$EXPECTED_BASENAME"
+    echo "neweventlooptimerupp_source_expression=NewEventLoopTimerUPP(ProbeTimer)"
+    echo "neweventlooptimerupp_linkage=$NEWEVENTLOOPTIMERUPP_LINKAGE"
     /usr/bin/file "$OUT"
     /usr/bin/lipo -info "$OUT" 2>/dev/null || true
     echo
