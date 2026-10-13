@@ -10,12 +10,13 @@ import subprocess
 import sys
 import tempfile
 
-ANALYZER_VERSION = "1"
+ANALYZER_VERSION = "2"
 COREUI = "/System/Library/PrivateFrameworks/CoreUI.framework/Versions/A/CoreUI"
 ARTFILE = "/System/Library/PrivateFrameworks/CoreUI.framework/Versions/A/Resources/ArtFile.bin"
 
 CREATE_PATH = "__ZN10CUIElement18CreateQSIImagePathElPK13CUIDescriptorPPK10__CFStringPhll"
 APPEND_VARIANT = "__ZN7CUIPath19AppendWindowVariantEl"
+APPEND_STATE = "__ZN7CUIPath11AppendStateElhi"
 APPEND_TITLEBAR_STATE = "__ZN7CUIPath31AppendWindowTitlebarButtonStateElll"
 
 EXPECTED = {
@@ -27,6 +28,13 @@ EXPECTED = {
         "artfile_sha256": "1ca5d946725e5815cb4fc34ef45006aab7220ef1f8e89128e65a5754359b4ec5",
         "branch_start": 0x28b00,
         "branch_end": 0x28d84,
+        "state_strategy": "INLINE_APPEND_STATE",
+        "state_helper_expected": False,
+        "state_continuation_ranges": [(0x28e78, 0x28ec0)],
+        "minimum_branch_calls": {
+            APPEND_VARIANT: 3,
+            APPEND_STATE: 3,
+        },
         "semantic_ids": {
             "titlebarcontrols": 0xa6,
             "close": 0x13,
@@ -43,7 +51,7 @@ EXPECTED = {
             "li\tr5,0xb6",
             "li\tr4,0x16",
             "bl\t" + APPEND_VARIANT,
-            "bl\t" + APPEND_TITLEBAR_STATE,
+            "bl\t" + APPEND_STATE,
         ],
     },
     "10.7.5": {
@@ -54,6 +62,13 @@ EXPECTED = {
         "artfile_sha256": "0cc8e1491be49fb015cb8b290fe9c289e4587bde570804a44a43e2b35e4b19f4",
         "branch_start": 0x40bf8,
         "branch_end": 0x40dd4,
+        "state_strategy": "HELPER",
+        "state_helper_expected": True,
+        "state_continuation_ranges": [],
+        "minimum_branch_calls": {
+            APPEND_VARIANT: 3,
+            APPEND_TITLEBAR_STATE: 3,
+        },
         "semantic_ids": {
             "titlebarcontrols": 0x99,
             "close": 0x14,
@@ -301,7 +316,10 @@ def main():
         by_name = {}
         rows = []
         branch_rows = []
+        state_continuation_rows = []
         helper_rows = {}
+        branch_call_counts = {}
+        titlebar_state_helper_present = False
 
         if arch and os.path.isfile(COREUI):
             thin = os.path.join(tempdir, "CoreUI.%s" % arch)
@@ -325,19 +343,51 @@ def main():
                 else:
                     rows = parse_instructions(dis_out)
 
-                for name in [CREATE_PATH, APPEND_VARIANT, APPEND_TITLEBAR_STATE]:
+                for name in [CREATE_PATH, APPEND_VARIANT]:
                     if name not in by_name:
                         issues.append("missing CoreUI symbol: %s" % name)
                     else:
                         helper_rows[name] = symbol_rows(rows, symbols, name)
 
+                titlebar_state_helper_present = APPEND_TITLEBAR_STATE in by_name
+                if expected["state_helper_expected"]:
+                    if not titlebar_state_helper_present:
+                        issues.append("missing CoreUI symbol: %s" % APPEND_TITLEBAR_STATE)
+                    else:
+                        helper_rows[APPEND_TITLEBAR_STATE] = symbol_rows(
+                            rows, symbols, APPEND_TITLEBAR_STATE
+                        )
+                elif titlebar_state_helper_present:
+                    issues.append(
+                        "unexpected CoreUI titlebar-state helper present for inline-state release"
+                    )
+
                 branch_rows = rows_in_range(
                     rows, expected["branch_start"], expected["branch_end"]
                 )
+                for start, end in expected["state_continuation_ranges"]:
+                    state_continuation_rows.extend(rows_in_range(rows, start, end))
+
                 branch_text = "\n".join(line for _, line in branch_rows)
+                continuation_text = "\n".join(
+                    line for _, line in state_continuation_rows
+                )
+                validation_text = branch_text
+                if continuation_text:
+                    validation_text += "\n" + continuation_text
+
                 for marker in expected["branch_markers"]:
-                    if not marker_present(branch_text, marker):
+                    if not marker_present(validation_text, marker):
                         issues.append("titlebar branch marker missing: %s" % marker)
+
+                for call_name, minimum in expected["minimum_branch_calls"].items():
+                    count = validation_text.count(call_name)
+                    branch_call_counts[call_name] = count
+                    if count < minimum:
+                        issues.append(
+                            "titlebar call count too small for %s: got %d expected >= %d" %
+                            (call_name, count, minimum)
+                        )
         else:
             if not os.path.isfile(COREUI):
                 issues.append("CoreUI missing")
@@ -372,6 +422,22 @@ def main():
                     )
 
             write_line(fp)
+            write_line(fp, "== CreateQSIImagePath titlebar state strategy ==")
+            if expected is not None:
+                write_line(fp, "titlebar_state_strategy=%s" %
+                           expected["state_strategy"])
+                write_line(fp, "titlebar_state_helper_expected=%s" %
+                           ("YES" if expected["state_helper_expected"] else "NO"))
+            write_line(fp, "titlebar_state_helper_present=%s" %
+                       ("YES" if titlebar_state_helper_present else "NO"))
+            for call_name in [APPEND_VARIANT, APPEND_STATE, APPEND_TITLEBAR_STATE]:
+                write_line(
+                    fp,
+                    "titlebar_branch_call_count_%s=%d" %
+                    (call_name, branch_call_counts.get(call_name, 0))
+                )
+
+            write_line(fp)
             write_line(fp, "== CreateQSIImagePath titlebar branch ==")
             if expected is not None:
                 write_line(fp, "range=0x%x..0x%x" %
@@ -379,11 +445,23 @@ def main():
             for _, line in branch_rows:
                 write_line(fp, line)
 
+            if expected is not None and expected["state_continuation_ranges"]:
+                write_line(fp)
+                write_line(fp, "== Inline titlebar-state continuations ==")
+                for start, end in expected["state_continuation_ranges"]:
+                    write_line(fp, "range=0x%x..0x%x" % (start, end))
+                for _, line in state_continuation_rows:
+                    write_line(fp, line)
+
             for name in [APPEND_VARIANT, APPEND_TITLEBAR_STATE]:
                 write_line(fp)
                 write_line(fp, "== helper symbol: %s ==" % name)
                 body = helper_rows.get(name, [])
-                write_line(fp, "present=%s" % ("YES" if body else "NO"))
+                if expected is not None and name == APPEND_TITLEBAR_STATE:
+                    write_line(fp, "expected_present=%s" %
+                               ("YES" if expected["state_helper_expected"] else "NO"))
+                write_line(fp, "present=%s" %
+                           ("YES" if name in by_name else "NO"))
                 if body:
                     write_line(fp, "symbol_address=0x%x" % by_name[name])
                     write_line(fp, "instruction_lines=%d" % len(body))
