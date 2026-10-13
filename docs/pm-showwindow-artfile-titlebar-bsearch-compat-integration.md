@@ -1,5 +1,7 @@
 # ShowWindow titlebar exact-three-key bsearch compatibility integration
 
+> **Historical procedure note:** Phases A-G above describe the completed exact-three integration and pin its historical source/builder/runner blobs. Current `main` has advanced the titlebar source and Snow builder/runner to the exact-six Snow-control stage. Do not rerun this exact-three procedure from current `main`; use `docs/pm-showwindow-artfile-titlebar-six-key-snow-control.md` instead.
+
 ## Objective
 
 Run the first controlled live compatibility proof for the CoreUI titlebar ArtFile namespace mismatch using the exact boundary and exact byte policy already proven statically.
@@ -452,7 +454,7 @@ The returned evidence closes the prepared exact-three integration gate positivel
   - `a601167ab6000000`
 - the runner named a new crash report, crash plist, and `/cores/core.9821`.
 
-This proves the original exact-three bsearch compatibility policy is live and correctly reached; it also proves that the original three keys were not the complete titlebar ArtFile lookup surface exercised by this ShowWindow path. The returned crash report classified the termination as the same CoreUI diagnostic-helper fault class, with the same `ShowArtFilePathToStdErr +220 -> LoadFromArtFile +1840 -> Load +132` chain and the same Rosetta host `EIP=0x8bea0843`, now faulting at `0x7872a1c4`. The residual exact-three static proof has since passed on both Snow and Lion, including unique valid Lion targets, zero overlap with the original policy, 6,120/0 near-miss failures, and zero local-record changes. The 500+ MB core remains preserved but is not required. Do **not** add the residual three keys to the live policy yet. The next authoritative stage is the read-only combined six-key proof in `docs/pm-showwindow-artfile-titlebar-combined-six-key-policy-proof.md`. No further Lion PPC run is authorized until that combined proof is reviewed.
+This proves the original exact-three bsearch compatibility policy is live and correctly reached; it also proves that the original three keys were not the complete titlebar ArtFile lookup surface exercised by this ShowWindow path. The returned crash report classified the termination as the same CoreUI diagnostic-helper fault class, with the same `ShowArtFilePathToStdErr +220 -> LoadFromArtFile +1840 -> Load +132` chain and the same Rosetta host `EIP=0x8bea0843`, now faulting at `0x7872a1c4`. The residual exact-three static proof and the combined exact-six static proof have since both passed. The combined proof establishes six unique exact source/target pairs, one valid Lion direct target for every mapping, 12,240/0 single-byte near-miss failures, zero original/residual overlap, idempotence, and zero local-record changes. The 500+ MB core remains preserved but is not required. Current `main` now prepares build ID `coreui-titlebar-bsearch-exact-six-v2`; however, Lion execution remains blocked. The next authoritative stage is the Snow-only build/passthrough control in `docs/pm-showwindow-artfile-titlebar-six-key-snow-control.md`. No further Lion PPC run is authorized until that Snow evidence is reviewed.
 
 ## Current boundary
 
@@ -468,9 +470,9 @@ Snow passthrough control                          PASS
 Lion exact-three live proof                       PASS: all three translated, zero guard rejects
 ShowWindow return                                 NO: exit 139
 residual invalid ArtFile keys                      a60113167a / a60116567a / a601167ab6
-next evidence gate                                combined exact-six static policy proof
+next evidence gate                                exact-six Snow passthrough control
 core.9821                                         preserve; not required now
-PPC Lion rerun                                    NOT AUTHORIZED BEFORE STATIC PROOF REVIEW
+PPC Lion rerun                                    NOT AUTHORIZED BEFORE SNOW CONTROL REVIEW
 CoreUI/ArtFile patch                              NO
 XNU                                               no change indicated
 ```
