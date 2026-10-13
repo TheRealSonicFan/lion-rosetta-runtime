@@ -322,3 +322,41 @@ CGSShapeWindow                                 held
 RawCamera / CoreUI                             held
 XNU                                            no change indicated
 ```
+
+
+## Observed result — exact-seven broker passes; post-seventh crash is next
+
+The exact-seven integration completed its intended notification proof. The new broker was i386 with build ID `distributed-notifications-showwindow-seventh-registration-broker-v1`; its SHA-256 `7360bcd68e0b5bc473540143e1bd7fb1cb1544a60f530d1c2f6df57469db46a9` matched the sidecar and the runner's expected/actual broker hashes. Syscall 295 remained healthy on the accepted kernel.
+
+The seventh reviewed registration was accepted exactly once:
+
+```text
+index=7
+allowed=5
+behavior=4
+publicBehavior=2
+anyObject=YES
+entry=0x3797d0
+counter=0x1
+```
+
+The broker then completed:
+
+```text
+register=7 callback=0 rejects=0 exact=YES
+PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS
+```
+
+No eighth legacy notification request was observed. `S01_AFTER_ShowWindow` and `SHOWWINDOW_PASS` were not reached.
+
+The accepted WindowBackingInfo, ColorProfileClient, and ResolveColorProfile adapters each passed exactly once; the prior backing-data shmem mapping and `_CGSLockWindow` failures remained absent. The subject terminated with exit status 139. Immediately after the seventh registration, the only visible diagnostics were three CoreUI `Invalid ArtFile Path!` messages. The runner preserved the matching crash report and `/cores/core.89664`.
+
+The returned final result label, `POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_PREDICATE_NOT_REACHED`, is not the new causal boundary. AddTrackingArea, OrderFrontConditionally, and SetFrontWindow simply were not reached before this post-seventh termination. Runtime `main` now classifies this exact state before those later adapter gates.
+
+The authoritative next procedure is:
+
+```text
+docs/process-manager-showwindow-post-dn7-postmortem.md
+```
+
+Do not rerun the PPC subject. Run the read-only collector against the preserved exact-seven crash/core and return the three short postmortem artifacts. No XNU change is indicated.
