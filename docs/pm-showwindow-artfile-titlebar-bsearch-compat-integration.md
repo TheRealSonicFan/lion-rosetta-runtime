@@ -44,8 +44,10 @@ Source identities:
 compat build ID   coreui-titlebar-bsearch-exact-three-v1
 source git blob   ced22138eb0b02a0e0474f933bebe4abce0b286f
 builder git blob  91dcca963ddcd8517ba518726657545fe974fe3c
-Lion runner blob  d689159a2c0e1ece527b9c9552dca166e4a00be4
+Lion runner blob  bd0d65f52324f9126d5dcb966d10ea5debe08282
 Snow runner blob  bb0cc234b4243eda5d0b9086353c83cdddac6c3e
+exact-seven broker source blob   9d137becc45bac476fa70218db4839b28be0e219
+exact-seven broker builder blob  d909dd6a3eba657854feb8d09bf2793c33a2bea9
 ```
 
 Default artifact name:
@@ -129,6 +131,8 @@ test "$LOCAL_HEAD" = "$REMOTE_HEAD" || exit 1
 test "$(git hash-object ./tests/ppc-coreui-titlebar-bsearch-compat-interposer.c)" =   "ced22138eb0b02a0e0474f933bebe4abce0b286f" || exit 1
 
 test "$(git hash-object ./scripts/build-ppc-coreui-titlebar-bsearch-compat-on-snowleopard.sh)" =   "91dcca963ddcd8517ba518726657545fe974fe3c" || exit 1
+
+test "$(git hash-object ./scripts/run-lion-ppc-process-manager-createwindow-distnotify-integration.sh)" =   "bd0d65f52324f9126d5dcb966d10ea5debe08282" || exit 1
 
 /bin/bash -n ./scripts/build-ppc-coreui-titlebar-bsearch-compat-on-snowleopard.sh || exit 1
 /bin/bash -n ./scripts/run-snowleopard-ppc-process-manager-createwindow-distnotify-integration-control.sh || exit 1
@@ -256,7 +260,40 @@ pm-titlebar-bsearch-compat.dylib.sha256
 
 Retain `pm-titlebar-bsearch-snow.log` as returned evidence.
 
-## Phase E — syscall-295 preflight on Lion
+## Recovery note for the pre-launch Phase F failure
+
+The earlier Lion attempt that stopped on `TITLEBAR_BSEARCH_ABS: unbound variable` terminated inside runner initialization, before artifact-path validation and before the PPC subject launch. It therefore does **not** consume the single authorized Lion ShowWindow run. If the Snow Phase C passthrough control already passed, retain that log and do not repeat Snow solely because of this harness failure.
+
+The runner initialization order is corrected on current `main`; require Lion runner blob `bd0d65f52324f9126d5dcb966d10ea5debe08282`.
+
+## Phase E — build the exact-seven broker on Lion
+
+The titlebar experiment reuses the previously reviewed exact-seven broker policy, but the executable is a generated Lion-native artifact and is not stored in Git. Build it before the syscall probe / ShowWindow run:
+
+```sh
+cd "$RUNTIME" || exit 1
+
+test "$(git hash-object ./tests/native-dn-showwindow-7-registration-broker.c)" =   "9d137becc45bac476fa70218db4839b28be0e219" || exit 1
+
+test "$(git hash-object ./scripts/build-lion-dn-showwindow-7-registration-broker.sh)" =   "d909dd6a3eba657854feb8d09bf2793c33a2bea9" || exit 1
+
+/bin/bash -n ./scripts/build-lion-dn-showwindow-7-registration-broker.sh || exit 1
+/bin/bash ./scripts/build-lion-dn-showwindow-7-registration-broker.sh   ./dn-showwindow-7-registration-broker || exit 1
+```
+
+Require:
+
+```text
+dn-showwindow-7-registration-broker
+dn-showwindow-7-registration-broker.info.txt
+dn-showwindow-7-registration-broker.sha256
+architecture i386
+build ID distributed-notifications-showwindow-seventh-registration-broker-v1
+```
+
+Do not substitute an older sixth-request broker or a generic ingress broker.
+
+## Phase F — syscall-295 preflight on Lion
 
 On Lion:
 
@@ -277,7 +314,7 @@ probe_exit_status=0
 RESULT: PASS
 ```
 
-## Phase F — exactly one Lion exact-seven ShowWindow run
+## Phase G — exactly one Lion exact-seven ShowWindow run
 
 On Lion:
 
@@ -391,6 +428,8 @@ Return:
 pm-titlebar-bsearch-compat.dylib.info.txt
 pm-titlebar-bsearch-compat.dylib.sha256
 pm-titlebar-bsearch-snow.log
+dn-showwindow-7-registration-broker.info.txt
+dn-showwindow-7-registration-broker.sha256
 sys295-titlebar-bsearch.log
 lion-titlebar-bsearch.log
 lion-titlebar-bsearch.raw.log
