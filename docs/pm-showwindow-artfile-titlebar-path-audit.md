@@ -84,6 +84,16 @@ Analyzer v2 therefore:
 
 Use the same static inputs. No PPC application rerun is needed.
 
+
+
+## Second Phase C failure — stale analyzer evidence
+
+A later returned Snow report begins with `analyzer_version=1` and repeats the original v1 failure verbatim, including the obsolete requirement that Snow export `AppendWindowTitlebarButtonState`. That report did **not** come from the corrected analyzer already present on runtime `main`; it therefore does not identify a new CoreUI problem.
+
+The required correction is procedural as well as diagnostic: Phase A now hard-gates the checkout against `origin/main`, verifies the exact Git blob of the analyzer, requires analyzer version 3 plus the current audit-contract identifier, and forbids proceeding on stale evidence. Analyzer v3 also records its resolved script path in the report.
+
+Do not reinterpret the repeated v1 helper-missing message. Once Phase A passes, rerun Phase C and require `analyzer_version=3`, `audit_contract=release-specific-titlebar-state-v3`, `titlebar_state_strategy=INLINE_APPEND_STATE`, `titlebar_state_helper_expected=NO`, and `titlebar_state_helper_present=NO`.
+
 ## Prepared analyzer
 
 Current runtime `main` provides:
@@ -95,8 +105,16 @@ scripts/audit-pm-artfile-titlebar-path-builder.py
 Analyzer version:
 
 ```text
-2
+3
 ```
+
+Audit contract:
+
+```text
+release-specific-titlebar-state-v3
+```
+
+The analyzer now also prints its resolved script path so a stale checkout or wrong runtime tree is visible in the report.
 
 It is Python-2-compatible and read-only. On each release it:
 
@@ -126,18 +144,322 @@ It is Python-2-compatible and read-only. On each release it:
 
 ## Phase A — update runtime on both systems
 
-On Snow Leopard and Lion:
+On Snow Leopard and Lion, first prove that the checkout and analyzer are current before running any audit:
 
 ```sh
 export RUNTIME=/path/to/lion-rosetta-runtime
 
 cd "$RUNTIME" || exit 1
-git pull --ff-only
-git rev-parse HEAD
 
-ls -l ./scripts/audit-pm-artfile-titlebar-path-builder.py
+test "$(git symbolic-ref -q HEAD)" = "refs/heads/main" || {
+  echo "ERROR: runtime checkout is not on main"
+  exit 1
+}
+
+git fetch origin main || exit 1
+git pull --ff-only origin main || exit 1
+
+LOCAL_HEAD="$(git rev-parse HEAD)" || exit 1
+REMOTE_HEAD="$(git rev-parse origin/main)" || exit 1
+
+echo "local_head=$LOCAL_HEAD"
+echo "origin_main=$REMOTE_HEAD"
+
+test "$LOCAL_HEAD" = "$REMOTE_HEAD" || {
+  echo "ERROR: local runtime main is not current origin/main"
+  exit 1
+}
+
+SCRIPT=./scripts/audit-pm-artfile-titlebar-path-builder.py
+
+test "$(git hash-object "$SCRIPT")" = "a21d172a9ec76d12e4fda4b37e196ef3576c0654" || {
+  echo "ERROR: titlebar analyzer file is stale or locally modified"
+  exit 1
+}
+
+/usr/bin/grep -q '^ANALYZER_VERSION = "3"
+## Phase B — syntax-check
+
+On both systems:
+
+```sh
+cd "$RUNTIME" || exit 1
+
+/usr/bin/python -c 'compile(open("./scripts/audit-pm-artfile-titlebar-path-builder.py","rb").read(),"audit-pm-artfile-titlebar-path-builder.py","exec")' || exit 1
+```
+
+## Phase C — Snow Leopard path-builder audit
+
+On Snow Leopard 10.6.8:
+
+```sh
+cd "$RUNTIME" || exit 1
+
+/usr/bin/python ./scripts/audit-pm-artfile-titlebar-path-builder.py \
+  ./pm-art-titlebar-path-snow.txt
+```
+
+Require:
+
+```text
+analyzer_version=3
+audit_contract=release-specific-titlebar-state-v3
+product_version=10.6.8
+required_arch=ppc7400
+semantic=titlebarcontrols id=0xa6
+semantic=close id=0x13
+semantic=colorsryg id=0x16
+semantic=disabled id=0x1f
+semantic=minimize id=0x56
+semantic=regularwin id=0x7a
+semantic=zoom id=0xb6
+titlebar_state_strategy=INLINE_APPEND_STATE
+titlebar_state_helper_expected=NO
+titlebar_state_helper_present=NO
+RESULT: PASS
+```
+
+Also require nonzero direct `AppendState` calls in the titlebar extraction and the emitted inline continuation range `0x28e78..0x28ec0`.
+
+## Phase D — Lion path-builder audit
+
+On Lion 10.7.5:
+
+```sh
+cd "$RUNTIME" || exit 1
+
+/usr/bin/python ./scripts/audit-pm-artfile-titlebar-path-builder.py \
+  ./pm-art-titlebar-path-lion.txt
+```
+
+Require:
+
+```text
+analyzer_version=3
+audit_contract=release-specific-titlebar-state-v3
+product_version=10.7.5
+required_arch=i386
+semantic=titlebarcontrols id=0x99
+semantic=close id=0x14
+semantic=colorsryg id=0x17
+semantic=disabled id=0x22
+semantic=minimize id=0x55
+semantic=regularwin id=0x72
+semantic=zoom id=0xa9
+titlebar_state_strategy=HELPER
+titlebar_state_helper_expected=YES
+titlebar_state_helper_present=YES
+RESULT: PASS
+```
+
+The Lion titlebar branch must call `AppendWindowTitlebarButtonState`; unlike Snow, this helper is a required Lion structure.
+
+## Phase E — return evidence
+
+Return exactly:
+
+```text
+pm-art-titlebar-path-snow.txt
+pm-art-titlebar-path-lion.txt
+```
+
+Do not return CoreUI or ArtFile binaries.
+
+## Review gates
+
+### Native Lion builder uses the semantic-equivalent Lion IDs
+
+If the Lion close/minimize/zoom branches and the two helper routines resolve to the semantic-equivalent IDs listed above while Snow resolves to its own IDs, the namespace mismatch is proven at the path-construction boundary. The next experiment may then be a process-local path translation limited to the titlebar paths actually produced by Snow-PPC CoreUI and only when Lion's ArtFile dictionary is the proven mapped archive.
+
+Do not globally translate arbitrary CoreUI IDs.
+
+### Titlebar state implementation differs structurally
+
+This difference is now already established: Snow inlines the titlebar button-state logic through `AppendState`, while Lion factors it into `AppendWindowTitlebarButtonState`. That difference alone is not an analyzer failure. The v2 reports must be compared semantically: if the Lion helper implements the same state choices under Lion's reindexed component namespace, a narrowly scoped semantic translator may still be justified; if the state choices differ, stop before a live shim and model the state transformation explicitly.
+
+### Variant helper differs semantically
+
+If `AppendWindowVariant` changes its state/variant meaning rather than merely its component constants, stop before a live shim. Do not apply a flat byte map.
+
+### Lion no longer constructs one of the Snow semantics
+
+If native Lion omits `disabled`, `regularwin`, or another captured semantic from the corresponding titlebar path, do not manufacture that component. The next discriminator must identify Lion's native replacement path shape.
+
+### Static provenance fails
+
+If either report returns `RESULT: FAIL`, return both reports unchanged and stop. Do not rerun the PPC subject.
+
+## Current boundary
+
+```text
+Snow captured titlebar paths                       semantically decoded
+Snow/Lion active component IDs                     all seven differ numerically
+Snow 0xb6 semantic                                 zoom
+Lion zoom semantic                                 0xa9
+Snow a6 semantic                                   titlebarcontrols
+Lion titlebarcontrols semantic                     0x99
+Snow colorsryg / disabled / regularwin             0x16 / 0x1f / 0x7a
+Lion colorsryg / disabled / regularwin             0x17 / 0x22 / 0x72
+numeric-only Lion diagnostic names                 misleading by dictionary reindexing
+
+Snow titlebar-state implementation                 inline AppendState; dedicated helper absent
+Lion titlebar-state implementation                 dedicated helper expected
+analyzer-v1 Phase C failure                        analyzer modeling error, not Snow binary failure
+exact crash pointer                                already proven
+next step                                          pass strict Phase A preflight, rerun analyzer v3 on Snow, then run Lion static path-builder/helper audit
+PPC subject rerun                                  NO
+resource substitution                              NO
+component remap                                    NOT YET
+XNU                                                no change indicated
+```
+ "$SCRIPT" || {
+  echo "ERROR: expected analyzer version 3"
+  exit 1
+}
+
+/usr/bin/grep -q '^AUDIT_CONTRACT = "release-specific-titlebar-state-v3"
+## Phase B — syntax-check
+
+On both systems:
+
+```sh
+cd "$RUNTIME" || exit 1
+
+/usr/bin/python -c 'compile(open("./scripts/audit-pm-artfile-titlebar-path-builder.py","rb").read(),"audit-pm-artfile-titlebar-path-builder.py","exec")' || exit 1
+```
+
+## Phase C — Snow Leopard path-builder audit
+
+On Snow Leopard 10.6.8:
+
+```sh
+cd "$RUNTIME" || exit 1
+
+/usr/bin/python ./scripts/audit-pm-artfile-titlebar-path-builder.py \
+  ./pm-art-titlebar-path-snow.txt
+```
+
+Require:
+
+```text
+analyzer_version=2
+product_version=10.6.8
+required_arch=ppc7400
+semantic=titlebarcontrols id=0xa6
+semantic=close id=0x13
+semantic=colorsryg id=0x16
+semantic=disabled id=0x1f
+semantic=minimize id=0x56
+semantic=regularwin id=0x7a
+semantic=zoom id=0xb6
+titlebar_state_strategy=INLINE_APPEND_STATE
+titlebar_state_helper_expected=NO
+titlebar_state_helper_present=NO
+RESULT: PASS
+```
+
+Also require nonzero direct `AppendState` calls in the titlebar extraction and the emitted inline continuation range `0x28e78..0x28ec0`.
+
+## Phase D — Lion path-builder audit
+
+On Lion 10.7.5:
+
+```sh
+cd "$RUNTIME" || exit 1
+
+/usr/bin/python ./scripts/audit-pm-artfile-titlebar-path-builder.py \
+  ./pm-art-titlebar-path-lion.txt
+```
+
+Require:
+
+```text
+analyzer_version=2
+product_version=10.7.5
+required_arch=i386
+semantic=titlebarcontrols id=0x99
+semantic=close id=0x14
+semantic=colorsryg id=0x17
+semantic=disabled id=0x22
+semantic=minimize id=0x55
+semantic=regularwin id=0x72
+semantic=zoom id=0xa9
+titlebar_state_strategy=HELPER
+titlebar_state_helper_expected=YES
+titlebar_state_helper_present=YES
+RESULT: PASS
+```
+
+The Lion titlebar branch must call `AppendWindowTitlebarButtonState`; unlike Snow, this helper is a required Lion structure.
+
+## Phase E — return evidence
+
+Return exactly:
+
+```text
+pm-art-titlebar-path-snow.txt
+pm-art-titlebar-path-lion.txt
+```
+
+Do not return CoreUI or ArtFile binaries.
+
+## Review gates
+
+### Native Lion builder uses the semantic-equivalent Lion IDs
+
+If the Lion close/minimize/zoom branches and the two helper routines resolve to the semantic-equivalent IDs listed above while Snow resolves to its own IDs, the namespace mismatch is proven at the path-construction boundary. The next experiment may then be a process-local path translation limited to the titlebar paths actually produced by Snow-PPC CoreUI and only when Lion's ArtFile dictionary is the proven mapped archive.
+
+Do not globally translate arbitrary CoreUI IDs.
+
+### Titlebar state implementation differs structurally
+
+This difference is now already established: Snow inlines the titlebar button-state logic through `AppendState`, while Lion factors it into `AppendWindowTitlebarButtonState`. That difference alone is not an analyzer failure. The v2 reports must be compared semantically: if the Lion helper implements the same state choices under Lion's reindexed component namespace, a narrowly scoped semantic translator may still be justified; if the state choices differ, stop before a live shim and model the state transformation explicitly.
+
+### Variant helper differs semantically
+
+If `AppendWindowVariant` changes its state/variant meaning rather than merely its component constants, stop before a live shim. Do not apply a flat byte map.
+
+### Lion no longer constructs one of the Snow semantics
+
+If native Lion omits `disabled`, `regularwin`, or another captured semantic from the corresponding titlebar path, do not manufacture that component. The next discriminator must identify Lion's native replacement path shape.
+
+### Static provenance fails
+
+If either report returns `RESULT: FAIL`, return both reports unchanged and stop. Do not rerun the PPC subject.
+
+## Current boundary
+
+```text
+Snow captured titlebar paths                       semantically decoded
+Snow/Lion active component IDs                     all seven differ numerically
+Snow 0xb6 semantic                                 zoom
+Lion zoom semantic                                 0xa9
+Snow a6 semantic                                   titlebarcontrols
+Lion titlebarcontrols semantic                     0x99
+Snow colorsryg / disabled / regularwin             0x16 / 0x1f / 0x7a
+Lion colorsryg / disabled / regularwin             0x17 / 0x22 / 0x72
+numeric-only Lion diagnostic names                 misleading by dictionary reindexing
+
+Snow titlebar-state implementation                 inline AppendState; dedicated helper absent
+Lion titlebar-state implementation                 dedicated helper expected
+analyzer-v1 Phase C failure                        analyzer modeling error, not Snow binary failure
+exact crash pointer                                already proven
+next step                                          rerun analyzer v2 on Snow, then run Lion static path-builder/helper audit
+PPC subject rerun                                  NO
+resource substitution                              NO
+component remap                                    NOT YET
+XNU                                                no change indicated
+```
+ "$SCRIPT" || {
+  echo "ERROR: unexpected analyzer contract"
+  exit 1
+}
+
+ls -l "$SCRIPT"
 ls -l ./docs/pm-showwindow-artfile-titlebar-path-audit.md
 ```
+
+Do not proceed if any Phase A command fails. In particular, an output file beginning with `analyzer_version=1` or `analyzer_version=2` is stale evidence and must not be analyzed as a current Phase C/Phase D result.
 
 ## Phase B — syntax-check
 
