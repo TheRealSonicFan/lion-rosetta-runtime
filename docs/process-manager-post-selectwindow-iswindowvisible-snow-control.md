@@ -257,6 +257,14 @@ pm-iswindowvisible-snow.log
 
 Do not transfer or execute the IsWindowVisible subject on Lion until this evidence is reviewed.
 
+## Reviewed Snow result
+
+The Snow IsWindowVisible control passes completely. The exact subject is PPC7400, uses `/usr/oah/dyld`, imports `_IsWindowVisible`, carries build ID `cps-iswindowvisible-validation-v1`, and has SHA-256 `19c19b6ca022b6975b3d4107610847e964c60e14f97c79d66d6257cce9067785`.
+
+The public sequence returns from ShowWindow and SelectWindow, then `IsWindowVisible(window)` returns immediately with `visible=1` and `ISWINDOWVISIBLE_PASS`. The inherited full-stack Snow control remains transparent: all six titlebar keys pass through with zero unexpected action, both OrderFront calls pass through with exactly one bounded by SelectWindow, WindowBackingInfo remains passthrough, both ResolveColorProfile observations remain passthrough, and no compatibility family emits `ADAPTER_PASS`. The subject reaches `M24_SUCCESS`, exits 0, and the runner ends with `POST_SELECTWINDOW_ISWINDOWVISIBLE_SNOW_CONTROL_PASS` and `PASS`.
+
+No visibility-specific compatibility rule is justified by this evidence. Current `main` prepares exactly one guarded Lion IsWindowVisible run using the unchanged live-proven SelectWindow stack. Follow `docs/process-manager-post-selectwindow-iswindowvisible-lion-integration.md`; do not proceed to timers or the event loop until that Lion result is reviewed.
+
 ## Current boundary
 
 ```text
@@ -264,8 +272,8 @@ CreateNewWindow                                  PASS
 SetWindowTitleWithCFString                       PASS
 ShowWindow on Lion                               LIVE-PROVEN PASS
 SelectWindow on Lion                             LIVE-PROVEN PASS
-SelectWindow second OrderFront adapter           LIVE-PROVEN
-IsWindowVisible                                  NEXT: Snow control only
+IsWindowVisible on Snow                          PASS
+IsWindowVisible on Lion                          NEXT: one guarded run
 timers / event loop                              HELD
 new compatibility families                      NO
 titlebar policy broadening                      NO
