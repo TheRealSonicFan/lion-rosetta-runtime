@@ -437,6 +437,23 @@ lion-titlebar-bsearch.raw.log
 
 Also return every new crash report or core diagnostic explicitly named by the Lion runner. Do not return the compatibility dylib itself unless specifically requested.
 
+## Observed live result — 2026-10-13
+
+The returned evidence closes the prepared exact-three integration gate positively but does **not** close ShowWindow:
+
+- the Snow Leopard passthrough control reached all three exact target keys without translation, returned from ShowWindow, reached `M24_SUCCESS`, and ended `RESULT: PASS`;
+- the Lion syscall-295 preflight again returned `EBADF` with no `SIGSYS`;
+- the Lion exact-seven broker accepted exactly seven registrations with no rejection and ended `PASS`;
+- the Lion CoreUI bsearch compatibility dylib translated each of the three proven keys exactly once with zero guard rejects;
+- ShowWindow still did not return and the subject exited 139;
+- immediately before termination, CoreUI emitted a **different residual three-key invalid-path set**:
+  - `a60113167a000000`
+  - `a60116567a000000`
+  - `a601167ab6000000`
+- the runner named a new crash report, crash plist, and `/cores/core.9821`.
+
+This proves the original exact-three bsearch compatibility policy is live and correctly reached; it also proves that the original three keys were not the complete titlebar ArtFile lookup surface exercised by this ShowWindow path. Do **not** add the residual three keys to the policy yet. The next step is evidence review of the newly named crash report/core to determine whether the termination is still the same CoreUI helper fault or a downstream failure. No further Lion PPC run is authorized until those diagnostics are reviewed.
+
 ## Current boundary
 
 ```text
@@ -446,10 +463,13 @@ non-target identity behavior                      PROVEN
 old Load -> LoadFromArtFile                       direct internal branch
 old LoadFromArtFile -> bsearch                    one external lazy-bound stub
 chosen integration boundary                       libSystem bsearch
-live interposer implementation                    PREPARED
-Snow passthrough control                          NOT YET RUN
-Lion exact-three live proof                       NOT YET RUN
-PPC Lion rerun                                    exactly one authorized by this procedure
+live interposer implementation                    LIVE-PROVEN FOR ORIGINAL THREE KEYS
+Snow passthrough control                          PASS
+Lion exact-three live proof                       PASS: all three translated, zero guard rejects
+ShowWindow return                                 NO: exit 139
+residual invalid ArtFile keys                      a60113167a / a60116567a / a601167ab6
+next evidence gate                                new crash report + plist + core.9821 review
+PPC Lion rerun                                    NOT AUTHORIZED BEFORE CRASH/CORE REVIEW
 CoreUI/ArtFile patch                              NO
 XNU                                               no change indicated
 ```
