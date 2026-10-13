@@ -156,7 +156,7 @@ test "$(git symbolic-ref -q HEAD)" = "refs/heads/main" || {
   exit 1
 }
 
-git fetch origin main || exit 1
+git fetch origin || exit 1
 git pull --ff-only origin main || exit 1
 
 LOCAL_HEAD="$(git rev-parse HEAD)" || exit 1
