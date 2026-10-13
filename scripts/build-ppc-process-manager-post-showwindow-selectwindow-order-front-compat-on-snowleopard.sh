@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+# Short artifact name is deliberate: WBI = Window Backing Info.
 OUT="${1:-./pm-selectwindow-orderfront-compat.dylib}"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -10,12 +11,24 @@ INGRESS_SRC="$ROOT/tests/ppc-distributed-notifications-ingress-interposer.c"
 INFO="$OUT.info.txt"
 SHA="$OUT.sha256"
 
+# Keep each generated path component comfortably below legacy HFS+/POSIX NAME_MAX.
+for generated in "$OUT" "$INFO" "$SHA"; do
+    generated_name="$(/usr/bin/basename "$generated")"
+    [ "${#generated_name}" -le 240 ] || {
+        echo "error: artifact filename too long: $generated_name" >&2
+        exit 64
+    }
+done
+
 EXPECTED_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-selectwindow-orderfront-compat-v3"
 EXPECTED_INGRESS_BUILD_ID="distributed-notifications-ppc-ingress-interposer-v2"
+EXPECTED_RESOLVE_TRACE_BUILD_ID="color-profile-resolve-passive-trace-v1"
+EXPECTED_RESOLVE_COMPAT_BUILD_ID="color-profile-resolve-id-compat-v1"
+EXPECTED_WBI_COMPAT_BUILD_ID="window-backing-info-id-compat-v1"
 CC_SELECTED="${CC:-/Developer-3.2.6/usr/bin/gcc-4.2}"
 
 [ "$(/usr/bin/sw_vers -productVersion)" = "10.6.8" ] || {
-    echo "error: build combined PPC SelectWindow OrderFront compatibility dylib on Snow Leopard 10.6.8" >&2
+    echo "error: build combined PPC SelectWindow OrderFront + accepted ResolveColorProfile/WindowBackingInfo compatibility dylib on Snow Leopard 10.6.8" >&2
     exit 65
 }
 [ -x "$CC_SELECTED" ] || {
@@ -52,6 +65,9 @@ trap cleanup_on_exit EXIT
 
 "$CC_SELECTED" -arch ppc -mmacosx-version-min=10.5 -dynamiclib \
     -DPM_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION=1 \
+    -DPM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_TRACE=1 \
+    -DPM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_INTEGRATION=1 \
+    -DPM_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_INTEGRATION=1 \
     -DPM_CGS_SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_INTEGRATION=1 \
     -DPM_CGS_SHOWWINDOW_UNKNOWN_TRACE=1 \
     -DPM_CGS_CONNECTION_TRACE=1 \
@@ -181,6 +197,30 @@ for marker in \
     'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:' \
     'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' \
     'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:PASSTHROUGH' \
+    'PM_CGS_COLOR_PROFILE_RESOLVE_TRACE_BUILD_ID:color-profile-resolve-passive-trace-v1' \
+    'CGS_COLOR_PROFILE_RESOLVE_LEGACY' \
+    'CGS_COLOR_PROFILE_RESOLVE_LION' \
+    'PM_CGS_COLOR_PROFILE_RESOLVE_TRACE_REQUEST:' \
+    'PM_CGS_COLOR_PROFILE_RESOLVE_TRACE_REPLY:' \
+    'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_BUILD_ID:color-profile-resolve-id-compat-v1' \
+    'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_PREREQ:' \
+    'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:' \
+    'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_ADAPTED_REQUEST:' \
+    'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_NATIVE_MACH_RETURN:' \
+    'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_NATIVE_REPLY:' \
+    'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_ADAPTED_REPLY:' \
+    'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' \
+    'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:PASSTHROUGH' \
+    'PM_CGS_WINDOW_BACKING_INFO_COMPAT_BUILD_ID:window-backing-info-id-compat-v1' \
+    'CGS_WINDOW_BACKING_INFO_LEGACY' \
+    'CGS_WINDOW_BACKING_INFO_LION' \
+    'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:' \
+    'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REQUEST:' \
+    'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_MACH_RETURN:' \
+    'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_REPLY:' \
+    'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REPLY:' \
+    'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' \
+    'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:PASSTHROUGH' \
     'PM_CGS_SET_FRONT_WINDOW_COMPAT_CALL:' \
     'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REQUEST:' \
     'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY:' \
@@ -276,7 +316,10 @@ CORE_SOURCE_SHA="$(/usr/bin/shasum -a 256 "$CORE_SRC" | /usr/bin/awk '{print $1}
 INGRESS_SOURCE_SHA="$(/usr/bin/shasum -a 256 "$INGRESS_SRC" | /usr/bin/awk '{print $1}')"
 
 {
-    echo "== PPC Process Manager + distributed-notifications + SelectWindow OrderFront compatibility interposer =="
+    echo "== PPC Process Manager + distributed-notifications + SelectWindow OrderFront + accepted ResolveColorProfile/WindowBackingInfo compatibility interposer =="
+    echo "resolve_trace_build_id=$EXPECTED_RESOLVE_TRACE_BUILD_ID"
+    echo "resolve_compat_build_id=$EXPECTED_RESOLVE_COMPAT_BUILD_ID"
+    echo "window_backing_info_compat_build_id=$EXPECTED_WBI_COMPAT_BUILD_ID"
     echo "compiler=$CC_SELECTED"
     echo "runtime_git_head=$RUNTIME_GIT_HEAD"
     echo "core_source=$CORE_SRC"
