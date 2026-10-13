@@ -298,733 +298,766 @@ if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
     EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-compat-v1"
 fi
 if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
+    ORDER_FRONT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_ADAPTER_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_order_front_conditionally_compat_call_count=$ORDER_FRONT_COMPAT_COUNT"
+    log "cgs_order_front_conditionally_legacy_trace_count=$ORDER_FRONT_TRACE_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_ADAPTER_PASS_COUNT"
     if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
-        [ "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" = "lion-selectwindow-id-v1" ] ||
-            die 64 "SelectWindow validation requires lion-selectwindow-id-v1 OrderFront compatibility"
+        SELECTWINDOW_ORDER_FRONT_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow/{seen=1; next} seen && /PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow/{exit} seen && /PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+        log "selectwindow_order_front_conditionally_call_count=$SELECTWINDOW_ORDER_FRONT_COUNT"
+        if [ "$ORDER_FRONT_COMPAT_COUNT" -ne 2 ] ||
+           [ "$ORDER_FRONT_TRACE_COUNT" -ne 2 ] ||
+           [ "$ORDER_FRONT_ADAPTER_PASS_COUNT" -ne 2 ] ||
+           [ "$SELECTWINDOW_ORDER_FRONT_COUNT" -ne 1 ]; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COUNT_MISMATCH"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=1 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=2 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=2 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=2 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=2 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=2 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_order_front_conditionally_native_reply_class=SUCCESS"
+        log "selectwindow_order_front_conditionally_native_reply_class=SUCCESS"
     else
-        [ "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" = "lion-id-v1" ] ||
-            die 64 "unsupported ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE: $SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE"
+        if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+            [ "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" = "lion-selectwindow-id-v1" ] ||
+                die 64 "SelectWindow validation requires lion-selectwindow-id-v1 OrderFront compatibility"
+        else
+            [ "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" = "lion-id-v1" ] ||
+                die 64 "unsupported ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE: $SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE"
+        fi
+        [ "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" = "lion-inline-id-v1" ] ||
+            die 64 "CGSOrderFrontConditionally compatibility requires accepted CGSAddTrackingArea compatibility"
+        [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "lion-passive-v1" ] ||
+            die 64 "CGSOrderFrontConditionally compatibility requires lion-passive-v1 ShowWindow CGS tracing"
+        [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
+            die 64 "CGSOrderFrontConditionally compatibility requires the ShowWindow subject"
+        { [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+          [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
+            die 64 "CGSOrderFrontConditionally compatibility requires the accepted exact-six or exact-seven notification broker"
+        EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-compat-v1"
     fi
-    [ "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" = "lion-inline-id-v1" ] ||
-        die 64 "CGSOrderFrontConditionally compatibility requires accepted CGSAddTrackingArea compatibility"
-    [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "lion-passive-v1" ] ||
-        die 64 "CGSOrderFrontConditionally compatibility requires lion-passive-v1 ShowWindow CGS tracing"
-    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
-        die 64 "CGSOrderFrontConditionally compatibility requires the ShowWindow subject"
-    { [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
-      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
-        die 64 "CGSOrderFrontConditionally compatibility requires the accepted exact-six or exact-seven notification broker"
-    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-compat-v1"
-fi
-if [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
-    [ "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" = "lion-id-v1" ] ||
-        die 64 "unsupported ROSETTA_CGS_SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE: $SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE"
-    { [ "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" = "lion-id-v1" ] ||
-      { [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ] &&
-        [ "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" = "lion-selectwindow-id-v1" ]; }; } ||
-        die 64 "CGSSetFrontWindow compatibility requires accepted CGSOrderFrontConditionally compatibility"
-    [ "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" = "lion-inline-id-v1" ] ||
-        die 64 "CGSSetFrontWindow compatibility requires accepted CGSAddTrackingArea compatibility"
-    [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "lion-passive-v1" ] ||
-        die 64 "CGSSetFrontWindow compatibility requires lion-passive-v1 ShowWindow CGS tracing"
-    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
-        die 64 "CGSSetFrontWindow compatibility requires the ShowWindow subject"
-    { [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
-      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
-        die 64 "CGSSetFrontWindow compatibility requires the accepted exact-six or exact-seven notification broker"
-    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat-v1"
-fi
-if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
-    [ "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" = "lion-passive-v1" ] ||
-        die 64 "unsupported ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE: $SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE"
-    [ "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" = "lion-id-v1" ] ||
-        die 64 "ColorProfileClient trace requires accepted CGSSetFrontWindow compatibility"
-    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
-        die 64 "ColorProfileClient trace requires the ShowWindow subject"
-    { [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
-      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
-        die 64 "ColorProfileClient trace requires the accepted exact-six or exact-seven notification broker"
-    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-trace-v1"
-fi
-if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
-    [ "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" = "lion-id-v1" ] ||
-        die 64 "unsupported ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE: $SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE"
-    [ -z "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ] ||
-        die 64 "ColorProfileClient compatibility and passive-trace runner modes are mutually exclusive"
-    [ "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" = "lion-id-v1" ] ||
-        die 64 "ColorProfileClient compatibility requires accepted CGSSetFrontWindow compatibility"
-    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
-        die 64 "ColorProfileClient compatibility requires the ShowWindow subject"
-    { [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
-      [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
-        die 64 "ColorProfileClient compatibility requires the accepted exact-six or exact-seven notification broker"
-    EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-selectwindow-orderfront-compat-v3"
-fi
-sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
-
-if [ -n "$SCHEMA_AUDIT_REPORT" ] && [ -n "$REAL_REGISTRATION_MODE" ]; then
-    die 64 "schema-audit and real-registration modes are mutually exclusive"
-fi
-if [ -n "$SCHEMA_AUDIT_REPORT" ] && [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ]; then
-    die 64 "initial schema-audit and post-Extras schema-audit modes are mutually exclusive"
-fi
-if [ -n "$SCHEMA_AUDIT_REPORT" ] && [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ]; then
-    die 64 "initial schema-audit and post-FontServer schema-audit modes are mutually exclusive"
-fi
-if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] && [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ]; then
-    die 64 "post-Extras and post-FontServer schema-audit modes are mutually exclusive"
-fi
-if [ -n "$SCHEMA_AUDIT_REPORT" ] && [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
-    die 64 "initial and post-ShowWindow schema-audit modes are mutually exclusive"
-fi
-if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] && [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
-    die 64 "post-Extras and post-ShowWindow schema-audit modes are mutually exclusive"
-fi
-if [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ] && [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
-    die 64 "post-FontServer and post-ShowWindow schema-audit modes are mutually exclusive"
-fi
-if [ -n "$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT" ] &&
-   { [ -n "$SCHEMA_AUDIT_REPORT" ] ||
-     [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] ||
-     [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ] ||
-     [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; }; then
-    die 64 "seventh-request schema audit is mutually exclusive with other schema-audit modes"
-fi
-if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] && [ -z "$REAL_REGISTRATION_MODE" ]; then
-    die 64 "post-Extras schema audit requires the reviewed real-registration mode"
-fi
-if [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ]; then
-    [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] ||
-        die 64 "post-FontServer schema audit requires the exact-four real-registration mode"
-    [ "$FONTSERVER_COMPAT_MODE" = "lion-fontserver-v1" ] ||
-        die 64 "post-FontServer schema audit requires lion-fontserver-v1"
-    [ "$POST_CREATEWINDOW_TITLE_MODE" = "lion-windowtitle-v1" ] ||
-        die 64 "post-FontServer schema audit requires the window-title subject"
-fi
-if [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
-    [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] ||
-        die 64 "post-ShowWindow schema audit requires the reviewed exact-five registration mode"
-    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
-        die 64 "post-ShowWindow schema audit requires the ShowWindow subject"
-    [ "$FONTSERVER_COMPAT_MODE" = "lion-fontserver-v1" ] ||
-        die 64 "post-ShowWindow schema audit requires FontServer bootstrap compatibility"
-    [ "$FONTSERVER_RPC_TRACE_MODE" = "lion-passive-v1" ] ||
-        die 64 "post-ShowWindow schema audit requires FontServer passive tracing"
-    [ "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" = "lion-rendezvous-v1" ] ||
-        die 64 "post-ShowWindow schema audit requires FontServer rendezvous compatibility"
-fi
-if [ -n "$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT" ]; then
-    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
-        die 64 "seventh-request schema audit requires the reviewed exact-six registration mode"
-    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
-        die 64 "seventh-request schema audit requires the ShowWindow subject"
-    [ "$FONTSERVER_COMPAT_MODE" = "lion-fontserver-v1" ] ||
-        die 64 "seventh-request schema audit requires FontServer bootstrap compatibility"
-    [ "$FONTSERVER_RPC_TRACE_MODE" = "lion-passive-v1" ] ||
-        die 64 "seventh-request schema audit requires FontServer passive tracing"
-    [ "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" = "lion-rendezvous-v1" ] ||
-        die 64 "seventh-request schema audit requires FontServer rendezvous compatibility"
-fi
-if [ -n "$REAL_REGISTRATION_MODE" ] &&
-   [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-register-v1" ] &&
-   [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-post-extras-register-v1" ] &&
-   [ "$REAL_REGISTRATION_MODE" != "lion-windowtitle-fontserver-register-v1" ] &&
-   [ "$REAL_REGISTRATION_MODE" != "lion-showwindow-sixth-register-v1" ] &&
-   [ "$REAL_REGISTRATION_MODE" != "lion-showwindow-seventh-register-v1" ]; then
-    die 64 "unsupported ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE: $REAL_REGISTRATION_MODE"
-fi
-
-if [ -n "$DOCKSERVER_COMPAT_MODE" ] &&
-   [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-post-extras-register-v1" ] &&
-   [ "$REAL_REGISTRATION_MODE" != "lion-windowtitle-fontserver-register-v1" ] &&
-   [ "$REAL_REGISTRATION_MODE" != "lion-showwindow-sixth-register-v1" ] &&
-   [ "$REAL_REGISTRATION_MODE" != "lion-showwindow-seventh-register-v1" ]; then
-    die 64 "DockServer bootstrap compatibility requires the reviewed exact-four, exact-five, exact-six, or exact-seven registration mode"
-fi
-if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] &&
-   [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-register-v1" ]; then
-    die 64 "post-Extras schema audit requires lion-createwindow-register-v1"
-fi
-if { [ -n "$HITOOLBOX_TRACE" ] && [ -z "$HITOOLBOX_TRACE_SHA_FILE" ]; } ||
-   { [ -z "$HITOOLBOX_TRACE" ] && [ -n "$HITOOLBOX_TRACE_SHA_FILE" ]; }; then
-    die 64 "set both ROSETTA_HITOOLBOX_CFBUNDLE_TRACE_PATH and ROSETTA_HITOOLBOX_CFBUNDLE_TRACE_SHA256_FILE, or neither"
-fi
-if [ -n "$HITOOLBOX_TRACE" ] && [ -z "$REAL_REGISTRATION_MODE" ]; then
-    die 64 "HIToolbox CFBundle trace requires the reviewed real-registration mode"
-fi
-if [ -n "$HITOOLBOX_TRACE" ] && [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
-    die 64 "HIToolbox trace and Extras compatibility modes are mutually exclusive"
-fi
-if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] && [ -z "$HITOOLBOX_EXTRAS_COMPAT" ]; then
-    die 64 "post-Extras schema audit requires the exact HIToolbox Extras compatibility path"
-fi
-if [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ] && [ -z "$HITOOLBOX_EXTRAS_COMPAT" ]; then
-    die 64 "post-FontServer schema audit requires the exact HIToolbox Extras compatibility path"
-fi
-if [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ] && [ -z "$HITOOLBOX_EXTRAS_COMPAT" ]; then
-    die 64 "post-ShowWindow schema audit requires the exact HIToolbox Extras compatibility path"
-fi
-if [ -n "$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT" ] && [ -z "$HITOOLBOX_EXTRAS_COMPAT" ]; then
-    die 64 "seventh-request schema audit requires the exact HIToolbox Extras compatibility path"
-fi
-
-if [ -n "$DOCKSERVER_COMPAT_MODE" ] && [ -z "$HITOOLBOX_EXTRAS_COMPAT" ]; then
-    die 64 "DockServer bootstrap compatibility requires the exact HIToolbox Extras compatibility path"
-fi
-if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ] || [ -n "$HITOOLBOX_EXTRAS_COMPAT_SHA_FILE" ] ||
-   [ -n "$HITOOLBOX_EXTRAS_RESOURCE" ] || [ -n "$HITOOLBOX_EXTRAS_MODE" ]; then
-    [ -n "$REAL_REGISTRATION_MODE" ] ||
-        die 64 "HIToolbox Extras compatibility requires the reviewed real-registration mode"
-    [ -n "$HITOOLBOX_EXTRAS_COMPAT" ] ||
-        die 64 "set ROSETTA_HITOOLBOX_EXTRAS_COMPAT_PATH"
-    [ -n "$HITOOLBOX_EXTRAS_COMPAT_SHA_FILE" ] ||
-        die 64 "set ROSETTA_HITOOLBOX_EXTRAS_COMPAT_SHA256_FILE"
-    [ -n "$HITOOLBOX_EXTRAS_RESOURCE" ] ||
-        die 64 "set ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH"
-    [ "$HITOOLBOX_EXTRAS_MODE" = "lion-fallback-external-v1" ] ||
-        die 64 "Lion Extras compatibility mode must be lion-fallback-external-v1"
-fi
-
-if [ -n "$TITLEBAR_BSEARCH_COMPAT" ] || [ -n "$TITLEBAR_BSEARCH_SHA_FILE" ] ||
-   [ -n "$TITLEBAR_BSEARCH_MODE" ]; then
-    [ -n "$TITLEBAR_BSEARCH_COMPAT" ] || die 64 "set ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_PATH"
-    [ -n "$TITLEBAR_BSEARCH_SHA_FILE" ] || die 64 "set ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_SHA256_FILE"
-    [ "$TITLEBAR_BSEARCH_MODE" = "lion-exact-six-v1" ] ||
-        die 64 "Lion titlebar bsearch mode must be lion-exact-six-v1"
-    [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
-        die 64 "titlebar bsearch compatibility requires the ShowWindow subject"
-    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] ||
-        die 64 "titlebar bsearch compatibility requires the accepted exact-seven notification mode"
-fi
-
-abspath() {
-    file="$1"
-    dir="$(/usr/bin/dirname "$file")"
-    base="$(/usr/bin/basename "$file")"
-    (cd "$dir" 2>/dev/null && echo "$(pwd)/$base")
-}
-has_ppc32_arch() {
-    file="$1"
-    if [ -x /usr/bin/lipo ]; then
-        /usr/bin/lipo -verify_arch ppc "$file" >/dev/null 2>&1 && return 0
-        /usr/bin/lipo "$file" -verify_arch ppc >/dev/null 2>&1 && return 0
+    if [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
+        [ "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" = "lion-id-v1" ] ||
+            die 64 "unsupported ROSETTA_CGS_SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE: $SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE"
+        { [ "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" = "lion-id-v1" ] ||
+          { [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ] &&
+            [ "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" = "lion-selectwindow-id-v1" ]; }; } ||
+            die 64 "CGSSetFrontWindow compatibility requires accepted CGSOrderFrontConditionally compatibility"
+        [ "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" = "lion-inline-id-v1" ] ||
+            die 64 "CGSSetFrontWindow compatibility requires accepted CGSAddTrackingArea compatibility"
+        [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "lion-passive-v1" ] ||
+            die 64 "CGSSetFrontWindow compatibility requires lion-passive-v1 ShowWindow CGS tracing"
+        [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
+            die 64 "CGSSetFrontWindow compatibility requires the ShowWindow subject"
+        { [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+          [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
+            die 64 "CGSSetFrontWindow compatibility requires the accepted exact-six or exact-seven notification broker"
+        EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-compat-v1"
     fi
-    desc="$(/usr/bin/file "$file" 2>/dev/null || true)"
-    echo "$desc" | /usr/bin/grep -Eiq '(^|[^[:alnum:]_])(ppc|powerpc)([^[:alnum:]_]|$)' || return 1
-    echo "$desc" | /usr/bin/grep -Eiq 'ppc64|powerpc64' && return 1
-    return 0
-}
-
-log "== Lion PPC restored-stack CreateNewWindow distributed-notifications integration =="
-log "date=$(/bin/date '+%Y-%m-%d %H:%M:%S %z')"
-log "host=$(/bin/hostname)"
-
-PRODUCT_VERSION="$(/usr/bin/sw_vers -productVersion 2>/dev/null || true)"
-BUILD_VERSION="$(/usr/bin/sw_vers -buildVersion 2>/dev/null || true)"
-log "product_version=$PRODUCT_VERSION"
-log "build_version=$BUILD_VERSION"
-[ "$PRODUCT_VERSION" = "10.7.5" ] || die 65 "requires Lion 10.7.5"
-
-CURRENT_USER="$(/usr/bin/id -un 2>/dev/null || true)"
-CONSOLE_USER="$(/usr/bin/stat -f '%Su' /dev/console 2>/dev/null || true)"
-log "current_user=$CURRENT_USER"
-log "console_user=$CONSOLE_USER"
-[ "$CURRENT_USER" = "$CONSOLE_USER" ] || die 65 "run from the logged-in Aqua console user's Terminal session"
-/bin/ps -ax | /usr/bin/grep -q '[W]indowServer' || die 65 "WindowServer is not running"
-
-for v in CORESERVICESD_SERVICE_NAME SCDontUseServer LSDONOTABORTIFNOASN \
-         ROSETTA_CORESERVICES_COMPAT_MODE ROSETTA_SECURITY_SESSION_API_COMPAT_MODE \
-         ROSETTA_CGS_SESSION_BOOTSTRAP_COMPAT_MODE ROSETTA_CGS_SERVER_VERSION_COMPAT_MODE \
-         ROSETTA_CPS_REGISTRATION_COMPAT_MODE ROSETTA_CPS_SETFRONT_COMPAT_MODE \
-         ROSETTA_DISTRIBUTED_NOTIFICATIONS_INGRESS_MODE ROSETTA_DISTRIBUTED_NOTIFICATIONS_BROKER_PATH \
-         ROSETTA_DISTRIBUTED_NOTIFICATIONS_COMPAT_MODE DYLD_INSERT_LIBRARIES; do
-    eval "present=\${$v+x}"
-    [ -z "$present" ] || die 68 "$v must be unset before the runner"
-done
-
-[ -n "$EXPECTED_KERNEL_SHA" ] || die 64 "set ROSETTA_EXPECTED_KERNEL_SHA256"
-
-for p in /mach_kernel "$TRANSLATOR" "$PRIVATE_DYLD" "$SYSTEM_DYLD" \
-         "$ROSETTA_CACHE" "$ROSETTA_CACHE_MAP" "$COREGRAPHICS" "$CARBONCORE" \
-         "$SECURITY" "$LAUNCHSERVICES" "$HISERVICES" "$LIBSYSTEM" "$DISTNOTED" "$LIBXPC" \
-         "$SUBJECT" "$SUBJECT_SHA_FILE" "$CORE_COMPAT" "$CORE_COMPAT_SHA_FILE" \
-         "$SEC_INTERPOSER" "$SEC_SHA_FILE" "$CGS_INTERPOSER" "$CGS_SHA_FILE" \
-         "$BROKER" "$BROKER_SHA_FILE"; do
-    [ -e "$p" ] || die 66 "missing required path: $p"
-done
-if [ -n "$HITOOLBOX_TRACE" ]; then
-    [ -e "$HITOOLBOX_TRACE" ] || die 66 "missing HIToolbox trace dylib: $HITOOLBOX_TRACE"
-    [ -e "$HITOOLBOX_TRACE_SHA_FILE" ] || die 66 "missing HIToolbox trace SHA file: $HITOOLBOX_TRACE_SHA_FILE"
-fi
-if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
-    [ -e "$HITOOLBOX_EXTRAS_COMPAT" ] || die 66 "missing HIToolbox Extras compatibility dylib: $HITOOLBOX_EXTRAS_COMPAT"
-    [ -e "$HITOOLBOX_EXTRAS_COMPAT_SHA_FILE" ] || die 66 "missing HIToolbox Extras compatibility SHA file: $HITOOLBOX_EXTRAS_COMPAT_SHA_FILE"
-    [ -f "$HITOOLBOX_EXTRAS_RESOURCE" ] || die 66 "missing staged Snow Leopard Extras.rsrc: $HITOOLBOX_EXTRAS_RESOURCE"
-fi
-
-EXPECTED_SUBJECT_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$SUBJECT_SHA_FILE")"
-EXPECTED_CORE_COMPAT_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$CORE_COMPAT_SHA_FILE")"
-EXPECTED_SEC_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$SEC_SHA_FILE")"
-EXPECTED_CGS_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$CGS_SHA_FILE")"
-EXPECTED_BROKER_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$BROKER_SHA_FILE")"
-if [ -n "$HITOOLBOX_TRACE" ]; then
-    EXPECTED_HITOOLBOX_TRACE_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$HITOOLBOX_TRACE_SHA_FILE")"
-fi
-if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
-    EXPECTED_HITOOLBOX_EXTRAS_COMPAT_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$HITOOLBOX_EXTRAS_COMPAT_SHA_FILE")"
-fi
-
-if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
-    [ -e "$TITLEBAR_BSEARCH_COMPAT" ] || die 66 "missing titlebar bsearch compatibility dylib: $TITLEBAR_BSEARCH_COMPAT"
-    [ -e "$TITLEBAR_BSEARCH_SHA_FILE" ] || die 66 "missing titlebar bsearch compatibility SHA file: $TITLEBAR_BSEARCH_SHA_FILE"
-    [ -f "$TITLEBAR_ARTFILE" ] || die 66 "missing Lion ArtFile.bin"
-    EXPECTED_TITLEBAR_BSEARCH_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$TITLEBAR_BSEARCH_SHA_FILE")"
-fi
-
-KERNEL_BEFORE="$(sha256 /mach_kernel)"
-TRANSLATOR_BEFORE="$(sha256 "$TRANSLATOR")"
-PRIVATE_BEFORE="$(sha256 "$PRIVATE_DYLD")"
-SYSTEM_BEFORE="$(sha256 "$SYSTEM_DYLD")"
-CACHE_BEFORE="$(sha256 "$ROSETTA_CACHE")"
-CACHE_MAP_SHA="$(sha256 "$ROSETTA_CACHE_MAP")"
-CG_BEFORE="$(sha256 "$COREGRAPHICS")"
-CARBONCORE_BEFORE="$(sha256 "$CARBONCORE")"
-SECURITY_BEFORE="$(sha256 "$SECURITY")"
-LAUNCHSERVICES_BEFORE="$(sha256 "$LAUNCHSERVICES")"
-HISERVICES_BEFORE="$(sha256 "$HISERVICES")"
-LIBSYSTEM_BEFORE="$(sha256 "$LIBSYSTEM")"
-DISTNOTED_BEFORE="$(sha256 "$DISTNOTED")"
-LIBXPC_BEFORE="$(sha256 "$LIBXPC")"
-BROKER_BEFORE="$(sha256 "$BROKER")"
-SUBJECT_BEFORE="$(sha256 "$SUBJECT")"
-CORE_COMPAT_BEFORE="$(sha256 "$CORE_COMPAT")"
-SEC_BEFORE="$(sha256 "$SEC_INTERPOSER")"
-CGS_BEFORE="$(sha256 "$CGS_INTERPOSER")"
-if [ -n "$HITOOLBOX_TRACE" ]; then
-    HITOOLBOX_TRACE_BEFORE="$(sha256 "$HITOOLBOX_TRACE")"
-fi
-if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
-    HITOOLBOX_EXTRAS_COMPAT_BEFORE="$(sha256 "$HITOOLBOX_EXTRAS_COMPAT")"
-    HITOOLBOX_EXTRAS_RESOURCE_BEFORE="$(sha256 "$HITOOLBOX_EXTRAS_RESOURCE")"
-fi
-
-if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
-    TITLEBAR_BSEARCH_BEFORE="$(sha256 "$TITLEBAR_BSEARCH_COMPAT")"
-    TITLEBAR_ARTFILE_BEFORE="$(sha256 "$TITLEBAR_ARTFILE")"
-    [ "$TITLEBAR_BSEARCH_BEFORE" = "$EXPECTED_TITLEBAR_BSEARCH_SHA" ] ||
-        die 68 "titlebar bsearch compatibility hash mismatch"
-    [ "$TITLEBAR_ARTFILE_BEFORE" = "$EXPECTED_TITLEBAR_ARTFILE_SHA" ] ||
-        die 68 "Lion ArtFile.bin hash mismatch for titlebar compatibility"
-    has_ppc32_arch "$TITLEBAR_BSEARCH_COMPAT" ||
-        die 68 "titlebar bsearch compatibility dylib is not 32-bit PPC"
-    /usr/bin/strings "$TITLEBAR_BSEARCH_COMPAT" |
-        /usr/bin/grep -Fq "PM_COREUI_TITLEBAR_BSEARCH_BUILD_ID:$EXPECTED_TITLEBAR_BSEARCH_BUILD_ID" ||
-        die 68 "titlebar bsearch compatibility build marker missing"
-    TITLEBAR_INTERPOSE_SECTION="$(/usr/bin/otool -l "$TITLEBAR_BSEARCH_COMPAT" | /usr/bin/grep -A10 -B2 '__interpose' || true)"
-    echo "$TITLEBAR_INTERPOSE_SECTION" | /usr/bin/grep -Fq 'size 0x00000008' ||
-        die 68 "titlebar bsearch compatibility does not contain exactly one PPC interpose tuple"
-fi
-
-log "mach_kernel_sha256_before=$KERNEL_BEFORE"
-log "expected_mach_kernel_sha256=$EXPECTED_KERNEL_SHA"
-log "translator_sha256_before=$TRANSLATOR_BEFORE"
-log "private_dyld_sha256_before=$PRIVATE_BEFORE"
-log "system_dyld_sha256_before=$SYSTEM_BEFORE"
-log "rosetta_cache_sha256_before=$CACHE_BEFORE"
-log "rosetta_cache_map_sha256=$CACHE_MAP_SHA"
-log "coregraphics_sha256_before=$CG_BEFORE"
-log "distnoted_sha256_before=$DISTNOTED_BEFORE"
-log "libxpc_sha256_before=$LIBXPC_BEFORE"
-log "expected_subject_sha256=$EXPECTED_SUBJECT_SHA"
-log "actual_subject_sha256=$SUBJECT_BEFORE"
-log "expected_coreservices_cps_registration_compat_sha256=$EXPECTED_CORE_COMPAT_SHA"
-log "actual_coreservices_cps_registration_compat_sha256=$CORE_COMPAT_BEFORE"
-log "expected_security_interposer_sha256=$EXPECTED_SEC_SHA"
-log "actual_security_interposer_sha256=$SEC_BEFORE"
-log "expected_cgs_interposer_sha256=$EXPECTED_CGS_SHA"
-log "actual_cgs_interposer_sha256=$CGS_BEFORE"
-log "expected_broker_sha256=$EXPECTED_BROKER_SHA"
-log "actual_broker_sha256=$BROKER_BEFORE"
-if [ -n "$HITOOLBOX_TRACE" ]; then
-    log "expected_hitoolbox_trace_sha256=$EXPECTED_HITOOLBOX_TRACE_SHA"
-    log "actual_hitoolbox_trace_sha256=$HITOOLBOX_TRACE_BEFORE"
-fi
-if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
-    log "expected_hitoolbox_extras_compat_sha256=$EXPECTED_HITOOLBOX_EXTRAS_COMPAT_SHA"
-    log "actual_hitoolbox_extras_compat_sha256=$HITOOLBOX_EXTRAS_COMPAT_BEFORE"
-    log "expected_hitoolbox_extras_resource_sha256=$EXPECTED_HITOOLBOX_EXTRAS_RESOURCE_SHA"
-    log "actual_hitoolbox_extras_resource_sha256=$HITOOLBOX_EXTRAS_RESOURCE_BEFORE"
-fi
-
-[ "$KERNEL_BEFORE" = "$EXPECTED_KERNEL_SHA" ] || die 68 "kernel hash mismatch"
-[ "$TRANSLATOR_BEFORE" = "$EXPECTED_TRANSLATOR_SHA" ] || die 68 "translator hash mismatch"
-[ "$PRIVATE_BEFORE" = "$EXPECTED_DYLD_SHA" ] || die 68 "private dyld hash mismatch"
-[ "$CACHE_BEFORE" = "$EXPECTED_CACHE_SHA" ] || die 68 "Rosetta cache hash mismatch"
-[ "$CACHE_MAP_SHA" = "$EXPECTED_CACHE_MAP_SHA" ] || die 68 "Rosetta cache map hash mismatch"
-[ "$CG_BEFORE" = "$EXPECTED_COREGRAPHICS_SHA" ] || die 68 "CoreGraphics baseline hash mismatch"
-[ "$SUBJECT_BEFORE" = "$EXPECTED_SUBJECT_SHA" ] || die 68 "subject hash mismatch"
-[ "$CORE_COMPAT_BEFORE" = "$EXPECTED_CORE_COMPAT_SHA" ] || die 68 "CoreServices CPS registration compatibility hash mismatch"
-[ "$SEC_BEFORE" = "$EXPECTED_SEC_SHA" ] || die 68 "Security interposer hash mismatch"
-[ "$CGS_BEFORE" = "$EXPECTED_CGS_SHA" ] || die 68 "CGS interposer hash mismatch"
-[ "$BROKER_BEFORE" = "$EXPECTED_BROKER_SHA" ] || die 68 "broker hash mismatch"
-if [ -n "$HITOOLBOX_TRACE" ]; then
-    [ "$HITOOLBOX_TRACE_BEFORE" = "$EXPECTED_HITOOLBOX_TRACE_SHA" ] ||
-        die 68 "HIToolbox trace hash mismatch"
-fi
-if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
-    [ "$HITOOLBOX_EXTRAS_COMPAT_BEFORE" = "$EXPECTED_HITOOLBOX_EXTRAS_COMPAT_SHA" ] ||
-        die 68 "HIToolbox Extras compatibility hash mismatch"
-    [ "$HITOOLBOX_EXTRAS_RESOURCE_BEFORE" = "$EXPECTED_HITOOLBOX_EXTRAS_RESOURCE_SHA" ] ||
-        die 68 "staged Snow Leopard Extras.rsrc hash mismatch"
-fi
-
-HANDLER="$(/usr/sbin/sysctl -n kern.exec.archhandler.powerpc 2>/dev/null || true)"
-log "powerpc_archhandler=$HANDLER"
-[ "$HANDLER" = "$TRANSLATOR" ] || die 68 "PowerPC handler mismatch"
-
-for p in "$SUBJECT" "$CORE_COMPAT" "$SEC_INTERPOSER" "$CGS_INTERPOSER"; do
-    has_ppc32_arch "$p" || die 67 "required artifact is not 32-bit PPC: $p"
-done
-if [ -n "$HITOOLBOX_TRACE" ]; then
-    has_ppc32_arch "$HITOOLBOX_TRACE" || die 67 "HIToolbox trace is not 32-bit PPC"
-fi
-if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
-    has_ppc32_arch "$HITOOLBOX_EXTRAS_COMPAT" || die 67 "HIToolbox Extras compatibility dylib is not 32-bit PPC"
-fi
-
-BROKER_ARCH="$(/usr/bin/lipo -info "$BROKER" 2>/dev/null || true)"
-echo "$BROKER_ARCH" | /usr/bin/grep -Eq '(^|[[:space:]])i386([[:space:]]|$)' ||
-    die 67 "broker is not i386"
-
-/usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq \
-    "PM_CPS_CREATEWINDOW_BUILD_ID:$EXPECTED_SUBJECT_BUILD_ID" || die 68 "subject build marker missing"
-if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
-    for marker in \
-        'PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow' \
-        'PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow' \
-        'PM_POSTWINDOWSHOW_RESULT:SHOWWINDOW_PASS'; do
-        /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq "$marker" ||
-            die 68 "ShowWindow subject marker missing: $marker"
+    if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
+        [ "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" = "lion-passive-v1" ] ||
+            die 64 "unsupported ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE: $SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE"
+        [ "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" = "lion-id-v1" ] ||
+            die 64 "ColorProfileClient trace requires accepted CGSSetFrontWindow compatibility"
+        [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
+            die 64 "ColorProfileClient trace requires the ShowWindow subject"
+        { [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+          [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
+            die 64 "ColorProfileClient trace requires the accepted exact-six or exact-seven notification broker"
+        EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-trace-v1"
+    fi
+    if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+        [ "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" = "lion-id-v1" ] ||
+            die 64 "unsupported ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE: $SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE"
+        [ -z "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ] ||
+            die 64 "ColorProfileClient compatibility and passive-trace runner modes are mutually exclusive"
+        [ "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" = "lion-id-v1" ] ||
+            die 64 "ColorProfileClient compatibility requires accepted CGSSetFrontWindow compatibility"
+        [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
+            die 64 "ColorProfileClient compatibility requires the ShowWindow subject"
+        { [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+          [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; } ||
+            die 64 "ColorProfileClient compatibility requires the accepted exact-six or exact-seven notification broker"
+        EXPECTED_CORE_COMPAT_BUILD_ID="dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-selectwindow-orderfront-compat-v3"
+    fi
+    sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
+    
+    if [ -n "$SCHEMA_AUDIT_REPORT" ] && [ -n "$REAL_REGISTRATION_MODE" ]; then
+        die 64 "schema-audit and real-registration modes are mutually exclusive"
+    fi
+    if [ -n "$SCHEMA_AUDIT_REPORT" ] && [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ]; then
+        die 64 "initial schema-audit and post-Extras schema-audit modes are mutually exclusive"
+    fi
+    if [ -n "$SCHEMA_AUDIT_REPORT" ] && [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ]; then
+        die 64 "initial schema-audit and post-FontServer schema-audit modes are mutually exclusive"
+    fi
+    if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] && [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ]; then
+        die 64 "post-Extras and post-FontServer schema-audit modes are mutually exclusive"
+    fi
+    if [ -n "$SCHEMA_AUDIT_REPORT" ] && [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
+        die 64 "initial and post-ShowWindow schema-audit modes are mutually exclusive"
+    fi
+    if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] && [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
+        die 64 "post-Extras and post-ShowWindow schema-audit modes are mutually exclusive"
+    fi
+    if [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ] && [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
+        die 64 "post-FontServer and post-ShowWindow schema-audit modes are mutually exclusive"
+    fi
+    if [ -n "$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT" ] &&
+       { [ -n "$SCHEMA_AUDIT_REPORT" ] ||
+         [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] ||
+         [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ] ||
+         [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; }; then
+        die 64 "seventh-request schema audit is mutually exclusive with other schema-audit modes"
+    fi
+    if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] && [ -z "$REAL_REGISTRATION_MODE" ]; then
+        die 64 "post-Extras schema audit requires the reviewed real-registration mode"
+    fi
+    if [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ]; then
+        [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] ||
+            die 64 "post-FontServer schema audit requires the exact-four real-registration mode"
+        [ "$FONTSERVER_COMPAT_MODE" = "lion-fontserver-v1" ] ||
+            die 64 "post-FontServer schema audit requires lion-fontserver-v1"
+        [ "$POST_CREATEWINDOW_TITLE_MODE" = "lion-windowtitle-v1" ] ||
+            die 64 "post-FontServer schema audit requires the window-title subject"
+    fi
+    if [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
+        [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] ||
+            die 64 "post-ShowWindow schema audit requires the reviewed exact-five registration mode"
+        [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
+            die 64 "post-ShowWindow schema audit requires the ShowWindow subject"
+        [ "$FONTSERVER_COMPAT_MODE" = "lion-fontserver-v1" ] ||
+            die 64 "post-ShowWindow schema audit requires FontServer bootstrap compatibility"
+        [ "$FONTSERVER_RPC_TRACE_MODE" = "lion-passive-v1" ] ||
+            die 64 "post-ShowWindow schema audit requires FontServer passive tracing"
+        [ "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" = "lion-rendezvous-v1" ] ||
+            die 64 "post-ShowWindow schema audit requires FontServer rendezvous compatibility"
+    fi
+    if [ -n "$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT" ]; then
+        [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] ||
+            die 64 "seventh-request schema audit requires the reviewed exact-six registration mode"
+        [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
+            die 64 "seventh-request schema audit requires the ShowWindow subject"
+        [ "$FONTSERVER_COMPAT_MODE" = "lion-fontserver-v1" ] ||
+            die 64 "seventh-request schema audit requires FontServer bootstrap compatibility"
+        [ "$FONTSERVER_RPC_TRACE_MODE" = "lion-passive-v1" ] ||
+            die 64 "seventh-request schema audit requires FontServer passive tracing"
+        [ "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" = "lion-rendezvous-v1" ] ||
+            die 64 "seventh-request schema audit requires FontServer rendezvous compatibility"
+    fi
+    if [ -n "$REAL_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-register-v1" ] &&
+       [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-post-extras-register-v1" ] &&
+       [ "$REAL_REGISTRATION_MODE" != "lion-windowtitle-fontserver-register-v1" ] &&
+       [ "$REAL_REGISTRATION_MODE" != "lion-showwindow-sixth-register-v1" ] &&
+       [ "$REAL_REGISTRATION_MODE" != "lion-showwindow-seventh-register-v1" ]; then
+        die 64 "unsupported ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE: $REAL_REGISTRATION_MODE"
+    fi
+    
+    if [ -n "$DOCKSERVER_COMPAT_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-post-extras-register-v1" ] &&
+       [ "$REAL_REGISTRATION_MODE" != "lion-windowtitle-fontserver-register-v1" ] &&
+       [ "$REAL_REGISTRATION_MODE" != "lion-showwindow-sixth-register-v1" ] &&
+       [ "$REAL_REGISTRATION_MODE" != "lion-showwindow-seventh-register-v1" ]; then
+        die 64 "DockServer bootstrap compatibility requires the reviewed exact-four, exact-five, exact-six, or exact-seven registration mode"
+    fi
+    if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] &&
+       [ "$REAL_REGISTRATION_MODE" != "lion-createwindow-register-v1" ]; then
+        die 64 "post-Extras schema audit requires lion-createwindow-register-v1"
+    fi
+    if { [ -n "$HITOOLBOX_TRACE" ] && [ -z "$HITOOLBOX_TRACE_SHA_FILE" ]; } ||
+       { [ -z "$HITOOLBOX_TRACE" ] && [ -n "$HITOOLBOX_TRACE_SHA_FILE" ]; }; then
+        die 64 "set both ROSETTA_HITOOLBOX_CFBUNDLE_TRACE_PATH and ROSETTA_HITOOLBOX_CFBUNDLE_TRACE_SHA256_FILE, or neither"
+    fi
+    if [ -n "$HITOOLBOX_TRACE" ] && [ -z "$REAL_REGISTRATION_MODE" ]; then
+        die 64 "HIToolbox CFBundle trace requires the reviewed real-registration mode"
+    fi
+    if [ -n "$HITOOLBOX_TRACE" ] && [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        die 64 "HIToolbox trace and Extras compatibility modes are mutually exclusive"
+    fi
+    if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ] && [ -z "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        die 64 "post-Extras schema audit requires the exact HIToolbox Extras compatibility path"
+    fi
+    if [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ] && [ -z "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        die 64 "post-FontServer schema audit requires the exact HIToolbox Extras compatibility path"
+    fi
+    if [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ] && [ -z "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        die 64 "post-ShowWindow schema audit requires the exact HIToolbox Extras compatibility path"
+    fi
+    if [ -n "$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT" ] && [ -z "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        die 64 "seventh-request schema audit requires the exact HIToolbox Extras compatibility path"
+    fi
+    
+    if [ -n "$DOCKSERVER_COMPAT_MODE" ] && [ -z "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        die 64 "DockServer bootstrap compatibility requires the exact HIToolbox Extras compatibility path"
+    fi
+    if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ] || [ -n "$HITOOLBOX_EXTRAS_COMPAT_SHA_FILE" ] ||
+       [ -n "$HITOOLBOX_EXTRAS_RESOURCE" ] || [ -n "$HITOOLBOX_EXTRAS_MODE" ]; then
+        [ -n "$REAL_REGISTRATION_MODE" ] ||
+            die 64 "HIToolbox Extras compatibility requires the reviewed real-registration mode"
+        [ -n "$HITOOLBOX_EXTRAS_COMPAT" ] ||
+            die 64 "set ROSETTA_HITOOLBOX_EXTRAS_COMPAT_PATH"
+        [ -n "$HITOOLBOX_EXTRAS_COMPAT_SHA_FILE" ] ||
+            die 64 "set ROSETTA_HITOOLBOX_EXTRAS_COMPAT_SHA256_FILE"
+        [ -n "$HITOOLBOX_EXTRAS_RESOURCE" ] ||
+            die 64 "set ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH"
+        [ "$HITOOLBOX_EXTRAS_MODE" = "lion-fallback-external-v1" ] ||
+            die 64 "Lion Extras compatibility mode must be lion-fallback-external-v1"
+    fi
+    
+    if [ -n "$TITLEBAR_BSEARCH_COMPAT" ] || [ -n "$TITLEBAR_BSEARCH_SHA_FILE" ] ||
+       [ -n "$TITLEBAR_BSEARCH_MODE" ]; then
+        [ -n "$TITLEBAR_BSEARCH_COMPAT" ] || die 64 "set ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_PATH"
+        [ -n "$TITLEBAR_BSEARCH_SHA_FILE" ] || die 64 "set ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_SHA256_FILE"
+        [ "$TITLEBAR_BSEARCH_MODE" = "lion-exact-six-v1" ] ||
+            die 64 "Lion titlebar bsearch mode must be lion-exact-six-v1"
+        [ "$POST_WINDOWTITLE_SHOWWINDOW_MODE" = "lion-showwindow-v1" ] ||
+            die 64 "titlebar bsearch compatibility requires the ShowWindow subject"
+        [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] ||
+            die 64 "titlebar bsearch compatibility requires the accepted exact-seven notification mode"
+    fi
+    
+    abspath() {
+        file="$1"
+        dir="$(/usr/bin/dirname "$file")"
+        base="$(/usr/bin/basename "$file")"
+        (cd "$dir" 2>/dev/null && echo "$(pwd)/$base")
+    }
+    has_ppc32_arch() {
+        file="$1"
+        if [ -x /usr/bin/lipo ]; then
+            /usr/bin/lipo -verify_arch ppc "$file" >/dev/null 2>&1 && return 0
+            /usr/bin/lipo "$file" -verify_arch ppc >/dev/null 2>&1 && return 0
+        fi
+        desc="$(/usr/bin/file "$file" 2>/dev/null || true)"
+        echo "$desc" | /usr/bin/grep -Eiq '(^|[^[:alnum:]_])(ppc|powerpc)([^[:alnum:]_]|$)' || return 1
+        echo "$desc" | /usr/bin/grep -Eiq 'ppc64|powerpc64' && return 1
+        return 0
+    }
+    
+    log "== Lion PPC restored-stack CreateNewWindow distributed-notifications integration =="
+    log "date=$(/bin/date '+%Y-%m-%d %H:%M:%S %z')"
+    log "host=$(/bin/hostname)"
+    
+    PRODUCT_VERSION="$(/usr/bin/sw_vers -productVersion 2>/dev/null || true)"
+    BUILD_VERSION="$(/usr/bin/sw_vers -buildVersion 2>/dev/null || true)"
+    log "product_version=$PRODUCT_VERSION"
+    log "build_version=$BUILD_VERSION"
+    [ "$PRODUCT_VERSION" = "10.7.5" ] || die 65 "requires Lion 10.7.5"
+    
+    CURRENT_USER="$(/usr/bin/id -un 2>/dev/null || true)"
+    CONSOLE_USER="$(/usr/bin/stat -f '%Su' /dev/console 2>/dev/null || true)"
+    log "current_user=$CURRENT_USER"
+    log "console_user=$CONSOLE_USER"
+    [ "$CURRENT_USER" = "$CONSOLE_USER" ] || die 65 "run from the logged-in Aqua console user's Terminal session"
+    /bin/ps -ax | /usr/bin/grep -q '[W]indowServer' || die 65 "WindowServer is not running"
+    
+    for v in CORESERVICESD_SERVICE_NAME SCDontUseServer LSDONOTABORTIFNOASN \
+             ROSETTA_CORESERVICES_COMPAT_MODE ROSETTA_SECURITY_SESSION_API_COMPAT_MODE \
+             ROSETTA_CGS_SESSION_BOOTSTRAP_COMPAT_MODE ROSETTA_CGS_SERVER_VERSION_COMPAT_MODE \
+             ROSETTA_CPS_REGISTRATION_COMPAT_MODE ROSETTA_CPS_SETFRONT_COMPAT_MODE \
+             ROSETTA_DISTRIBUTED_NOTIFICATIONS_INGRESS_MODE ROSETTA_DISTRIBUTED_NOTIFICATIONS_BROKER_PATH \
+             ROSETTA_DISTRIBUTED_NOTIFICATIONS_COMPAT_MODE DYLD_INSERT_LIBRARIES; do
+        eval "present=\${$v+x}"
+        [ -z "$present" ] || die 68 "$v must be unset before the runner"
     done
-fi
-if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
-    for marker in \
-        'PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow' \
-        'PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow' \
-        'PM_POSTWINDOWSELECT_RESULT:SELECTWINDOW_PASS'; do
-        /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq "$marker" ||
-            die 68 "SelectWindow subject marker missing: $marker"
+    
+    [ -n "$EXPECTED_KERNEL_SHA" ] || die 64 "set ROSETTA_EXPECTED_KERNEL_SHA256"
+    
+    for p in /mach_kernel "$TRANSLATOR" "$PRIVATE_DYLD" "$SYSTEM_DYLD" \
+             "$ROSETTA_CACHE" "$ROSETTA_CACHE_MAP" "$COREGRAPHICS" "$CARBONCORE" \
+             "$SECURITY" "$LAUNCHSERVICES" "$HISERVICES" "$LIBSYSTEM" "$DISTNOTED" "$LIBXPC" \
+             "$SUBJECT" "$SUBJECT_SHA_FILE" "$CORE_COMPAT" "$CORE_COMPAT_SHA_FILE" \
+             "$SEC_INTERPOSER" "$SEC_SHA_FILE" "$CGS_INTERPOSER" "$CGS_SHA_FILE" \
+             "$BROKER" "$BROKER_SHA_FILE"; do
+        [ -e "$p" ] || die 66 "missing required path: $p"
     done
-fi
-/usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
-    "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || die 68 "CoreServices CPS registration compatibility build marker missing"
-/usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
-    "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_BUILD_ID:distributed-notifications-ppc-ingress-interposer-v2" || die 68 "embedded distributed-notifications ingress marker missing"
-if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
-    for marker in \
-        'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST:' \
-        'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST_HEX:' \
-        'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_MACH_RETURN:' \
-        'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_FAILURE_BUFFER_HEX:' \
-        'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REPLY_HEX:'; do
-        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
-            die 68 "ShowWindow CGS passive trace marker missing: $marker"
+    if [ -n "$HITOOLBOX_TRACE" ]; then
+        [ -e "$HITOOLBOX_TRACE" ] || die 66 "missing HIToolbox trace dylib: $HITOOLBOX_TRACE"
+        [ -e "$HITOOLBOX_TRACE_SHA_FILE" ] || die 66 "missing HIToolbox trace SHA file: $HITOOLBOX_TRACE_SHA_FILE"
+    fi
+    if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        [ -e "$HITOOLBOX_EXTRAS_COMPAT" ] || die 66 "missing HIToolbox Extras compatibility dylib: $HITOOLBOX_EXTRAS_COMPAT"
+        [ -e "$HITOOLBOX_EXTRAS_COMPAT_SHA_FILE" ] || die 66 "missing HIToolbox Extras compatibility SHA file: $HITOOLBOX_EXTRAS_COMPAT_SHA_FILE"
+        [ -f "$HITOOLBOX_EXTRAS_RESOURCE" ] || die 66 "missing staged Snow Leopard Extras.rsrc: $HITOOLBOX_EXTRAS_RESOURCE"
+    fi
+    
+    EXPECTED_SUBJECT_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$SUBJECT_SHA_FILE")"
+    EXPECTED_CORE_COMPAT_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$CORE_COMPAT_SHA_FILE")"
+    EXPECTED_SEC_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$SEC_SHA_FILE")"
+    EXPECTED_CGS_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$CGS_SHA_FILE")"
+    EXPECTED_BROKER_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$BROKER_SHA_FILE")"
+    if [ -n "$HITOOLBOX_TRACE" ]; then
+        EXPECTED_HITOOLBOX_TRACE_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$HITOOLBOX_TRACE_SHA_FILE")"
+    fi
+    if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        EXPECTED_HITOOLBOX_EXTRAS_COMPAT_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$HITOOLBOX_EXTRAS_COMPAT_SHA_FILE")"
+    fi
+    
+    if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
+        [ -e "$TITLEBAR_BSEARCH_COMPAT" ] || die 66 "missing titlebar bsearch compatibility dylib: $TITLEBAR_BSEARCH_COMPAT"
+        [ -e "$TITLEBAR_BSEARCH_SHA_FILE" ] || die 66 "missing titlebar bsearch compatibility SHA file: $TITLEBAR_BSEARCH_SHA_FILE"
+        [ -f "$TITLEBAR_ARTFILE" ] || die 66 "missing Lion ArtFile.bin"
+        EXPECTED_TITLEBAR_BSEARCH_SHA="$(/usr/bin/awk 'NR==1 {print $1}' "$TITLEBAR_BSEARCH_SHA_FILE")"
+    fi
+    
+    KERNEL_BEFORE="$(sha256 /mach_kernel)"
+    TRANSLATOR_BEFORE="$(sha256 "$TRANSLATOR")"
+    PRIVATE_BEFORE="$(sha256 "$PRIVATE_DYLD")"
+    SYSTEM_BEFORE="$(sha256 "$SYSTEM_DYLD")"
+    CACHE_BEFORE="$(sha256 "$ROSETTA_CACHE")"
+    CACHE_MAP_SHA="$(sha256 "$ROSETTA_CACHE_MAP")"
+    CG_BEFORE="$(sha256 "$COREGRAPHICS")"
+    CARBONCORE_BEFORE="$(sha256 "$CARBONCORE")"
+    SECURITY_BEFORE="$(sha256 "$SECURITY")"
+    LAUNCHSERVICES_BEFORE="$(sha256 "$LAUNCHSERVICES")"
+    HISERVICES_BEFORE="$(sha256 "$HISERVICES")"
+    LIBSYSTEM_BEFORE="$(sha256 "$LIBSYSTEM")"
+    DISTNOTED_BEFORE="$(sha256 "$DISTNOTED")"
+    LIBXPC_BEFORE="$(sha256 "$LIBXPC")"
+    BROKER_BEFORE="$(sha256 "$BROKER")"
+    SUBJECT_BEFORE="$(sha256 "$SUBJECT")"
+    CORE_COMPAT_BEFORE="$(sha256 "$CORE_COMPAT")"
+    SEC_BEFORE="$(sha256 "$SEC_INTERPOSER")"
+    CGS_BEFORE="$(sha256 "$CGS_INTERPOSER")"
+    if [ -n "$HITOOLBOX_TRACE" ]; then
+        HITOOLBOX_TRACE_BEFORE="$(sha256 "$HITOOLBOX_TRACE")"
+    fi
+    if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        HITOOLBOX_EXTRAS_COMPAT_BEFORE="$(sha256 "$HITOOLBOX_EXTRAS_COMPAT")"
+        HITOOLBOX_EXTRAS_RESOURCE_BEFORE="$(sha256 "$HITOOLBOX_EXTRAS_RESOURCE")"
+    fi
+    
+    if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
+        TITLEBAR_BSEARCH_BEFORE="$(sha256 "$TITLEBAR_BSEARCH_COMPAT")"
+        TITLEBAR_ARTFILE_BEFORE="$(sha256 "$TITLEBAR_ARTFILE")"
+        [ "$TITLEBAR_BSEARCH_BEFORE" = "$EXPECTED_TITLEBAR_BSEARCH_SHA" ] ||
+            die 68 "titlebar bsearch compatibility hash mismatch"
+        [ "$TITLEBAR_ARTFILE_BEFORE" = "$EXPECTED_TITLEBAR_ARTFILE_SHA" ] ||
+            die 68 "Lion ArtFile.bin hash mismatch for titlebar compatibility"
+        has_ppc32_arch "$TITLEBAR_BSEARCH_COMPAT" ||
+            die 68 "titlebar bsearch compatibility dylib is not 32-bit PPC"
+        /usr/bin/strings "$TITLEBAR_BSEARCH_COMPAT" |
+            /usr/bin/grep -Fq "PM_COREUI_TITLEBAR_BSEARCH_BUILD_ID:$EXPECTED_TITLEBAR_BSEARCH_BUILD_ID" ||
+            die 68 "titlebar bsearch compatibility build marker missing"
+        TITLEBAR_INTERPOSE_SECTION="$(/usr/bin/otool -l "$TITLEBAR_BSEARCH_COMPAT" | /usr/bin/grep -A10 -B2 '__interpose' || true)"
+        echo "$TITLEBAR_INTERPOSE_SECTION" | /usr/bin/grep -Fq 'size 0x00000008' ||
+            die 68 "titlebar bsearch compatibility does not contain exactly one PPC interpose tuple"
+    fi
+    
+    log "mach_kernel_sha256_before=$KERNEL_BEFORE"
+    log "expected_mach_kernel_sha256=$EXPECTED_KERNEL_SHA"
+    log "translator_sha256_before=$TRANSLATOR_BEFORE"
+    log "private_dyld_sha256_before=$PRIVATE_BEFORE"
+    log "system_dyld_sha256_before=$SYSTEM_BEFORE"
+    log "rosetta_cache_sha256_before=$CACHE_BEFORE"
+    log "rosetta_cache_map_sha256=$CACHE_MAP_SHA"
+    log "coregraphics_sha256_before=$CG_BEFORE"
+    log "distnoted_sha256_before=$DISTNOTED_BEFORE"
+    log "libxpc_sha256_before=$LIBXPC_BEFORE"
+    log "expected_subject_sha256=$EXPECTED_SUBJECT_SHA"
+    log "actual_subject_sha256=$SUBJECT_BEFORE"
+    log "expected_coreservices_cps_registration_compat_sha256=$EXPECTED_CORE_COMPAT_SHA"
+    log "actual_coreservices_cps_registration_compat_sha256=$CORE_COMPAT_BEFORE"
+    log "expected_security_interposer_sha256=$EXPECTED_SEC_SHA"
+    log "actual_security_interposer_sha256=$SEC_BEFORE"
+    log "expected_cgs_interposer_sha256=$EXPECTED_CGS_SHA"
+    log "actual_cgs_interposer_sha256=$CGS_BEFORE"
+    log "expected_broker_sha256=$EXPECTED_BROKER_SHA"
+    log "actual_broker_sha256=$BROKER_BEFORE"
+    if [ -n "$HITOOLBOX_TRACE" ]; then
+        log "expected_hitoolbox_trace_sha256=$EXPECTED_HITOOLBOX_TRACE_SHA"
+        log "actual_hitoolbox_trace_sha256=$HITOOLBOX_TRACE_BEFORE"
+    fi
+    if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        log "expected_hitoolbox_extras_compat_sha256=$EXPECTED_HITOOLBOX_EXTRAS_COMPAT_SHA"
+        log "actual_hitoolbox_extras_compat_sha256=$HITOOLBOX_EXTRAS_COMPAT_BEFORE"
+        log "expected_hitoolbox_extras_resource_sha256=$EXPECTED_HITOOLBOX_EXTRAS_RESOURCE_SHA"
+        log "actual_hitoolbox_extras_resource_sha256=$HITOOLBOX_EXTRAS_RESOURCE_BEFORE"
+    fi
+    
+    [ "$KERNEL_BEFORE" = "$EXPECTED_KERNEL_SHA" ] || die 68 "kernel hash mismatch"
+    [ "$TRANSLATOR_BEFORE" = "$EXPECTED_TRANSLATOR_SHA" ] || die 68 "translator hash mismatch"
+    [ "$PRIVATE_BEFORE" = "$EXPECTED_DYLD_SHA" ] || die 68 "private dyld hash mismatch"
+    [ "$CACHE_BEFORE" = "$EXPECTED_CACHE_SHA" ] || die 68 "Rosetta cache hash mismatch"
+    [ "$CACHE_MAP_SHA" = "$EXPECTED_CACHE_MAP_SHA" ] || die 68 "Rosetta cache map hash mismatch"
+    [ "$CG_BEFORE" = "$EXPECTED_COREGRAPHICS_SHA" ] || die 68 "CoreGraphics baseline hash mismatch"
+    [ "$SUBJECT_BEFORE" = "$EXPECTED_SUBJECT_SHA" ] || die 68 "subject hash mismatch"
+    [ "$CORE_COMPAT_BEFORE" = "$EXPECTED_CORE_COMPAT_SHA" ] || die 68 "CoreServices CPS registration compatibility hash mismatch"
+    [ "$SEC_BEFORE" = "$EXPECTED_SEC_SHA" ] || die 68 "Security interposer hash mismatch"
+    [ "$CGS_BEFORE" = "$EXPECTED_CGS_SHA" ] || die 68 "CGS interposer hash mismatch"
+    [ "$BROKER_BEFORE" = "$EXPECTED_BROKER_SHA" ] || die 68 "broker hash mismatch"
+    if [ -n "$HITOOLBOX_TRACE" ]; then
+        [ "$HITOOLBOX_TRACE_BEFORE" = "$EXPECTED_HITOOLBOX_TRACE_SHA" ] ||
+            die 68 "HIToolbox trace hash mismatch"
+    fi
+    if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        [ "$HITOOLBOX_EXTRAS_COMPAT_BEFORE" = "$EXPECTED_HITOOLBOX_EXTRAS_COMPAT_SHA" ] ||
+            die 68 "HIToolbox Extras compatibility hash mismatch"
+        [ "$HITOOLBOX_EXTRAS_RESOURCE_BEFORE" = "$EXPECTED_HITOOLBOX_EXTRAS_RESOURCE_SHA" ] ||
+            die 68 "staged Snow Leopard Extras.rsrc hash mismatch"
+    fi
+    
+    HANDLER="$(/usr/sbin/sysctl -n kern.exec.archhandler.powerpc 2>/dev/null || true)"
+    log "powerpc_archhandler=$HANDLER"
+    [ "$HANDLER" = "$TRANSLATOR" ] || die 68 "PowerPC handler mismatch"
+    
+    for p in "$SUBJECT" "$CORE_COMPAT" "$SEC_INTERPOSER" "$CGS_INTERPOSER"; do
+        has_ppc32_arch "$p" || die 67 "required artifact is not 32-bit PPC: $p"
     done
-fi
-if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ] || [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
-    for marker in \
-        'CGS_COLOR_PROFILE_CLIENT_LEGACY' \
-        'CGS_COLOR_PROFILE_CLIENT_LION' \
-        'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:' \
-        'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:'; do
-        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
-            die 68 "ColorProfileClient trace marker missing: $marker"
-    done
-fi
-if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
-    for marker in \
-        'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:' \
-        'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REQUEST:' \
-        'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_MACH_RETURN:' \
-        'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY:' \
-        'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:' \
-        'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS'; do
-        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
-            die 68 "ColorProfileClient compatibility marker missing: $marker"
-    done
-fi
-if [ -n "$NEWWINDOW_TRACE_MODE" ] || [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
-    /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_CREATE_WINDOW_INLINE_LEGACY' ||
-        die 68 "CGS NewWindow legacy trace marker missing"
-    /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_CREATE_WINDOW_INLINE_LION' ||
-        die 68 "CGS NewWindow Lion trace marker missing"
-fi
-if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
-    for marker in         'PM_CGS_NEWWINDOW_COMPAT_CALL:'         'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REQUEST:'         'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:'         'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:'         'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS'; do
-        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
-            die 68 "CGS NewWindow compatibility marker missing: $marker"
-    done
-fi
-if [ -n "$RELEASEBACKING_TRACE_MODE" ]; then
-    /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_SET_WINDOW_RELEASE_BACKING_LEGACY' ||
-        die 68 "CGS release-backing legacy trace marker missing"
-    /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_SET_WINDOW_RELEASE_BACKING_LION' ||
-        die 68 "CGS release-backing Lion trace marker missing"
-fi
-if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
-    for marker in         'CGS_SET_WINDOW_RELEASE_BACKING_LEGACY'         'CGS_SET_WINDOW_RELEASE_BACKING_LION'         'PM_CGS_RELEASEBACKING_COMPAT_CALL:'         'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REQUEST:'         'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:'         'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:'         'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS'; do
-        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
-            die 68 "CGS release-backing compatibility marker missing: $marker"
-    done
-fi
-if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
-    for marker in \
-        'CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' \
-        'CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY' \
-        'PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:'; do
-        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
-            die 68 "CGS opacity alpha-plane trace marker missing: $marker"
-    done
-fi
-if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
-    for marker in \
-        'CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' \
-        'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:' \
-        'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REQUEST:' \
-        'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:' \
-        'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:' \
-        'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS'; do
-        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
-            die 68 "CGS opacity create-alpha compatibility marker missing: $marker"
-    done
-fi
-/usr/bin/strings "$BROKER" | /usr/bin/grep -Fq \
-    "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_BUILD_ID:$EXPECTED_BROKER_BUILD_ID" || die 68 "broker build marker missing"
-if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; then
+    if [ -n "$HITOOLBOX_TRACE" ]; then
+        has_ppc32_arch "$HITOOLBOX_TRACE" || die 67 "HIToolbox trace is not 32-bit PPC"
+    fi
+    if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        has_ppc32_arch "$HITOOLBOX_EXTRAS_COMPAT" || die 67 "HIToolbox Extras compatibility dylib is not 32-bit PPC"
+    fi
+    
+    BROKER_ARCH="$(/usr/bin/lipo -info "$BROKER" 2>/dev/null || true)"
+    echo "$BROKER_ARCH" | /usr/bin/grep -Eq '(^|[[:space:]])i386([[:space:]]|$)' ||
+        die 67 "broker is not i386"
+    
+    /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq \
+        "PM_CPS_CREATEWINDOW_BUILD_ID:$EXPECTED_SUBJECT_BUILD_ID" || die 68 "subject build marker missing"
+    if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        for marker in \
+            'PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow' \
+            'PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow' \
+            'PM_POSTWINDOWSHOW_RESULT:SHOWWINDOW_PASS'; do
+            /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq "$marker" ||
+                die 68 "ShowWindow subject marker missing: $marker"
+        done
+    fi
+    if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        for marker in \
+            'PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow' \
+            'PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow' \
+            'PM_POSTWINDOWSELECT_RESULT:SELECTWINDOW_PASS'; do
+            /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq "$marker" ||
+                die 68 "SelectWindow subject marker missing: $marker"
+        done
+    fi
+    /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
+        "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || die 68 "CoreServices CPS registration compatibility build marker missing"
+    /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
+        "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_BUILD_ID:distributed-notifications-ppc-ingress-interposer-v2" || die 68 "embedded distributed-notifications ingress marker missing"
+    if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
+        for marker in \
+            'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST:' \
+            'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST_HEX:' \
+            'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_MACH_RETURN:' \
+            'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_FAILURE_BUFFER_HEX:' \
+            'PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REPLY_HEX:'; do
+            /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
+                die 68 "ShowWindow CGS passive trace marker missing: $marker"
+        done
+    fi
+    if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ] || [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+        for marker in \
+            'CGS_COLOR_PROFILE_CLIENT_LEGACY' \
+            'CGS_COLOR_PROFILE_CLIENT_LION' \
+            'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:' \
+            'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:'; do
+            /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
+                die 68 "ColorProfileClient trace marker missing: $marker"
+        done
+    fi
+    if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+        for marker in \
+            'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:' \
+            'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REQUEST:' \
+            'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_MACH_RETURN:' \
+            'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY:' \
+            'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:' \
+            'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS'; do
+            /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
+                die 68 "ColorProfileClient compatibility marker missing: $marker"
+        done
+    fi
+    if [ -n "$NEWWINDOW_TRACE_MODE" ] || [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_CREATE_WINDOW_INLINE_LEGACY' ||
+            die 68 "CGS NewWindow legacy trace marker missing"
+        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_CREATE_WINDOW_INLINE_LION' ||
+            die 68 "CGS NewWindow Lion trace marker missing"
+    fi
+    if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+        for marker in         'PM_CGS_NEWWINDOW_COMPAT_CALL:'         'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REQUEST:'         'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:'         'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:'         'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS'; do
+            /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
+                die 68 "CGS NewWindow compatibility marker missing: $marker"
+        done
+    fi
+    if [ -n "$RELEASEBACKING_TRACE_MODE" ]; then
+        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_SET_WINDOW_RELEASE_BACKING_LEGACY' ||
+            die 68 "CGS release-backing legacy trace marker missing"
+        /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'CGS_SET_WINDOW_RELEASE_BACKING_LION' ||
+            die 68 "CGS release-backing Lion trace marker missing"
+    fi
+    if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+        for marker in         'CGS_SET_WINDOW_RELEASE_BACKING_LEGACY'         'CGS_SET_WINDOW_RELEASE_BACKING_LION'         'PM_CGS_RELEASEBACKING_COMPAT_CALL:'         'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REQUEST:'         'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:'         'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:'         'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS'; do
+            /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
+                die 68 "CGS release-backing compatibility marker missing: $marker"
+        done
+    fi
+    if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+        for marker in \
+            'CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' \
+            'CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY' \
+            'PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:'; do
+            /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
+                die 68 "CGS opacity alpha-plane trace marker missing: $marker"
+        done
+    fi
+    if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+        for marker in \
+            'CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' \
+            'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:' \
+            'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REQUEST:' \
+            'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:' \
+            'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:' \
+            'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS'; do
+            /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "$marker" ||
+                die 68 "CGS opacity create-alpha compatibility marker missing: $marker"
+        done
+    fi
     /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq \
-        'PM_DISTRIBUTED_NOTIFICATIONS_SHOWWINDOW_SIXTH_REGISTRATION_POLICY:index=6 allowed=3 counter=2' ||
-        die 68 "exact-seven broker missing inherited exact-six policy marker"
-    /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq \
-        'PM_DISTRIBUTED_NOTIFICATIONS_SHOWWINDOW_SEVENTH_REGISTRATION_POLICY:index=7 allowed=5 counter=1' ||
-        die 68 "exact-seven ShowWindow registration policy marker missing"
-elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ]; then
-    /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq \
-        'PM_DISTRIBUTED_NOTIFICATIONS_SHOWWINDOW_SIXTH_REGISTRATION_POLICY:index=6 allowed=3 counter=2' ||
-        die 68 "exact-six ShowWindow registration policy marker missing"
-fi
-if [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
-    for marker in \
-        'PM_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SCHEMA_AUDIT_CAPTURE:' \
-        'PM_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SCHEMA_AUDIT_REJECT:' \
-        'PM_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SCHEMA_AUDIT_SUMMARY:' \
-        'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:POST_SHOWWINDOW_AUDIT_PASS'; do
-        /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq "$marker" ||
-            die 68 "post-ShowWindow schema-audit broker marker missing: $marker"
+        "PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_BUILD_ID:$EXPECTED_BROKER_BUILD_ID" || die 68 "broker build marker missing"
+    if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; then
+        /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq \
+            'PM_DISTRIBUTED_NOTIFICATIONS_SHOWWINDOW_SIXTH_REGISTRATION_POLICY:index=6 allowed=3 counter=2' ||
+            die 68 "exact-seven broker missing inherited exact-six policy marker"
+        /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq \
+            'PM_DISTRIBUTED_NOTIFICATIONS_SHOWWINDOW_SEVENTH_REGISTRATION_POLICY:index=7 allowed=5 counter=1' ||
+            die 68 "exact-seven ShowWindow registration policy marker missing"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ]; then
+        /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq \
+            'PM_DISTRIBUTED_NOTIFICATIONS_SHOWWINDOW_SIXTH_REGISTRATION_POLICY:index=6 allowed=3 counter=2' ||
+            die 68 "exact-six ShowWindow registration policy marker missing"
+    fi
+    if [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
+        for marker in \
+            'PM_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SCHEMA_AUDIT_CAPTURE:' \
+            'PM_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SCHEMA_AUDIT_REJECT:' \
+            'PM_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SCHEMA_AUDIT_SUMMARY:' \
+            'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:POST_SHOWWINDOW_AUDIT_PASS'; do
+            /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq "$marker" ||
+                die 68 "post-ShowWindow schema-audit broker marker missing: $marker"
+        done
+    fi
+    if [ -n "$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT" ]; then
+        for marker in \
+            'PM_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_CAPTURE:' \
+            'PM_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REJECT:' \
+            'PM_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_SUMMARY:' \
+            'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:POST_SHOWWINDOW_SEVENTH_AUDIT_PASS'; do
+            /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq "$marker" ||
+                die 68 "seventh-request schema-audit broker marker missing: $marker"
+        done
+    fi
+    /usr/bin/strings "$SEC_INTERPOSER" | /usr/bin/grep -Fq \
+        "PM_SECURITY_SESSION_API_COMPAT_BUILD_ID:$EXPECTED_SEC_BUILD_ID" || die 68 "Security build marker missing"
+    /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq \
+        "PM_CGS_SESSION_BOOTSTRAP_COMPAT_BUILD_ID:$EXPECTED_CGS_BUILD_ID" || die 68 "CGS build marker missing"
+    if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+        /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'com.apple.dock.server' ||
+            die 68 "DockServer service marker missing from CGS interposer"
+        /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' ||
+            die 68 "DockServer adapter PASS marker missing from CGS interposer"
+    fi
+    if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
+        /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'com.apple.FontServer' ||
+            die 68 "FontServer service marker missing from CGS interposer"
+        /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' ||
+            die 68 "FontServer adapter PASS marker missing from CGS interposer"
+    fi
+    if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
+        /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REQUEST:' ||
+            die 68 "FontServer RPC trace request marker missing from CGS interposer"
+        /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REPLY:' ||
+            die 68 "FontServer RPC trace reply marker missing from CGS interposer"
+    fi
+    if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+        for marker in \
+            'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_CALL:' \
+            'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REQUEST:' \
+            'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_NATIVE_MACH_RETURN:' \
+            'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_NATIVE_REPLY:' \
+            'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REPLY:' \
+            'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:ADAPTER_PASS'; do
+            /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq "$marker" ||
+                die 68 "FontServer rendezvous compatibility marker missing from CGS interposer: $marker"
+        done
+    fi
+    if [ -n "$HITOOLBOX_TRACE" ]; then
+        /usr/bin/strings "$HITOOLBOX_TRACE" | /usr/bin/grep -Fq \
+            "PM_HITOOLBOX_CFBUNDLE_TRACE_BUILD_ID:$EXPECTED_HITOOLBOX_TRACE_BUILD_ID" ||
+            die 68 "HIToolbox trace build marker missing"
+        /usr/bin/nm -u "$HITOOLBOX_TRACE" | /usr/bin/grep -Fq '_dlsym' &&
+            die 68 "HIToolbox trace unexpectedly imports dlsym"
+    fi
+    if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        /usr/bin/strings "$HITOOLBOX_EXTRAS_COMPAT" | /usr/bin/grep -Fq \
+            "PM_HITOOLBOX_EXTRAS_COMPAT_BUILD_ID:$EXPECTED_HITOOLBOX_EXTRAS_COMPAT_BUILD_ID" ||
+            die 68 "HIToolbox Extras compatibility build marker missing"
+        /usr/bin/nm -u "$HITOOLBOX_EXTRAS_COMPAT" | /usr/bin/grep -Fq '_dlsym' &&
+            die 68 "HIToolbox Extras compatibility dylib unexpectedly imports dlsym"
+    fi
+    
+    for image in "$COREGRAPHICS" "$CARBONCORE" "$SECURITY" "$LAUNCHSERVICES" "$HISERVICES" "$LIBSYSTEM"; do
+        /usr/bin/grep -Fq "$image" "$ROSETTA_CACHE_MAP" || die 68 "required image absent from Rosetta cache map: $image"
     done
-fi
-if [ -n "$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT" ]; then
-    for marker in \
-        'PM_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_CAPTURE:' \
-        'PM_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REJECT:' \
-        'PM_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_SUMMARY:' \
-        'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:POST_SHOWWINDOW_SEVENTH_AUDIT_PASS'; do
-        /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq "$marker" ||
-            die 68 "seventh-request schema-audit broker marker missing: $marker"
-    done
-fi
-/usr/bin/strings "$SEC_INTERPOSER" | /usr/bin/grep -Fq \
-    "PM_SECURITY_SESSION_API_COMPAT_BUILD_ID:$EXPECTED_SEC_BUILD_ID" || die 68 "Security build marker missing"
-/usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq \
-    "PM_CGS_SESSION_BOOTSTRAP_COMPAT_BUILD_ID:$EXPECTED_CGS_BUILD_ID" || die 68 "CGS build marker missing"
-if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
-    /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'com.apple.dock.server' ||
-        die 68 "DockServer service marker missing from CGS interposer"
-    /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' ||
-        die 68 "DockServer adapter PASS marker missing from CGS interposer"
-fi
-if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
-    /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'com.apple.FontServer' ||
-        die 68 "FontServer service marker missing from CGS interposer"
-    /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' ||
-        die 68 "FontServer adapter PASS marker missing from CGS interposer"
-fi
-if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
-    /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REQUEST:' ||
-        die 68 "FontServer RPC trace request marker missing from CGS interposer"
-    /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REPLY:' ||
-        die 68 "FontServer RPC trace reply marker missing from CGS interposer"
-fi
-if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
-    for marker in \
-        'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_CALL:' \
-        'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REQUEST:' \
-        'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_NATIVE_MACH_RETURN:' \
-        'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_NATIVE_REPLY:' \
-        'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REPLY:' \
-        'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:ADAPTER_PASS'; do
-        /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq "$marker" ||
-            die 68 "FontServer rendezvous compatibility marker missing from CGS interposer: $marker"
-    done
-fi
-if [ -n "$HITOOLBOX_TRACE" ]; then
-    /usr/bin/strings "$HITOOLBOX_TRACE" | /usr/bin/grep -Fq \
-        "PM_HITOOLBOX_CFBUNDLE_TRACE_BUILD_ID:$EXPECTED_HITOOLBOX_TRACE_BUILD_ID" ||
-        die 68 "HIToolbox trace build marker missing"
-    /usr/bin/nm -u "$HITOOLBOX_TRACE" | /usr/bin/grep -Fq '_dlsym' &&
-        die 68 "HIToolbox trace unexpectedly imports dlsym"
-fi
-if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
-    /usr/bin/strings "$HITOOLBOX_EXTRAS_COMPAT" | /usr/bin/grep -Fq \
-        "PM_HITOOLBOX_EXTRAS_COMPAT_BUILD_ID:$EXPECTED_HITOOLBOX_EXTRAS_COMPAT_BUILD_ID" ||
-        die 68 "HIToolbox Extras compatibility build marker missing"
-    /usr/bin/nm -u "$HITOOLBOX_EXTRAS_COMPAT" | /usr/bin/grep -Fq '_dlsym' &&
-        die 68 "HIToolbox Extras compatibility dylib unexpectedly imports dlsym"
-fi
-
-for image in "$COREGRAPHICS" "$CARBONCORE" "$SECURITY" "$LAUNCHSERVICES" "$HISERVICES" "$LIBSYSTEM"; do
-    /usr/bin/grep -Fq "$image" "$ROSETTA_CACHE_MAP" || die 68 "required image absent from Rosetta cache map: $image"
-done
-
-OT="$(/usr/bin/otool -l "$SUBJECT" | /usr/bin/grep -A3 LC_LOAD_DYLINKER || true)"
-echo "$OT" | /usr/bin/tee -a "$REPORT"
-echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || die 68 "LC_LOAD_DYLINKER is not /usr/oah/dyld"
-
-CORE_ABS="$(abspath "$CORE_COMPAT")"
-SEC_ABS="$(abspath "$SEC_INTERPOSER")"
-CGS_ABS="$(abspath "$CGS_INTERPOSER")"
-BROKER_ABS="$(abspath "$BROKER")"
-[ -n "$CORE_ABS" ] || die 68 "could not resolve CoreServices CPS registration compatibility path"
-[ -n "$SEC_ABS" ] || die 68 "could not resolve Security interposer path"
-[ -n "$CGS_ABS" ] || die 68 "could not resolve CGS interposer path"
-[ -n "$BROKER_ABS" ] || die 68 "could not resolve native notification broker path"
-INSERTED="$CORE_ABS:$SEC_ABS:$CGS_ABS"
-if [ -n "$HITOOLBOX_TRACE" ]; then
-    HITOOLBOX_TRACE_ABS="$(abspath "$HITOOLBOX_TRACE")"
-    [ -n "$HITOOLBOX_TRACE_ABS" ] || die 68 "could not resolve HIToolbox trace path"
-    INSERTED="$INSERTED:$HITOOLBOX_TRACE_ABS"
-fi
-if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
-    HITOOLBOX_EXTRAS_COMPAT_ABS="$(abspath "$HITOOLBOX_EXTRAS_COMPAT")"
-    HITOOLBOX_EXTRAS_RESOURCE_ABS="$(abspath "$HITOOLBOX_EXTRAS_RESOURCE")"
-    [ -n "$HITOOLBOX_EXTRAS_COMPAT_ABS" ] || die 68 "could not resolve HIToolbox Extras compatibility path"
-    [ -n "$HITOOLBOX_EXTRAS_RESOURCE_ABS" ] || die 68 "could not resolve staged Extras.rsrc path"
-    INSERTED="$INSERTED:$HITOOLBOX_EXTRAS_COMPAT_ABS"
-fi
-if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
-    TITLEBAR_BSEARCH_ABS="$(abspath "$TITLEBAR_BSEARCH_COMPAT")"
-    [ -n "$TITLEBAR_BSEARCH_ABS" ] || die 68 "could not resolve titlebar bsearch compatibility path"
-    INSERTED="$INSERTED:$TITLEBAR_BSEARCH_ABS"
-fi
-log "coreservices_cps_registration_compat_absolute_path=$CORE_ABS"
-log "security_interposer_absolute_path=$SEC_ABS"
-log "cgs_interposer_absolute_path=$CGS_ABS"
-log "distributed_notifications_broker_absolute_path=$BROKER_ABS"
-if [ -n "$HITOOLBOX_TRACE" ]; then
-    log "hitoolbox_cfbundle_trace_absolute_path=$HITOOLBOX_TRACE_ABS"
-fi
-if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
-    log "hitoolbox_extras_compat_absolute_path=$HITOOLBOX_EXTRAS_COMPAT_ABS"
-    log "hitoolbox_extras_resource_absolute_path=$HITOOLBOX_EXTRAS_RESOURCE_ABS"
-    export ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE="$HITOOLBOX_EXTRAS_MODE"
-    export ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH="$HITOOLBOX_EXTRAS_RESOURCE_ABS"
-fi
-if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
-    log "coreui_titlebar_bsearch_compat_absolute_path=$TITLEBAR_BSEARCH_ABS"
-    log "coreui_titlebar_bsearch_compat_sha256=$TITLEBAR_BSEARCH_BEFORE"
-    log "coreui_titlebar_bsearch_mode=$TITLEBAR_BSEARCH_MODE"
-    log "coreui_titlebar_artfile_sha256=$TITLEBAR_ARTFILE_BEFORE"
-    export ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_MODE="$TITLEBAR_BSEARCH_MODE"
-fi
-if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
-    : > "$SCHEMA_AUDIT_REPORT" || die 73 "could not initialize schema audit report: $SCHEMA_AUDIT_REPORT"
-    log "distributed_notifications_schema_audit_report=$SCHEMA_AUDIT_REPORT"
-fi
-if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ]; then
-    : > "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ||
-        die 73 "could not initialize post-Extras schema audit report: $POST_EXTRAS_SCHEMA_AUDIT_REPORT"
-    export ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_EXTRAS_SCHEMA_AUDIT_REPORT="$POST_EXTRAS_SCHEMA_AUDIT_REPORT"
-    log "distributed_notifications_post_extras_schema_audit_report=$POST_EXTRAS_SCHEMA_AUDIT_REPORT"
-fi
-if [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ]; then
-    : > "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ||
-        die 73 "could not initialize post-FontServer schema audit report: $POST_FONTSERVER_SCHEMA_AUDIT_REPORT"
-    export ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_FONTSERVER_SCHEMA_AUDIT_REPORT="$POST_FONTSERVER_SCHEMA_AUDIT_REPORT"
-    log "distributed_notifications_post_fontserver_schema_audit_report=$POST_FONTSERVER_SCHEMA_AUDIT_REPORT"
-fi
-if [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
-    : > "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ||
-        die 73 "could not initialize post-ShowWindow schema audit report: $POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT"
-    export ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT="$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT"
-    log "distributed_notifications_post_showwindow_schema_audit_report=$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT"
-fi
-if [ -n "$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT" ]; then
-    : > "$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT" ||
-        die 73 "could not initialize seventh-request schema audit report: $POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT"
-    export ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT="$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT"
-    log "distributed_notifications_post_showwindow_seventh_schema_audit_report=$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT"
-fi
-if [ -n "$REAL_REGISTRATION_MODE" ]; then
-    log "distributed_notifications_real_registration_mode=$REAL_REGISTRATION_MODE"
-fi
-if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
-    log "dockserver_bootstrap_compat_mode=$DOCKSERVER_COMPAT_MODE"
-    export ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE="$DOCKSERVER_COMPAT_MODE"
-else
-    unset ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE
-fi
-if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
-    log "fontserver_bootstrap_compat_mode=$FONTSERVER_COMPAT_MODE"
-    export ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE="$FONTSERVER_COMPAT_MODE"
-else
-    unset ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE
-fi
-if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
-    log "fontserver_rpc_trace_mode=$FONTSERVER_RPC_TRACE_MODE"
-    export ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE="$FONTSERVER_RPC_TRACE_MODE"
-else
-    unset ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE
-fi
-if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
-    log "fontserver_rendezvous_compat_mode=$FONTSERVER_RENDEZVOUS_COMPAT_MODE"
-    export ROSETTA_CGS_FONTSERVER_RENDEZVOUS_COMPAT_MODE="$FONTSERVER_RENDEZVOUS_COMPAT_MODE"
-else
-    unset ROSETTA_CGS_FONTSERVER_RENDEZVOUS_COMPAT_MODE
-fi
-if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
-    log "cgs_newwindow_compat_mode=$NEWWINDOW_COMPAT_MODE"
-    export ROSETTA_CGS_NEWWINDOW_COMPAT_MODE="$NEWWINDOW_COMPAT_MODE"
-else
-    unset ROSETTA_CGS_NEWWINDOW_COMPAT_MODE
-fi
-if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
-    log "cgs_releasebacking_compat_mode=$RELEASEBACKING_COMPAT_MODE"
-    export ROSETTA_CGS_RELEASEBACKING_COMPAT_MODE="$RELEASEBACKING_COMPAT_MODE"
-else
-    unset ROSETTA_CGS_RELEASEBACKING_COMPAT_MODE
-fi
-if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
-    log "cgs_post_releasebacking_opacity_alpha_trace_mode=$OPACITY_ALPHA_TRACE_MODE"
-fi
-if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
-    log "cgs_opacity_alpha_create_compat_mode=$OPACITY_ALPHA_CREATE_COMPAT_MODE"
-    export ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE="$OPACITY_ALPHA_CREATE_COMPAT_MODE"
-else
-    unset ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE
-fi
-if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
-    log "post_createwindow_title_validation_mode=$POST_CREATEWINDOW_TITLE_MODE"
-fi
-if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
-    log "post_windowtitle_showwindow_validation_mode=$POST_WINDOWTITLE_SHOWWINDOW_MODE"
-fi
-if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
-    log "post_showwindow_selectwindow_validation_mode=$POST_SHOWWINDOW_SELECTWINDOW_MODE"
-fi
-if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
-    log "showwindow_unknown_cgs_trace_mode=$SHOWWINDOW_UNKNOWN_TRACE_MODE"
-    export ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE="$SHOWWINDOW_UNKNOWN_TRACE_MODE"
-else
-    unset ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE
+    
+    OT="$(/usr/bin/otool -l "$SUBJECT" | /usr/bin/grep -A3 LC_LOAD_DYLINKER || true)"
+    echo "$OT" | /usr/bin/tee -a "$REPORT"
+    echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || die 68 "LC_LOAD_DYLINKER is not /usr/oah/dyld"
+    
+    CORE_ABS="$(abspath "$CORE_COMPAT")"
+    SEC_ABS="$(abspath "$SEC_INTERPOSER")"
+    CGS_ABS="$(abspath "$CGS_INTERPOSER")"
+    BROKER_ABS="$(abspath "$BROKER")"
+    [ -n "$CORE_ABS" ] || die 68 "could not resolve CoreServices CPS registration compatibility path"
+    [ -n "$SEC_ABS" ] || die 68 "could not resolve Security interposer path"
+    [ -n "$CGS_ABS" ] || die 68 "could not resolve CGS interposer path"
+    [ -n "$BROKER_ABS" ] || die 68 "could not resolve native notification broker path"
+    INSERTED="$CORE_ABS:$SEC_ABS:$CGS_ABS"
+    if [ -n "$HITOOLBOX_TRACE" ]; then
+        HITOOLBOX_TRACE_ABS="$(abspath "$HITOOLBOX_TRACE")"
+        [ -n "$HITOOLBOX_TRACE_ABS" ] || die 68 "could not resolve HIToolbox trace path"
+        INSERTED="$INSERTED:$HITOOLBOX_TRACE_ABS"
+    fi
+    if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        HITOOLBOX_EXTRAS_COMPAT_ABS="$(abspath "$HITOOLBOX_EXTRAS_COMPAT")"
+        HITOOLBOX_EXTRAS_RESOURCE_ABS="$(abspath "$HITOOLBOX_EXTRAS_RESOURCE")"
+        [ -n "$HITOOLBOX_EXTRAS_COMPAT_ABS" ] || die 68 "could not resolve HIToolbox Extras compatibility path"
+        [ -n "$HITOOLBOX_EXTRAS_RESOURCE_ABS" ] || die 68 "could not resolve staged Extras.rsrc path"
+        INSERTED="$INSERTED:$HITOOLBOX_EXTRAS_COMPAT_ABS"
+    fi
+    if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
+        TITLEBAR_BSEARCH_ABS="$(abspath "$TITLEBAR_BSEARCH_COMPAT")"
+        [ -n "$TITLEBAR_BSEARCH_ABS" ] || die 68 "could not resolve titlebar bsearch compatibility path"
+        INSERTED="$INSERTED:$TITLEBAR_BSEARCH_ABS"
+    fi
+    log "coreservices_cps_registration_compat_absolute_path=$CORE_ABS"
+    log "security_interposer_absolute_path=$SEC_ABS"
+    log "cgs_interposer_absolute_path=$CGS_ABS"
+    log "distributed_notifications_broker_absolute_path=$BROKER_ABS"
+    if [ -n "$HITOOLBOX_TRACE" ]; then
+        log "hitoolbox_cfbundle_trace_absolute_path=$HITOOLBOX_TRACE_ABS"
+    fi
+    if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        log "hitoolbox_extras_compat_absolute_path=$HITOOLBOX_EXTRAS_COMPAT_ABS"
+        log "hitoolbox_extras_resource_absolute_path=$HITOOLBOX_EXTRAS_RESOURCE_ABS"
+        export ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_MODE="$HITOOLBOX_EXTRAS_MODE"
+        export ROSETTA_HITOOLBOX_EXTRAS_RESOURCE_PATH="$HITOOLBOX_EXTRAS_RESOURCE_ABS"
+    fi
+    if [ -n "$TITLEBAR_BSEARCH_COMPAT" ]; then
+        log "coreui_titlebar_bsearch_compat_absolute_path=$TITLEBAR_BSEARCH_ABS"
+        log "coreui_titlebar_bsearch_compat_sha256=$TITLEBAR_BSEARCH_BEFORE"
+        log "coreui_titlebar_bsearch_mode=$TITLEBAR_BSEARCH_MODE"
+        log "coreui_titlebar_artfile_sha256=$TITLEBAR_ARTFILE_BEFORE"
+        export ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_MODE="$TITLEBAR_BSEARCH_MODE"
+    fi
+    if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
+        : > "$SCHEMA_AUDIT_REPORT" || die 73 "could not initialize schema audit report: $SCHEMA_AUDIT_REPORT"
+        log "distributed_notifications_schema_audit_report=$SCHEMA_AUDIT_REPORT"
+    fi
+    if [ -n "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ]; then
+        : > "$POST_EXTRAS_SCHEMA_AUDIT_REPORT" ||
+            die 73 "could not initialize post-Extras schema audit report: $POST_EXTRAS_SCHEMA_AUDIT_REPORT"
+        export ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_EXTRAS_SCHEMA_AUDIT_REPORT="$POST_EXTRAS_SCHEMA_AUDIT_REPORT"
+        log "distributed_notifications_post_extras_schema_audit_report=$POST_EXTRAS_SCHEMA_AUDIT_REPORT"
+    fi
+    if [ -n "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ]; then
+        : > "$POST_FONTSERVER_SCHEMA_AUDIT_REPORT" ||
+            die 73 "could not initialize post-FontServer schema audit report: $POST_FONTSERVER_SCHEMA_AUDIT_REPORT"
+        export ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_FONTSERVER_SCHEMA_AUDIT_REPORT="$POST_FONTSERVER_SCHEMA_AUDIT_REPORT"
+        log "distributed_notifications_post_fontserver_schema_audit_report=$POST_FONTSERVER_SCHEMA_AUDIT_REPORT"
+    fi
+    if [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
+        : > "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ||
+            die 73 "could not initialize post-ShowWindow schema audit report: $POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT"
+        export ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT="$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT"
+        log "distributed_notifications_post_showwindow_schema_audit_report=$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT"
+    fi
+    if [ -n "$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT" ]; then
+        : > "$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT" ||
+            die 73 "could not initialize seventh-request schema audit report: $POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT"
+        export ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT="$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT"
+        log "distributed_notifications_post_showwindow_seventh_schema_audit_report=$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT"
+    fi
+    if [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "distributed_notifications_real_registration_mode=$REAL_REGISTRATION_MODE"
+    fi
+    if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+        log "dockserver_bootstrap_compat_mode=$DOCKSERVER_COMPAT_MODE"
+        export ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE="$DOCKSERVER_COMPAT_MODE"
+    else
+        unset ROSETTA_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_MODE
+    fi
+    if [ -n "$FONTSERVER_COMPAT_MODE" ]; then
+        log "fontserver_bootstrap_compat_mode=$FONTSERVER_COMPAT_MODE"
+        export ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE="$FONTSERVER_COMPAT_MODE"
+    else
+        unset ROSETTA_CGS_FONTSERVER_BOOTSTRAP_COMPAT_MODE
+    fi
+    if [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
+        log "fontserver_rpc_trace_mode=$FONTSERVER_RPC_TRACE_MODE"
+        export ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE="$FONTSERVER_RPC_TRACE_MODE"
+    else
+        unset ROSETTA_CGS_FONTSERVER_RPC_TRACE_MODE
+    fi
+    if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+        log "fontserver_rendezvous_compat_mode=$FONTSERVER_RENDEZVOUS_COMPAT_MODE"
+        export ROSETTA_CGS_FONTSERVER_RENDEZVOUS_COMPAT_MODE="$FONTSERVER_RENDEZVOUS_COMPAT_MODE"
+    else
+        unset ROSETTA_CGS_FONTSERVER_RENDEZVOUS_COMPAT_MODE
+    fi
+    if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+        log "cgs_newwindow_compat_mode=$NEWWINDOW_COMPAT_MODE"
+        export ROSETTA_CGS_NEWWINDOW_COMPAT_MODE="$NEWWINDOW_COMPAT_MODE"
+    else
+        unset ROSETTA_CGS_NEWWINDOW_COMPAT_MODE
+    fi
+    if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+        log "cgs_releasebacking_compat_mode=$RELEASEBACKING_COMPAT_MODE"
+        export ROSETTA_CGS_RELEASEBACKING_COMPAT_MODE="$RELEASEBACKING_COMPAT_MODE"
+    else
+        unset ROSETTA_CGS_RELEASEBACKING_COMPAT_MODE
+    fi
+    if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+        log "cgs_post_releasebacking_opacity_alpha_trace_mode=$OPACITY_ALPHA_TRACE_MODE"
+    fi
+    if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+        log "cgs_opacity_alpha_create_compat_mode=$OPACITY_ALPHA_CREATE_COMPAT_MODE"
+        export ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE="$OPACITY_ALPHA_CREATE_COMPAT_MODE"
+    else
+        unset ROSETTA_CGS_OPACITY_ALPHA_CREATE_COMPAT_MODE
+    fi
+    if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+        log "post_createwindow_title_validation_mode=$POST_CREATEWINDOW_TITLE_MODE"
+    fi
+    if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "post_windowtitle_showwindow_validation_mode=$POST_WINDOWTITLE_SHOWWINDOW_MODE"
+    fi
+    if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        log "post_showwindow_selectwindow_validation_mode=$POST_SHOWWINDOW_SELECTWINDOW_MODE"
+    fi
+    if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
+        log "showwindow_unknown_cgs_trace_mode=$SHOWWINDOW_UNKNOWN_TRACE_MODE"
+        export ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE="$SHOWWINDOW_UNKNOWN_TRACE_MODE"
+    else
+        unset ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE
+    fi
 fi
 if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
     log "showwindow_add_tracking_area_compat_mode=$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE"
