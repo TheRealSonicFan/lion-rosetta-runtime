@@ -2774,6 +2774,9 @@ handle_cgs_order_front_conditionally_compat(
     unsigned int reply_changed = 0U;
     unsigned int reply_body_changed = 0U;
     int exact;
+    int lion_showwindow_mode;
+    int lion_selectwindow_mode;
+    int call_index_ok;
     int reply_swapped = 0;
     const char *reply_class = "UNEXPECTED";
 
