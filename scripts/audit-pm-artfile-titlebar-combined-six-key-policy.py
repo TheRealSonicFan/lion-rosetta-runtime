@@ -477,7 +477,8 @@ def main():
         write_line(fp, "No PowerPC subject was launched.")
         write_line(fp, "No process was attached.")
         write_line(fp, "No interposer was built or installed.")
-        write_line(fp, "The already-live original exact-three interposer policy was not changed.")\n        write_line(fp, "The residual three-key policy was evaluated only inside this analyzer.")
+        write_line(fp, "The already-live original exact-three interposer policy was not changed.")
+        write_line(fp, "The residual three-key policy was evaluated only inside this analyzer.")
         write_line(fp, "No framework, resource, Rosetta cache, service, or XNU state was modified.")
 
     print("Created: %s" % report)
