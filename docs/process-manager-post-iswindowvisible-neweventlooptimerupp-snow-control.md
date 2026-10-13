@@ -39,7 +39,7 @@ Pinned blobs:
 
 ```text
 NewEventLoopTimerUPP subject source   a2dd3716bb06cc7c54d247a010451a48a5dd80b3
-NewEventLoopTimerUPP Snow builder     a95b601eeb504ea0142c2170f4f2a1fb4b5b8e89
+NewEventLoopTimerUPP Snow builder     20423ad2e1aa0f44bead8ecfec50f07a2ab34526
 Snow integration runner               f08f790eb67673e795f3c10e275102bc9059a790
 v3 CoreServices artifact SHA-256      28d44246249f41b2de8ef5abda83733272aff2d02df79392a949b899461d0578
 exact-six titlebar artifact SHA-256    6bd11d4e9b271eab926f56f9cf99f4c4fb606db1d69a98f062cc398561488c72
@@ -118,7 +118,7 @@ test "$(git hash-object ./tests/ppc-process-manager-postidentity-neweventlooptim
   "a2dd3716bb06cc7c54d247a010451a48a5dd80b3" || exit 1
 
 test "$(git hash-object ./scripts/build-ppc-process-manager-neweventlooptimerupp-on-snowleopard.sh)" = \
-  "a95b601eeb504ea0142c2170f4f2a1fb4b5b8e89" || exit 1
+  "20423ad2e1aa0f44bead8ecfec50f07a2ab34526" || exit 1
 
 test "$(git hash-object ./scripts/run-snowleopard-ppc-process-manager-createwindow-distnotify-integration-control.sh)" = \
   "f08f790eb67673e795f3c10e275102bc9059a790" || exit 1
