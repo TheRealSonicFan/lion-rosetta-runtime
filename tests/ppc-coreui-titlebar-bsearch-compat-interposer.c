@@ -4,12 +4,12 @@
 #include <string.h>
 #include <unistd.h>
 
-#define BUILD_ID "coreui-titlebar-bsearch-exact-three-v1"
+#define BUILD_ID "coreui-titlebar-bsearch-exact-six-v2"
 #define BUILD_MARKER "PM_COREUI_TITLEBAR_BSEARCH_BUILD_ID:" BUILD_ID "\n"
 
 #define MODE_ENV "ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_MODE"
 #define MODE_PASSTHROUGH "passthrough"
-#define MODE_LION "lion-exact-three-v1"
+#define MODE_LION "lion-exact-six-v1"
 
 #define RECORD_SIZE 12U
 #define PATH_OFFSET 4U
@@ -39,22 +39,35 @@ struct interpose_tuple {
 
 static struct interpose_tuple sBsearchInterpose;
 static bsearch_fn gOriginal = NULL;
-static unsigned int gSeen[3] = { 0, 0, 0 };
+static unsigned int gSeen[6] = { 0, 0, 0, 0, 0, 0 };
 static int gBuildLogged = 0;
 
-static const unsigned char kSnowKeys[3][PATH_LENGTH] = {
+static const unsigned char kSnowKeys[6][PATH_LENGTH] = {
     { 0xa6, 0x13, 0x16, 0x1f, 0x7a, 0x00, 0x00, 0x00 },
     { 0xa6, 0x16, 0x1f, 0x56, 0x7a, 0x00, 0x00, 0x00 },
-    { 0xa6, 0x16, 0x1f, 0x7a, 0xb6, 0x00, 0x00, 0x00 }
+    { 0xa6, 0x16, 0x1f, 0x7a, 0xb6, 0x00, 0x00, 0x00 },
+    { 0xa6, 0x01, 0x13, 0x16, 0x7a, 0x00, 0x00, 0x00 },
+    { 0xa6, 0x01, 0x16, 0x56, 0x7a, 0x00, 0x00, 0x00 },
+    { 0xa6, 0x01, 0x16, 0x7a, 0xb6, 0x00, 0x00, 0x00 }
 };
 
-static const unsigned char kLionKeys[3][PATH_LENGTH] = {
+static const unsigned char kLionKeys[6][PATH_LENGTH] = {
     { 0x99, 0x14, 0x17, 0x22, 0x72, 0x00, 0x00, 0x00 },
     { 0x99, 0x17, 0x22, 0x55, 0x72, 0x00, 0x00, 0x00 },
-    { 0x99, 0x17, 0x22, 0x72, 0xa9, 0x00, 0x00, 0x00 }
+    { 0x99, 0x17, 0x22, 0x72, 0xa9, 0x00, 0x00, 0x00 },
+    { 0x99, 0x01, 0x14, 0x17, 0x72, 0x00, 0x00, 0x00 },
+    { 0x99, 0x01, 0x17, 0x55, 0x72, 0x00, 0x00, 0x00 },
+    { 0x99, 0x01, 0x17, 0x72, 0xa9, 0x00, 0x00, 0x00 }
 };
 
-static const char *kNames[3] = { "clear", "minus", "zoom" };
+static const char *kNames[6] = {
+    "disabled-clear",
+    "disabled-minus",
+    "disabled-zoom",
+    "active-clear",
+    "active-minus",
+    "active-zoom"
+};
 
 static void
 write_literal(const char *s)
@@ -148,7 +161,7 @@ static int
 target_index(const unsigned char *path)
 {
     unsigned int i;
-    for (i = 0; i < 3; ++i) {
+    for (i = 0; i < 6; ++i) {
         if (memcmp(path, kSnowKeys[i], PATH_LENGTH) == 0)
             return (int)i;
     }
@@ -167,7 +180,7 @@ log_target(int index, const char *mode, const char *action)
     const char *parts[7];
     unsigned int i;
 
-    if (index < 0 || index > 2)
+    if (index < 0 || index > 5)
         return;
     if (gSeen[index] > MAX_LOGS_PER_PATH)
         return;
