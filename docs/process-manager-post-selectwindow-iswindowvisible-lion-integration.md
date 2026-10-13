@@ -317,14 +317,26 @@ payload/lion-iswindowvisible.raw.log
 
 Also return any new crash report or crash plist explicitly named by the runner. Do not upload a large core unless requested.
 
+## Reviewed Lion result
+
+The guarded Lion IsWindowVisible integration passes completely on 10.7.5 / 11G63. The exact Snow-proven subject SHA-256 is preserved, the full v3 CoreServices artifact and exact-six titlebar artifact hashes match, the exact-seven broker remains the accepted i386 build, and the fresh syscall-295 probe again reaches the compatibility front-end and returns EBADF without SIGSYS.
+
+The inherited live stack remains unchanged: WindowBackingInfo is exactly one successful adapted call; ResolveColorProfile is exactly one successful adapted call; ColorProfileClient succeeds; both exact OrderFront requests adapt successfully under `lion-selectwindow-id-v1`, with exactly one call bounded by S02/S03; all six exact titlebar paths translate once with zero guard rejects; exact-seven notification ingress completes with no eighth request; and protected hashes remain unchanged.
+
+After `SELECTWINDOW_PASS`, the new public query emits S04, returns through S05 with `visible=1`, and emits `ISWINDOWVISIBLE_PASS`. The subject then reaches `M24_SUCCESS`, exits 0, creates no new diagnostic, and the runner ends with `POST_SELECTWINDOW_ISWINDOWVISIBLE_VALIDATION_PASS`.
+
+This closes IsWindowVisible as a live compatibility boundary. No visibility-specific adapter is required. The next isolated operation is only `NewEventLoopTimerUPP`, beginning with the Snow-only control in `docs/process-manager-post-iswindowvisible-neweventlooptimerupp-snow-control.md`. Do not install a timer or enter the event loop until that UPP-creation result is reviewed.
+
 ## Current boundary
 
 ```text
 ShowWindow on Lion                               LIVE-PROVEN PASS
 SelectWindow on Lion                             LIVE-PROVEN PASS
 IsWindowVisible on Snow                          PASS
-IsWindowVisible on Lion                          NEXT: one guarded run
-timers / event loop                              HELD
+IsWindowVisible on Lion                          LIVE-PROVEN PASS
+NewEventLoopTimerUPP                             NEXT: Snow control only
+InstallEventLoopTimer                            HELD
+RunApplicationEventLoop                         HELD
 new compatibility families                      NO
 titlebar policy broadening                      NO
 XNU                                              no change indicated
