@@ -354,6 +354,14 @@ payload/lion-getmaineventloop.raw.log
 
 Also return any new crash report or crash plist explicitly named by the runner. Do not upload a large core unless requested.
 
+## Reviewed Lion result
+
+The guarded Lion 10.7.5 / 11G63 `GetMainEventLoop()` run passes completely with the exact Snow-proven subject SHA-256 `27a91765c2815bd885828a1785776cb0fa0c30f146b92d682be84b0691e724f8`. The accepted kernel, Rosetta, private dyld, shared-cache, CoreGraphics, v3 CoreServices, exact-six titlebar, security, CGS, HIToolbox Extras, and exact-seven broker identities all match their pinned values. The fresh syscall-295 preflight again reaches the compatibility front-end and returns EBADF without SIGSYS.
+
+After the inherited ShowWindow/SelectWindow/IsWindowVisible/NewEventLoopTimerUPP path succeeds, S08 and S09 both execute, `GetMainEventLoop()` returns the nonzero EventLoopRef `0x004a6da0`, and `GETMAINEVENTLOOP_PASS` is emitted. Cleanup reaches `M24_SUCCESS`, the PPC execution status is 0, exact-seven remains `register=7 callback=0 rejects=0 exact=YES`, all six titlebar translations occur once with zero guard rejects, WindowBackingInfo and ResolveColorProfile each preserve one successful adapter call, both OrderFront calls preserve successful adaptation with exactly one SelectWindow-bounded call, protected hashes remain unchanged, no new diagnostic is created, and the runner ends with `POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_VALIDATION_PASS`.
+
+This closes main-event-loop acquisition as a live Lion boundary without a new compatibility rule. Current `main` advances one public Carbon operation at a time to a Snow-first `InstallEventLoopTimer` control in `docs/process-manager-post-getmaineventloop-installeventlooptimer-snow-control.md`. The new control uses the already proven EventLoopRef and UPP, installs a one-shot timer with the historical 2-second delay, requires status 0 and a nonzero timer reference, and explicitly requires that the callback has not fired because the event loop is not entered. `RemoveEventLoopTimer`, `DisposeEventLoopTimerUPP`, and `RunApplicationEventLoop` remain held.
+
 ## Current boundary
 
 ```text
@@ -362,9 +370,11 @@ SelectWindow on Lion                             LIVE-PROVEN PASS
 IsWindowVisible on Lion                          LIVE-PROVEN PASS
 NewEventLoopTimerUPP on Lion                     LIVE-PROVEN PASS
 GetMainEventLoop on Snow                         PASS
-GetMainEventLoop on Lion                         NEXT: one guarded run
-InstallEventLoopTimer                            HELD
+GetMainEventLoop on Lion                         LIVE-PROVEN PASS
+InstallEventLoopTimer                            NEXT: Snow control only
 RunApplicationEventLoop                         HELD
+timer callback invocation                       HELD
+RemoveEventLoopTimer / DisposeEventLoopTimerUPP  HELD
 new compatibility families                      NO
 titlebar policy broadening                      NO
 XNU                                              no change indicated
