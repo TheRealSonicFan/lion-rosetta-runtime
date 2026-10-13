@@ -10,7 +10,8 @@ import subprocess
 import sys
 import tempfile
 
-ANALYZER_VERSION = "2"
+ANALYZER_VERSION = "3"
+AUDIT_CONTRACT = "release-specific-titlebar-state-v3"
 COREUI = "/System/Library/PrivateFrameworks/CoreUI.framework/Versions/A/CoreUI"
 ARTFILE = "/System/Library/PrivateFrameworks/CoreUI.framework/Versions/A/Resources/ArtFile.bin"
 
@@ -395,6 +396,8 @@ def main():
         with open(report, "w") as fp:
             write_line(fp, "== CoreUI titlebar ArtFile path-builder audit ==")
             write_line(fp, "analyzer_version=%s" % ANALYZER_VERSION)
+            write_line(fp, "audit_contract=%s" % AUDIT_CONTRACT)
+            write_line(fp, "analyzer_script_path=%s" % os.path.realpath(__file__))
             write_line(fp, "product_version=%s" % product)
             write_line(fp, "build_version=%s" % build)
             write_line(fp, "required_arch=%s" % (arch if arch else "UNSUPPORTED"))
