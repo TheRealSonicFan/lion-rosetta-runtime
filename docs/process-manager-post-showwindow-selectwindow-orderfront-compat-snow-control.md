@@ -288,16 +288,25 @@ Do not transfer the dylib to Lion until this evidence is reviewed.
 
 If the corrected, Lion-complete Snow v3 control passes—including the ResolveColorProfile and WindowBackingInfo passthrough predicates—the rebuilt artifact is proven transparent across the complete accepted Snow baseline. Only then may that exact dylib be transferred to Lion and used with `ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE=lion-selectwindow-id-v1`, after a fresh syscall-295 preflight, for exactly one separately authorized Lion SelectWindow run.
 
+## Reviewed corrected full-stack result
+
+The corrected Lion-complete v3 artifact passes the Snow gate. Its SHA-256 is `28d44246249f41b2de8ef5abda83733272aff2d02df79392a949b899461d0578`; it is PPC7400, contains exactly two PPC `__interpose` tuples, carries the expected v3 build ID, and embeds the accepted ResolveColorProfile trace/compatibility and WindowBackingInfo compatibility build IDs.
+
+The Snow run preserves the complete accepted baseline. ResolveColorProfile is present and passthrough-only twice; WindowBackingInfo is present and passthrough-only once; neither emits `ADAPTER_PASS`. Both exact legacy OrderFront calls remain passthrough, with exactly one call bounded by the SelectWindow S02/S03 markers. `ShowWindow` and `SelectWindow` both return, all six CoreUI titlebar keys remain passthrough with zero unexpected actions, `M24_SUCCESS` is reached, `control_status=0`, and the final results are `POST_SHOWWINDOW_SELECTWINDOW_SNOW_CONTROL_PASS` and `PASS`.
+
+This closes the corrected v3 Snow transparency gate. The exact artifact may now be transferred to Lion together with the already accepted SelectWindow subject. The next authorized stage is `docs/process-manager-post-showwindow-selectwindow-lion-integration.md`: refresh both repositories, transfer and hash-check the exact Snow artifacts, rebuild the exact-seven native broker, repeat syscall 295, and only if every preflight passes run exactly one Lion SelectWindow attempt. No new public API, compatibility family, titlebar mapping, or XNU change is authorized.
+
 ## Current boundary
 
 ```text
 SelectWindow Snow API control                   PASS
 second OrderFront legacy call                   PROVEN
 v3 Lion-only second-call adapter source         PREPARED
-first v3 artifact                              PASS but Lion-incomplete
-corrected Lion-complete v3 artifact build       NEXT
-corrected v3 Snow passthrough control           NEXT
-Lion SelectWindow                               NOT AUTHORIZED YET
+corrected full-stack v3 artifact                PASS
+ResolveColorProfile Snow transparency           PASS: 2 passthrough
+WindowBackingInfo Snow transparency             PASS: 1 passthrough
+exact-six titlebar Snow transparency             PASS
+Lion SelectWindow                               NEXT: one guarded integration
 IsWindowVisible / timers / event loop            HELD
 XNU                                              no change indicated
 ```
