@@ -200,19 +200,22 @@ pm-titlebar-bsearch-six-key-snow.log
 
 Do not return the dylib itself unless requested.
 
-## Review gate
+## Completed result
 
-If the Snow control passes, the exact-six implementation is proven transparent on the native Snow lookup surface. Only then may the Lion runner be updated to accept build ID `coreui-titlebar-bsearch-exact-six-v2`, mode `lion-exact-six-v1`, and six translation predicates, followed by a fresh syscall-295 preflight and a separately authorized single Lion ShowWindow run.
+The returned Snow evidence passes the exact-six control completely. The artifact is a PPC7400 dylib with exactly one 8-byte `__DATA,__interpose` tuple, imports `_bsearch`, contains local `_rosetta_bsearch`, carries build ID `coreui-titlebar-bsearch-exact-six-v2`, and hashes to `6bd11d4e9b271eab926f56f9cf99f4c4fb606db1d69a98f062cc398561488c72`. The runtime control loaded that exact artifact, observed each of the six disabled/active clear/minus/zoom keys once in `passthrough` mode, observed zero translated or guard-reject actions, returned from ShowWindow, reached `M24_SUCCESS`, and ended `RESULT: PASS`.
+
+The Snow transparency gate is therefore closed positively. Current `main` now enables the Lion runner only for build ID `coreui-titlebar-bsearch-exact-six-v2` in mode `lion-exact-six-v1` and requires all six translation predicates. Proceed only through `docs/pm-showwindow-artfile-titlebar-six-key-lion-integration.md`.
 
 ## Current boundary
 
 ```text
 combined exact-six static policy               PASS
 exact-six compatibility source                 PREPARED
-exact-six Snow build                           NEXT
-exact-six Snow passthrough                     NEXT
-Lion exact-six runner                          INTENTIONALLY BLOCKED
-Lion PPC rerun                                 NOT AUTHORIZED
+exact-six Snow build                           PASS
+exact-six Snow passthrough                     PASS: all six observed once
+Lion exact-six runner                          PREPARED
+fresh syscall-295 preflight                    NEXT
+single Lion exact-six ShowWindow run           AUTHORIZED AFTER PREFLIGHT
 core.9821                                      preserve; not required now
 CoreUI/ArtFile patch                           NO
 XNU                                            no change indicated
