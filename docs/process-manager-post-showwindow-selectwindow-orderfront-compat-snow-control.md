@@ -6,6 +6,14 @@ Build the new combined PPC compatibility artifact that adds one narrowly guarded
 
 This stage is Snow-only. It does not authorize a Lion SelectWindow run.
 
+## Reviewed first v3 Snow result
+
+The first returned v3 artifact, SHA-256 `6400ab1fc790e93bd404c3f15f02f26c66d11b816498e09f717a700f4c29337b`, passed the SelectWindow/OrderFront Snow transparency predicates: both exact legacy OrderFront calls were passthrough, exactly one was bounded by S02/S03, `SelectWindow` returned, `M24_SUCCESS` was reached, all six CoreUI titlebar keys remained passthrough, and the final Snow result was PASS.
+
+That artifact is **not approved for Lion**. Review of its build recipe showed that the new builder had inherited the earlier ColorProfileClient-only compile flags and therefore omitted the already accepted `ResolveColorProfile` and `WindowBackingInfo` compatibility modules that are part of the live-proven Lion ShowWindow baseline. The returned log correspondingly contains no `PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_*` or `PM_CGS_WINDOW_BACKING_INFO_COMPAT_*` markers. This is a build-composition gap, not a failure of the new second-OrderFront guard.
+
+Current `main` corrects only that composition error: the v3 builder now includes the same accepted ResolveColorProfile trace/compatibility and WindowBackingInfo compatibility compile flags and marker checks as the previously proven WBI build, while retaining the new `lion-selectwindow-id-v1` OrderFront mode. A fresh Snow build and passthrough control of this Lion-complete v3 artifact is required before any Lion transfer or execution.
+
 The corrected SelectWindow Snow control already proved the new public API sequence:
 
 ```text
@@ -35,7 +43,7 @@ Pinned identities:
 
 ```text
 CoreServices compat source blob  2c167877c92e6777189c0b4f8657f5570e1a0acb
-SelectWindow compat builder blob b77fce15136424bb2f4eb76b09614c3c2b89696a
+SelectWindow compat builder blob c0e0b4c363595b3781305f8da785e1708ba2d41a
 Snow runner blob                 aff24e231e7c8915065973aaf2db9419ea8f90ae
 Lion runner blob                 689c5def8a4bc32e2ad0756a8d66e1a4c6aa2056
 SelectWindow subject source      6d873470f27e99de997301ef2d0c757ac6b61a6a
@@ -97,7 +105,7 @@ test "$(git hash-object ./tests/ppc-process-manager-coreservices-sessioninit-com
   "2c167877c92e6777189c0b4f8657f5570e1a0acb" || exit 1
 
 test "$(git hash-object ./scripts/build-ppc-process-manager-post-showwindow-selectwindow-order-front-compat-on-snowleopard.sh)" = \
-  "b77fce15136424bb2f4eb76b09614c3c2b89696a" || exit 1
+  "c0e0b4c363595b3781305f8da785e1708ba2d41a" || exit 1
 
 test "$(git hash-object ./scripts/run-snowleopard-ppc-process-manager-createwindow-distnotify-integration-control.sh)" = \
   "aff24e231e7c8915065973aaf2db9419ea8f90ae" || exit 1
@@ -139,7 +147,16 @@ exactly two PPC __interpose tuples
 embedded distributed-notifications ingress v2
 ```
 
-Also require the built strings to contain `lion-selectwindow-id-v1`.
+The corrected builder must also have compiled the accepted downstream baseline into the same artifact. Require the built strings to contain all of:
+
+```text
+lion-selectwindow-id-v1
+PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_BUILD_ID:color-profile-resolve-id-compat-v1
+PM_CGS_WINDOW_BACKING_INFO_COMPAT_BUILD_ID:window-backing-info-id-compat-v1
+PM_CGS_COLOR_PROFILE_RESOLVE_TRACE_BUILD_ID:color-profile-resolve-passive-trace-v1
+```
+
+If any is absent, stop; do not run the Snow subject and do not transfer the artifact to Lion.
 
 ## Phase C — verify and reuse the existing SelectWindow subject
 
@@ -238,7 +255,20 @@ RESULT: POST_SHOWWINDOW_SELECTWINDOW_SNOW_CONTROL_PASS
 RESULT: PASS
 ```
 
-There must be no `PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS` on Snow and no CoreUI titlebar translation/guard-reject action.
+In addition, because this corrected v3 artifact is intended to replace the live-proven WBI baseline on Lion, require the Snow raw/consolidated log to contain:
+
+```text
+PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_BUILD_ID:color-profile-resolve-id-compat-v1
+PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:index=1 ... mode=passthrough
+PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:index=2 ... mode=passthrough
+PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:PASSTHROUGH     exactly 2
+
+PM_CGS_WINDOW_BACKING_INFO_COMPAT_BUILD_ID:window-backing-info-id-compat-v1
+PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=1 ... mode=passthrough exact=YES
+PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:PASSTHROUGH      exactly 1
+```
+
+There must be no `PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS`, no ResolveColorProfile/WindowBackingInfo `ADAPTER_PASS`, and no CoreUI titlebar translation/guard-reject action on Snow.
 
 If this control fails, stop. Do not weaken the new call-index/provenance guard and do not run Lion.
 
@@ -256,7 +286,7 @@ Do not transfer the dylib to Lion until this evidence is reviewed.
 
 ## Review gate
 
-If the Snow v3 control passes, the rebuilt artifact is proven transparent on the native Snow path. Only then may the exact v3 dylib be transferred to Lion and used with `ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE=lion-selectwindow-id-v1`, after a fresh syscall-295 preflight, for exactly one separately authorized Lion SelectWindow run.
+If the corrected, Lion-complete Snow v3 control passes—including the ResolveColorProfile and WindowBackingInfo passthrough predicates—the rebuilt artifact is proven transparent across the complete accepted Snow baseline. Only then may that exact dylib be transferred to Lion and used with `ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE=lion-selectwindow-id-v1`, after a fresh syscall-295 preflight, for exactly one separately authorized Lion SelectWindow run.
 
 ## Current boundary
 
@@ -264,8 +294,9 @@ If the Snow v3 control passes, the rebuilt artifact is proven transparent on the
 SelectWindow Snow API control                   PASS
 second OrderFront legacy call                   PROVEN
 v3 Lion-only second-call adapter source         PREPARED
-v3 combined artifact build                      NEXT
-v3 Snow passthrough control                     NEXT
+first v3 artifact                              PASS but Lion-incomplete
+corrected Lion-complete v3 artifact build       NEXT
+corrected v3 Snow passthrough control           NEXT
 Lion SelectWindow                               NOT AUTHORIZED YET
 IsWindowVisible / timers / event loop            HELD
 XNU                                              no change indicated
