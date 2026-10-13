@@ -747,3 +747,12 @@ The corrected preserved-core analyzer now passes all provenance gates and closes
 This proves the immediate SIGSEGV is caused by a real Snow-PPC/Lion ArtFile component-table semantic mismatch, not by RawCamera, XNU, or an arbitrary libc failure. A blind diagnostic bounds check would only hide the downstream crash and is not the compatibility target.
 
 Current `main` advances to `docs/pm-showwindow-artfile-component-audit.md` using `scripts/audit-pm-artfile-components.py`. Run the read-only component dictionary audit once on Snow Leopard and once on Lion and return `pm-art-components-snow.txt` and `pm-art-components-lion.txt`. The next discriminator is the semantic name of Snow component `0xb6` and whether Lion retains an equivalent under another ID. Do not rerun the PPC ShowWindow subject, remap `0xb6`, suppress the diagnostic, substitute resources, or change XNU yet.
+
+
+## ArtFile component audit proves a full titlebar ID namespace shift
+
+The Snow/Lion component dictionary audits both pass and show that the preserved titlebar path is semantically correct under Snow's own ArtFile dictionary but numerically wrong for Lion's. Snow decodes the three captured paths as `titlebarcontrols.close.colorsryg.disabled.regularwin`, `titlebarcontrols.colorsryg.disabled.minimize.regularwin`, and `titlebarcontrols.colorsryg.disabled.regularwin.zoom`. The active semantic IDs all changed between releases: `a6->99` titlebarcontrols, `13->14` close, `16->17` colorsryg, `1f->22` disabled, `56->55` minimize, `7a->72` regularwin, and `b6->a9` zoom.
+
+Therefore the old Lion-side diagnostics such as `west.colorsrgb.determinate.scrollbars` are namespace-misdecode artifacts, not the Snow path's true semantic names, and the compatibility boundary is broader than one terminal `0xb6` token. A blind `0xb6->0xa9` remap is explicitly rejected.
+
+Current `main` advances to `docs/pm-showwindow-artfile-titlebar-path-audit.md` using `scripts/audit-pm-artfile-titlebar-path-builder.py`. Run it read-only on Snow Leopard and Lion and return `pm-art-titlebar-path-snow.txt` and `pm-art-titlebar-path-lion.txt`. The audit compares `CreateQSIImagePath`, `AppendWindowVariant`, and `AppendWindowTitlebarButtonState` so the next compatibility experiment, if justified, can translate only the proven titlebar semantic path. Do not rerun the PPC subject, patch CoreUI/ArtFile, or change XNU.
