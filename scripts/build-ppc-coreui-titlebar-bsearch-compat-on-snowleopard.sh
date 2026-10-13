@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-OUT="\${1:-./pm-titlebar-bsearch-compat.dylib}"
+OUT="${1:-./pm-titlebar-bsearch-compat.dylib}"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -63,7 +63,7 @@ probe_compiler() {
 }
 
 CC_SELECTED=""
-if [ -n "\${CC:-}" ]; then
+if [ -n "${CC:-}" ]; then
     echo "Probing requested compiler: $CC" >&2
     probe_compiler "$CC" || true
 fi
