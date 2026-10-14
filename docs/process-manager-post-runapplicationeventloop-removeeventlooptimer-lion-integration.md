@@ -409,7 +409,8 @@ all 21 reviewed Lion notification registrations     LIVE-PROVEN PASS
 RemoveEventLoopTimer Snow                            LIVE-PROVEN PASS
 RemoveEventLoopTimer Lion                            LIVE-PROVEN PASS
 DisposeEventLoopTimerUPP Snow                        LIVE-PROVEN PASS
-DisposeEventLoopTimerUPP Lion                        NEXT: guarded exact-binary transfer
+DisposeEventLoopTimerUPP Lion                        LIVE-PROVEN PASS
+original Carbon GUI smoke under restored stack      NEXT: exact historical-binary retest
 new compatibility families                          NO
 titlebar policy broadening                          NO
 XNU                                                  no source change indicated
