@@ -79,7 +79,7 @@ scripts/build-ppc-carbon-gui-backing-sync-compat-on-snowleopard.sh
 Git blob 454e9803d389640388a89220f6ac800dc1ecaf83
 
 scripts/run-snowleopard-ppc-carbon-gui-backing-sync-control.sh
-Git blob 058e4d13fc216a439bd668b042d78811b8963083
+Git blob 7822f7466708cc4f8745d7d9aa0c8cc73f202be1
 
 scripts/run-lion-ppc-carbon-gui-backing-sync-integration.sh
 Git blob dcef472c5e63c00ed3bac44b552b2be417e80d03
@@ -182,7 +182,7 @@ test "$(git hash-object ./tests/ppc-process-manager-coreservices-sessioninit-com
 test "$(git hash-object ./scripts/build-ppc-carbon-gui-backing-sync-compat-on-snowleopard.sh)" = \
   "454e9803d389640388a89220f6ac800dc1ecaf83" || exit 1
 test "$(git hash-object ./scripts/run-snowleopard-ppc-carbon-gui-backing-sync-control.sh)" = \
-  "058e4d13fc216a439bd668b042d78811b8963083" || exit 1
+  "7822f7466708cc4f8745d7d9aa0c8cc73f202be1" || exit 1
 test "$(git hash-object ./scripts/run-lion-ppc-carbon-gui-backing-sync-integration.sh)" = \
   "dcef472c5e63c00ed3bac44b552b2be417e80d03" || exit 1
 ```
