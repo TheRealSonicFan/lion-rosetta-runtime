@@ -280,3 +280,18 @@ seventh notification registration                held
 CGSShapeWindow                                   held
 XNU                                              no change indicated
 ```
+
+
+## Later reuse — Carbon GUI backing synchronization
+
+The exact historical Carbon GUI smoke has now advanced beyond the earlier ShowWindow blocker: ShapeWindow geometry is restored to 400x222 and the Lion window is manually visible. That run exposes a titlebar-fidelity defect together with repeated legacy 0x7265/0x72c9 requests returning -304 immediately before _CGSLockWindow reports that it cannot synchronize the window backing store.
+
+This report's existing static inventory supplies the exact neighboring attribution needed for the new boundary:
+
+~~~text
+Snow PPC  __CGSSynchronizeWindowBackingStore   0x7265 / 0x72c9
+Lion i386 __CGSSynchronizeWindowBackingStore   0x7266 / 0x72ca
+Lion i386 __CGSSetWindowAutofillColor          0x7265 / 0x72c9
+~~~
+
+The Snow/Lion synchronization generated clients use the same live-relevant 0x1513, option-3, 0x2c/0x2c, three-scalar simple contract, while Lion's colliding AutofillColor request uses a different layout and 0x30 send size. Current work therefore reuses this static evidence in docs/ppc-carbon-gui-backing-sync-compat-integration.md for an exact ID-only synchronization experiment. No backing-output synthesis or CoreUI/ArtFile change is implied by this reuse.
