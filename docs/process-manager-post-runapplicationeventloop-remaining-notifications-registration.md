@@ -347,8 +347,8 @@ post-request-21 policy                               unreviewed / reject if seen
 RunApplicationEventLoop timer-side-quit Lion         LIVE-PROVEN through S15
 RemoveEventLoopTimer Snow                            LIVE-PROVEN PASS
 RemoveEventLoopTimer Lion                            LIVE-PROVEN PASS
-DisposeEventLoopTimerUPP Snow                        NEXT: isolated control
-DisposeEventLoopTimerUPP Lion                        HELD pending Snow result
+DisposeEventLoopTimerUPP Snow                        LIVE-PROVEN PASS
+DisposeEventLoopTimerUPP Lion                        NEXT: guarded exact-binary transfer
 new compatibility families                          NO
 titlebar policy broadening                          NO
 XNU                                                  no source change indicated
