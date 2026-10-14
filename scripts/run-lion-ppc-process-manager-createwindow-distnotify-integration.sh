@@ -102,6 +102,7 @@ RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICAT
 RUNAPPLICATIONEVENTLOOP_ELEVENTH_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_ELEVENTH_REGISTRATION_MODE:-}"
 RUNAPPLICATIONEVENTLOOP_TWELFTH_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_TWELFTH_REGISTRATION_MODE:-}"
 RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE:-}"
+RUNAPPLICATIONEVENTLOOP_REMAINING_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_REMAINING_REGISTRATION_MODE:-}"
 REAL_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE:-}"
 EXPECTED_REAL_REGISTRATION_COUNT=3
 if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
@@ -141,6 +142,9 @@ elif [ -n "$RUNAPPLICATIONEVENTLOOP_FOURTEENTH_SCHEMA_AUDIT_REPORT" ]; then
 elif [ -n "$RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-runapplicationeventloop-remaining-schema-audit-broker-v1"
     EXPECTED_REAL_REGISTRATION_COUNT=13
+elif [ -n "$RUNAPPLICATIONEVENTLOOP_REMAINING_REGISTRATION_MODE" ]; then
+    EXPECTED_BROKER_BUILD_ID="distributed-notifications-runapplicationeventloop-remaining-registration-broker-v1"
+    EXPECTED_REAL_REGISTRATION_COUNT=21
 elif [ -n "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-runapplicationeventloop-thirteenth-registration-broker-v1"
     EXPECTED_REAL_REGISTRATION_COUNT=13
@@ -450,6 +454,43 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT" ]; then
     [ -z "$RUNAPPLICATIONEVENTLOOP_ELEVENTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop remaining-wave schema audit uses its own exact-thirteen broker; do not enable exact-eleven separately"
     [ -z "$RUNAPPLICATIONEVENTLOOP_TWELFTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop remaining-wave schema audit uses its own exact-thirteen broker; do not enable exact-twelve separately"
     [ -z "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop remaining-wave schema audit uses its own exact-thirteen broker; do not enable exact-thirteen registration mode separately"
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_REMAINING_REGISTRATION_MODE" ]; then
+    [ "$RUNAPPLICATIONEVENTLOOP_REMAINING_REGISTRATION_MODE" = "lion-remaining-register-v1" ] ||
+        die 64 "unsupported ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_REMAINING_REGISTRATION_MODE: $RUNAPPLICATIONEVENTLOOP_REMAINING_REGISTRATION_MODE"
+    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] ||
+        die 64 "RunApplicationEventLoop remaining-wave registration requires the reviewed exact-seven registration base mode"
+    [ "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" = "lion-runapplicationeventloop-timer-quit-v2" ] ||
+        die 64 "RunApplicationEventLoop remaining-wave registration requires lion-runapplicationeventloop-timer-quit-v2"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT" ] ||
+        die 64 "RunApplicationEventLoop remaining-wave registration and request-8 schema audit are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_NINTH_SCHEMA_AUDIT_REPORT" ] ||
+        die 64 "RunApplicationEventLoop remaining-wave registration and request-9 schema audit are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_TENTH_SCHEMA_AUDIT_REPORT" ] ||
+        die 64 "RunApplicationEventLoop remaining-wave registration and request-10 schema audit are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_ELEVENTH_SCHEMA_AUDIT_REPORT" ] ||
+        die 64 "RunApplicationEventLoop remaining-wave registration and request-11 schema audit are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_TWELFTH_SCHEMA_AUDIT_REPORT" ] ||
+        die 64 "RunApplicationEventLoop remaining-wave registration and request-12 schema audit are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_SCHEMA_AUDIT_REPORT" ] ||
+        die 64 "RunApplicationEventLoop remaining-wave registration and request-13 schema audit are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_FOURTEENTH_SCHEMA_AUDIT_REPORT" ] ||
+        die 64 "RunApplicationEventLoop remaining-wave registration and request-14 schema audit are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT" ] ||
+        die 64 "RunApplicationEventLoop remaining-wave registration and remaining-wave schema audit are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ] ||
+        die 64 "RunApplicationEventLoop exact remaining-wave registration uses its own first-twenty-one broker; do not enable exact-eight separately"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ] ||
+        die 64 "RunApplicationEventLoop exact remaining-wave registration uses its own first-twenty-one broker; do not enable exact-nine separately"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ] ||
+        die 64 "RunApplicationEventLoop exact remaining-wave registration uses its own first-twenty-one broker; do not enable exact-ten separately"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_ELEVENTH_REGISTRATION_MODE" ] ||
+        die 64 "RunApplicationEventLoop exact remaining-wave registration uses its own first-twenty-one broker; do not enable exact-eleven separately"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_TWELFTH_REGISTRATION_MODE" ] ||
+        die 64 "RunApplicationEventLoop exact remaining-wave registration uses its own first-twenty-one broker; do not enable exact-twelve separately"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE" ] ||
+        die 64 "RunApplicationEventLoop exact remaining-wave registration uses its own first-twenty-one broker; do not enable exact-thirteen separately"
 fi
 
 if [ -n "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE" ]; then
@@ -1496,6 +1537,36 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT" ]; then
             die 68 "RunApplicationEventLoop remaining-wave schema-audit broker marker missing: $marker"
     done
 fi
+if [ -n "$RUNAPPLICATIONEVENTLOOP_REMAINING_REGISTRATION_MODE" ]; then
+    for marker in \
+        'PM_DISTRIBUTED_NOTIFICATIONS_SHOWWINDOW_SIXTH_REGISTRATION_POLICY:index=6 allowed=3 counter=2' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_SHOWWINDOW_SEVENTH_REGISTRATION_POLICY:index=7 allowed=5 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_POLICY:index=8 allowed=6 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_POLICY:index=9 allowed=7 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_POLICY:index=10 allowed=8 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_ELEVENTH_REGISTRATION_POLICY:index=11 allowed=9 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_TWELFTH_REGISTRATION_POLICY:index=12 allowed=10 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_POLICY:index=13 allowed=11 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_FOURTEENTH_REGISTRATION_POLICY:index=14 allowed=12 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_FIFTEENTH_REGISTRATION_POLICY:index=15 allowed=13 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_SIXTEENTH_REGISTRATION_POLICY:index=16 allowed=14 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_SEVENTEENTH_REGISTRATION_POLICY:index=17 allowed=15 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_EIGHTEENTH_REGISTRATION_POLICY:index=18 allowed=16 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_NINETEENTH_REGISTRATION_POLICY:index=19 allowed=17 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_TWENTIETH_REGISTRATION_POLICY:index=20 allowed=18 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_TWENTYFIRST_REGISTRATION_POLICY:index=21 allowed=19 counter=1' \
+        'AppleKeyboardPreferencesChangedNotification' \
+        'AppleKeyboardPreferencesSelectedItemsChangedNotification' \
+        'AppleSelectedInputMethodPasteboardInvalidNotification' \
+        'AppleTextInputMenuExtraDidLoadNotification' \
+        'AppleInstalledInputSourcesChangedNotification' \
+        'AppleEnabledInputSourcesChangedNotification' \
+        'AppleSelectedInputSourcesChangedNotification' \
+        'com.apple.accessibility.api'; do
+        /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "RunApplicationEventLoop exact remaining-wave registration broker marker missing: $marker"
+    done
+fi
 if [ -n "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE" ]; then
     for marker in \
         'PM_DISTRIBUTED_NOTIFICATIONS_SHOWWINDOW_SIXTH_REGISTRATION_POLICY:index=6 allowed=3 counter=2' \
@@ -1782,6 +1853,9 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_ELEVENTH_REGISTRATION_MODE" ]; then
 fi
 if [ -n "$RUNAPPLICATIONEVENTLOOP_TWELFTH_REGISTRATION_MODE" ]; then
     log "distributed_notifications_runapplicationeventloop_twelfth_registration_mode=$RUNAPPLICATIONEVENTLOOP_TWELFTH_REGISTRATION_MODE"
+fi
+if [ -n "$RUNAPPLICATIONEVENTLOOP_REMAINING_REGISTRATION_MODE" ]; then
+    log "distributed_notifications_runapplicationeventloop_remaining_registration_mode=$RUNAPPLICATIONEVENTLOOP_REMAINING_REGISTRATION_MODE"
 fi
 if [ -n "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE" ]; then
     log "distributed_notifications_runapplicationeventloop_thirteenth_registration_mode=$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE"
@@ -3012,6 +3086,9331 @@ if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_NATIVE_REPLY_UNEXPECTED"
         exit 0
     fi
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_REMAINING_REGISTRATION_MODE" ]; then
+    REMAINING_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=(14 allowed=12|15 allowed=13|16 allowed=14|17 allowed=15|18 allowed=16|19 allowed=17|20 allowed=18|21 allowed=19) behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=13 allowed=11 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "thirteenth_notification_registration_accept_count=$THIRTEENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$THIRTEENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=14 bits=0x00001111 id=4 size=336 payload=302' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_PASS_FOURTEENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+    if [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=13 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_INTEGRATION_INCOMPLETE"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_TWELFTH_REGISTRATION_MODE" ]; then
+    TWELFTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=12 allowed=10 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "twelfth_notification_registration_accept_count=$TWELFTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$TWELFTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=13 bits=0x00001111 id=4 size=356 payload=323' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_PASS_THIRTEENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+    if [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=12 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_INTEGRATION_INCOMPLETE"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_ELEVENTH_REGISTRATION_MODE" ]; then
+    ELEVENTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=11 allowed=9 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "eleventh_notification_registration_accept_count=$ELEVENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$ELEVENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=12 bits=0x00001111 id=4 size=336 payload=302' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_PASS_TWELFTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+    if [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=11 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_INCOMPLETE"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ]; then
+    TENTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=10 allowed=8 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "tenth_notification_registration_accept_count=$TENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$TENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=11 bits=0x00001111 id=4 size=356 payload=323' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_PASS_ELEVENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ]; then
+    NINTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=9 allowed=7 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "ninth_notification_registration_accept_count=$NINTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$NINTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=10 bits=0x00001111 id=4 size=332 payload=300' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_PASS_TENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ]; then
+    EIGHTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=8 allowed=6 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "eighth_notification_registration_accept_count=$EIGHTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$EIGHTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=9 ' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_PASS_NINTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+fi
+
+if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REJECT:' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_REQUEST:FAIL' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_CALLBACK:REJECT' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+    if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=7 allowed=5 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_PASS_EIGHTH_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] &&
+       /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=6 allowed=3 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x2$' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SIXTH_NOTIFICATION_REGISTRATION_PASS_SEVENTH_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=5 allowed=4 behavior=1 publicBehavior=4 anyObject=YES' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_PASS_SIXTH_PROTOCOL_REJECTED"
+    elif [ -n "$FONTSERVER_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_PASS_NOTIFICATION_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ]; then
+        log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATION_PROTOCOL_REJECTED"
+    elif [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_PROTOCOL_REJECTED"
+    elif /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:status=20' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_BROKER_SCHEMA_REJECTED"
+    else
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_PROTOCOL_REJECTED"
+    fi
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG" &&
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M21_AFTER_CreateNewWindow' "$RAW_LOG"; then
+    if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        OPACITY_CREATE_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        OPACITY_CREATE_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT"
+        log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT"
+        if [ "$OPACITY_CREATE_COMPAT_COUNT" -ne 1 ] || [ "$OPACITY_CREATE_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseBackingCompatCalls=1 newWindowCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724f lionId=0x00007250 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_FAILURE"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001200 size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+           /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        fi
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+    if [ -n "$OPACITY_ALPHA_TRACE_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        OPACITY_CREATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        OPACITY_TERMINATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        OPACITY_TOTAL_COUNT=$((OPACITY_CREATE_COUNT + OPACITY_TERMINATE_COUNT))
+        log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_COUNT"
+        log "cgs_opacity_alpha_terminate_legacy_trace_count=$OPACITY_TERMINATE_COUNT"
+        log "cgs_opacity_alpha_legacy_trace_count=$OPACITY_TOTAL_COUNT"
+        if [ "$OPACITY_TOTAL_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_REQUEST_NOT_REACHED"
+            exit 0
+        fi
+        if [ "$OPACITY_CREATE_COUNT" -eq 1 ]; then
+            OPACITY_KIND="CREATE"
+            if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'id=0x0000724f expectedReply=0x000072b3 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_REQUEST_UNEXPECTED"
+                exit 0
+            fi
+            MACH_KIND="CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY"
+            EXPECTED_REPLY="0x000072b3"
+        else
+            OPACITY_KIND="TERMINATE"
+            if ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'id=0x00007250 expectedReply=0x000072b4 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_TERMINATE_REQUEST_UNEXPECTED"
+                exit 0
+            fi
+            MACH_KIND="CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY"
+            EXPECTED_REPLY="0x000072b4"
+        fi
+        log "cgs_opacity_alpha_legacy_kind=$OPACITY_KIND"
+        if /usr/bin/grep -Fq "kind=$MACH_KIND kr=268451844 hex=0x10004004" "$RAW_LOG"; then
+            if /usr/bin/grep -Fq "PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:" "$RAW_LOG" &&
+               /usr/bin/grep -Fq "kind=$MACH_KIND kr=268451844 hex=0x10004004" "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_${OPACITY_KIND}_MACH_RCV_TOO_LARGE_OBSERVED"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER_MISSING"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Fq "kind=$MACH_KIND kr=0 hex=0x00000000" "$RAW_LOG"; then
+            if /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=$MACH_KIND" | /usr/bin/grep -Fq "size=0x00000024 id=$EXPECTED_REPLY expected=$EXPECTED_REPLY idMatch=YES"; then
+                if [ "$OPACITY_KIND" = "TERMINATE" ]; then
+                    log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_TERMINATE_ID_COLLISION_REPLY_OBSERVED"
+                else
+                    log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_LEGACY_REPLY_OBSERVED"
+                fi
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_REPLY_UNEXPECTED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Fq "PM_CGS_CONNECTION_TRACE_MACH_RETURN:" "$RAW_LOG" &&
+           /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_MACH_RETURN:" "$RAW_LOG" | /usr/bin/grep -Fq "kind=$MACH_KIND"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_${OPACITY_KIND}_MACH_FAILURE_OBSERVED"
+        else
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_MACH_RETURN_MISSING"
+        fi
+        exit 0
+    fi
+    if [ -n "$RELEASEBACKING_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        RELEASEBACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_releasebacking_compat_call_count=$RELEASEBACKING_COMPAT_COUNT"
+        if [ "$RELEASEBACKING_COMPAT_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseFlag=0x00000001 newWindowCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724b lionId=0x0000724c send=0x00000028 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+           /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        fi
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+    if [ -n "$RELEASEBACKING_TRACE_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        RELEASEBACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_releasebacking_legacy_trace_count=$RELEASEBACKING_TRACE_COUNT"
+        if [ "$RELEASEBACKING_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REQUEST_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x0000724b expectedReply=0x000072af option=0x00000003 send=0x00000028 recv=0x0000002c' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REQUEST_UNEXPECTED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_MACH_FAILURE"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY bits=' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_LEGACY_REPLY_OBSERVED"
+        else
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REPLY_UNEXPECTED"
+        fi
+        exit 0
+    fi
+    if [ -n "$NEWWINDOW_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000038 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_CONNECTION_TRACE_REPLY:index=5 kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=0x00001200 size=0x00000038 id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        exit 0
+    fi
+    if [ -n "$DOCKSERVER_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_PASS_NO_RETURN"
+        exit 0
+    fi
+    if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        HITOOLBOX_EXTRAS_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_EXTRAS_COMPAT_TARGET:.*mode=lion-fallback-external-v1.*bundle=com.apple.HIToolbox name=Extras type=rsrc' "$RAW_LOG" 2>/dev/null || true)"
+        log "hitoolbox_extras_compat_target_count=$HITOOLBOX_EXTRAS_TARGET_COUNT"
+        if [ "$HITOOLBOX_EXTRAS_TARGET_COUNT" -ge 1 ] &&
+           /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" &&
+           ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NULL' "$RAW_LOG" &&
+           ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NONNULL fallback=NOT_USED' "$RAW_LOG" &&
+           /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_NO_RETURN"
+        else
+            log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_INCOMPLETE"
+        fi
+        exit 0
+    fi
+    if [ -n "$HITOOLBOX_TRACE" ]; then
+        HITOOLBOX_TRACE_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_CFBUNDLE_TRACE_TARGET:.*bundle=com.apple.HIToolbox name=Extras type=rsrc subdir=NULL localization=NULL' "$RAW_LOG" 2>/dev/null || true)"
+        log "hitoolbox_cfbundle_trace_target_count=$HITOOLBOX_TRACE_TARGET_COUNT"
+    fi
+    if [ -n "$REAL_REGISTRATION_MODE" ] &&
+       [ -n "$HITOOLBOX_TRACE" ] &&
+       [ "$HITOOLBOX_TRACE_TARGET_COUNT" -ge 1 ] &&
+       /usr/bin/grep -F 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:' "$RAW_LOG" | /usr/bin/grep -Fq ' url=NULL ' &&
+       ! /usr/bin/grep -F 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:' "$RAW_LOG" | /usr/bin/grep -Fq ' url=NONNULL ' &&
+       /usr/bin/grep -Fq 'HIToolbox: failed to copy resource URL for framework bundle.' "$RAW_LOG" &&
+       /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_LOOKUP_CONFIRMED_NO_RETURN"
+    elif [ -n "$REAL_REGISTRATION_MODE" ] &&
+       /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REGISTRATIONS_ESTABLISHED_CREATEWINDOW_NO_RETURN"
+    elif [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_INCOMPLETE"
+    else
+        log "RESULT: CREATENEWWINDOW_NO_RETURN"
+    fi
+    exit 0
+fi
+
+if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_NOT_REACHED"
+    exit 0
+fi
+
+if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+    if ! /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_CALL:index=1 mode=lion-dockserver-v1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_LOOKUP_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_ADAPTER_FAILED"
+        exit 0
+    fi
+fi
+
+if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
+    NEWWINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_newwindow_legacy_trace_count=$NEWWINDOW_TRACE_COUNT"
+    if [ "$NEWWINDOW_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REQUEST_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'id=0x00007394 expectedReply=0x000073f8 option=0x00000003' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'recv=0x00000040' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REQUEST_UNEXPECTED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_MACH_FAILURE"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_LEGACY_REPLY_OBSERVED"
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REPLY_UNEXPECTED"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+    NEWWINDOW_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    NEWWINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_newwindow_compat_call_count=$NEWWINDOW_COMPAT_COUNT"
+    log "cgs_newwindow_legacy_trace_count=$NEWWINDOW_TRACE_COUNT"
+
+    if [ "$NEWWINDOW_COMPAT_COUNT" -ne 1 ] || [ "$NEWWINDOW_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'registrationCalls=1 setFrontCalls=1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_PREDICATE_NOT_MET"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007394 lionId=0x0000739a send=0x00000068 recv=0x00000040 changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_MACH_FAILURE"
+        exit 0
+    fi
+
+    if /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000038 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_LEGACY_FACING_SUCCESS_REPLY_NOT_ACCEPTED"
+            exit 0
+        fi
+        log "cgs_newwindow_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073fe result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_newwindow_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+    RELEASEBACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    RELEASEBACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_releasebacking_compat_call_count=$RELEASEBACKING_COMPAT_COUNT"
+    log "cgs_releasebacking_legacy_trace_count=$RELEASEBACKING_TRACE_COUNT"
+
+    if [ "$RELEASEBACKING_COMPAT_COUNT" -ne 1 ] || [ "$RELEASEBACKING_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseFlag=0x00000001 newWindowCompatCalls=1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_MET"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724b lionId=0x0000724c send=0x00000028 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_FAILURE"
+        exit 0
+    fi
+
+    if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_releasebacking_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_releasebacking_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+    OPACITY_CREATE_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_CREATE_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT"
+    log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT"
+    if [ "$OPACITY_CREATE_COMPAT_COUNT" -ne 1 ] || [ "$OPACITY_CREATE_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseBackingCompatCalls=1 newWindowCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724f lionId=0x00007250 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001200 size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_create_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_create_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+    OPACITY_CREATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_TERMINATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_TOTAL_COUNT=$((OPACITY_CREATE_COUNT + OPACITY_TERMINATE_COUNT))
+    log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_COUNT"
+    log "cgs_opacity_alpha_terminate_legacy_trace_count=$OPACITY_TERMINATE_COUNT"
+    log "cgs_opacity_alpha_legacy_trace_count=$OPACITY_TOTAL_COUNT"
+
+    if [ "$OPACITY_TOTAL_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_REQUEST_NOT_REACHED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_UNEXPECTED_MACH_FAILURE"
+        exit 0
+    fi
+
+    if [ "$OPACITY_CREATE_COUNT" -eq 1 ]; then
+        OPACITY_KIND="CREATE"
+        if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x0000724f expectedReply=0x000072b3 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY" | /usr/bin/grep -Fq 'size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES'; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_SUCCESS_UNEXPECTED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_legacy_kind=CREATE"
+    elif [ "$OPACITY_TERMINATE_COUNT" -eq 1 ]; then
+        OPACITY_KIND="TERMINATE"
+        if ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x00007250 expectedReply=0x000072b4 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY" | /usr/bin/grep -Fq 'size=0x00000024 id=0x000072b4 expected=0x000072b4 idMatch=YES'; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_TERMINATE_SUCCESS_UNEXPECTED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_legacy_kind=TERMINATE"
+        log "cgs_opacity_alpha_id_collision=SNOW_TERMINATE_EQUALS_LION_CREATE"
+    fi
+fi
+
+if [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
+    SET_FRONT_WINDOW_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_SET_FRONT_WINDOW_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    SET_FRONT_WINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_FRONT_WINDOW_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_set_front_window_compat_call_count=$SET_FRONT_WINDOW_COMPAT_COUNT"
+    log "cgs_set_front_window_legacy_trace_count=$SET_FRONT_WINDOW_TRACE_COUNT"
+    if [ "$SET_FRONT_WINDOW_COMPAT_COUNT" -ne 1 ] || [ "$SET_FRONT_WINDOW_TRACE_COUNT" -lt 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* .*opacityCreateCompatCalls=1 orderFrontCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072f2 lionId=0x000072f5 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x00007359 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x00007359 legacyId=0x00007356 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_SET_FRONT_WINDOW_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_SET_FRONT_WINDOW_LEGACY bits=0x00001200 size=0x00000024 id=0x00007356 expected=0x00007356 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_set_front_window_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x00007359 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x00007359 legacyId=0x00007356 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'id=0x00007356 expected=0x00007356 idMatch=YES' "$RAW_LOG"; then
+        log "cgs_set_front_window_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
+    COLOR_PROFILE_CLIENT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_color_profile_client_legacy_trace_count=$COLOR_PROFILE_CLIENT_TRACE_COUNT"
+    if [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -lt 1 ] ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY exact=YES bits=0x80001513 id=0x000074d4 send=0x00000034 recv=0x00000030' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000024 id=0x00007538 expected=0x00007538 idMatch=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000024 id=0x00007538 expected=0x00007538 resultRaw=0xd0feffff clientIdRaw=0x00000000' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LION' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_UNEXPECTED"
+        exit 0
+    fi
+    log "cgs_color_profile_client_live_result=LEGACY_MINUS304"
+fi
+
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+    COLOR_PROFILE_CLIENT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    COLOR_PROFILE_CLIENT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_color_profile_client_compat_call_count=$COLOR_PROFILE_CLIENT_COMPAT_COUNT"
+    log "cgs_color_profile_client_legacy_trace_count=$COLOR_PROFILE_CLIENT_TRACE_COUNT"
+    if [ "$COLOR_PROFILE_CLIENT_COMPAT_COUNT" -lt 1 ] || [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -lt 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES lionPortExact=YES applicationPort=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* .*descriptorCount=1 .*disposition=0x13 type=0x00 .*newWindowCompatCalls=1 releaseBackingCompatCalls=1 opacityCreateCompatCalls=1 orderFrontCompatCalls=0 addTrackingCompatCalls=0 setFrontWindowCompatCalls=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000074d4 lionId=0x000074d6 send=0x00000034 recv=0x00000030 changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*pid=[1-9][0-9]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000028 id=0x0000753a resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* replyClass=SUCCESS' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753a legacyId=0x00007538 size=0x00000028 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000028 id=0x00007538 expected=0x00007538 idMatch=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000028 id=0x00007538 expected=0x00007538 resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_color_profile_client_native_reply_class=SUCCESS"
+        if [ "$COLOR_PROFILE_CLIENT_COMPAT_COUNT" -ne 1 ] || [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_RETRY_AFTER_ADAPTER"
+            exit 0
+        fi
+    elif /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000753a resultRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* clientIdRaw=0x00000000 replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753a legacyId=0x00007538 size=0x00000024 changedBytes=1 bodyChangedBytes=0 resultRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* clientIdRaw=0x00000000 replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "cgs_color_profile_client_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+    WBI_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASSTHROUGH_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:PASSTHROUGH' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASSTHROUGH_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:PASSTHROUGH' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_EXPECTED_COUNT=1
+    RUNAPPLICATIONEVENTLOOP_WBI_COUNT=0
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        WBI_EXPECTED_COUNT=2
+        RUNAPPLICATIONEVENTLOOP_WBI_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop/{seen=1; next} seen && /PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop/{exit} seen && /PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+    fi
+    log "window_backing_info_compat_call_count=$WBI_COMPAT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "runapplicationeventloop_window_backing_info_call_count=$RUNAPPLICATIONEVENTLOOP_WBI_COUNT"
+    fi
+    log "color_profile_resolve_compat_call_count=$CPR_COMPAT_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    if [ "$WBI_COMPAT_COUNT" -ne "$WBI_EXPECTED_COUNT" ] ||
+       [ "$WBI_PASS_COUNT" -ne "$WBI_EXPECTED_COUNT" ] ||
+       [ "$WBI_PASSTHROUGH_COUNT" -ne 0 ] ||
+       { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+         [ "$RUNAPPLICATIONEVENTLOOP_WBI_COUNT" -ne 1 ]; } ||
+       [ "$CPR_COMPAT_COUNT" -ne 1 ] || [ "$CPR_PASS_COUNT" -ne 1 ] || [ "$CPR_PASSTHROUGH_COUNT" -ne 0 ]; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_ACCEPTED_FULL_STACK_COUNT_MISMATCH"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=1 adapted=0 mode=lion-id-v1 exact=YES applicationPortExact=YES .*newWindowCompatCalls=1 releaseBackingCompatCalls=1 opacityCreateCompatCalls=1 orderFrontCompatCalls=0 addTrackingCompatCalls=0 setFrontWindowCompatCalls=0 colorProfileClientCompatCalls=0 colorProfileResolveCompatCalls=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007263 lionId=0x00007264 send=0x00000024 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 windowId=[1-9][0-9]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000034 id=0x000072c8 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072c8 legacyId=0x000072c7 size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG"; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_WINDOW_BACKING_INFO_BASELINE_NOT_PASSED"
+        exit 0
+    fi
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=2 adapted=0 mode=lion-id-v1 exact=YES applicationPortExact=YES .*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REQUEST:index=2 legacyId=0x00007263 lionId=0x00007264 send=0x00000024 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 windowId=[1-9][0-9]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_MACH_RETURN:index=2 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_REPLY:index=2 bits=0x00001200 size=0x00000034 id=0x000072c8 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REPLY:index=2 nativeId=0x000072c8 legacyId=0x000072c7 size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_WINDOW_BACKING_INFO_NOT_PASSED"
+            exit 0
+        fi
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:index=1 adapted=0 mode=lion-id-v1 exact=YES provenanceExact=YES clientId=[1-9][0-9]* expectedClientId=[1-9][0-9]* profileId=1 .*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000074d7 lionId=0x000074d9 send=0x00000038 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 clientId=[1-9][0-9]* profileId=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000034 id=0x0000753d resultRaw=0x00000000 ' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753d legacyId=0x0000753b size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 ' "$RAW_LOG"; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_COLOR_PROFILE_RESOLVE_BASELINE_NOT_PASSED"
+        exit 0
+    fi
+    log "window_backing_info_native_reply_class=SUCCESS"
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "runapplicationeventloop_window_backing_info_native_reply_class=SUCCESS"
+    fi
+    log "color_profile_resolve_native_reply_class=SUCCESS"
+fi
+
+if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
+    ORDER_FRONT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_ADAPTER_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_order_front_conditionally_compat_call_count=$ORDER_FRONT_COMPAT_COUNT"
+    log "cgs_order_front_conditionally_legacy_trace_count=$ORDER_FRONT_TRACE_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_ADAPTER_PASS_COUNT"
+    if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        SELECTWINDOW_ORDER_FRONT_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow/{seen=1; next} seen && /PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow/{exit} seen && /PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+        ORDER_FRONT_EXPECTED_COUNT=2
+        RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT=0
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            ORDER_FRONT_EXPECTED_COUNT=3
+            RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop/{seen=1; next} seen && /PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop/{exit} seen && /PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+        fi
+        log "selectwindow_order_front_conditionally_call_count=$SELECTWINDOW_ORDER_FRONT_COUNT"
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            log "runapplicationeventloop_order_front_conditionally_call_count=$RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT"
+        fi
+        if [ "$ORDER_FRONT_COMPAT_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$ORDER_FRONT_TRACE_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$ORDER_FRONT_ADAPTER_PASS_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$SELECTWINDOW_ORDER_FRONT_COUNT" -ne 1 ] ||
+           { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+             [ "$RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT" -ne 1 ]; }; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COUNT_MISMATCH"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=1 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=2 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=2 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=2 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=2 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=2 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+             { ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=3 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+               ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=3 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=3 kr=0 hex=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=3 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=3 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG"; }; }; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_order_front_conditionally_native_reply_class=SUCCESS"
+        log "selectwindow_order_front_conditionally_native_reply_class=SUCCESS"
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            log "runapplicationeventloop_order_front_conditionally_native_reply_class=SUCCESS"
+        fi
+    else
+        ORDER_FRONT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        ORDER_FRONT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_order_front_conditionally_compat_call_count=$ORDER_FRONT_COMPAT_COUNT"
+        log "cgs_order_front_conditionally_legacy_trace_count=$ORDER_FRONT_TRACE_COUNT"
+        if [ "$ORDER_FRONT_COMPAT_COUNT" -ne 1 ] || [ "$ORDER_FRONT_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY bits=0x00001200 size=0x00000024 id=0x0000734b expected=0x0000734b idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+                exit 0
+            fi
+            log "cgs_order_front_conditionally_native_reply_class=SUCCESS"
+        elif /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000734e result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+             /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+             /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+             /usr/bin/grep -Fq 'id=0x0000734b expected=0x0000734b idMatch=YES' "$RAW_LOG"; then
+            log "cgs_order_front_conditionally_native_reply_class=ERROR"
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        else
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY_UNEXPECTED"
+            exit 0
+        fi
+    fi
+fi
+if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+    ADD_TRACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ADD_TRACKING_AREA_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    ADD_TRACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_add_tracking_area_compat_call_count=$ADD_TRACKING_COMPAT_COUNT"
+    log "cgs_add_tracking_area_legacy_trace_count=$ADD_TRACKING_TRACE_COUNT"
+    if [ "$ADD_TRACKING_COMPAT_COUNT" -ne 1 ] || [ "$ADD_TRACKING_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES .*count=9 opacityCreateCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007388 lionId=0x0000738e send=0x00000060 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*count=9' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073f2 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073f2 legacyId=0x000073ec size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY bits=0x00001200 size=0x00000024 id=0x000073ec expected=0x000073ec idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_add_tracking_area_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073f2 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073f2 legacyId=0x000073ec size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'id=0x000073ec expected=0x000073ec idMatch=YES' "$RAW_LOG"; then
+        log "cgs_add_tracking_area_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] &&
+   [ "$FOUND" -eq 0 ] &&
+   /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=-304' "$RAW_LOG" &&
+   /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH:reason=NON_TARGET' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'name=com.apple.dock.server' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH_RETURN:kr=-304 hex=0xfffffed0 servicePort=0x00000000' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATIONS_ESTABLISHED_DOCK_SERVER_MINUS304"
+    exit 0
+fi
+
+if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=0' "$RAW_LOG"; then
+    if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PUBLIC_ERROR"
+    elif [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_PUBLIC_ERROR"
+    elif [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_SUCCESS_PUBLIC_ERROR"
+    elif [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_SUCCESS_PUBLIC_ERROR"
+    elif [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_ADAPTER_PASS_CREATEWINDOW_ERROR"
+    else
+        log "RESULT: CREATENEWWINDOW_RETURNED_ERROR"
+    fi
+    exit 0
+fi
+
+if ! /usr/bin/grep -Eq 'PM_POSTIDENTITY_WINDOW:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_RESULT:CREATENEWWINDOW_PASS' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_NULL_OR_INVALID"
+    exit 0
+fi
+
+if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T00_BEFORE_CFStringCreateWithCString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_STAGE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T01_AFTER_CFStringCreateWithCString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFSTRING_NO_RETURN"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_POSTWINDOWTITLE_CFSTRING:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_RESULT:CFSTRING_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFSTRING_FAILED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T02_BEFORE_SetWindowTitleWithCFString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T03_AFTER_SetWindowTitleWithCFString' "$RAW_LOG"; then
+        if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REPLY:index=1 replyClass=SUCCESS' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        elif [ -n "$FONTSERVER_RPC_TRACE_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REQUEST:index=1 mode=lion-passive-v1' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_CAPTURED"
+        elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] &&
+           /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=5 allowed=4 behavior=1 publicBehavior=4 anyObject=YES' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_PASS_POST_RPC_NO_RETURN"
+        elif [ -n "$FONTSERVER_COMPAT_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        else
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_NO_RETURN"
+        fi
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_STATUS:SetWindowTitleWithCFString=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_RESULT:SETWINDOWTITLE_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_ERROR"
+        exit 0
+    fi
+    if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow' "$RAW_LOG"; then
+            if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+               /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=7 allowed=5 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG"; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_PASS_SHOWWINDOW_NO_RETURN"
+            elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ] &&
+               /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_LEGACY_MINUS304"
+            elif [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
+                SHOWWINDOW_UNKNOWN_REQUEST_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow/{seen=1; next} seen && /PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow/{exit} seen && /PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+                SHOWWINDOW_UNKNOWN_RETURN_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow/{seen=1; next} seen && /PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow/{exit} seen && /PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_MACH_RETURN:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+                log "showwindow_unknown_cgs_trace_request_count=$SHOWWINDOW_UNKNOWN_REQUEST_COUNT"
+                log "showwindow_unknown_cgs_trace_return_count=$SHOWWINDOW_UNKNOWN_RETURN_COUNT"
+                if [ "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" -lt 1 ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_NOT_REACHED"
+                elif [ "$SHOWWINDOW_UNKNOWN_RETURN_COUNT" -ne "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_INCOMPLETE"
+                elif [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                elif [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                elif [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                else
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_CAPTURED"
+                fi
+            else
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_NO_RETURN"
+            fi
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_RESULT:SHOWWINDOW_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_MARKER_INCOMPLETE"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_RESULT:SELECTWINDOW_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_MARKER_INCOMPLETE"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_MILESTONE:S04_BEFORE_IsWindowVisible' "$RAW_LOG"; then
+            log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_MILESTONE:S05_AFTER_IsWindowVisible' "$RAW_LOG"; then
+            log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_VALUE:visible=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_RESULT:ISWINDOWVISIBLE_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_RESULT:ISWINDOWVISIBLE_FALSE' "$RAW_LOG"; then
+            log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_VALUE_OR_MARKER_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_MILESTONE:S06_BEFORE_NewEventLoopTimerUPP' "$RAW_LOG"; then
+            log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_MILESTONE:S07_AFTER_NewEventLoopTimerUPP' "$RAW_LOG"; then
+            log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_POSTWINDOWTIMERUPP_POINTER:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_RESULT:NEWEVENTLOOPTIMERUPP_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_RESULT:NEWEVENTLOOPTIMERUPP_NULL' "$RAW_LOG"; then
+            log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_POINTER_OR_MARKER_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_MILESTONE:S08_BEFORE_GetMainEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_MILESTONE:S09_AFTER_GetMainEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_POSTWINDOWMAINEVENTLOOP_POINTER:pointer=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_RESULT:GETMAINEVENTLOOP_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_RESULT:GETMAINEVENTLOOP_NULL' "$RAW_LOG"; then
+            log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_POINTER_OR_MARKER_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_MILESTONE:S10_BEFORE_InstallEventLoopTimer' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_MILESTONE:S11_AFTER_InstallEventLoopTimer' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_STATUS:InstallEventLoopTimer=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_POSTWINDOWTIMERINSTALL_POINTER:pointer=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_CALLBACK:fired=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_RETURNED_ERROR' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_NULL_TIMER' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_CALLBACK_FIRED_UNEXPECTEDLY' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_STATUS_POINTER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_MILESTONE:S12_BEFORE_QuitApplicationEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_MILESTONE:S13_AFTER_QuitApplicationEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_CALLBACK:fired=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_RESULT:QUITAPPLICATIONEVENTLOOP_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_RESULT:QUITAPPLICATIONEVENTLOOP_CALLBACK_FIRED_UNEXPECTEDLY' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MARKER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NOT_REACHED"
+            exit 0
+        fi
+        TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+        log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+        log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+        log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+        log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+        if [ "$TIMER_CB_ENTER_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_EXIT_COUNT" -ne 1 ] ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_CALLBACK_COUNT_MISMATCH' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_MARKER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T04_BEFORE_CFRelease' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T05_AFTER_CFRelease' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFRELEASE_INCOMPLETE"
+        exit 0
+    fi
+fi
+
+if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M22_BEFORE_DisposeWindow' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M23_AFTER_DisposeWindow' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_DISPOSE_OR_SUCCESS_MILESTONE_MISSING"
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_CPS_REGISTRATION_COMPAT_CALL:index=2' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_SECOND_REGISTRATION_CALL"
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_CPS_SETFRONT_COMPAT_CALL:index=2' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_SECOND_SETFRONT_CALL"
+    exit 0
+fi
+
+if [ -n "$REAL_REGISTRATION_MODE" ] &&
+   ! /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_INCOMPLETE"
+    exit 0
+fi
+
+if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    HITOOLBOX_EXTRAS_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_EXTRAS_COMPAT_TARGET:.*mode=lion-fallback-external-v1.*bundle=com.apple.HIToolbox name=Extras type=rsrc' "$RAW_LOG" 2>/dev/null || true)"
+    if [ "$HITOOLBOX_EXTRAS_TARGET_COUNT" -lt 1 ] ||
+       ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NULL' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NONNULL fallback=NOT_USED' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_INCOMPLETE"
+        exit 0
+    fi
+fi
+
+if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" ||
+   ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_WAIT:pid=[0-9]+ exit=0$' "$RAW_LOG" ||
+   ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_EXIT:lookups=1 requests=[0-9]+ callbacks=[0-9]+$' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_DISTNOTIFY_LIFECYCLE_INCOMPLETE"
+    exit 0
+fi
+
+if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
+    if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
+        log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" ]; then
+        log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE" ]; then
+        log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_SHOWWINDOW_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SIXTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_VALIDATION_PASS"
+    elif [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_TITLE_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$FONTSERVER_COMPAT_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_VALIDATION_PASS"
+    elif [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATEWINDOW_PASS"
+    elif [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ]; then
+        log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATION_PASS"
+    elif [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_PASS"
+    elif [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_PASS"
+    else
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_INTEGRATION_PASS"
+    fi
+    exit 0
+fi
+
+log "RESULT: CREATENEWWINDOW_PROCESS_STATE_UNEXPECTED rc=$RC diagnostics=$FOUND"
+exit 0
+ "$RAW_LOG" 2>/dev/null || true)"
+    THIRTEENTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=13 allowed=11 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=13 allowed=11 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "thirteenth_notification_registration_accept_count=$THIRTEENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$THIRTEENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=14 bits=0x00001111 id=4 size=336 payload=302' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_PASS_FOURTEENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+    if [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=13 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_INTEGRATION_INCOMPLETE"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_TWELFTH_REGISTRATION_MODE" ]; then
+    TWELFTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=12 allowed=10 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "twelfth_notification_registration_accept_count=$TWELFTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$TWELFTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=13 bits=0x00001111 id=4 size=356 payload=323' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_PASS_THIRTEENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+    if [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=12 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_INTEGRATION_INCOMPLETE"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_ELEVENTH_REGISTRATION_MODE" ]; then
+    ELEVENTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=11 allowed=9 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "eleventh_notification_registration_accept_count=$ELEVENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$ELEVENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=12 bits=0x00001111 id=4 size=336 payload=302' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_PASS_TWELFTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+    if [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=11 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_INCOMPLETE"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ]; then
+    TENTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=10 allowed=8 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "tenth_notification_registration_accept_count=$TENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$TENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=11 bits=0x00001111 id=4 size=356 payload=323' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_PASS_ELEVENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ]; then
+    NINTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=9 allowed=7 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "ninth_notification_registration_accept_count=$NINTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$NINTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=10 bits=0x00001111 id=4 size=332 payload=300' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_PASS_TENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ]; then
+    EIGHTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=8 allowed=6 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "eighth_notification_registration_accept_count=$EIGHTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$EIGHTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=9 ' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_PASS_NINTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+fi
+
+if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REJECT:' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_REQUEST:FAIL' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_CALLBACK:REJECT' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+    if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=7 allowed=5 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_PASS_EIGHTH_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] &&
+       /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=6 allowed=3 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x2$' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SIXTH_NOTIFICATION_REGISTRATION_PASS_SEVENTH_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=5 allowed=4 behavior=1 publicBehavior=4 anyObject=YES' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_PASS_SIXTH_PROTOCOL_REJECTED"
+    elif [ -n "$FONTSERVER_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_PASS_NOTIFICATION_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ]; then
+        log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATION_PROTOCOL_REJECTED"
+    elif [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_PROTOCOL_REJECTED"
+    elif /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:status=20' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_BROKER_SCHEMA_REJECTED"
+    else
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_PROTOCOL_REJECTED"
+    fi
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG" &&
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M21_AFTER_CreateNewWindow' "$RAW_LOG"; then
+    if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        OPACITY_CREATE_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        OPACITY_CREATE_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT"
+        log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT"
+        if [ "$OPACITY_CREATE_COMPAT_COUNT" -ne 1 ] || [ "$OPACITY_CREATE_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseBackingCompatCalls=1 newWindowCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724f lionId=0x00007250 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_FAILURE"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001200 size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+           /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        fi
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+    if [ -n "$OPACITY_ALPHA_TRACE_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        OPACITY_CREATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        OPACITY_TERMINATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        OPACITY_TOTAL_COUNT=$((OPACITY_CREATE_COUNT + OPACITY_TERMINATE_COUNT))
+        log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_COUNT"
+        log "cgs_opacity_alpha_terminate_legacy_trace_count=$OPACITY_TERMINATE_COUNT"
+        log "cgs_opacity_alpha_legacy_trace_count=$OPACITY_TOTAL_COUNT"
+        if [ "$OPACITY_TOTAL_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_REQUEST_NOT_REACHED"
+            exit 0
+        fi
+        if [ "$OPACITY_CREATE_COUNT" -eq 1 ]; then
+            OPACITY_KIND="CREATE"
+            if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'id=0x0000724f expectedReply=0x000072b3 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_REQUEST_UNEXPECTED"
+                exit 0
+            fi
+            MACH_KIND="CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY"
+            EXPECTED_REPLY="0x000072b3"
+        else
+            OPACITY_KIND="TERMINATE"
+            if ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'id=0x00007250 expectedReply=0x000072b4 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_TERMINATE_REQUEST_UNEXPECTED"
+                exit 0
+            fi
+            MACH_KIND="CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY"
+            EXPECTED_REPLY="0x000072b4"
+        fi
+        log "cgs_opacity_alpha_legacy_kind=$OPACITY_KIND"
+        if /usr/bin/grep -Fq "kind=$MACH_KIND kr=268451844 hex=0x10004004" "$RAW_LOG"; then
+            if /usr/bin/grep -Fq "PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:" "$RAW_LOG" &&
+               /usr/bin/grep -Fq "kind=$MACH_KIND kr=268451844 hex=0x10004004" "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_${OPACITY_KIND}_MACH_RCV_TOO_LARGE_OBSERVED"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER_MISSING"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Fq "kind=$MACH_KIND kr=0 hex=0x00000000" "$RAW_LOG"; then
+            if /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=$MACH_KIND" | /usr/bin/grep -Fq "size=0x00000024 id=$EXPECTED_REPLY expected=$EXPECTED_REPLY idMatch=YES"; then
+                if [ "$OPACITY_KIND" = "TERMINATE" ]; then
+                    log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_TERMINATE_ID_COLLISION_REPLY_OBSERVED"
+                else
+                    log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_LEGACY_REPLY_OBSERVED"
+                fi
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_REPLY_UNEXPECTED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Fq "PM_CGS_CONNECTION_TRACE_MACH_RETURN:" "$RAW_LOG" &&
+           /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_MACH_RETURN:" "$RAW_LOG" | /usr/bin/grep -Fq "kind=$MACH_KIND"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_${OPACITY_KIND}_MACH_FAILURE_OBSERVED"
+        else
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_MACH_RETURN_MISSING"
+        fi
+        exit 0
+    fi
+    if [ -n "$RELEASEBACKING_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        RELEASEBACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_releasebacking_compat_call_count=$RELEASEBACKING_COMPAT_COUNT"
+        if [ "$RELEASEBACKING_COMPAT_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseFlag=0x00000001 newWindowCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724b lionId=0x0000724c send=0x00000028 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+           /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        fi
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+    if [ -n "$RELEASEBACKING_TRACE_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        RELEASEBACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_releasebacking_legacy_trace_count=$RELEASEBACKING_TRACE_COUNT"
+        if [ "$RELEASEBACKING_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REQUEST_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x0000724b expectedReply=0x000072af option=0x00000003 send=0x00000028 recv=0x0000002c' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REQUEST_UNEXPECTED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_MACH_FAILURE"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY bits=' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_LEGACY_REPLY_OBSERVED"
+        else
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REPLY_UNEXPECTED"
+        fi
+        exit 0
+    fi
+    if [ -n "$NEWWINDOW_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000038 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_CONNECTION_TRACE_REPLY:index=5 kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=0x00001200 size=0x00000038 id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        exit 0
+    fi
+    if [ -n "$DOCKSERVER_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_PASS_NO_RETURN"
+        exit 0
+    fi
+    if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        HITOOLBOX_EXTRAS_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_EXTRAS_COMPAT_TARGET:.*mode=lion-fallback-external-v1.*bundle=com.apple.HIToolbox name=Extras type=rsrc' "$RAW_LOG" 2>/dev/null || true)"
+        log "hitoolbox_extras_compat_target_count=$HITOOLBOX_EXTRAS_TARGET_COUNT"
+        if [ "$HITOOLBOX_EXTRAS_TARGET_COUNT" -ge 1 ] &&
+           /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" &&
+           ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NULL' "$RAW_LOG" &&
+           ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NONNULL fallback=NOT_USED' "$RAW_LOG" &&
+           /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_NO_RETURN"
+        else
+            log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_INCOMPLETE"
+        fi
+        exit 0
+    fi
+    if [ -n "$HITOOLBOX_TRACE" ]; then
+        HITOOLBOX_TRACE_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_CFBUNDLE_TRACE_TARGET:.*bundle=com.apple.HIToolbox name=Extras type=rsrc subdir=NULL localization=NULL' "$RAW_LOG" 2>/dev/null || true)"
+        log "hitoolbox_cfbundle_trace_target_count=$HITOOLBOX_TRACE_TARGET_COUNT"
+    fi
+    if [ -n "$REAL_REGISTRATION_MODE" ] &&
+       [ -n "$HITOOLBOX_TRACE" ] &&
+       [ "$HITOOLBOX_TRACE_TARGET_COUNT" -ge 1 ] &&
+       /usr/bin/grep -F 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:' "$RAW_LOG" | /usr/bin/grep -Fq ' url=NULL ' &&
+       ! /usr/bin/grep -F 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:' "$RAW_LOG" | /usr/bin/grep -Fq ' url=NONNULL ' &&
+       /usr/bin/grep -Fq 'HIToolbox: failed to copy resource URL for framework bundle.' "$RAW_LOG" &&
+       /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_LOOKUP_CONFIRMED_NO_RETURN"
+    elif [ -n "$REAL_REGISTRATION_MODE" ] &&
+       /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REGISTRATIONS_ESTABLISHED_CREATEWINDOW_NO_RETURN"
+    elif [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_INCOMPLETE"
+    else
+        log "RESULT: CREATENEWWINDOW_NO_RETURN"
+    fi
+    exit 0
+fi
+
+if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_NOT_REACHED"
+    exit 0
+fi
+
+if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+    if ! /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_CALL:index=1 mode=lion-dockserver-v1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_LOOKUP_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_ADAPTER_FAILED"
+        exit 0
+    fi
+fi
+
+if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
+    NEWWINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_newwindow_legacy_trace_count=$NEWWINDOW_TRACE_COUNT"
+    if [ "$NEWWINDOW_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REQUEST_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'id=0x00007394 expectedReply=0x000073f8 option=0x00000003' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'recv=0x00000040' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REQUEST_UNEXPECTED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_MACH_FAILURE"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_LEGACY_REPLY_OBSERVED"
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REPLY_UNEXPECTED"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+    NEWWINDOW_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    NEWWINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_newwindow_compat_call_count=$NEWWINDOW_COMPAT_COUNT"
+    log "cgs_newwindow_legacy_trace_count=$NEWWINDOW_TRACE_COUNT"
+
+    if [ "$NEWWINDOW_COMPAT_COUNT" -ne 1 ] || [ "$NEWWINDOW_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'registrationCalls=1 setFrontCalls=1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_PREDICATE_NOT_MET"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007394 lionId=0x0000739a send=0x00000068 recv=0x00000040 changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_MACH_FAILURE"
+        exit 0
+    fi
+
+    if /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000038 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_LEGACY_FACING_SUCCESS_REPLY_NOT_ACCEPTED"
+            exit 0
+        fi
+        log "cgs_newwindow_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073fe result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_newwindow_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+    RELEASEBACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    RELEASEBACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_releasebacking_compat_call_count=$RELEASEBACKING_COMPAT_COUNT"
+    log "cgs_releasebacking_legacy_trace_count=$RELEASEBACKING_TRACE_COUNT"
+
+    if [ "$RELEASEBACKING_COMPAT_COUNT" -ne 1 ] || [ "$RELEASEBACKING_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseFlag=0x00000001 newWindowCompatCalls=1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_MET"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724b lionId=0x0000724c send=0x00000028 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_FAILURE"
+        exit 0
+    fi
+
+    if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_releasebacking_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_releasebacking_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+    OPACITY_CREATE_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_CREATE_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT"
+    log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT"
+    if [ "$OPACITY_CREATE_COMPAT_COUNT" -ne 1 ] || [ "$OPACITY_CREATE_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseBackingCompatCalls=1 newWindowCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724f lionId=0x00007250 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001200 size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_create_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_create_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+    OPACITY_CREATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_TERMINATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_TOTAL_COUNT=$((OPACITY_CREATE_COUNT + OPACITY_TERMINATE_COUNT))
+    log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_COUNT"
+    log "cgs_opacity_alpha_terminate_legacy_trace_count=$OPACITY_TERMINATE_COUNT"
+    log "cgs_opacity_alpha_legacy_trace_count=$OPACITY_TOTAL_COUNT"
+
+    if [ "$OPACITY_TOTAL_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_REQUEST_NOT_REACHED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_UNEXPECTED_MACH_FAILURE"
+        exit 0
+    fi
+
+    if [ "$OPACITY_CREATE_COUNT" -eq 1 ]; then
+        OPACITY_KIND="CREATE"
+        if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x0000724f expectedReply=0x000072b3 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY" | /usr/bin/grep -Fq 'size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES'; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_SUCCESS_UNEXPECTED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_legacy_kind=CREATE"
+    elif [ "$OPACITY_TERMINATE_COUNT" -eq 1 ]; then
+        OPACITY_KIND="TERMINATE"
+        if ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x00007250 expectedReply=0x000072b4 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY" | /usr/bin/grep -Fq 'size=0x00000024 id=0x000072b4 expected=0x000072b4 idMatch=YES'; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_TERMINATE_SUCCESS_UNEXPECTED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_legacy_kind=TERMINATE"
+        log "cgs_opacity_alpha_id_collision=SNOW_TERMINATE_EQUALS_LION_CREATE"
+    fi
+fi
+
+if [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
+    SET_FRONT_WINDOW_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_SET_FRONT_WINDOW_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    SET_FRONT_WINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_FRONT_WINDOW_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_set_front_window_compat_call_count=$SET_FRONT_WINDOW_COMPAT_COUNT"
+    log "cgs_set_front_window_legacy_trace_count=$SET_FRONT_WINDOW_TRACE_COUNT"
+    if [ "$SET_FRONT_WINDOW_COMPAT_COUNT" -ne 1 ] || [ "$SET_FRONT_WINDOW_TRACE_COUNT" -lt 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* .*opacityCreateCompatCalls=1 orderFrontCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072f2 lionId=0x000072f5 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x00007359 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x00007359 legacyId=0x00007356 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_SET_FRONT_WINDOW_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_SET_FRONT_WINDOW_LEGACY bits=0x00001200 size=0x00000024 id=0x00007356 expected=0x00007356 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_set_front_window_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x00007359 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x00007359 legacyId=0x00007356 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'id=0x00007356 expected=0x00007356 idMatch=YES' "$RAW_LOG"; then
+        log "cgs_set_front_window_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
+    COLOR_PROFILE_CLIENT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_color_profile_client_legacy_trace_count=$COLOR_PROFILE_CLIENT_TRACE_COUNT"
+    if [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -lt 1 ] ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY exact=YES bits=0x80001513 id=0x000074d4 send=0x00000034 recv=0x00000030' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000024 id=0x00007538 expected=0x00007538 idMatch=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000024 id=0x00007538 expected=0x00007538 resultRaw=0xd0feffff clientIdRaw=0x00000000' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LION' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_UNEXPECTED"
+        exit 0
+    fi
+    log "cgs_color_profile_client_live_result=LEGACY_MINUS304"
+fi
+
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+    COLOR_PROFILE_CLIENT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    COLOR_PROFILE_CLIENT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_color_profile_client_compat_call_count=$COLOR_PROFILE_CLIENT_COMPAT_COUNT"
+    log "cgs_color_profile_client_legacy_trace_count=$COLOR_PROFILE_CLIENT_TRACE_COUNT"
+    if [ "$COLOR_PROFILE_CLIENT_COMPAT_COUNT" -lt 1 ] || [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -lt 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES lionPortExact=YES applicationPort=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* .*descriptorCount=1 .*disposition=0x13 type=0x00 .*newWindowCompatCalls=1 releaseBackingCompatCalls=1 opacityCreateCompatCalls=1 orderFrontCompatCalls=0 addTrackingCompatCalls=0 setFrontWindowCompatCalls=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000074d4 lionId=0x000074d6 send=0x00000034 recv=0x00000030 changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*pid=[1-9][0-9]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000028 id=0x0000753a resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* replyClass=SUCCESS' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753a legacyId=0x00007538 size=0x00000028 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000028 id=0x00007538 expected=0x00007538 idMatch=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000028 id=0x00007538 expected=0x00007538 resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_color_profile_client_native_reply_class=SUCCESS"
+        if [ "$COLOR_PROFILE_CLIENT_COMPAT_COUNT" -ne 1 ] || [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_RETRY_AFTER_ADAPTER"
+            exit 0
+        fi
+    elif /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000753a resultRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* clientIdRaw=0x00000000 replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753a legacyId=0x00007538 size=0x00000024 changedBytes=1 bodyChangedBytes=0 resultRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* clientIdRaw=0x00000000 replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "cgs_color_profile_client_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+    WBI_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASSTHROUGH_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:PASSTHROUGH' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASSTHROUGH_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:PASSTHROUGH' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_EXPECTED_COUNT=1
+    RUNAPPLICATIONEVENTLOOP_WBI_COUNT=0
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        WBI_EXPECTED_COUNT=2
+        RUNAPPLICATIONEVENTLOOP_WBI_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop/{seen=1; next} seen && /PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop/{exit} seen && /PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+    fi
+    log "window_backing_info_compat_call_count=$WBI_COMPAT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "runapplicationeventloop_window_backing_info_call_count=$RUNAPPLICATIONEVENTLOOP_WBI_COUNT"
+    fi
+    log "color_profile_resolve_compat_call_count=$CPR_COMPAT_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    if [ "$WBI_COMPAT_COUNT" -ne "$WBI_EXPECTED_COUNT" ] ||
+       [ "$WBI_PASS_COUNT" -ne "$WBI_EXPECTED_COUNT" ] ||
+       [ "$WBI_PASSTHROUGH_COUNT" -ne 0 ] ||
+       { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+         [ "$RUNAPPLICATIONEVENTLOOP_WBI_COUNT" -ne 1 ]; } ||
+       [ "$CPR_COMPAT_COUNT" -ne 1 ] || [ "$CPR_PASS_COUNT" -ne 1 ] || [ "$CPR_PASSTHROUGH_COUNT" -ne 0 ]; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_ACCEPTED_FULL_STACK_COUNT_MISMATCH"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=1 adapted=0 mode=lion-id-v1 exact=YES applicationPortExact=YES .*newWindowCompatCalls=1 releaseBackingCompatCalls=1 opacityCreateCompatCalls=1 orderFrontCompatCalls=0 addTrackingCompatCalls=0 setFrontWindowCompatCalls=0 colorProfileClientCompatCalls=0 colorProfileResolveCompatCalls=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007263 lionId=0x00007264 send=0x00000024 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 windowId=[1-9][0-9]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000034 id=0x000072c8 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072c8 legacyId=0x000072c7 size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG"; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_WINDOW_BACKING_INFO_BASELINE_NOT_PASSED"
+        exit 0
+    fi
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=2 adapted=0 mode=lion-id-v1 exact=YES applicationPortExact=YES .*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REQUEST:index=2 legacyId=0x00007263 lionId=0x00007264 send=0x00000024 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 windowId=[1-9][0-9]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_MACH_RETURN:index=2 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_REPLY:index=2 bits=0x00001200 size=0x00000034 id=0x000072c8 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REPLY:index=2 nativeId=0x000072c8 legacyId=0x000072c7 size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_WINDOW_BACKING_INFO_NOT_PASSED"
+            exit 0
+        fi
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:index=1 adapted=0 mode=lion-id-v1 exact=YES provenanceExact=YES clientId=[1-9][0-9]* expectedClientId=[1-9][0-9]* profileId=1 .*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000074d7 lionId=0x000074d9 send=0x00000038 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 clientId=[1-9][0-9]* profileId=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000034 id=0x0000753d resultRaw=0x00000000 ' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753d legacyId=0x0000753b size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 ' "$RAW_LOG"; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_COLOR_PROFILE_RESOLVE_BASELINE_NOT_PASSED"
+        exit 0
+    fi
+    log "window_backing_info_native_reply_class=SUCCESS"
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "runapplicationeventloop_window_backing_info_native_reply_class=SUCCESS"
+    fi
+    log "color_profile_resolve_native_reply_class=SUCCESS"
+fi
+
+if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
+    ORDER_FRONT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_ADAPTER_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_order_front_conditionally_compat_call_count=$ORDER_FRONT_COMPAT_COUNT"
+    log "cgs_order_front_conditionally_legacy_trace_count=$ORDER_FRONT_TRACE_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_ADAPTER_PASS_COUNT"
+    if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        SELECTWINDOW_ORDER_FRONT_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow/{seen=1; next} seen && /PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow/{exit} seen && /PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+        ORDER_FRONT_EXPECTED_COUNT=2
+        RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT=0
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            ORDER_FRONT_EXPECTED_COUNT=3
+            RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop/{seen=1; next} seen && /PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop/{exit} seen && /PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+        fi
+        log "selectwindow_order_front_conditionally_call_count=$SELECTWINDOW_ORDER_FRONT_COUNT"
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            log "runapplicationeventloop_order_front_conditionally_call_count=$RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT"
+        fi
+        if [ "$ORDER_FRONT_COMPAT_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$ORDER_FRONT_TRACE_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$ORDER_FRONT_ADAPTER_PASS_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$SELECTWINDOW_ORDER_FRONT_COUNT" -ne 1 ] ||
+           { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+             [ "$RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT" -ne 1 ]; }; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COUNT_MISMATCH"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=1 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=2 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=2 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=2 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=2 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=2 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+             { ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=3 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+               ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=3 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=3 kr=0 hex=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=3 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=3 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG"; }; }; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_order_front_conditionally_native_reply_class=SUCCESS"
+        log "selectwindow_order_front_conditionally_native_reply_class=SUCCESS"
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            log "runapplicationeventloop_order_front_conditionally_native_reply_class=SUCCESS"
+        fi
+    else
+        ORDER_FRONT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        ORDER_FRONT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_order_front_conditionally_compat_call_count=$ORDER_FRONT_COMPAT_COUNT"
+        log "cgs_order_front_conditionally_legacy_trace_count=$ORDER_FRONT_TRACE_COUNT"
+        if [ "$ORDER_FRONT_COMPAT_COUNT" -ne 1 ] || [ "$ORDER_FRONT_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY bits=0x00001200 size=0x00000024 id=0x0000734b expected=0x0000734b idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+                exit 0
+            fi
+            log "cgs_order_front_conditionally_native_reply_class=SUCCESS"
+        elif /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000734e result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+             /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+             /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+             /usr/bin/grep -Fq 'id=0x0000734b expected=0x0000734b idMatch=YES' "$RAW_LOG"; then
+            log "cgs_order_front_conditionally_native_reply_class=ERROR"
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        else
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY_UNEXPECTED"
+            exit 0
+        fi
+    fi
+fi
+if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+    ADD_TRACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ADD_TRACKING_AREA_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    ADD_TRACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_add_tracking_area_compat_call_count=$ADD_TRACKING_COMPAT_COUNT"
+    log "cgs_add_tracking_area_legacy_trace_count=$ADD_TRACKING_TRACE_COUNT"
+    if [ "$ADD_TRACKING_COMPAT_COUNT" -ne 1 ] || [ "$ADD_TRACKING_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES .*count=9 opacityCreateCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007388 lionId=0x0000738e send=0x00000060 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*count=9' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073f2 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073f2 legacyId=0x000073ec size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY bits=0x00001200 size=0x00000024 id=0x000073ec expected=0x000073ec idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_add_tracking_area_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073f2 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073f2 legacyId=0x000073ec size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'id=0x000073ec expected=0x000073ec idMatch=YES' "$RAW_LOG"; then
+        log "cgs_add_tracking_area_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] &&
+   [ "$FOUND" -eq 0 ] &&
+   /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=-304' "$RAW_LOG" &&
+   /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH:reason=NON_TARGET' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'name=com.apple.dock.server' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH_RETURN:kr=-304 hex=0xfffffed0 servicePort=0x00000000' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATIONS_ESTABLISHED_DOCK_SERVER_MINUS304"
+    exit 0
+fi
+
+if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=0' "$RAW_LOG"; then
+    if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PUBLIC_ERROR"
+    elif [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_PUBLIC_ERROR"
+    elif [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_SUCCESS_PUBLIC_ERROR"
+    elif [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_SUCCESS_PUBLIC_ERROR"
+    elif [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_ADAPTER_PASS_CREATEWINDOW_ERROR"
+    else
+        log "RESULT: CREATENEWWINDOW_RETURNED_ERROR"
+    fi
+    exit 0
+fi
+
+if ! /usr/bin/grep -Eq 'PM_POSTIDENTITY_WINDOW:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_RESULT:CREATENEWWINDOW_PASS' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_NULL_OR_INVALID"
+    exit 0
+fi
+
+if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T00_BEFORE_CFStringCreateWithCString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_STAGE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T01_AFTER_CFStringCreateWithCString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFSTRING_NO_RETURN"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_POSTWINDOWTITLE_CFSTRING:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_RESULT:CFSTRING_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFSTRING_FAILED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T02_BEFORE_SetWindowTitleWithCFString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T03_AFTER_SetWindowTitleWithCFString' "$RAW_LOG"; then
+        if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REPLY:index=1 replyClass=SUCCESS' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        elif [ -n "$FONTSERVER_RPC_TRACE_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REQUEST:index=1 mode=lion-passive-v1' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_CAPTURED"
+        elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] &&
+           /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=5 allowed=4 behavior=1 publicBehavior=4 anyObject=YES' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_PASS_POST_RPC_NO_RETURN"
+        elif [ -n "$FONTSERVER_COMPAT_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        else
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_NO_RETURN"
+        fi
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_STATUS:SetWindowTitleWithCFString=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_RESULT:SETWINDOWTITLE_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_ERROR"
+        exit 0
+    fi
+    if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow' "$RAW_LOG"; then
+            if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+               /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=7 allowed=5 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG"; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_PASS_SHOWWINDOW_NO_RETURN"
+            elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ] &&
+               /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_LEGACY_MINUS304"
+            elif [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
+                SHOWWINDOW_UNKNOWN_REQUEST_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow/{seen=1; next} seen && /PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow/{exit} seen && /PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+                SHOWWINDOW_UNKNOWN_RETURN_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow/{seen=1; next} seen && /PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow/{exit} seen && /PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_MACH_RETURN:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+                log "showwindow_unknown_cgs_trace_request_count=$SHOWWINDOW_UNKNOWN_REQUEST_COUNT"
+                log "showwindow_unknown_cgs_trace_return_count=$SHOWWINDOW_UNKNOWN_RETURN_COUNT"
+                if [ "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" -lt 1 ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_NOT_REACHED"
+                elif [ "$SHOWWINDOW_UNKNOWN_RETURN_COUNT" -ne "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_INCOMPLETE"
+                elif [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                elif [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                elif [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                else
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_CAPTURED"
+                fi
+            else
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_NO_RETURN"
+            fi
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_RESULT:SHOWWINDOW_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_MARKER_INCOMPLETE"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_RESULT:SELECTWINDOW_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_MARKER_INCOMPLETE"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_MILESTONE:S04_BEFORE_IsWindowVisible' "$RAW_LOG"; then
+            log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_MILESTONE:S05_AFTER_IsWindowVisible' "$RAW_LOG"; then
+            log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_VALUE:visible=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_RESULT:ISWINDOWVISIBLE_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_RESULT:ISWINDOWVISIBLE_FALSE' "$RAW_LOG"; then
+            log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_VALUE_OR_MARKER_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_MILESTONE:S06_BEFORE_NewEventLoopTimerUPP' "$RAW_LOG"; then
+            log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_MILESTONE:S07_AFTER_NewEventLoopTimerUPP' "$RAW_LOG"; then
+            log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_POSTWINDOWTIMERUPP_POINTER:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_RESULT:NEWEVENTLOOPTIMERUPP_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_RESULT:NEWEVENTLOOPTIMERUPP_NULL' "$RAW_LOG"; then
+            log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_POINTER_OR_MARKER_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_MILESTONE:S08_BEFORE_GetMainEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_MILESTONE:S09_AFTER_GetMainEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_POSTWINDOWMAINEVENTLOOP_POINTER:pointer=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_RESULT:GETMAINEVENTLOOP_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_RESULT:GETMAINEVENTLOOP_NULL' "$RAW_LOG"; then
+            log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_POINTER_OR_MARKER_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_MILESTONE:S10_BEFORE_InstallEventLoopTimer' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_MILESTONE:S11_AFTER_InstallEventLoopTimer' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_STATUS:InstallEventLoopTimer=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_POSTWINDOWTIMERINSTALL_POINTER:pointer=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_CALLBACK:fired=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_RETURNED_ERROR' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_NULL_TIMER' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_CALLBACK_FIRED_UNEXPECTEDLY' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_STATUS_POINTER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_MILESTONE:S12_BEFORE_QuitApplicationEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_MILESTONE:S13_AFTER_QuitApplicationEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_CALLBACK:fired=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_RESULT:QUITAPPLICATIONEVENTLOOP_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_RESULT:QUITAPPLICATIONEVENTLOOP_CALLBACK_FIRED_UNEXPECTEDLY' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MARKER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NOT_REACHED"
+            exit 0
+        fi
+        TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+        log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+        log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+        log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+        log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+        if [ "$TIMER_CB_ENTER_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_EXIT_COUNT" -ne 1 ] ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_CALLBACK_COUNT_MISMATCH' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_MARKER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T04_BEFORE_CFRelease' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T05_AFTER_CFRelease' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFRELEASE_INCOMPLETE"
+        exit 0
+    fi
+fi
+
+if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M22_BEFORE_DisposeWindow' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M23_AFTER_DisposeWindow' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_DISPOSE_OR_SUCCESS_MILESTONE_MISSING"
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_CPS_REGISTRATION_COMPAT_CALL:index=2' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_SECOND_REGISTRATION_CALL"
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_CPS_SETFRONT_COMPAT_CALL:index=2' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_SECOND_SETFRONT_CALL"
+    exit 0
+fi
+
+if [ -n "$REAL_REGISTRATION_MODE" ] &&
+   ! /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_INCOMPLETE"
+    exit 0
+fi
+
+if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    HITOOLBOX_EXTRAS_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_EXTRAS_COMPAT_TARGET:.*mode=lion-fallback-external-v1.*bundle=com.apple.HIToolbox name=Extras type=rsrc' "$RAW_LOG" 2>/dev/null || true)"
+    if [ "$HITOOLBOX_EXTRAS_TARGET_COUNT" -lt 1 ] ||
+       ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NULL' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NONNULL fallback=NOT_USED' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_INCOMPLETE"
+        exit 0
+    fi
+fi
+
+if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" ||
+   ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_WAIT:pid=[0-9]+ exit=0$' "$RAW_LOG" ||
+   ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_EXIT:lookups=1 requests=[0-9]+ callbacks=[0-9]+$' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_DISTNOTIFY_LIFECYCLE_INCOMPLETE"
+    exit 0
+fi
+
+if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
+    if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
+        log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" ]; then
+        log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE" ]; then
+        log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_SHOWWINDOW_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SIXTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_VALIDATION_PASS"
+    elif [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_TITLE_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$FONTSERVER_COMPAT_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_VALIDATION_PASS"
+    elif [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATEWINDOW_PASS"
+    elif [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ]; then
+        log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATION_PASS"
+    elif [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_PASS"
+    elif [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_PASS"
+    else
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_INTEGRATION_PASS"
+    fi
+    exit 0
+fi
+
+log "RESULT: CREATENEWWINDOW_PROCESS_STATE_UNEXPECTED rc=$RC diagnostics=$FOUND"
+exit 0
+ "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=13 allowed=11 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "thirteenth_notification_registration_accept_count=$THIRTEENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$THIRTEENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=14 bits=0x00001111 id=4 size=336 payload=302' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_PASS_FOURTEENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+    if [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=13 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_INTEGRATION_INCOMPLETE"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_TWELFTH_REGISTRATION_MODE" ]; then
+    TWELFTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=12 allowed=10 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "twelfth_notification_registration_accept_count=$TWELFTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$TWELFTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=13 bits=0x00001111 id=4 size=356 payload=323' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_PASS_THIRTEENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+    if [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=12 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_INTEGRATION_INCOMPLETE"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_ELEVENTH_REGISTRATION_MODE" ]; then
+    ELEVENTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=11 allowed=9 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "eleventh_notification_registration_accept_count=$ELEVENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$ELEVENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=12 bits=0x00001111 id=4 size=336 payload=302' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_PASS_TWELFTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+    if [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=11 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_INCOMPLETE"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ]; then
+    TENTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=10 allowed=8 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "tenth_notification_registration_accept_count=$TENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$TENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=11 bits=0x00001111 id=4 size=356 payload=323' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_PASS_ELEVENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ]; then
+    NINTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=9 allowed=7 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "ninth_notification_registration_accept_count=$NINTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$NINTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=10 bits=0x00001111 id=4 size=332 payload=300' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_PASS_TENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ]; then
+    EIGHTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=8 allowed=6 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "eighth_notification_registration_accept_count=$EIGHTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$EIGHTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=9 ' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_PASS_NINTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+fi
+
+if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REJECT:' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_REQUEST:FAIL' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_CALLBACK:REJECT' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+    if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=7 allowed=5 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_PASS_EIGHTH_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] &&
+       /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=6 allowed=3 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x2$' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SIXTH_NOTIFICATION_REGISTRATION_PASS_SEVENTH_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=5 allowed=4 behavior=1 publicBehavior=4 anyObject=YES' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_PASS_SIXTH_PROTOCOL_REJECTED"
+    elif [ -n "$FONTSERVER_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_PASS_NOTIFICATION_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ]; then
+        log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATION_PROTOCOL_REJECTED"
+    elif [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_PROTOCOL_REJECTED"
+    elif /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:status=20' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_BROKER_SCHEMA_REJECTED"
+    else
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_PROTOCOL_REJECTED"
+    fi
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG" &&
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M21_AFTER_CreateNewWindow' "$RAW_LOG"; then
+    if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        OPACITY_CREATE_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        OPACITY_CREATE_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT"
+        log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT"
+        if [ "$OPACITY_CREATE_COMPAT_COUNT" -ne 1 ] || [ "$OPACITY_CREATE_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseBackingCompatCalls=1 newWindowCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724f lionId=0x00007250 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_FAILURE"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001200 size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+           /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        fi
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+    if [ -n "$OPACITY_ALPHA_TRACE_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        OPACITY_CREATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        OPACITY_TERMINATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        OPACITY_TOTAL_COUNT=$((OPACITY_CREATE_COUNT + OPACITY_TERMINATE_COUNT))
+        log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_COUNT"
+        log "cgs_opacity_alpha_terminate_legacy_trace_count=$OPACITY_TERMINATE_COUNT"
+        log "cgs_opacity_alpha_legacy_trace_count=$OPACITY_TOTAL_COUNT"
+        if [ "$OPACITY_TOTAL_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_REQUEST_NOT_REACHED"
+            exit 0
+        fi
+        if [ "$OPACITY_CREATE_COUNT" -eq 1 ]; then
+            OPACITY_KIND="CREATE"
+            if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'id=0x0000724f expectedReply=0x000072b3 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_REQUEST_UNEXPECTED"
+                exit 0
+            fi
+            MACH_KIND="CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY"
+            EXPECTED_REPLY="0x000072b3"
+        else
+            OPACITY_KIND="TERMINATE"
+            if ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'id=0x00007250 expectedReply=0x000072b4 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_TERMINATE_REQUEST_UNEXPECTED"
+                exit 0
+            fi
+            MACH_KIND="CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY"
+            EXPECTED_REPLY="0x000072b4"
+        fi
+        log "cgs_opacity_alpha_legacy_kind=$OPACITY_KIND"
+        if /usr/bin/grep -Fq "kind=$MACH_KIND kr=268451844 hex=0x10004004" "$RAW_LOG"; then
+            if /usr/bin/grep -Fq "PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:" "$RAW_LOG" &&
+               /usr/bin/grep -Fq "kind=$MACH_KIND kr=268451844 hex=0x10004004" "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_${OPACITY_KIND}_MACH_RCV_TOO_LARGE_OBSERVED"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER_MISSING"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Fq "kind=$MACH_KIND kr=0 hex=0x00000000" "$RAW_LOG"; then
+            if /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=$MACH_KIND" | /usr/bin/grep -Fq "size=0x00000024 id=$EXPECTED_REPLY expected=$EXPECTED_REPLY idMatch=YES"; then
+                if [ "$OPACITY_KIND" = "TERMINATE" ]; then
+                    log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_TERMINATE_ID_COLLISION_REPLY_OBSERVED"
+                else
+                    log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_LEGACY_REPLY_OBSERVED"
+                fi
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_REPLY_UNEXPECTED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Fq "PM_CGS_CONNECTION_TRACE_MACH_RETURN:" "$RAW_LOG" &&
+           /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_MACH_RETURN:" "$RAW_LOG" | /usr/bin/grep -Fq "kind=$MACH_KIND"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_${OPACITY_KIND}_MACH_FAILURE_OBSERVED"
+        else
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_MACH_RETURN_MISSING"
+        fi
+        exit 0
+    fi
+    if [ -n "$RELEASEBACKING_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        RELEASEBACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_releasebacking_compat_call_count=$RELEASEBACKING_COMPAT_COUNT"
+        if [ "$RELEASEBACKING_COMPAT_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseFlag=0x00000001 newWindowCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724b lionId=0x0000724c send=0x00000028 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+           /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        fi
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+    if [ -n "$RELEASEBACKING_TRACE_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        RELEASEBACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_releasebacking_legacy_trace_count=$RELEASEBACKING_TRACE_COUNT"
+        if [ "$RELEASEBACKING_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REQUEST_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x0000724b expectedReply=0x000072af option=0x00000003 send=0x00000028 recv=0x0000002c' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REQUEST_UNEXPECTED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_MACH_FAILURE"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY bits=' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_LEGACY_REPLY_OBSERVED"
+        else
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REPLY_UNEXPECTED"
+        fi
+        exit 0
+    fi
+    if [ -n "$NEWWINDOW_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000038 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_CONNECTION_TRACE_REPLY:index=5 kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=0x00001200 size=0x00000038 id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        exit 0
+    fi
+    if [ -n "$DOCKSERVER_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_PASS_NO_RETURN"
+        exit 0
+    fi
+    if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        HITOOLBOX_EXTRAS_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_EXTRAS_COMPAT_TARGET:.*mode=lion-fallback-external-v1.*bundle=com.apple.HIToolbox name=Extras type=rsrc' "$RAW_LOG" 2>/dev/null || true)"
+        log "hitoolbox_extras_compat_target_count=$HITOOLBOX_EXTRAS_TARGET_COUNT"
+        if [ "$HITOOLBOX_EXTRAS_TARGET_COUNT" -ge 1 ] &&
+           /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" &&
+           ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NULL' "$RAW_LOG" &&
+           ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NONNULL fallback=NOT_USED' "$RAW_LOG" &&
+           /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_NO_RETURN"
+        else
+            log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_INCOMPLETE"
+        fi
+        exit 0
+    fi
+    if [ -n "$HITOOLBOX_TRACE" ]; then
+        HITOOLBOX_TRACE_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_CFBUNDLE_TRACE_TARGET:.*bundle=com.apple.HIToolbox name=Extras type=rsrc subdir=NULL localization=NULL' "$RAW_LOG" 2>/dev/null || true)"
+        log "hitoolbox_cfbundle_trace_target_count=$HITOOLBOX_TRACE_TARGET_COUNT"
+    fi
+    if [ -n "$REAL_REGISTRATION_MODE" ] &&
+       [ -n "$HITOOLBOX_TRACE" ] &&
+       [ "$HITOOLBOX_TRACE_TARGET_COUNT" -ge 1 ] &&
+       /usr/bin/grep -F 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:' "$RAW_LOG" | /usr/bin/grep -Fq ' url=NULL ' &&
+       ! /usr/bin/grep -F 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:' "$RAW_LOG" | /usr/bin/grep -Fq ' url=NONNULL ' &&
+       /usr/bin/grep -Fq 'HIToolbox: failed to copy resource URL for framework bundle.' "$RAW_LOG" &&
+       /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_LOOKUP_CONFIRMED_NO_RETURN"
+    elif [ -n "$REAL_REGISTRATION_MODE" ] &&
+       /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REGISTRATIONS_ESTABLISHED_CREATEWINDOW_NO_RETURN"
+    elif [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_INCOMPLETE"
+    else
+        log "RESULT: CREATENEWWINDOW_NO_RETURN"
+    fi
+    exit 0
+fi
+
+if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_NOT_REACHED"
+    exit 0
+fi
+
+if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+    if ! /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_CALL:index=1 mode=lion-dockserver-v1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_LOOKUP_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_ADAPTER_FAILED"
+        exit 0
+    fi
+fi
+
+if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
+    NEWWINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_newwindow_legacy_trace_count=$NEWWINDOW_TRACE_COUNT"
+    if [ "$NEWWINDOW_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REQUEST_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'id=0x00007394 expectedReply=0x000073f8 option=0x00000003' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'recv=0x00000040' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REQUEST_UNEXPECTED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_MACH_FAILURE"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_LEGACY_REPLY_OBSERVED"
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REPLY_UNEXPECTED"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+    NEWWINDOW_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    NEWWINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_newwindow_compat_call_count=$NEWWINDOW_COMPAT_COUNT"
+    log "cgs_newwindow_legacy_trace_count=$NEWWINDOW_TRACE_COUNT"
+
+    if [ "$NEWWINDOW_COMPAT_COUNT" -ne 1 ] || [ "$NEWWINDOW_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'registrationCalls=1 setFrontCalls=1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_PREDICATE_NOT_MET"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007394 lionId=0x0000739a send=0x00000068 recv=0x00000040 changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_MACH_FAILURE"
+        exit 0
+    fi
+
+    if /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000038 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_LEGACY_FACING_SUCCESS_REPLY_NOT_ACCEPTED"
+            exit 0
+        fi
+        log "cgs_newwindow_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073fe result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_newwindow_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+    RELEASEBACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    RELEASEBACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_releasebacking_compat_call_count=$RELEASEBACKING_COMPAT_COUNT"
+    log "cgs_releasebacking_legacy_trace_count=$RELEASEBACKING_TRACE_COUNT"
+
+    if [ "$RELEASEBACKING_COMPAT_COUNT" -ne 1 ] || [ "$RELEASEBACKING_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseFlag=0x00000001 newWindowCompatCalls=1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_MET"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724b lionId=0x0000724c send=0x00000028 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_FAILURE"
+        exit 0
+    fi
+
+    if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_releasebacking_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_releasebacking_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+    OPACITY_CREATE_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_CREATE_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT"
+    log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT"
+    if [ "$OPACITY_CREATE_COMPAT_COUNT" -ne 1 ] || [ "$OPACITY_CREATE_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseBackingCompatCalls=1 newWindowCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724f lionId=0x00007250 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001200 size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_create_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_create_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+    OPACITY_CREATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_TERMINATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_TOTAL_COUNT=$((OPACITY_CREATE_COUNT + OPACITY_TERMINATE_COUNT))
+    log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_COUNT"
+    log "cgs_opacity_alpha_terminate_legacy_trace_count=$OPACITY_TERMINATE_COUNT"
+    log "cgs_opacity_alpha_legacy_trace_count=$OPACITY_TOTAL_COUNT"
+
+    if [ "$OPACITY_TOTAL_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_REQUEST_NOT_REACHED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_UNEXPECTED_MACH_FAILURE"
+        exit 0
+    fi
+
+    if [ "$OPACITY_CREATE_COUNT" -eq 1 ]; then
+        OPACITY_KIND="CREATE"
+        if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x0000724f expectedReply=0x000072b3 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY" | /usr/bin/grep -Fq 'size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES'; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_SUCCESS_UNEXPECTED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_legacy_kind=CREATE"
+    elif [ "$OPACITY_TERMINATE_COUNT" -eq 1 ]; then
+        OPACITY_KIND="TERMINATE"
+        if ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x00007250 expectedReply=0x000072b4 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY" | /usr/bin/grep -Fq 'size=0x00000024 id=0x000072b4 expected=0x000072b4 idMatch=YES'; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_TERMINATE_SUCCESS_UNEXPECTED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_legacy_kind=TERMINATE"
+        log "cgs_opacity_alpha_id_collision=SNOW_TERMINATE_EQUALS_LION_CREATE"
+    fi
+fi
+
+if [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
+    SET_FRONT_WINDOW_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_SET_FRONT_WINDOW_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    SET_FRONT_WINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_FRONT_WINDOW_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_set_front_window_compat_call_count=$SET_FRONT_WINDOW_COMPAT_COUNT"
+    log "cgs_set_front_window_legacy_trace_count=$SET_FRONT_WINDOW_TRACE_COUNT"
+    if [ "$SET_FRONT_WINDOW_COMPAT_COUNT" -ne 1 ] || [ "$SET_FRONT_WINDOW_TRACE_COUNT" -lt 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* .*opacityCreateCompatCalls=1 orderFrontCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072f2 lionId=0x000072f5 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x00007359 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x00007359 legacyId=0x00007356 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_SET_FRONT_WINDOW_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_SET_FRONT_WINDOW_LEGACY bits=0x00001200 size=0x00000024 id=0x00007356 expected=0x00007356 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_set_front_window_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x00007359 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x00007359 legacyId=0x00007356 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'id=0x00007356 expected=0x00007356 idMatch=YES' "$RAW_LOG"; then
+        log "cgs_set_front_window_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
+    COLOR_PROFILE_CLIENT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_color_profile_client_legacy_trace_count=$COLOR_PROFILE_CLIENT_TRACE_COUNT"
+    if [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -lt 1 ] ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY exact=YES bits=0x80001513 id=0x000074d4 send=0x00000034 recv=0x00000030' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000024 id=0x00007538 expected=0x00007538 idMatch=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000024 id=0x00007538 expected=0x00007538 resultRaw=0xd0feffff clientIdRaw=0x00000000' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LION' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_UNEXPECTED"
+        exit 0
+    fi
+    log "cgs_color_profile_client_live_result=LEGACY_MINUS304"
+fi
+
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+    COLOR_PROFILE_CLIENT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    COLOR_PROFILE_CLIENT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_color_profile_client_compat_call_count=$COLOR_PROFILE_CLIENT_COMPAT_COUNT"
+    log "cgs_color_profile_client_legacy_trace_count=$COLOR_PROFILE_CLIENT_TRACE_COUNT"
+    if [ "$COLOR_PROFILE_CLIENT_COMPAT_COUNT" -lt 1 ] || [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -lt 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES lionPortExact=YES applicationPort=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* .*descriptorCount=1 .*disposition=0x13 type=0x00 .*newWindowCompatCalls=1 releaseBackingCompatCalls=1 opacityCreateCompatCalls=1 orderFrontCompatCalls=0 addTrackingCompatCalls=0 setFrontWindowCompatCalls=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000074d4 lionId=0x000074d6 send=0x00000034 recv=0x00000030 changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*pid=[1-9][0-9]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000028 id=0x0000753a resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* replyClass=SUCCESS' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753a legacyId=0x00007538 size=0x00000028 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000028 id=0x00007538 expected=0x00007538 idMatch=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000028 id=0x00007538 expected=0x00007538 resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_color_profile_client_native_reply_class=SUCCESS"
+        if [ "$COLOR_PROFILE_CLIENT_COMPAT_COUNT" -ne 1 ] || [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_RETRY_AFTER_ADAPTER"
+            exit 0
+        fi
+    elif /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000753a resultRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* clientIdRaw=0x00000000 replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753a legacyId=0x00007538 size=0x00000024 changedBytes=1 bodyChangedBytes=0 resultRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* clientIdRaw=0x00000000 replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "cgs_color_profile_client_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+    WBI_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASSTHROUGH_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:PASSTHROUGH' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASSTHROUGH_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:PASSTHROUGH' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_EXPECTED_COUNT=1
+    RUNAPPLICATIONEVENTLOOP_WBI_COUNT=0
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        WBI_EXPECTED_COUNT=2
+        RUNAPPLICATIONEVENTLOOP_WBI_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop/{seen=1; next} seen && /PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop/{exit} seen && /PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+    fi
+    log "window_backing_info_compat_call_count=$WBI_COMPAT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "runapplicationeventloop_window_backing_info_call_count=$RUNAPPLICATIONEVENTLOOP_WBI_COUNT"
+    fi
+    log "color_profile_resolve_compat_call_count=$CPR_COMPAT_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    if [ "$WBI_COMPAT_COUNT" -ne "$WBI_EXPECTED_COUNT" ] ||
+       [ "$WBI_PASS_COUNT" -ne "$WBI_EXPECTED_COUNT" ] ||
+       [ "$WBI_PASSTHROUGH_COUNT" -ne 0 ] ||
+       { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+         [ "$RUNAPPLICATIONEVENTLOOP_WBI_COUNT" -ne 1 ]; } ||
+       [ "$CPR_COMPAT_COUNT" -ne 1 ] || [ "$CPR_PASS_COUNT" -ne 1 ] || [ "$CPR_PASSTHROUGH_COUNT" -ne 0 ]; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_ACCEPTED_FULL_STACK_COUNT_MISMATCH"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=1 adapted=0 mode=lion-id-v1 exact=YES applicationPortExact=YES .*newWindowCompatCalls=1 releaseBackingCompatCalls=1 opacityCreateCompatCalls=1 orderFrontCompatCalls=0 addTrackingCompatCalls=0 setFrontWindowCompatCalls=0 colorProfileClientCompatCalls=0 colorProfileResolveCompatCalls=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007263 lionId=0x00007264 send=0x00000024 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 windowId=[1-9][0-9]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000034 id=0x000072c8 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072c8 legacyId=0x000072c7 size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG"; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_WINDOW_BACKING_INFO_BASELINE_NOT_PASSED"
+        exit 0
+    fi
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=2 adapted=0 mode=lion-id-v1 exact=YES applicationPortExact=YES .*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REQUEST:index=2 legacyId=0x00007263 lionId=0x00007264 send=0x00000024 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 windowId=[1-9][0-9]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_MACH_RETURN:index=2 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_REPLY:index=2 bits=0x00001200 size=0x00000034 id=0x000072c8 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REPLY:index=2 nativeId=0x000072c8 legacyId=0x000072c7 size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_WINDOW_BACKING_INFO_NOT_PASSED"
+            exit 0
+        fi
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:index=1 adapted=0 mode=lion-id-v1 exact=YES provenanceExact=YES clientId=[1-9][0-9]* expectedClientId=[1-9][0-9]* profileId=1 .*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000074d7 lionId=0x000074d9 send=0x00000038 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 clientId=[1-9][0-9]* profileId=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000034 id=0x0000753d resultRaw=0x00000000 ' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753d legacyId=0x0000753b size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 ' "$RAW_LOG"; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_COLOR_PROFILE_RESOLVE_BASELINE_NOT_PASSED"
+        exit 0
+    fi
+    log "window_backing_info_native_reply_class=SUCCESS"
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "runapplicationeventloop_window_backing_info_native_reply_class=SUCCESS"
+    fi
+    log "color_profile_resolve_native_reply_class=SUCCESS"
+fi
+
+if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
+    ORDER_FRONT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_ADAPTER_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_order_front_conditionally_compat_call_count=$ORDER_FRONT_COMPAT_COUNT"
+    log "cgs_order_front_conditionally_legacy_trace_count=$ORDER_FRONT_TRACE_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_ADAPTER_PASS_COUNT"
+    if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        SELECTWINDOW_ORDER_FRONT_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow/{seen=1; next} seen && /PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow/{exit} seen && /PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+        ORDER_FRONT_EXPECTED_COUNT=2
+        RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT=0
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            ORDER_FRONT_EXPECTED_COUNT=3
+            RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop/{seen=1; next} seen && /PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop/{exit} seen && /PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+        fi
+        log "selectwindow_order_front_conditionally_call_count=$SELECTWINDOW_ORDER_FRONT_COUNT"
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            log "runapplicationeventloop_order_front_conditionally_call_count=$RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT"
+        fi
+        if [ "$ORDER_FRONT_COMPAT_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$ORDER_FRONT_TRACE_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$ORDER_FRONT_ADAPTER_PASS_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$SELECTWINDOW_ORDER_FRONT_COUNT" -ne 1 ] ||
+           { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+             [ "$RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT" -ne 1 ]; }; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COUNT_MISMATCH"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=1 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=2 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=2 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=2 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=2 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=2 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+             { ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=3 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+               ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=3 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=3 kr=0 hex=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=3 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=3 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG"; }; }; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_order_front_conditionally_native_reply_class=SUCCESS"
+        log "selectwindow_order_front_conditionally_native_reply_class=SUCCESS"
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            log "runapplicationeventloop_order_front_conditionally_native_reply_class=SUCCESS"
+        fi
+    else
+        ORDER_FRONT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        ORDER_FRONT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_order_front_conditionally_compat_call_count=$ORDER_FRONT_COMPAT_COUNT"
+        log "cgs_order_front_conditionally_legacy_trace_count=$ORDER_FRONT_TRACE_COUNT"
+        if [ "$ORDER_FRONT_COMPAT_COUNT" -ne 1 ] || [ "$ORDER_FRONT_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY bits=0x00001200 size=0x00000024 id=0x0000734b expected=0x0000734b idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+                exit 0
+            fi
+            log "cgs_order_front_conditionally_native_reply_class=SUCCESS"
+        elif /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000734e result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+             /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+             /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+             /usr/bin/grep -Fq 'id=0x0000734b expected=0x0000734b idMatch=YES' "$RAW_LOG"; then
+            log "cgs_order_front_conditionally_native_reply_class=ERROR"
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        else
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY_UNEXPECTED"
+            exit 0
+        fi
+    fi
+fi
+if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+    ADD_TRACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ADD_TRACKING_AREA_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    ADD_TRACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_add_tracking_area_compat_call_count=$ADD_TRACKING_COMPAT_COUNT"
+    log "cgs_add_tracking_area_legacy_trace_count=$ADD_TRACKING_TRACE_COUNT"
+    if [ "$ADD_TRACKING_COMPAT_COUNT" -ne 1 ] || [ "$ADD_TRACKING_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES .*count=9 opacityCreateCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007388 lionId=0x0000738e send=0x00000060 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*count=9' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073f2 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073f2 legacyId=0x000073ec size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY bits=0x00001200 size=0x00000024 id=0x000073ec expected=0x000073ec idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_add_tracking_area_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073f2 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073f2 legacyId=0x000073ec size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'id=0x000073ec expected=0x000073ec idMatch=YES' "$RAW_LOG"; then
+        log "cgs_add_tracking_area_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] &&
+   [ "$FOUND" -eq 0 ] &&
+   /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=-304' "$RAW_LOG" &&
+   /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH:reason=NON_TARGET' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'name=com.apple.dock.server' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH_RETURN:kr=-304 hex=0xfffffed0 servicePort=0x00000000' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATIONS_ESTABLISHED_DOCK_SERVER_MINUS304"
+    exit 0
+fi
+
+if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=0' "$RAW_LOG"; then
+    if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PUBLIC_ERROR"
+    elif [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_PUBLIC_ERROR"
+    elif [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_SUCCESS_PUBLIC_ERROR"
+    elif [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_SUCCESS_PUBLIC_ERROR"
+    elif [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_ADAPTER_PASS_CREATEWINDOW_ERROR"
+    else
+        log "RESULT: CREATENEWWINDOW_RETURNED_ERROR"
+    fi
+    exit 0
+fi
+
+if ! /usr/bin/grep -Eq 'PM_POSTIDENTITY_WINDOW:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_RESULT:CREATENEWWINDOW_PASS' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_NULL_OR_INVALID"
+    exit 0
+fi
+
+if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T00_BEFORE_CFStringCreateWithCString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_STAGE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T01_AFTER_CFStringCreateWithCString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFSTRING_NO_RETURN"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_POSTWINDOWTITLE_CFSTRING:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_RESULT:CFSTRING_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFSTRING_FAILED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T02_BEFORE_SetWindowTitleWithCFString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T03_AFTER_SetWindowTitleWithCFString' "$RAW_LOG"; then
+        if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REPLY:index=1 replyClass=SUCCESS' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        elif [ -n "$FONTSERVER_RPC_TRACE_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REQUEST:index=1 mode=lion-passive-v1' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_CAPTURED"
+        elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] &&
+           /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=5 allowed=4 behavior=1 publicBehavior=4 anyObject=YES' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_PASS_POST_RPC_NO_RETURN"
+        elif [ -n "$FONTSERVER_COMPAT_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        else
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_NO_RETURN"
+        fi
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_STATUS:SetWindowTitleWithCFString=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_RESULT:SETWINDOWTITLE_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_ERROR"
+        exit 0
+    fi
+    if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow' "$RAW_LOG"; then
+            if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+               /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=7 allowed=5 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG"; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_PASS_SHOWWINDOW_NO_RETURN"
+            elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ] &&
+               /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_LEGACY_MINUS304"
+            elif [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
+                SHOWWINDOW_UNKNOWN_REQUEST_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow/{seen=1; next} seen && /PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow/{exit} seen && /PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+                SHOWWINDOW_UNKNOWN_RETURN_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow/{seen=1; next} seen && /PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow/{exit} seen && /PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_MACH_RETURN:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+                log "showwindow_unknown_cgs_trace_request_count=$SHOWWINDOW_UNKNOWN_REQUEST_COUNT"
+                log "showwindow_unknown_cgs_trace_return_count=$SHOWWINDOW_UNKNOWN_RETURN_COUNT"
+                if [ "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" -lt 1 ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_NOT_REACHED"
+                elif [ "$SHOWWINDOW_UNKNOWN_RETURN_COUNT" -ne "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_INCOMPLETE"
+                elif [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                elif [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                elif [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                else
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_CAPTURED"
+                fi
+            else
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_NO_RETURN"
+            fi
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_RESULT:SHOWWINDOW_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_MARKER_INCOMPLETE"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_RESULT:SELECTWINDOW_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_MARKER_INCOMPLETE"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_MILESTONE:S04_BEFORE_IsWindowVisible' "$RAW_LOG"; then
+            log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_MILESTONE:S05_AFTER_IsWindowVisible' "$RAW_LOG"; then
+            log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_VALUE:visible=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_RESULT:ISWINDOWVISIBLE_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_RESULT:ISWINDOWVISIBLE_FALSE' "$RAW_LOG"; then
+            log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_VALUE_OR_MARKER_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_MILESTONE:S06_BEFORE_NewEventLoopTimerUPP' "$RAW_LOG"; then
+            log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_MILESTONE:S07_AFTER_NewEventLoopTimerUPP' "$RAW_LOG"; then
+            log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_POSTWINDOWTIMERUPP_POINTER:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_RESULT:NEWEVENTLOOPTIMERUPP_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_RESULT:NEWEVENTLOOPTIMERUPP_NULL' "$RAW_LOG"; then
+            log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_POINTER_OR_MARKER_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_MILESTONE:S08_BEFORE_GetMainEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_MILESTONE:S09_AFTER_GetMainEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_POSTWINDOWMAINEVENTLOOP_POINTER:pointer=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_RESULT:GETMAINEVENTLOOP_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_RESULT:GETMAINEVENTLOOP_NULL' "$RAW_LOG"; then
+            log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_POINTER_OR_MARKER_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_MILESTONE:S10_BEFORE_InstallEventLoopTimer' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_MILESTONE:S11_AFTER_InstallEventLoopTimer' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_STATUS:InstallEventLoopTimer=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_POSTWINDOWTIMERINSTALL_POINTER:pointer=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_CALLBACK:fired=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_RETURNED_ERROR' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_NULL_TIMER' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_CALLBACK_FIRED_UNEXPECTEDLY' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_STATUS_POINTER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_MILESTONE:S12_BEFORE_QuitApplicationEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_MILESTONE:S13_AFTER_QuitApplicationEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_CALLBACK:fired=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_RESULT:QUITAPPLICATIONEVENTLOOP_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_RESULT:QUITAPPLICATIONEVENTLOOP_CALLBACK_FIRED_UNEXPECTEDLY' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MARKER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NOT_REACHED"
+            exit 0
+        fi
+        TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+        log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+        log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+        log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+        log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+        if [ "$TIMER_CB_ENTER_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_EXIT_COUNT" -ne 1 ] ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_CALLBACK_COUNT_MISMATCH' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_MARKER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T04_BEFORE_CFRelease' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T05_AFTER_CFRelease' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFRELEASE_INCOMPLETE"
+        exit 0
+    fi
+fi
+
+if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M22_BEFORE_DisposeWindow' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M23_AFTER_DisposeWindow' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_DISPOSE_OR_SUCCESS_MILESTONE_MISSING"
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_CPS_REGISTRATION_COMPAT_CALL:index=2' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_SECOND_REGISTRATION_CALL"
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_CPS_SETFRONT_COMPAT_CALL:index=2' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_SECOND_SETFRONT_CALL"
+    exit 0
+fi
+
+if [ -n "$REAL_REGISTRATION_MODE" ] &&
+   ! /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_INCOMPLETE"
+    exit 0
+fi
+
+if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    HITOOLBOX_EXTRAS_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_EXTRAS_COMPAT_TARGET:.*mode=lion-fallback-external-v1.*bundle=com.apple.HIToolbox name=Extras type=rsrc' "$RAW_LOG" 2>/dev/null || true)"
+    if [ "$HITOOLBOX_EXTRAS_TARGET_COUNT" -lt 1 ] ||
+       ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NULL' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NONNULL fallback=NOT_USED' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_INCOMPLETE"
+        exit 0
+    fi
+fi
+
+if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" ||
+   ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_WAIT:pid=[0-9]+ exit=0$' "$RAW_LOG" ||
+   ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_EXIT:lookups=1 requests=[0-9]+ callbacks=[0-9]+$' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_DISTNOTIFY_LIFECYCLE_INCOMPLETE"
+    exit 0
+fi
+
+if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
+    if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
+        log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" ]; then
+        log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE" ]; then
+        log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_SHOWWINDOW_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SIXTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_VALIDATION_PASS"
+    elif [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_TITLE_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$FONTSERVER_COMPAT_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_VALIDATION_PASS"
+    elif [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATEWINDOW_PASS"
+    elif [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ]; then
+        log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATION_PASS"
+    elif [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_PASS"
+    elif [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_PASS"
+    else
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_INTEGRATION_PASS"
+    fi
+    exit 0
+fi
+
+log "RESULT: CREATENEWWINDOW_PROCESS_STATE_UNEXPECTED rc=$RC diagnostics=$FOUND"
+exit 0
+ "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=13 allowed=11 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "thirteenth_notification_registration_accept_count=$THIRTEENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$THIRTEENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=14 bits=0x00001111 id=4 size=336 payload=302' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_PASS_FOURTEENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+    if [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=13 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_INTEGRATION_INCOMPLETE"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_TWELFTH_REGISTRATION_MODE" ]; then
+    TWELFTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=12 allowed=10 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "twelfth_notification_registration_accept_count=$TWELFTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$TWELFTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=13 bits=0x00001111 id=4 size=356 payload=323' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_PASS_THIRTEENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+    if [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=12 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_INTEGRATION_INCOMPLETE"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_ELEVENTH_REGISTRATION_MODE" ]; then
+    ELEVENTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=11 allowed=9 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "eleventh_notification_registration_accept_count=$ELEVENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$ELEVENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=12 bits=0x00001111 id=4 size=336 payload=302' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_PASS_TWELFTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+    if [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=11 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_INCOMPLETE"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ]; then
+    TENTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=10 allowed=8 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "tenth_notification_registration_accept_count=$TENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$TENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=11 bits=0x00001111 id=4 size=356 payload=323' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_PASS_ELEVENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ]; then
+    NINTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=9 allowed=7 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "ninth_notification_registration_accept_count=$NINTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$NINTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=10 bits=0x00001111 id=4 size=332 payload=300' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_PASS_TENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ]; then
+    EIGHTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=8 allowed=6 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "eighth_notification_registration_accept_count=$EIGHTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$EIGHTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=9 ' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_PASS_NINTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+fi
+
+if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REJECT:' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_REQUEST:FAIL' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_CALLBACK:REJECT' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+    if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=7 allowed=5 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_PASS_EIGHTH_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] &&
+       /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=6 allowed=3 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x2$' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SIXTH_NOTIFICATION_REGISTRATION_PASS_SEVENTH_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=5 allowed=4 behavior=1 publicBehavior=4 anyObject=YES' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_PASS_SIXTH_PROTOCOL_REJECTED"
+    elif [ -n "$FONTSERVER_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_PASS_NOTIFICATION_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ]; then
+        log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATION_PROTOCOL_REJECTED"
+    elif [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_PROTOCOL_REJECTED"
+    elif /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:status=20' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_BROKER_SCHEMA_REJECTED"
+    else
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_PROTOCOL_REJECTED"
+    fi
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG" &&
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M21_AFTER_CreateNewWindow' "$RAW_LOG"; then
+    if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        OPACITY_CREATE_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        OPACITY_CREATE_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT"
+        log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT"
+        if [ "$OPACITY_CREATE_COMPAT_COUNT" -ne 1 ] || [ "$OPACITY_CREATE_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseBackingCompatCalls=1 newWindowCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724f lionId=0x00007250 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_FAILURE"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001200 size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+           /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        fi
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+    if [ -n "$OPACITY_ALPHA_TRACE_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        OPACITY_CREATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        OPACITY_TERMINATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        OPACITY_TOTAL_COUNT=$((OPACITY_CREATE_COUNT + OPACITY_TERMINATE_COUNT))
+        log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_COUNT"
+        log "cgs_opacity_alpha_terminate_legacy_trace_count=$OPACITY_TERMINATE_COUNT"
+        log "cgs_opacity_alpha_legacy_trace_count=$OPACITY_TOTAL_COUNT"
+        if [ "$OPACITY_TOTAL_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_REQUEST_NOT_REACHED"
+            exit 0
+        fi
+        if [ "$OPACITY_CREATE_COUNT" -eq 1 ]; then
+            OPACITY_KIND="CREATE"
+            if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'id=0x0000724f expectedReply=0x000072b3 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_REQUEST_UNEXPECTED"
+                exit 0
+            fi
+            MACH_KIND="CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY"
+            EXPECTED_REPLY="0x000072b3"
+        else
+            OPACITY_KIND="TERMINATE"
+            if ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'id=0x00007250 expectedReply=0x000072b4 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_TERMINATE_REQUEST_UNEXPECTED"
+                exit 0
+            fi
+            MACH_KIND="CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY"
+            EXPECTED_REPLY="0x000072b4"
+        fi
+        log "cgs_opacity_alpha_legacy_kind=$OPACITY_KIND"
+        if /usr/bin/grep -Fq "kind=$MACH_KIND kr=268451844 hex=0x10004004" "$RAW_LOG"; then
+            if /usr/bin/grep -Fq "PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:" "$RAW_LOG" &&
+               /usr/bin/grep -Fq "kind=$MACH_KIND kr=268451844 hex=0x10004004" "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_${OPACITY_KIND}_MACH_RCV_TOO_LARGE_OBSERVED"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER_MISSING"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Fq "kind=$MACH_KIND kr=0 hex=0x00000000" "$RAW_LOG"; then
+            if /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=$MACH_KIND" | /usr/bin/grep -Fq "size=0x00000024 id=$EXPECTED_REPLY expected=$EXPECTED_REPLY idMatch=YES"; then
+                if [ "$OPACITY_KIND" = "TERMINATE" ]; then
+                    log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_TERMINATE_ID_COLLISION_REPLY_OBSERVED"
+                else
+                    log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_LEGACY_REPLY_OBSERVED"
+                fi
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_REPLY_UNEXPECTED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Fq "PM_CGS_CONNECTION_TRACE_MACH_RETURN:" "$RAW_LOG" &&
+           /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_MACH_RETURN:" "$RAW_LOG" | /usr/bin/grep -Fq "kind=$MACH_KIND"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_${OPACITY_KIND}_MACH_FAILURE_OBSERVED"
+        else
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_MACH_RETURN_MISSING"
+        fi
+        exit 0
+    fi
+    if [ -n "$RELEASEBACKING_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        RELEASEBACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_releasebacking_compat_call_count=$RELEASEBACKING_COMPAT_COUNT"
+        if [ "$RELEASEBACKING_COMPAT_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseFlag=0x00000001 newWindowCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724b lionId=0x0000724c send=0x00000028 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+           /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        fi
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+    if [ -n "$RELEASEBACKING_TRACE_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        RELEASEBACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_releasebacking_legacy_trace_count=$RELEASEBACKING_TRACE_COUNT"
+        if [ "$RELEASEBACKING_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REQUEST_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x0000724b expectedReply=0x000072af option=0x00000003 send=0x00000028 recv=0x0000002c' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REQUEST_UNEXPECTED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_MACH_FAILURE"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY bits=' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_LEGACY_REPLY_OBSERVED"
+        else
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REPLY_UNEXPECTED"
+        fi
+        exit 0
+    fi
+    if [ -n "$NEWWINDOW_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000038 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_CONNECTION_TRACE_REPLY:index=5 kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=0x00001200 size=0x00000038 id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        exit 0
+    fi
+    if [ -n "$DOCKSERVER_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_PASS_NO_RETURN"
+        exit 0
+    fi
+    if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        HITOOLBOX_EXTRAS_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_EXTRAS_COMPAT_TARGET:.*mode=lion-fallback-external-v1.*bundle=com.apple.HIToolbox name=Extras type=rsrc' "$RAW_LOG" 2>/dev/null || true)"
+        log "hitoolbox_extras_compat_target_count=$HITOOLBOX_EXTRAS_TARGET_COUNT"
+        if [ "$HITOOLBOX_EXTRAS_TARGET_COUNT" -ge 1 ] &&
+           /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" &&
+           ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NULL' "$RAW_LOG" &&
+           ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NONNULL fallback=NOT_USED' "$RAW_LOG" &&
+           /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_NO_RETURN"
+        else
+            log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_INCOMPLETE"
+        fi
+        exit 0
+    fi
+    if [ -n "$HITOOLBOX_TRACE" ]; then
+        HITOOLBOX_TRACE_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_CFBUNDLE_TRACE_TARGET:.*bundle=com.apple.HIToolbox name=Extras type=rsrc subdir=NULL localization=NULL' "$RAW_LOG" 2>/dev/null || true)"
+        log "hitoolbox_cfbundle_trace_target_count=$HITOOLBOX_TRACE_TARGET_COUNT"
+    fi
+    if [ -n "$REAL_REGISTRATION_MODE" ] &&
+       [ -n "$HITOOLBOX_TRACE" ] &&
+       [ "$HITOOLBOX_TRACE_TARGET_COUNT" -ge 1 ] &&
+       /usr/bin/grep -F 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:' "$RAW_LOG" | /usr/bin/grep -Fq ' url=NULL ' &&
+       ! /usr/bin/grep -F 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:' "$RAW_LOG" | /usr/bin/grep -Fq ' url=NONNULL ' &&
+       /usr/bin/grep -Fq 'HIToolbox: failed to copy resource URL for framework bundle.' "$RAW_LOG" &&
+       /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_LOOKUP_CONFIRMED_NO_RETURN"
+    elif [ -n "$REAL_REGISTRATION_MODE" ] &&
+       /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REGISTRATIONS_ESTABLISHED_CREATEWINDOW_NO_RETURN"
+    elif [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_INCOMPLETE"
+    else
+        log "RESULT: CREATENEWWINDOW_NO_RETURN"
+    fi
+    exit 0
+fi
+
+if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_NOT_REACHED"
+    exit 0
+fi
+
+if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+    if ! /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_CALL:index=1 mode=lion-dockserver-v1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_LOOKUP_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_ADAPTER_FAILED"
+        exit 0
+    fi
+fi
+
+if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
+    NEWWINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_newwindow_legacy_trace_count=$NEWWINDOW_TRACE_COUNT"
+    if [ "$NEWWINDOW_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REQUEST_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'id=0x00007394 expectedReply=0x000073f8 option=0x00000003' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'recv=0x00000040' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REQUEST_UNEXPECTED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_MACH_FAILURE"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_LEGACY_REPLY_OBSERVED"
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REPLY_UNEXPECTED"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+    NEWWINDOW_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    NEWWINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_newwindow_compat_call_count=$NEWWINDOW_COMPAT_COUNT"
+    log "cgs_newwindow_legacy_trace_count=$NEWWINDOW_TRACE_COUNT"
+
+    if [ "$NEWWINDOW_COMPAT_COUNT" -ne 1 ] || [ "$NEWWINDOW_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'registrationCalls=1 setFrontCalls=1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_PREDICATE_NOT_MET"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007394 lionId=0x0000739a send=0x00000068 recv=0x00000040 changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_MACH_FAILURE"
+        exit 0
+    fi
+
+    if /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000038 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_LEGACY_FACING_SUCCESS_REPLY_NOT_ACCEPTED"
+            exit 0
+        fi
+        log "cgs_newwindow_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073fe result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_newwindow_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+    RELEASEBACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    RELEASEBACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_releasebacking_compat_call_count=$RELEASEBACKING_COMPAT_COUNT"
+    log "cgs_releasebacking_legacy_trace_count=$RELEASEBACKING_TRACE_COUNT"
+
+    if [ "$RELEASEBACKING_COMPAT_COUNT" -ne 1 ] || [ "$RELEASEBACKING_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseFlag=0x00000001 newWindowCompatCalls=1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_MET"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724b lionId=0x0000724c send=0x00000028 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_FAILURE"
+        exit 0
+    fi
+
+    if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_releasebacking_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_releasebacking_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+    OPACITY_CREATE_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_CREATE_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT"
+    log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT"
+    if [ "$OPACITY_CREATE_COMPAT_COUNT" -ne 1 ] || [ "$OPACITY_CREATE_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseBackingCompatCalls=1 newWindowCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724f lionId=0x00007250 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001200 size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_create_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_create_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+    OPACITY_CREATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_TERMINATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_TOTAL_COUNT=$((OPACITY_CREATE_COUNT + OPACITY_TERMINATE_COUNT))
+    log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_COUNT"
+    log "cgs_opacity_alpha_terminate_legacy_trace_count=$OPACITY_TERMINATE_COUNT"
+    log "cgs_opacity_alpha_legacy_trace_count=$OPACITY_TOTAL_COUNT"
+
+    if [ "$OPACITY_TOTAL_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_REQUEST_NOT_REACHED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_UNEXPECTED_MACH_FAILURE"
+        exit 0
+    fi
+
+    if [ "$OPACITY_CREATE_COUNT" -eq 1 ]; then
+        OPACITY_KIND="CREATE"
+        if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x0000724f expectedReply=0x000072b3 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY" | /usr/bin/grep -Fq 'size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES'; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_SUCCESS_UNEXPECTED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_legacy_kind=CREATE"
+    elif [ "$OPACITY_TERMINATE_COUNT" -eq 1 ]; then
+        OPACITY_KIND="TERMINATE"
+        if ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x00007250 expectedReply=0x000072b4 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY" | /usr/bin/grep -Fq 'size=0x00000024 id=0x000072b4 expected=0x000072b4 idMatch=YES'; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_TERMINATE_SUCCESS_UNEXPECTED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_legacy_kind=TERMINATE"
+        log "cgs_opacity_alpha_id_collision=SNOW_TERMINATE_EQUALS_LION_CREATE"
+    fi
+fi
+
+if [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
+    SET_FRONT_WINDOW_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_SET_FRONT_WINDOW_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    SET_FRONT_WINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_FRONT_WINDOW_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_set_front_window_compat_call_count=$SET_FRONT_WINDOW_COMPAT_COUNT"
+    log "cgs_set_front_window_legacy_trace_count=$SET_FRONT_WINDOW_TRACE_COUNT"
+    if [ "$SET_FRONT_WINDOW_COMPAT_COUNT" -ne 1 ] || [ "$SET_FRONT_WINDOW_TRACE_COUNT" -lt 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* .*opacityCreateCompatCalls=1 orderFrontCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072f2 lionId=0x000072f5 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x00007359 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x00007359 legacyId=0x00007356 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_SET_FRONT_WINDOW_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_SET_FRONT_WINDOW_LEGACY bits=0x00001200 size=0x00000024 id=0x00007356 expected=0x00007356 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_set_front_window_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x00007359 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x00007359 legacyId=0x00007356 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'id=0x00007356 expected=0x00007356 idMatch=YES' "$RAW_LOG"; then
+        log "cgs_set_front_window_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
+    COLOR_PROFILE_CLIENT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_color_profile_client_legacy_trace_count=$COLOR_PROFILE_CLIENT_TRACE_COUNT"
+    if [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -lt 1 ] ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY exact=YES bits=0x80001513 id=0x000074d4 send=0x00000034 recv=0x00000030' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000024 id=0x00007538 expected=0x00007538 idMatch=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000024 id=0x00007538 expected=0x00007538 resultRaw=0xd0feffff clientIdRaw=0x00000000' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LION' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_UNEXPECTED"
+        exit 0
+    fi
+    log "cgs_color_profile_client_live_result=LEGACY_MINUS304"
+fi
+
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+    COLOR_PROFILE_CLIENT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    COLOR_PROFILE_CLIENT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_color_profile_client_compat_call_count=$COLOR_PROFILE_CLIENT_COMPAT_COUNT"
+    log "cgs_color_profile_client_legacy_trace_count=$COLOR_PROFILE_CLIENT_TRACE_COUNT"
+    if [ "$COLOR_PROFILE_CLIENT_COMPAT_COUNT" -lt 1 ] || [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -lt 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES lionPortExact=YES applicationPort=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* .*descriptorCount=1 .*disposition=0x13 type=0x00 .*newWindowCompatCalls=1 releaseBackingCompatCalls=1 opacityCreateCompatCalls=1 orderFrontCompatCalls=0 addTrackingCompatCalls=0 setFrontWindowCompatCalls=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000074d4 lionId=0x000074d6 send=0x00000034 recv=0x00000030 changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*pid=[1-9][0-9]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000028 id=0x0000753a resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* replyClass=SUCCESS' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753a legacyId=0x00007538 size=0x00000028 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000028 id=0x00007538 expected=0x00007538 idMatch=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000028 id=0x00007538 expected=0x00007538 resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_color_profile_client_native_reply_class=SUCCESS"
+        if [ "$COLOR_PROFILE_CLIENT_COMPAT_COUNT" -ne 1 ] || [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_RETRY_AFTER_ADAPTER"
+            exit 0
+        fi
+    elif /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000753a resultRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* clientIdRaw=0x00000000 replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753a legacyId=0x00007538 size=0x00000024 changedBytes=1 bodyChangedBytes=0 resultRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* clientIdRaw=0x00000000 replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "cgs_color_profile_client_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+    WBI_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASSTHROUGH_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:PASSTHROUGH' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASSTHROUGH_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:PASSTHROUGH' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_EXPECTED_COUNT=1
+    RUNAPPLICATIONEVENTLOOP_WBI_COUNT=0
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        WBI_EXPECTED_COUNT=2
+        RUNAPPLICATIONEVENTLOOP_WBI_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop/{seen=1; next} seen && /PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop/{exit} seen && /PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+    fi
+    log "window_backing_info_compat_call_count=$WBI_COMPAT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "runapplicationeventloop_window_backing_info_call_count=$RUNAPPLICATIONEVENTLOOP_WBI_COUNT"
+    fi
+    log "color_profile_resolve_compat_call_count=$CPR_COMPAT_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    if [ "$WBI_COMPAT_COUNT" -ne "$WBI_EXPECTED_COUNT" ] ||
+       [ "$WBI_PASS_COUNT" -ne "$WBI_EXPECTED_COUNT" ] ||
+       [ "$WBI_PASSTHROUGH_COUNT" -ne 0 ] ||
+       { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+         [ "$RUNAPPLICATIONEVENTLOOP_WBI_COUNT" -ne 1 ]; } ||
+       [ "$CPR_COMPAT_COUNT" -ne 1 ] || [ "$CPR_PASS_COUNT" -ne 1 ] || [ "$CPR_PASSTHROUGH_COUNT" -ne 0 ]; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_ACCEPTED_FULL_STACK_COUNT_MISMATCH"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=1 adapted=0 mode=lion-id-v1 exact=YES applicationPortExact=YES .*newWindowCompatCalls=1 releaseBackingCompatCalls=1 opacityCreateCompatCalls=1 orderFrontCompatCalls=0 addTrackingCompatCalls=0 setFrontWindowCompatCalls=0 colorProfileClientCompatCalls=0 colorProfileResolveCompatCalls=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007263 lionId=0x00007264 send=0x00000024 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 windowId=[1-9][0-9]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000034 id=0x000072c8 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072c8 legacyId=0x000072c7 size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG"; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_WINDOW_BACKING_INFO_BASELINE_NOT_PASSED"
+        exit 0
+    fi
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=2 adapted=0 mode=lion-id-v1 exact=YES applicationPortExact=YES .*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REQUEST:index=2 legacyId=0x00007263 lionId=0x00007264 send=0x00000024 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 windowId=[1-9][0-9]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_MACH_RETURN:index=2 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_REPLY:index=2 bits=0x00001200 size=0x00000034 id=0x000072c8 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REPLY:index=2 nativeId=0x000072c8 legacyId=0x000072c7 size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_WINDOW_BACKING_INFO_NOT_PASSED"
+            exit 0
+        fi
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:index=1 adapted=0 mode=lion-id-v1 exact=YES provenanceExact=YES clientId=[1-9][0-9]* expectedClientId=[1-9][0-9]* profileId=1 .*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000074d7 lionId=0x000074d9 send=0x00000038 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 clientId=[1-9][0-9]* profileId=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000034 id=0x0000753d resultRaw=0x00000000 ' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753d legacyId=0x0000753b size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 ' "$RAW_LOG"; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_COLOR_PROFILE_RESOLVE_BASELINE_NOT_PASSED"
+        exit 0
+    fi
+    log "window_backing_info_native_reply_class=SUCCESS"
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "runapplicationeventloop_window_backing_info_native_reply_class=SUCCESS"
+    fi
+    log "color_profile_resolve_native_reply_class=SUCCESS"
+fi
+
+if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
+    ORDER_FRONT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_ADAPTER_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_order_front_conditionally_compat_call_count=$ORDER_FRONT_COMPAT_COUNT"
+    log "cgs_order_front_conditionally_legacy_trace_count=$ORDER_FRONT_TRACE_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_ADAPTER_PASS_COUNT"
+    if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        SELECTWINDOW_ORDER_FRONT_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow/{seen=1; next} seen && /PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow/{exit} seen && /PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+        ORDER_FRONT_EXPECTED_COUNT=2
+        RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT=0
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            ORDER_FRONT_EXPECTED_COUNT=3
+            RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop/{seen=1; next} seen && /PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop/{exit} seen && /PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+        fi
+        log "selectwindow_order_front_conditionally_call_count=$SELECTWINDOW_ORDER_FRONT_COUNT"
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            log "runapplicationeventloop_order_front_conditionally_call_count=$RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT"
+        fi
+        if [ "$ORDER_FRONT_COMPAT_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$ORDER_FRONT_TRACE_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$ORDER_FRONT_ADAPTER_PASS_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$SELECTWINDOW_ORDER_FRONT_COUNT" -ne 1 ] ||
+           { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+             [ "$RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT" -ne 1 ]; }; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COUNT_MISMATCH"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=1 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=2 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=2 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=2 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=2 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=2 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+             { ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=3 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+               ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=3 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=3 kr=0 hex=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=3 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=3 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG"; }; }; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_order_front_conditionally_native_reply_class=SUCCESS"
+        log "selectwindow_order_front_conditionally_native_reply_class=SUCCESS"
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            log "runapplicationeventloop_order_front_conditionally_native_reply_class=SUCCESS"
+        fi
+    else
+        ORDER_FRONT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        ORDER_FRONT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_order_front_conditionally_compat_call_count=$ORDER_FRONT_COMPAT_COUNT"
+        log "cgs_order_front_conditionally_legacy_trace_count=$ORDER_FRONT_TRACE_COUNT"
+        if [ "$ORDER_FRONT_COMPAT_COUNT" -ne 1 ] || [ "$ORDER_FRONT_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY bits=0x00001200 size=0x00000024 id=0x0000734b expected=0x0000734b idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+                exit 0
+            fi
+            log "cgs_order_front_conditionally_native_reply_class=SUCCESS"
+        elif /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000734e result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+             /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+             /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+             /usr/bin/grep -Fq 'id=0x0000734b expected=0x0000734b idMatch=YES' "$RAW_LOG"; then
+            log "cgs_order_front_conditionally_native_reply_class=ERROR"
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        else
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY_UNEXPECTED"
+            exit 0
+        fi
+    fi
+fi
+if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+    ADD_TRACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ADD_TRACKING_AREA_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    ADD_TRACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_add_tracking_area_compat_call_count=$ADD_TRACKING_COMPAT_COUNT"
+    log "cgs_add_tracking_area_legacy_trace_count=$ADD_TRACKING_TRACE_COUNT"
+    if [ "$ADD_TRACKING_COMPAT_COUNT" -ne 1 ] || [ "$ADD_TRACKING_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES .*count=9 opacityCreateCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007388 lionId=0x0000738e send=0x00000060 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*count=9' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073f2 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073f2 legacyId=0x000073ec size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY bits=0x00001200 size=0x00000024 id=0x000073ec expected=0x000073ec idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_add_tracking_area_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073f2 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073f2 legacyId=0x000073ec size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'id=0x000073ec expected=0x000073ec idMatch=YES' "$RAW_LOG"; then
+        log "cgs_add_tracking_area_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] &&
+   [ "$FOUND" -eq 0 ] &&
+   /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=-304' "$RAW_LOG" &&
+   /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH:reason=NON_TARGET' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'name=com.apple.dock.server' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH_RETURN:kr=-304 hex=0xfffffed0 servicePort=0x00000000' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATIONS_ESTABLISHED_DOCK_SERVER_MINUS304"
+    exit 0
+fi
+
+if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=0' "$RAW_LOG"; then
+    if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PUBLIC_ERROR"
+    elif [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_PUBLIC_ERROR"
+    elif [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_SUCCESS_PUBLIC_ERROR"
+    elif [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_SUCCESS_PUBLIC_ERROR"
+    elif [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_ADAPTER_PASS_CREATEWINDOW_ERROR"
+    else
+        log "RESULT: CREATENEWWINDOW_RETURNED_ERROR"
+    fi
+    exit 0
+fi
+
+if ! /usr/bin/grep -Eq 'PM_POSTIDENTITY_WINDOW:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_RESULT:CREATENEWWINDOW_PASS' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_NULL_OR_INVALID"
+    exit 0
+fi
+
+if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T00_BEFORE_CFStringCreateWithCString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_STAGE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T01_AFTER_CFStringCreateWithCString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFSTRING_NO_RETURN"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_POSTWINDOWTITLE_CFSTRING:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_RESULT:CFSTRING_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFSTRING_FAILED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T02_BEFORE_SetWindowTitleWithCFString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T03_AFTER_SetWindowTitleWithCFString' "$RAW_LOG"; then
+        if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REPLY:index=1 replyClass=SUCCESS' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        elif [ -n "$FONTSERVER_RPC_TRACE_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REQUEST:index=1 mode=lion-passive-v1' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_CAPTURED"
+        elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] &&
+           /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=5 allowed=4 behavior=1 publicBehavior=4 anyObject=YES' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_PASS_POST_RPC_NO_RETURN"
+        elif [ -n "$FONTSERVER_COMPAT_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        else
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_NO_RETURN"
+        fi
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_STATUS:SetWindowTitleWithCFString=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_RESULT:SETWINDOWTITLE_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_ERROR"
+        exit 0
+    fi
+    if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow' "$RAW_LOG"; then
+            if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+               /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=7 allowed=5 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG"; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_PASS_SHOWWINDOW_NO_RETURN"
+            elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ] &&
+               /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_LEGACY_MINUS304"
+            elif [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
+                SHOWWINDOW_UNKNOWN_REQUEST_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow/{seen=1; next} seen && /PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow/{exit} seen && /PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+                SHOWWINDOW_UNKNOWN_RETURN_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow/{seen=1; next} seen && /PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow/{exit} seen && /PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_MACH_RETURN:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+                log "showwindow_unknown_cgs_trace_request_count=$SHOWWINDOW_UNKNOWN_REQUEST_COUNT"
+                log "showwindow_unknown_cgs_trace_return_count=$SHOWWINDOW_UNKNOWN_RETURN_COUNT"
+                if [ "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" -lt 1 ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_NOT_REACHED"
+                elif [ "$SHOWWINDOW_UNKNOWN_RETURN_COUNT" -ne "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_INCOMPLETE"
+                elif [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                elif [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                elif [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                else
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_CAPTURED"
+                fi
+            else
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_NO_RETURN"
+            fi
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_RESULT:SHOWWINDOW_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_MARKER_INCOMPLETE"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_RESULT:SELECTWINDOW_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_MARKER_INCOMPLETE"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_MILESTONE:S04_BEFORE_IsWindowVisible' "$RAW_LOG"; then
+            log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_MILESTONE:S05_AFTER_IsWindowVisible' "$RAW_LOG"; then
+            log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_VALUE:visible=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_RESULT:ISWINDOWVISIBLE_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_RESULT:ISWINDOWVISIBLE_FALSE' "$RAW_LOG"; then
+            log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_VALUE_OR_MARKER_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_MILESTONE:S06_BEFORE_NewEventLoopTimerUPP' "$RAW_LOG"; then
+            log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_MILESTONE:S07_AFTER_NewEventLoopTimerUPP' "$RAW_LOG"; then
+            log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_POSTWINDOWTIMERUPP_POINTER:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_RESULT:NEWEVENTLOOPTIMERUPP_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_RESULT:NEWEVENTLOOPTIMERUPP_NULL' "$RAW_LOG"; then
+            log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_POINTER_OR_MARKER_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_MILESTONE:S08_BEFORE_GetMainEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_MILESTONE:S09_AFTER_GetMainEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_POSTWINDOWMAINEVENTLOOP_POINTER:pointer=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_RESULT:GETMAINEVENTLOOP_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_RESULT:GETMAINEVENTLOOP_NULL' "$RAW_LOG"; then
+            log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_POINTER_OR_MARKER_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_MILESTONE:S10_BEFORE_InstallEventLoopTimer' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_MILESTONE:S11_AFTER_InstallEventLoopTimer' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_STATUS:InstallEventLoopTimer=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_POSTWINDOWTIMERINSTALL_POINTER:pointer=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_CALLBACK:fired=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_RETURNED_ERROR' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_NULL_TIMER' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_CALLBACK_FIRED_UNEXPECTEDLY' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_STATUS_POINTER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_MILESTONE:S12_BEFORE_QuitApplicationEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_MILESTONE:S13_AFTER_QuitApplicationEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_CALLBACK:fired=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_RESULT:QUITAPPLICATIONEVENTLOOP_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_RESULT:QUITAPPLICATIONEVENTLOOP_CALLBACK_FIRED_UNEXPECTEDLY' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MARKER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NOT_REACHED"
+            exit 0
+        fi
+        TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+        log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+        log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+        log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+        log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+        if [ "$TIMER_CB_ENTER_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_EXIT_COUNT" -ne 1 ] ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_CALLBACK_COUNT_MISMATCH' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_MARKER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T04_BEFORE_CFRelease' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T05_AFTER_CFRelease' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFRELEASE_INCOMPLETE"
+        exit 0
+    fi
+fi
+
+if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M22_BEFORE_DisposeWindow' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M23_AFTER_DisposeWindow' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_DISPOSE_OR_SUCCESS_MILESTONE_MISSING"
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_CPS_REGISTRATION_COMPAT_CALL:index=2' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_SECOND_REGISTRATION_CALL"
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_CPS_SETFRONT_COMPAT_CALL:index=2' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_SECOND_SETFRONT_CALL"
+    exit 0
+fi
+
+if [ -n "$REAL_REGISTRATION_MODE" ] &&
+   ! /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_INCOMPLETE"
+    exit 0
+fi
+
+if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    HITOOLBOX_EXTRAS_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_EXTRAS_COMPAT_TARGET:.*mode=lion-fallback-external-v1.*bundle=com.apple.HIToolbox name=Extras type=rsrc' "$RAW_LOG" 2>/dev/null || true)"
+    if [ "$HITOOLBOX_EXTRAS_TARGET_COUNT" -lt 1 ] ||
+       ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NULL' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NONNULL fallback=NOT_USED' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_INCOMPLETE"
+        exit 0
+    fi
+fi
+
+if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" ||
+   ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_WAIT:pid=[0-9]+ exit=0$' "$RAW_LOG" ||
+   ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_EXIT:lookups=1 requests=[0-9]+ callbacks=[0-9]+$' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_DISTNOTIFY_LIFECYCLE_INCOMPLETE"
+    exit 0
+fi
+
+if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
+    if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
+        log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" ]; then
+        log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE" ]; then
+        log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_SHOWWINDOW_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SIXTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_VALIDATION_PASS"
+    elif [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_TITLE_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$FONTSERVER_COMPAT_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_VALIDATION_PASS"
+    elif [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATEWINDOW_PASS"
+    elif [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ]; then
+        log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATION_PASS"
+    elif [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_PASS"
+    elif [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_PASS"
+    else
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_INTEGRATION_PASS"
+    fi
+    exit 0
+fi
+
+log "RESULT: CREATENEWWINDOW_PROCESS_STATE_UNEXPECTED rc=$RC diagnostics=$FOUND"
+exit 0
+ "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=13 allowed=11 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "thirteenth_notification_registration_accept_count=$THIRTEENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$THIRTEENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=14 bits=0x00001111 id=4 size=336 payload=302' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_PASS_FOURTEENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+    if [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=13 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_INTEGRATION_INCOMPLETE"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_TWELFTH_REGISTRATION_MODE" ]; then
+    TWELFTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=12 allowed=10 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "twelfth_notification_registration_accept_count=$TWELFTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$TWELFTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=13 bits=0x00001111 id=4 size=356 payload=323' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_PASS_THIRTEENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+    if [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=12 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_INTEGRATION_INCOMPLETE"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_ELEVENTH_REGISTRATION_MODE" ]; then
+    ELEVENTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=11 allowed=9 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "eleventh_notification_registration_accept_count=$ELEVENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$ELEVENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=12 bits=0x00001111 id=4 size=336 payload=302' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_PASS_TWELFTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+    if [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=11 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_INCOMPLETE"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ]; then
+    TENTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=10 allowed=8 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "tenth_notification_registration_accept_count=$TENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$TENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=11 bits=0x00001111 id=4 size=356 payload=323' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_PASS_ELEVENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ]; then
+    NINTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=9 allowed=7 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "ninth_notification_registration_accept_count=$NINTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$NINTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=10 bits=0x00001111 id=4 size=332 payload=300' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_PASS_TENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ]; then
+    EIGHTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=8 allowed=6 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "eighth_notification_registration_accept_count=$EIGHTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$EIGHTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=9 ' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_PASS_NINTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+fi
+
+if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REJECT:' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_REQUEST:FAIL' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_CALLBACK:REJECT' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+    if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=7 allowed=5 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_PASS_EIGHTH_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] &&
+       /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=6 allowed=3 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x2$' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SIXTH_NOTIFICATION_REGISTRATION_PASS_SEVENTH_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=5 allowed=4 behavior=1 publicBehavior=4 anyObject=YES' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_PASS_SIXTH_PROTOCOL_REJECTED"
+    elif [ -n "$FONTSERVER_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_PASS_NOTIFICATION_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ]; then
+        log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATION_PROTOCOL_REJECTED"
+    elif [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_PROTOCOL_REJECTED"
+    elif /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:status=20' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_BROKER_SCHEMA_REJECTED"
+    else
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_PROTOCOL_REJECTED"
+    fi
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG" &&
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M21_AFTER_CreateNewWindow' "$RAW_LOG"; then
+    if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        OPACITY_CREATE_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        OPACITY_CREATE_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT"
+        log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT"
+        if [ "$OPACITY_CREATE_COMPAT_COUNT" -ne 1 ] || [ "$OPACITY_CREATE_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseBackingCompatCalls=1 newWindowCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724f lionId=0x00007250 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_FAILURE"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001200 size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+           /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        fi
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+    if [ -n "$OPACITY_ALPHA_TRACE_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        OPACITY_CREATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        OPACITY_TERMINATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        OPACITY_TOTAL_COUNT=$((OPACITY_CREATE_COUNT + OPACITY_TERMINATE_COUNT))
+        log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_COUNT"
+        log "cgs_opacity_alpha_terminate_legacy_trace_count=$OPACITY_TERMINATE_COUNT"
+        log "cgs_opacity_alpha_legacy_trace_count=$OPACITY_TOTAL_COUNT"
+        if [ "$OPACITY_TOTAL_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_REQUEST_NOT_REACHED"
+            exit 0
+        fi
+        if [ "$OPACITY_CREATE_COUNT" -eq 1 ]; then
+            OPACITY_KIND="CREATE"
+            if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'id=0x0000724f expectedReply=0x000072b3 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_REQUEST_UNEXPECTED"
+                exit 0
+            fi
+            MACH_KIND="CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY"
+            EXPECTED_REPLY="0x000072b3"
+        else
+            OPACITY_KIND="TERMINATE"
+            if ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'id=0x00007250 expectedReply=0x000072b4 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_TERMINATE_REQUEST_UNEXPECTED"
+                exit 0
+            fi
+            MACH_KIND="CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY"
+            EXPECTED_REPLY="0x000072b4"
+        fi
+        log "cgs_opacity_alpha_legacy_kind=$OPACITY_KIND"
+        if /usr/bin/grep -Fq "kind=$MACH_KIND kr=268451844 hex=0x10004004" "$RAW_LOG"; then
+            if /usr/bin/grep -Fq "PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:" "$RAW_LOG" &&
+               /usr/bin/grep -Fq "kind=$MACH_KIND kr=268451844 hex=0x10004004" "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_${OPACITY_KIND}_MACH_RCV_TOO_LARGE_OBSERVED"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER_MISSING"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Fq "kind=$MACH_KIND kr=0 hex=0x00000000" "$RAW_LOG"; then
+            if /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=$MACH_KIND" | /usr/bin/grep -Fq "size=0x00000024 id=$EXPECTED_REPLY expected=$EXPECTED_REPLY idMatch=YES"; then
+                if [ "$OPACITY_KIND" = "TERMINATE" ]; then
+                    log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_TERMINATE_ID_COLLISION_REPLY_OBSERVED"
+                else
+                    log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_LEGACY_REPLY_OBSERVED"
+                fi
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_REPLY_UNEXPECTED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Fq "PM_CGS_CONNECTION_TRACE_MACH_RETURN:" "$RAW_LOG" &&
+           /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_MACH_RETURN:" "$RAW_LOG" | /usr/bin/grep -Fq "kind=$MACH_KIND"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_${OPACITY_KIND}_MACH_FAILURE_OBSERVED"
+        else
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_MACH_RETURN_MISSING"
+        fi
+        exit 0
+    fi
+    if [ -n "$RELEASEBACKING_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        RELEASEBACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_releasebacking_compat_call_count=$RELEASEBACKING_COMPAT_COUNT"
+        if [ "$RELEASEBACKING_COMPAT_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseFlag=0x00000001 newWindowCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724b lionId=0x0000724c send=0x00000028 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+           /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        fi
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+    if [ -n "$RELEASEBACKING_TRACE_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        RELEASEBACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_releasebacking_legacy_trace_count=$RELEASEBACKING_TRACE_COUNT"
+        if [ "$RELEASEBACKING_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REQUEST_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x0000724b expectedReply=0x000072af option=0x00000003 send=0x00000028 recv=0x0000002c' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REQUEST_UNEXPECTED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_MACH_FAILURE"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY bits=' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_LEGACY_REPLY_OBSERVED"
+        else
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REPLY_UNEXPECTED"
+        fi
+        exit 0
+    fi
+    if [ -n "$NEWWINDOW_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000038 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_CONNECTION_TRACE_REPLY:index=5 kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=0x00001200 size=0x00000038 id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        exit 0
+    fi
+    if [ -n "$DOCKSERVER_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_PASS_NO_RETURN"
+        exit 0
+    fi
+    if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        HITOOLBOX_EXTRAS_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_EXTRAS_COMPAT_TARGET:.*mode=lion-fallback-external-v1.*bundle=com.apple.HIToolbox name=Extras type=rsrc' "$RAW_LOG" 2>/dev/null || true)"
+        log "hitoolbox_extras_compat_target_count=$HITOOLBOX_EXTRAS_TARGET_COUNT"
+        if [ "$HITOOLBOX_EXTRAS_TARGET_COUNT" -ge 1 ] &&
+           /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" &&
+           ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NULL' "$RAW_LOG" &&
+           ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NONNULL fallback=NOT_USED' "$RAW_LOG" &&
+           /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_NO_RETURN"
+        else
+            log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_INCOMPLETE"
+        fi
+        exit 0
+    fi
+    if [ -n "$HITOOLBOX_TRACE" ]; then
+        HITOOLBOX_TRACE_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_CFBUNDLE_TRACE_TARGET:.*bundle=com.apple.HIToolbox name=Extras type=rsrc subdir=NULL localization=NULL' "$RAW_LOG" 2>/dev/null || true)"
+        log "hitoolbox_cfbundle_trace_target_count=$HITOOLBOX_TRACE_TARGET_COUNT"
+    fi
+    if [ -n "$REAL_REGISTRATION_MODE" ] &&
+       [ -n "$HITOOLBOX_TRACE" ] &&
+       [ "$HITOOLBOX_TRACE_TARGET_COUNT" -ge 1 ] &&
+       /usr/bin/grep -F 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:' "$RAW_LOG" | /usr/bin/grep -Fq ' url=NULL ' &&
+       ! /usr/bin/grep -F 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:' "$RAW_LOG" | /usr/bin/grep -Fq ' url=NONNULL ' &&
+       /usr/bin/grep -Fq 'HIToolbox: failed to copy resource URL for framework bundle.' "$RAW_LOG" &&
+       /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_LOOKUP_CONFIRMED_NO_RETURN"
+    elif [ -n "$REAL_REGISTRATION_MODE" ] &&
+       /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REGISTRATIONS_ESTABLISHED_CREATEWINDOW_NO_RETURN"
+    elif [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_INCOMPLETE"
+    else
+        log "RESULT: CREATENEWWINDOW_NO_RETURN"
+    fi
+    exit 0
+fi
+
+if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_NOT_REACHED"
+    exit 0
+fi
+
+if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+    if ! /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_CALL:index=1 mode=lion-dockserver-v1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_LOOKUP_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_ADAPTER_FAILED"
+        exit 0
+    fi
+fi
+
+if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
+    NEWWINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_newwindow_legacy_trace_count=$NEWWINDOW_TRACE_COUNT"
+    if [ "$NEWWINDOW_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REQUEST_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'id=0x00007394 expectedReply=0x000073f8 option=0x00000003' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'recv=0x00000040' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REQUEST_UNEXPECTED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_MACH_FAILURE"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_LEGACY_REPLY_OBSERVED"
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REPLY_UNEXPECTED"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+    NEWWINDOW_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    NEWWINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_newwindow_compat_call_count=$NEWWINDOW_COMPAT_COUNT"
+    log "cgs_newwindow_legacy_trace_count=$NEWWINDOW_TRACE_COUNT"
+
+    if [ "$NEWWINDOW_COMPAT_COUNT" -ne 1 ] || [ "$NEWWINDOW_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'registrationCalls=1 setFrontCalls=1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_PREDICATE_NOT_MET"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007394 lionId=0x0000739a send=0x00000068 recv=0x00000040 changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_MACH_FAILURE"
+        exit 0
+    fi
+
+    if /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000038 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_LEGACY_FACING_SUCCESS_REPLY_NOT_ACCEPTED"
+            exit 0
+        fi
+        log "cgs_newwindow_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073fe result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_newwindow_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+    RELEASEBACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    RELEASEBACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_releasebacking_compat_call_count=$RELEASEBACKING_COMPAT_COUNT"
+    log "cgs_releasebacking_legacy_trace_count=$RELEASEBACKING_TRACE_COUNT"
+
+    if [ "$RELEASEBACKING_COMPAT_COUNT" -ne 1 ] || [ "$RELEASEBACKING_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseFlag=0x00000001 newWindowCompatCalls=1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_MET"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724b lionId=0x0000724c send=0x00000028 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_FAILURE"
+        exit 0
+    fi
+
+    if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_releasebacking_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_releasebacking_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+    OPACITY_CREATE_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_CREATE_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT"
+    log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT"
+    if [ "$OPACITY_CREATE_COMPAT_COUNT" -ne 1 ] || [ "$OPACITY_CREATE_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseBackingCompatCalls=1 newWindowCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724f lionId=0x00007250 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001200 size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_create_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_create_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+    OPACITY_CREATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_TERMINATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_TOTAL_COUNT=$((OPACITY_CREATE_COUNT + OPACITY_TERMINATE_COUNT))
+    log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_COUNT"
+    log "cgs_opacity_alpha_terminate_legacy_trace_count=$OPACITY_TERMINATE_COUNT"
+    log "cgs_opacity_alpha_legacy_trace_count=$OPACITY_TOTAL_COUNT"
+
+    if [ "$OPACITY_TOTAL_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_REQUEST_NOT_REACHED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_UNEXPECTED_MACH_FAILURE"
+        exit 0
+    fi
+
+    if [ "$OPACITY_CREATE_COUNT" -eq 1 ]; then
+        OPACITY_KIND="CREATE"
+        if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x0000724f expectedReply=0x000072b3 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY" | /usr/bin/grep -Fq 'size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES'; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_SUCCESS_UNEXPECTED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_legacy_kind=CREATE"
+    elif [ "$OPACITY_TERMINATE_COUNT" -eq 1 ]; then
+        OPACITY_KIND="TERMINATE"
+        if ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x00007250 expectedReply=0x000072b4 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY" | /usr/bin/grep -Fq 'size=0x00000024 id=0x000072b4 expected=0x000072b4 idMatch=YES'; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_TERMINATE_SUCCESS_UNEXPECTED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_legacy_kind=TERMINATE"
+        log "cgs_opacity_alpha_id_collision=SNOW_TERMINATE_EQUALS_LION_CREATE"
+    fi
+fi
+
+if [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
+    SET_FRONT_WINDOW_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_SET_FRONT_WINDOW_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    SET_FRONT_WINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_FRONT_WINDOW_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_set_front_window_compat_call_count=$SET_FRONT_WINDOW_COMPAT_COUNT"
+    log "cgs_set_front_window_legacy_trace_count=$SET_FRONT_WINDOW_TRACE_COUNT"
+    if [ "$SET_FRONT_WINDOW_COMPAT_COUNT" -ne 1 ] || [ "$SET_FRONT_WINDOW_TRACE_COUNT" -lt 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* .*opacityCreateCompatCalls=1 orderFrontCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072f2 lionId=0x000072f5 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x00007359 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x00007359 legacyId=0x00007356 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_SET_FRONT_WINDOW_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_SET_FRONT_WINDOW_LEGACY bits=0x00001200 size=0x00000024 id=0x00007356 expected=0x00007356 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_set_front_window_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x00007359 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x00007359 legacyId=0x00007356 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'id=0x00007356 expected=0x00007356 idMatch=YES' "$RAW_LOG"; then
+        log "cgs_set_front_window_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
+    COLOR_PROFILE_CLIENT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_color_profile_client_legacy_trace_count=$COLOR_PROFILE_CLIENT_TRACE_COUNT"
+    if [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -lt 1 ] ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY exact=YES bits=0x80001513 id=0x000074d4 send=0x00000034 recv=0x00000030' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000024 id=0x00007538 expected=0x00007538 idMatch=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000024 id=0x00007538 expected=0x00007538 resultRaw=0xd0feffff clientIdRaw=0x00000000' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LION' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_UNEXPECTED"
+        exit 0
+    fi
+    log "cgs_color_profile_client_live_result=LEGACY_MINUS304"
+fi
+
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+    COLOR_PROFILE_CLIENT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    COLOR_PROFILE_CLIENT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_color_profile_client_compat_call_count=$COLOR_PROFILE_CLIENT_COMPAT_COUNT"
+    log "cgs_color_profile_client_legacy_trace_count=$COLOR_PROFILE_CLIENT_TRACE_COUNT"
+    if [ "$COLOR_PROFILE_CLIENT_COMPAT_COUNT" -lt 1 ] || [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -lt 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES lionPortExact=YES applicationPort=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* .*descriptorCount=1 .*disposition=0x13 type=0x00 .*newWindowCompatCalls=1 releaseBackingCompatCalls=1 opacityCreateCompatCalls=1 orderFrontCompatCalls=0 addTrackingCompatCalls=0 setFrontWindowCompatCalls=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000074d4 lionId=0x000074d6 send=0x00000034 recv=0x00000030 changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*pid=[1-9][0-9]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000028 id=0x0000753a resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* replyClass=SUCCESS' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753a legacyId=0x00007538 size=0x00000028 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000028 id=0x00007538 expected=0x00007538 idMatch=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000028 id=0x00007538 expected=0x00007538 resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_color_profile_client_native_reply_class=SUCCESS"
+        if [ "$COLOR_PROFILE_CLIENT_COMPAT_COUNT" -ne 1 ] || [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_RETRY_AFTER_ADAPTER"
+            exit 0
+        fi
+    elif /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000753a resultRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* clientIdRaw=0x00000000 replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753a legacyId=0x00007538 size=0x00000024 changedBytes=1 bodyChangedBytes=0 resultRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* clientIdRaw=0x00000000 replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "cgs_color_profile_client_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+    WBI_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASSTHROUGH_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:PASSTHROUGH' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASSTHROUGH_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:PASSTHROUGH' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_EXPECTED_COUNT=1
+    RUNAPPLICATIONEVENTLOOP_WBI_COUNT=0
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        WBI_EXPECTED_COUNT=2
+        RUNAPPLICATIONEVENTLOOP_WBI_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop/{seen=1; next} seen && /PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop/{exit} seen && /PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+    fi
+    log "window_backing_info_compat_call_count=$WBI_COMPAT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "runapplicationeventloop_window_backing_info_call_count=$RUNAPPLICATIONEVENTLOOP_WBI_COUNT"
+    fi
+    log "color_profile_resolve_compat_call_count=$CPR_COMPAT_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    if [ "$WBI_COMPAT_COUNT" -ne "$WBI_EXPECTED_COUNT" ] ||
+       [ "$WBI_PASS_COUNT" -ne "$WBI_EXPECTED_COUNT" ] ||
+       [ "$WBI_PASSTHROUGH_COUNT" -ne 0 ] ||
+       { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+         [ "$RUNAPPLICATIONEVENTLOOP_WBI_COUNT" -ne 1 ]; } ||
+       [ "$CPR_COMPAT_COUNT" -ne 1 ] || [ "$CPR_PASS_COUNT" -ne 1 ] || [ "$CPR_PASSTHROUGH_COUNT" -ne 0 ]; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_ACCEPTED_FULL_STACK_COUNT_MISMATCH"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=1 adapted=0 mode=lion-id-v1 exact=YES applicationPortExact=YES .*newWindowCompatCalls=1 releaseBackingCompatCalls=1 opacityCreateCompatCalls=1 orderFrontCompatCalls=0 addTrackingCompatCalls=0 setFrontWindowCompatCalls=0 colorProfileClientCompatCalls=0 colorProfileResolveCompatCalls=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007263 lionId=0x00007264 send=0x00000024 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 windowId=[1-9][0-9]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000034 id=0x000072c8 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072c8 legacyId=0x000072c7 size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG"; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_WINDOW_BACKING_INFO_BASELINE_NOT_PASSED"
+        exit 0
+    fi
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=2 adapted=0 mode=lion-id-v1 exact=YES applicationPortExact=YES .*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REQUEST:index=2 legacyId=0x00007263 lionId=0x00007264 send=0x00000024 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 windowId=[1-9][0-9]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_MACH_RETURN:index=2 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_REPLY:index=2 bits=0x00001200 size=0x00000034 id=0x000072c8 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REPLY:index=2 nativeId=0x000072c8 legacyId=0x000072c7 size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_WINDOW_BACKING_INFO_NOT_PASSED"
+            exit 0
+        fi
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:index=1 adapted=0 mode=lion-id-v1 exact=YES provenanceExact=YES clientId=[1-9][0-9]* expectedClientId=[1-9][0-9]* profileId=1 .*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000074d7 lionId=0x000074d9 send=0x00000038 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 clientId=[1-9][0-9]* profileId=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000034 id=0x0000753d resultRaw=0x00000000 ' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753d legacyId=0x0000753b size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 ' "$RAW_LOG"; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_COLOR_PROFILE_RESOLVE_BASELINE_NOT_PASSED"
+        exit 0
+    fi
+    log "window_backing_info_native_reply_class=SUCCESS"
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "runapplicationeventloop_window_backing_info_native_reply_class=SUCCESS"
+    fi
+    log "color_profile_resolve_native_reply_class=SUCCESS"
+fi
+
+if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
+    ORDER_FRONT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_ADAPTER_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_order_front_conditionally_compat_call_count=$ORDER_FRONT_COMPAT_COUNT"
+    log "cgs_order_front_conditionally_legacy_trace_count=$ORDER_FRONT_TRACE_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_ADAPTER_PASS_COUNT"
+    if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        SELECTWINDOW_ORDER_FRONT_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow/{seen=1; next} seen && /PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow/{exit} seen && /PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+        ORDER_FRONT_EXPECTED_COUNT=2
+        RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT=0
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            ORDER_FRONT_EXPECTED_COUNT=3
+            RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop/{seen=1; next} seen && /PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop/{exit} seen && /PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+        fi
+        log "selectwindow_order_front_conditionally_call_count=$SELECTWINDOW_ORDER_FRONT_COUNT"
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            log "runapplicationeventloop_order_front_conditionally_call_count=$RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT"
+        fi
+        if [ "$ORDER_FRONT_COMPAT_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$ORDER_FRONT_TRACE_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$ORDER_FRONT_ADAPTER_PASS_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$SELECTWINDOW_ORDER_FRONT_COUNT" -ne 1 ] ||
+           { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+             [ "$RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT" -ne 1 ]; }; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COUNT_MISMATCH"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=1 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=2 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=2 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=2 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=2 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=2 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+             { ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=3 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+               ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=3 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=3 kr=0 hex=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=3 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=3 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG"; }; }; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_order_front_conditionally_native_reply_class=SUCCESS"
+        log "selectwindow_order_front_conditionally_native_reply_class=SUCCESS"
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            log "runapplicationeventloop_order_front_conditionally_native_reply_class=SUCCESS"
+        fi
+    else
+        ORDER_FRONT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        ORDER_FRONT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_order_front_conditionally_compat_call_count=$ORDER_FRONT_COMPAT_COUNT"
+        log "cgs_order_front_conditionally_legacy_trace_count=$ORDER_FRONT_TRACE_COUNT"
+        if [ "$ORDER_FRONT_COMPAT_COUNT" -ne 1 ] || [ "$ORDER_FRONT_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY bits=0x00001200 size=0x00000024 id=0x0000734b expected=0x0000734b idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+                exit 0
+            fi
+            log "cgs_order_front_conditionally_native_reply_class=SUCCESS"
+        elif /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000734e result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+             /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+             /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+             /usr/bin/grep -Fq 'id=0x0000734b expected=0x0000734b idMatch=YES' "$RAW_LOG"; then
+            log "cgs_order_front_conditionally_native_reply_class=ERROR"
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        else
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY_UNEXPECTED"
+            exit 0
+        fi
+    fi
+fi
+if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+    ADD_TRACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ADD_TRACKING_AREA_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    ADD_TRACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_add_tracking_area_compat_call_count=$ADD_TRACKING_COMPAT_COUNT"
+    log "cgs_add_tracking_area_legacy_trace_count=$ADD_TRACKING_TRACE_COUNT"
+    if [ "$ADD_TRACKING_COMPAT_COUNT" -ne 1 ] || [ "$ADD_TRACKING_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES .*count=9 opacityCreateCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007388 lionId=0x0000738e send=0x00000060 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*count=9' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073f2 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073f2 legacyId=0x000073ec size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY bits=0x00001200 size=0x00000024 id=0x000073ec expected=0x000073ec idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_add_tracking_area_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073f2 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073f2 legacyId=0x000073ec size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'id=0x000073ec expected=0x000073ec idMatch=YES' "$RAW_LOG"; then
+        log "cgs_add_tracking_area_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] &&
+   [ "$FOUND" -eq 0 ] &&
+   /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=-304' "$RAW_LOG" &&
+   /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH:reason=NON_TARGET' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'name=com.apple.dock.server' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH_RETURN:kr=-304 hex=0xfffffed0 servicePort=0x00000000' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATIONS_ESTABLISHED_DOCK_SERVER_MINUS304"
+    exit 0
+fi
+
+if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=0' "$RAW_LOG"; then
+    if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PUBLIC_ERROR"
+    elif [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_PUBLIC_ERROR"
+    elif [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_SUCCESS_PUBLIC_ERROR"
+    elif [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_SUCCESS_PUBLIC_ERROR"
+    elif [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_ADAPTER_PASS_CREATEWINDOW_ERROR"
+    else
+        log "RESULT: CREATENEWWINDOW_RETURNED_ERROR"
+    fi
+    exit 0
+fi
+
+if ! /usr/bin/grep -Eq 'PM_POSTIDENTITY_WINDOW:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_RESULT:CREATENEWWINDOW_PASS' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_NULL_OR_INVALID"
+    exit 0
+fi
+
+if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T00_BEFORE_CFStringCreateWithCString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_STAGE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T01_AFTER_CFStringCreateWithCString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFSTRING_NO_RETURN"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_POSTWINDOWTITLE_CFSTRING:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_RESULT:CFSTRING_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFSTRING_FAILED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T02_BEFORE_SetWindowTitleWithCFString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T03_AFTER_SetWindowTitleWithCFString' "$RAW_LOG"; then
+        if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REPLY:index=1 replyClass=SUCCESS' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        elif [ -n "$FONTSERVER_RPC_TRACE_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REQUEST:index=1 mode=lion-passive-v1' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_CAPTURED"
+        elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] &&
+           /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=5 allowed=4 behavior=1 publicBehavior=4 anyObject=YES' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_PASS_POST_RPC_NO_RETURN"
+        elif [ -n "$FONTSERVER_COMPAT_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        else
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_NO_RETURN"
+        fi
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_STATUS:SetWindowTitleWithCFString=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_RESULT:SETWINDOWTITLE_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_ERROR"
+        exit 0
+    fi
+    if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow' "$RAW_LOG"; then
+            if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+               /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=7 allowed=5 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG"; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_PASS_SHOWWINDOW_NO_RETURN"
+            elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ] &&
+               /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_LEGACY_MINUS304"
+            elif [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
+                SHOWWINDOW_UNKNOWN_REQUEST_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow/{seen=1; next} seen && /PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow/{exit} seen && /PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+                SHOWWINDOW_UNKNOWN_RETURN_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow/{seen=1; next} seen && /PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow/{exit} seen && /PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_MACH_RETURN:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+                log "showwindow_unknown_cgs_trace_request_count=$SHOWWINDOW_UNKNOWN_REQUEST_COUNT"
+                log "showwindow_unknown_cgs_trace_return_count=$SHOWWINDOW_UNKNOWN_RETURN_COUNT"
+                if [ "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" -lt 1 ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_NOT_REACHED"
+                elif [ "$SHOWWINDOW_UNKNOWN_RETURN_COUNT" -ne "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_INCOMPLETE"
+                elif [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                elif [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                elif [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                else
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_CAPTURED"
+                fi
+            else
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_NO_RETURN"
+            fi
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_RESULT:SHOWWINDOW_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_MARKER_INCOMPLETE"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_RESULT:SELECTWINDOW_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_MARKER_INCOMPLETE"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_MILESTONE:S04_BEFORE_IsWindowVisible' "$RAW_LOG"; then
+            log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_MILESTONE:S05_AFTER_IsWindowVisible' "$RAW_LOG"; then
+            log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_VALUE:visible=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_RESULT:ISWINDOWVISIBLE_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_RESULT:ISWINDOWVISIBLE_FALSE' "$RAW_LOG"; then
+            log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_VALUE_OR_MARKER_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_MILESTONE:S06_BEFORE_NewEventLoopTimerUPP' "$RAW_LOG"; then
+            log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_MILESTONE:S07_AFTER_NewEventLoopTimerUPP' "$RAW_LOG"; then
+            log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_POSTWINDOWTIMERUPP_POINTER:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_RESULT:NEWEVENTLOOPTIMERUPP_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_RESULT:NEWEVENTLOOPTIMERUPP_NULL' "$RAW_LOG"; then
+            log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_POINTER_OR_MARKER_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_MILESTONE:S08_BEFORE_GetMainEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_MILESTONE:S09_AFTER_GetMainEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_POSTWINDOWMAINEVENTLOOP_POINTER:pointer=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_RESULT:GETMAINEVENTLOOP_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_RESULT:GETMAINEVENTLOOP_NULL' "$RAW_LOG"; then
+            log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_POINTER_OR_MARKER_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_MILESTONE:S10_BEFORE_InstallEventLoopTimer' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_MILESTONE:S11_AFTER_InstallEventLoopTimer' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_STATUS:InstallEventLoopTimer=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_POSTWINDOWTIMERINSTALL_POINTER:pointer=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_CALLBACK:fired=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_RETURNED_ERROR' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_NULL_TIMER' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_CALLBACK_FIRED_UNEXPECTEDLY' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_STATUS_POINTER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_MILESTONE:S12_BEFORE_QuitApplicationEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_MILESTONE:S13_AFTER_QuitApplicationEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_CALLBACK:fired=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_RESULT:QUITAPPLICATIONEVENTLOOP_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_RESULT:QUITAPPLICATIONEVENTLOOP_CALLBACK_FIRED_UNEXPECTEDLY' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MARKER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NOT_REACHED"
+            exit 0
+        fi
+        TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+        log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+        log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+        log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+        log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+        if [ "$TIMER_CB_ENTER_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_EXIT_COUNT" -ne 1 ] ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_CALLBACK_COUNT_MISMATCH' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_MARKER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T04_BEFORE_CFRelease' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T05_AFTER_CFRelease' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFRELEASE_INCOMPLETE"
+        exit 0
+    fi
+fi
+
+if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M22_BEFORE_DisposeWindow' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M23_AFTER_DisposeWindow' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_DISPOSE_OR_SUCCESS_MILESTONE_MISSING"
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_CPS_REGISTRATION_COMPAT_CALL:index=2' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_SECOND_REGISTRATION_CALL"
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_CPS_SETFRONT_COMPAT_CALL:index=2' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_SECOND_SETFRONT_CALL"
+    exit 0
+fi
+
+if [ -n "$REAL_REGISTRATION_MODE" ] &&
+   ! /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_INCOMPLETE"
+    exit 0
+fi
+
+if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    HITOOLBOX_EXTRAS_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_EXTRAS_COMPAT_TARGET:.*mode=lion-fallback-external-v1.*bundle=com.apple.HIToolbox name=Extras type=rsrc' "$RAW_LOG" 2>/dev/null || true)"
+    if [ "$HITOOLBOX_EXTRAS_TARGET_COUNT" -lt 1 ] ||
+       ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NULL' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NONNULL fallback=NOT_USED' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_INCOMPLETE"
+        exit 0
+    fi
+fi
+
+if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" ||
+   ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_WAIT:pid=[0-9]+ exit=0$' "$RAW_LOG" ||
+   ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_EXIT:lookups=1 requests=[0-9]+ callbacks=[0-9]+$' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_DISTNOTIFY_LIFECYCLE_INCOMPLETE"
+    exit 0
+fi
+
+if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
+    if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
+        log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" ]; then
+        log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE" ]; then
+        log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_SHOWWINDOW_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SIXTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_VALIDATION_PASS"
+    elif [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_TITLE_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$FONTSERVER_COMPAT_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_VALIDATION_PASS"
+    elif [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATEWINDOW_PASS"
+    elif [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ]; then
+        log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATION_PASS"
+    elif [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_PASS"
+    elif [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_PASS"
+    else
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_INTEGRATION_PASS"
+    fi
+    exit 0
+fi
+
+log "RESULT: CREATENEWWINDOW_PROCESS_STATE_UNEXPECTED rc=$RC diagnostics=$FOUND"
+exit 0
+ "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=13 allowed=11 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "thirteenth_notification_registration_accept_count=$THIRTEENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$THIRTEENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=14 bits=0x00001111 id=4 size=336 payload=302' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_PASS_FOURTEENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+    if [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=13 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_INTEGRATION_INCOMPLETE"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_TWELFTH_REGISTRATION_MODE" ]; then
+    TWELFTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=12 allowed=10 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "twelfth_notification_registration_accept_count=$TWELFTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$TWELFTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=13 bits=0x00001111 id=4 size=356 payload=323' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_PASS_THIRTEENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+    if [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=12 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TWELFTH_NOTIFICATION_REGISTRATION_INTEGRATION_INCOMPLETE"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_ELEVENTH_REGISTRATION_MODE" ]; then
+    ELEVENTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=11 allowed=9 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "eleventh_notification_registration_accept_count=$ELEVENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$ELEVENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=12 bits=0x00001111 id=4 size=336 payload=302' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_PASS_TWELFTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+    if [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=11 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_INCOMPLETE"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ]; then
+    TENTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=10 allowed=8 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "tenth_notification_registration_accept_count=$TENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$TENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=11 bits=0x00001111 id=4 size=356 payload=323' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_PASS_ELEVENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ]; then
+    NINTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=9 allowed=7 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "ninth_notification_registration_accept_count=$NINTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$NINTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=10 bits=0x00001111 id=4 size=332 payload=300' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_PASS_TENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ]; then
+    EIGHTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=8 allowed=6 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "eighth_notification_registration_accept_count=$EIGHTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$EIGHTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=9 ' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_PASS_NINTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
+        exit 0
+    fi
+fi
+
+if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REJECT:' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_REQUEST:FAIL' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_IPC_CALLBACK:REJECT' "$RAW_LOG" ||
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+    if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=7 allowed=5 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_PASS_EIGHTH_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] &&
+       /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=6 allowed=3 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x2$' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SIXTH_NOTIFICATION_REGISTRATION_PASS_SEVENTH_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=5 allowed=4 behavior=1 publicBehavior=4 anyObject=YES' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_PASS_SIXTH_PROTOCOL_REJECTED"
+    elif [ -n "$FONTSERVER_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_PASS_NOTIFICATION_PROTOCOL_REJECTED"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ]; then
+        log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATION_PROTOCOL_REJECTED"
+    elif [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_PROTOCOL_REJECTED"
+    elif /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:status=20' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_BROKER_SCHEMA_REJECTED"
+    else
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_PROTOCOL_REJECTED"
+    fi
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG" &&
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M21_AFTER_CreateNewWindow' "$RAW_LOG"; then
+    if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        OPACITY_CREATE_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        OPACITY_CREATE_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT"
+        log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT"
+        if [ "$OPACITY_CREATE_COMPAT_COUNT" -ne 1 ] || [ "$OPACITY_CREATE_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseBackingCompatCalls=1 newWindowCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724f lionId=0x00007250 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_FAILURE"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001200 size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+           /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        fi
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+    if [ -n "$OPACITY_ALPHA_TRACE_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        OPACITY_CREATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        OPACITY_TERMINATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        OPACITY_TOTAL_COUNT=$((OPACITY_CREATE_COUNT + OPACITY_TERMINATE_COUNT))
+        log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_COUNT"
+        log "cgs_opacity_alpha_terminate_legacy_trace_count=$OPACITY_TERMINATE_COUNT"
+        log "cgs_opacity_alpha_legacy_trace_count=$OPACITY_TOTAL_COUNT"
+        if [ "$OPACITY_TOTAL_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_REQUEST_NOT_REACHED"
+            exit 0
+        fi
+        if [ "$OPACITY_CREATE_COUNT" -eq 1 ]; then
+            OPACITY_KIND="CREATE"
+            if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'id=0x0000724f expectedReply=0x000072b3 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_REQUEST_UNEXPECTED"
+                exit 0
+            fi
+            MACH_KIND="CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY"
+            EXPECTED_REPLY="0x000072b3"
+        else
+            OPACITY_KIND="TERMINATE"
+            if ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'id=0x00007250 expectedReply=0x000072b4 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_TERMINATE_REQUEST_UNEXPECTED"
+                exit 0
+            fi
+            MACH_KIND="CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY"
+            EXPECTED_REPLY="0x000072b4"
+        fi
+        log "cgs_opacity_alpha_legacy_kind=$OPACITY_KIND"
+        if /usr/bin/grep -Fq "kind=$MACH_KIND kr=268451844 hex=0x10004004" "$RAW_LOG"; then
+            if /usr/bin/grep -Fq "PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:" "$RAW_LOG" &&
+               /usr/bin/grep -Fq "kind=$MACH_KIND kr=268451844 hex=0x10004004" "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_${OPACITY_KIND}_MACH_RCV_TOO_LARGE_OBSERVED"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER_MISSING"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Fq "kind=$MACH_KIND kr=0 hex=0x00000000" "$RAW_LOG"; then
+            if /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=$MACH_KIND" | /usr/bin/grep -Fq "size=0x00000024 id=$EXPECTED_REPLY expected=$EXPECTED_REPLY idMatch=YES"; then
+                if [ "$OPACITY_KIND" = "TERMINATE" ]; then
+                    log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_TERMINATE_ID_COLLISION_REPLY_OBSERVED"
+                else
+                    log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_LEGACY_REPLY_OBSERVED"
+                fi
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_REPLY_UNEXPECTED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Fq "PM_CGS_CONNECTION_TRACE_MACH_RETURN:" "$RAW_LOG" &&
+           /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_MACH_RETURN:" "$RAW_LOG" | /usr/bin/grep -Fq "kind=$MACH_KIND"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_${OPACITY_KIND}_MACH_FAILURE_OBSERVED"
+        else
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_MACH_RETURN_MISSING"
+        fi
+        exit 0
+    fi
+    if [ -n "$RELEASEBACKING_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        RELEASEBACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_releasebacking_compat_call_count=$RELEASEBACKING_COMPAT_COUNT"
+        if [ "$RELEASEBACKING_COMPAT_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseFlag=0x00000001 newWindowCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724b lionId=0x0000724c send=0x00000028 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+               /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            else
+                log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            fi
+            exit 0
+        fi
+        if /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+           /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        fi
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+    if [ -n "$RELEASEBACKING_TRACE_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        RELEASEBACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_releasebacking_legacy_trace_count=$RELEASEBACKING_TRACE_COUNT"
+        if [ "$RELEASEBACKING_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REQUEST_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x0000724b expectedReply=0x000072af option=0x00000003 send=0x00000028 recv=0x0000002c' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REQUEST_UNEXPECTED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_MACH_FAILURE"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY bits=' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_LEGACY_REPLY_OBSERVED"
+        else
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_TRACE_REPLY_UNEXPECTED"
+        fi
+        exit 0
+    fi
+    if [ -n "$NEWWINDOW_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000038 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_CGS_CONNECTION_TRACE_REPLY:index=5 kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=0x00001200 size=0x00000038 id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        exit 0
+    fi
+    if [ -n "$DOCKSERVER_COMPAT_MODE" ] &&
+       /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_PASS_NO_RETURN"
+        exit 0
+    fi
+    if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        HITOOLBOX_EXTRAS_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_EXTRAS_COMPAT_TARGET:.*mode=lion-fallback-external-v1.*bundle=com.apple.HIToolbox name=Extras type=rsrc' "$RAW_LOG" 2>/dev/null || true)"
+        log "hitoolbox_extras_compat_target_count=$HITOOLBOX_EXTRAS_TARGET_COUNT"
+        if [ "$HITOOLBOX_EXTRAS_TARGET_COUNT" -ge 1 ] &&
+           /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" &&
+           ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NULL' "$RAW_LOG" &&
+           ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NONNULL fallback=NOT_USED' "$RAW_LOG" &&
+           /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_NO_RETURN"
+        else
+            log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_INCOMPLETE"
+        fi
+        exit 0
+    fi
+    if [ -n "$HITOOLBOX_TRACE" ]; then
+        HITOOLBOX_TRACE_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_CFBUNDLE_TRACE_TARGET:.*bundle=com.apple.HIToolbox name=Extras type=rsrc subdir=NULL localization=NULL' "$RAW_LOG" 2>/dev/null || true)"
+        log "hitoolbox_cfbundle_trace_target_count=$HITOOLBOX_TRACE_TARGET_COUNT"
+    fi
+    if [ -n "$REAL_REGISTRATION_MODE" ] &&
+       [ -n "$HITOOLBOX_TRACE" ] &&
+       [ "$HITOOLBOX_TRACE_TARGET_COUNT" -ge 1 ] &&
+       /usr/bin/grep -F 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:' "$RAW_LOG" | /usr/bin/grep -Fq ' url=NULL ' &&
+       ! /usr/bin/grep -F 'PM_HITOOLBOX_CFBUNDLE_TRACE_RESULT:' "$RAW_LOG" | /usr/bin/grep -Fq ' url=NONNULL ' &&
+       /usr/bin/grep -Fq 'HIToolbox: failed to copy resource URL for framework bundle.' "$RAW_LOG" &&
+       /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_LOOKUP_CONFIRMED_NO_RETURN"
+    elif [ -n "$REAL_REGISTRATION_MODE" ] &&
+       /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REGISTRATIONS_ESTABLISHED_CREATEWINDOW_NO_RETURN"
+    elif [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_INCOMPLETE"
+    else
+        log "RESULT: CREATENEWWINDOW_NO_RETURN"
+    fi
+    exit 0
+fi
+
+if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M20_BEFORE_CreateNewWindow' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_NOT_REACHED"
+    exit 0
+fi
+
+if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+    if ! /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_CALL:index=1 mode=lion-dockserver-v1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_LOOKUP_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_DOCKSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_ADAPTER_FAILED"
+        exit 0
+    fi
+fi
+
+if [ -n "$NEWWINDOW_TRACE_MODE" ]; then
+    NEWWINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_newwindow_legacy_trace_count=$NEWWINDOW_TRACE_COUNT"
+    if [ "$NEWWINDOW_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REQUEST_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'id=0x00007394 expectedReply=0x000073f8 option=0x00000003' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'recv=0x00000040' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REQUEST_UNEXPECTED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_MACH_FAILURE"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY bits=' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_LEGACY_REPLY_OBSERVED"
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_TRACE_REPLY_UNEXPECTED"
+    fi
+    exit 0
+fi
+
+
+if [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+    NEWWINDOW_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    NEWWINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_newwindow_compat_call_count=$NEWWINDOW_COMPAT_COUNT"
+    log "cgs_newwindow_legacy_trace_count=$NEWWINDOW_TRACE_COUNT"
+
+    if [ "$NEWWINDOW_COMPAT_COUNT" -ne 1 ] || [ "$NEWWINDOW_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'registrationCalls=1 setFrontCalls=1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_PREDICATE_NOT_MET"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007394 lionId=0x0000739a send=0x00000068 recv=0x00000040 changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_MACH_FAILURE"
+        exit 0
+    fi
+
+    if /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000038 id=0x000073fe result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000038 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_LEGACY_FACING_SUCCESS_REPLY_NOT_ACCEPTED"
+            exit 0
+        fi
+        log "cgs_newwindow_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073fe result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_NEWWINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073fe legacyId=0x000073f8 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_NEWWINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000073f8 expected=0x000073f8 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_newwindow_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+    RELEASEBACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    RELEASEBACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_WINDOW_RELEASE_BACKING_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_releasebacking_compat_call_count=$RELEASEBACKING_COMPAT_COUNT"
+    log "cgs_releasebacking_legacy_trace_count=$RELEASEBACKING_TRACE_COUNT"
+
+    if [ "$RELEASEBACKING_COMPAT_COUNT" -ne 1 ] || [ "$RELEASEBACKING_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseFlag=0x00000001 newWindowCompatCalls=1' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_PREDICATE_NOT_MET"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724b lionId=0x0000724c send=0x00000028 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_MACH_FAILURE"
+        exit 0
+    fi
+
+    if /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_releasebacking_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b0 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_RELEASEBACKING_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b0 legacyId=0x000072af size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_RELEASEBACKING_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072af expected=0x000072af idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_releasebacking_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+    OPACITY_CREATE_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_CREATE_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_opacity_alpha_create_compat_call_count=$OPACITY_CREATE_COMPAT_COUNT"
+    log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_TRACE_COUNT"
+    if [ "$OPACITY_CREATE_COMPAT_COUNT" -ne 1 ] || [ "$OPACITY_CREATE_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*releaseBackingCompatCalls=1 newWindowCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x0000724f lionId=0x00007250 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001200 size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_create_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000072b4 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072b4 legacyId=0x000072b3 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_CREATE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x000072b3 expected=0x000072b3 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_ERROR_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_create_native_reply_class=ERROR"
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+    OPACITY_CREATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_TERMINATE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    OPACITY_TOTAL_COUNT=$((OPACITY_CREATE_COUNT + OPACITY_TERMINATE_COUNT))
+    log "cgs_opacity_alpha_create_legacy_trace_count=$OPACITY_CREATE_COUNT"
+    log "cgs_opacity_alpha_terminate_legacy_trace_count=$OPACITY_TERMINATE_COUNT"
+    log "cgs_opacity_alpha_legacy_trace_count=$OPACITY_TOTAL_COUNT"
+
+    if [ "$OPACITY_TOTAL_COUNT" -ne 1 ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_REQUEST_NOT_REACHED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_OPACITY_ALPHA_TRACE_FAILURE_BUFFER:' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_UNEXPECTED_MACH_FAILURE"
+        exit 0
+    fi
+
+    if [ "$OPACITY_CREATE_COUNT" -eq 1 ]; then
+        OPACITY_KIND="CREATE"
+        if ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x0000724f expectedReply=0x000072b3 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=CGS_CREATE_WINDOW_ALPHA_PLANE_LEGACY" | /usr/bin/grep -Fq 'size=0x00000024 id=0x000072b3 expected=0x000072b3 idMatch=YES'; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATE_SUCCESS_UNEXPECTED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_legacy_kind=CREATE"
+    elif [ "$OPACITY_TERMINATE_COUNT" -eq 1 ]; then
+        OPACITY_KIND="TERMINATE"
+        if ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY bits=0x00001513' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'id=0x00007250 expectedReply=0x000072b4 option=0x00000003 send=0x00000024 recv=0x0000002c' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -F "PM_CGS_CONNECTION_TRACE_REPLY:" "$RAW_LOG" | /usr/bin/grep -F "kind=CGS_TERMINATE_WINDOW_ALPHA_PLANE_LEGACY" | /usr/bin/grep -Fq 'size=0x00000024 id=0x000072b4 expected=0x000072b4 idMatch=YES'; then
+            log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_TERMINATE_SUCCESS_UNEXPECTED"
+            exit 0
+        fi
+        log "cgs_opacity_alpha_legacy_kind=TERMINATE"
+        log "cgs_opacity_alpha_id_collision=SNOW_TERMINATE_EQUALS_LION_CREATE"
+    fi
+fi
+
+if [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
+    SET_FRONT_WINDOW_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_SET_FRONT_WINDOW_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    SET_FRONT_WINDOW_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_SET_FRONT_WINDOW_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_set_front_window_compat_call_count=$SET_FRONT_WINDOW_COMPAT_COUNT"
+    log "cgs_set_front_window_legacy_trace_count=$SET_FRONT_WINDOW_TRACE_COUNT"
+    if [ "$SET_FRONT_WINDOW_COMPAT_COUNT" -ne 1 ] || [ "$SET_FRONT_WINDOW_TRACE_COUNT" -lt 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* .*opacityCreateCompatCalls=1 orderFrontCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072f2 lionId=0x000072f5 send=0x00000024 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x00007359 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x00007359 legacyId=0x00007356 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_SET_FRONT_WINDOW_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_SET_FRONT_WINDOW_LEGACY bits=0x00001200 size=0x00000024 id=0x00007356 expected=0x00007356 idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_set_front_window_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x00007359 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x00007359 legacyId=0x00007356 size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_SET_FRONT_WINDOW_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'id=0x00007356 expected=0x00007356 idMatch=YES' "$RAW_LOG"; then
+        log "cgs_set_front_window_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
+    COLOR_PROFILE_CLIENT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_color_profile_client_legacy_trace_count=$COLOR_PROFILE_CLIENT_TRACE_COUNT"
+    if [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -lt 1 ] ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY exact=YES bits=0x80001513 id=0x000074d4 send=0x00000034 recv=0x00000030' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000024 id=0x00007538 expected=0x00007538 idMatch=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000024 id=0x00007538 expected=0x00007538 resultRaw=0xd0feffff clientIdRaw=0x00000000' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LION' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_UNEXPECTED"
+        exit 0
+    fi
+    log "cgs_color_profile_client_live_result=LEGACY_MINUS304"
+fi
+
+if [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ]; then
+    COLOR_PROFILE_CLIENT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    COLOR_PROFILE_CLIENT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REQUEST:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_color_profile_client_compat_call_count=$COLOR_PROFILE_CLIENT_COMPAT_COUNT"
+    log "cgs_color_profile_client_legacy_trace_count=$COLOR_PROFILE_CLIENT_TRACE_COUNT"
+    if [ "$COLOR_PROFILE_CLIENT_COMPAT_COUNT" -lt 1 ] || [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -lt 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES lionPortExact=YES applicationPort=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* .*descriptorCount=1 .*disposition=0x13 type=0x00 .*newWindowCompatCalls=1 releaseBackingCompatCalls=1 opacityCreateCompatCalls=1 orderFrontCompatCalls=0 addTrackingCompatCalls=0 setFrontWindowCompatCalls=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000074d4 lionId=0x000074d6 send=0x00000034 recv=0x00000030 changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*pid=[1-9][0-9]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000028 id=0x0000753a resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* replyClass=SUCCESS' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753a legacyId=0x00007538 size=0x00000028 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000028 id=0x00007538 expected=0x00007538 idMatch=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_TRACE_REPLY:kind=CGS_COLOR_PROFILE_CLIENT_LEGACY bits=0x00001200 size=0x00000028 id=0x00007538 expected=0x00007538 resultRaw=0x00000000 clientIdRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_color_profile_client_native_reply_class=SUCCESS"
+        if [ "$COLOR_PROFILE_CLIENT_COMPAT_COUNT" -ne 1 ] || [ "$COLOR_PROFILE_CLIENT_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_RETRY_AFTER_ADAPTER"
+            exit 0
+        fi
+    elif /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000753a resultRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* clientIdRaw=0x00000000 replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753a legacyId=0x00007538 size=0x00000024 changedBytes=1 bodyChangedBytes=0 resultRaw=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* clientIdRaw=0x00000000 replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+        log "cgs_color_profile_client_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+    WBI_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASSTHROUGH_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:PASSTHROUGH' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASSTHROUGH_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:PASSTHROUGH' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_EXPECTED_COUNT=1
+    RUNAPPLICATIONEVENTLOOP_WBI_COUNT=0
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        WBI_EXPECTED_COUNT=2
+        RUNAPPLICATIONEVENTLOOP_WBI_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop/{seen=1; next} seen && /PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop/{exit} seen && /PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+    fi
+    log "window_backing_info_compat_call_count=$WBI_COMPAT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "runapplicationeventloop_window_backing_info_call_count=$RUNAPPLICATIONEVENTLOOP_WBI_COUNT"
+    fi
+    log "color_profile_resolve_compat_call_count=$CPR_COMPAT_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    if [ "$WBI_COMPAT_COUNT" -ne "$WBI_EXPECTED_COUNT" ] ||
+       [ "$WBI_PASS_COUNT" -ne "$WBI_EXPECTED_COUNT" ] ||
+       [ "$WBI_PASSTHROUGH_COUNT" -ne 0 ] ||
+       { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+         [ "$RUNAPPLICATIONEVENTLOOP_WBI_COUNT" -ne 1 ]; } ||
+       [ "$CPR_COMPAT_COUNT" -ne 1 ] || [ "$CPR_PASS_COUNT" -ne 1 ] || [ "$CPR_PASSTHROUGH_COUNT" -ne 0 ]; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_ACCEPTED_FULL_STACK_COUNT_MISMATCH"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=1 adapted=0 mode=lion-id-v1 exact=YES applicationPortExact=YES .*newWindowCompatCalls=1 releaseBackingCompatCalls=1 opacityCreateCompatCalls=1 orderFrontCompatCalls=0 addTrackingCompatCalls=0 setFrontWindowCompatCalls=0 colorProfileClientCompatCalls=0 colorProfileResolveCompatCalls=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007263 lionId=0x00007264 send=0x00000024 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 windowId=[1-9][0-9]*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000034 id=0x000072c8 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000072c8 legacyId=0x000072c7 size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG"; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_WINDOW_BACKING_INFO_BASELINE_NOT_PASSED"
+        exit 0
+    fi
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=2 adapted=0 mode=lion-id-v1 exact=YES applicationPortExact=YES .*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REQUEST:index=2 legacyId=0x00007263 lionId=0x00007264 send=0x00000024 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 windowId=[1-9][0-9]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_MACH_RETURN:index=2 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_REPLY:index=2 bits=0x00001200 size=0x00000034 id=0x000072c8 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REPLY:index=2 nativeId=0x000072c8 legacyId=0x000072c7 size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_WINDOW_BACKING_INFO_NOT_PASSED"
+            exit 0
+        fi
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:index=1 adapted=0 mode=lion-id-v1 exact=YES provenanceExact=YES clientId=[1-9][0-9]* expectedClientId=[1-9][0-9]* profileId=1 .*' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000074d7 lionId=0x000074d9 send=0x00000038 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 clientId=[1-9][0-9]* profileId=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000034 id=0x0000753d resultRaw=0x00000000 ' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000753d legacyId=0x0000753b size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 ' "$RAW_LOG"; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_COLOR_PROFILE_RESOLVE_BASELINE_NOT_PASSED"
+        exit 0
+    fi
+    log "window_backing_info_native_reply_class=SUCCESS"
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "runapplicationeventloop_window_backing_info_native_reply_class=SUCCESS"
+    fi
+    log "color_profile_resolve_native_reply_class=SUCCESS"
+fi
+
+if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
+    ORDER_FRONT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_ADAPTER_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_order_front_conditionally_compat_call_count=$ORDER_FRONT_COMPAT_COUNT"
+    log "cgs_order_front_conditionally_legacy_trace_count=$ORDER_FRONT_TRACE_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_ADAPTER_PASS_COUNT"
+    if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        SELECTWINDOW_ORDER_FRONT_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow/{seen=1; next} seen && /PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow/{exit} seen && /PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+        ORDER_FRONT_EXPECTED_COUNT=2
+        RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT=0
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            ORDER_FRONT_EXPECTED_COUNT=3
+            RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop/{seen=1; next} seen && /PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop/{exit} seen && /PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+        fi
+        log "selectwindow_order_front_conditionally_call_count=$SELECTWINDOW_ORDER_FRONT_COUNT"
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            log "runapplicationeventloop_order_front_conditionally_call_count=$RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT"
+        fi
+        if [ "$ORDER_FRONT_COMPAT_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$ORDER_FRONT_TRACE_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$ORDER_FRONT_ADAPTER_PASS_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$SELECTWINDOW_ORDER_FRONT_COUNT" -ne 1 ] ||
+           { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+             [ "$RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT" -ne 1 ]; }; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COUNT_MISMATCH"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=1 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=2 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=2 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=2 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=2 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=2 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+             { ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=3 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+               ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=3 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=3 kr=0 hex=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=3 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=3 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG"; }; }; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_order_front_conditionally_native_reply_class=SUCCESS"
+        log "selectwindow_order_front_conditionally_native_reply_class=SUCCESS"
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            log "runapplicationeventloop_order_front_conditionally_native_reply_class=SUCCESS"
+        fi
+    else
+        ORDER_FRONT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+        ORDER_FRONT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+        log "cgs_order_front_conditionally_compat_call_count=$ORDER_FRONT_COMPAT_COUNT"
+        log "cgs_order_front_conditionally_legacy_trace_count=$ORDER_FRONT_TRACE_COUNT"
+        if [ "$ORDER_FRONT_COMPAT_COUNT" -ne 1 ] || [ "$ORDER_FRONT_TRACE_COUNT" -ne 1 ]; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_PREDICATE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=1 mode=lion-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        if /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+            if ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY bits=0x00001200 size=0x00000024 id=0x0000734b expected=0x0000734b idMatch=YES' "$RAW_LOG"; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+                exit 0
+            fi
+            log "cgs_order_front_conditionally_native_reply_class=SUCCESS"
+        elif /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x0000734e result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+             /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+             /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+             /usr/bin/grep -Fq 'id=0x0000734b expected=0x0000734b idMatch=YES' "$RAW_LOG"; then
+            log "cgs_order_front_conditionally_native_reply_class=ERROR"
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_ERROR_PRESERVED"
+            exit 0
+        else
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY_UNEXPECTED"
+            exit 0
+        fi
+    fi
+fi
+if [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+    ADD_TRACKING_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ADD_TRACKING_AREA_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
+    ADD_TRACKING_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
+    log "cgs_add_tracking_area_compat_call_count=$ADD_TRACKING_COMPAT_COUNT"
+    log "cgs_add_tracking_area_legacy_trace_count=$ADD_TRACKING_TRACE_COUNT"
+    if [ "$ADD_TRACKING_COMPAT_COUNT" -ne 1 ] || [ "$ADD_TRACKING_TRACE_COUNT" -ne 1 ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_PREDICATE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_CALL:index=1 mode=lion-inline-id-v1 exact=YES .*count=9 opacityCreateCompatCalls=1' "$RAW_LOG" ||
+       ! /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x00007388 lionId=0x0000738e send=0x00000060 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*count=9' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG"; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_REQUEST_ADAPTER_NOT_PASSED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073f2 result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG"; then
+        if ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073f2 legacyId=0x000073ec size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'kind=CGS_ADD_TRACKING_AREA_INLINE_LEGACY bits=0x00001200 size=0x00000024 id=0x000073ec expected=0x000073ec idMatch=YES' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_SUCCESS_REPLY_ADAPTER_NOT_PASSED"
+            exit 0
+        fi
+        log "cgs_add_tracking_area_native_reply_class=SUCCESS"
+    elif /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY:index=1 bits=0x00001200 size=0x00000024 id=0x000073f2 result=-?[1-9][0-9]* ndrSwapped=YES replyClass=ERROR raw20=0x[0-9a-fA-F]+' "$RAW_LOG" &&
+         /usr/bin/grep -Eq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTED_REPLY:index=1 nativeId=0x000073f2 legacyId=0x000073ec size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=-?[1-9][0-9]* replyClass=ERROR' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'PM_CGS_ADD_TRACKING_AREA_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+         /usr/bin/grep -Fq 'id=0x000073ec expected=0x000073ec idMatch=YES' "$RAW_LOG"; then
+        log "cgs_add_tracking_area_native_reply_class=ERROR"
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_ERROR_PRESERVED"
+        exit 0
+    else
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ] &&
+   [ "$FOUND" -eq 0 ] &&
+   /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=-304' "$RAW_LOG" &&
+   /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH:reason=NON_TARGET' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'name=com.apple.dock.server' "$RAW_LOG" &&
+   /usr/bin/grep -Fq 'PM_CGS_SESSION_BOOTSTRAP_COMPAT_PASSTHROUGH_RETURN:kr=-304 hex=0xfffffed0 servicePort=0x00000000' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATIONS_ESTABLISHED_DOCK_SERVER_MINUS304"
+    exit 0
+fi
+
+if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_STATUS:CreateNewWindow=0' "$RAW_LOG"; then
+    if [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_PUBLIC_ERROR"
+    elif [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_PUBLIC_ERROR"
+    elif [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_NATIVE_SUCCESS_PUBLIC_ERROR"
+    elif [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_NATIVE_SUCCESS_PUBLIC_ERROR"
+    elif [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_ADAPTER_PASS_CREATEWINDOW_ERROR"
+    else
+        log "RESULT: CREATENEWWINDOW_RETURNED_ERROR"
+    fi
+    exit 0
+fi
+
+if ! /usr/bin/grep -Eq 'PM_POSTIDENTITY_WINDOW:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_RESULT:CREATENEWWINDOW_PASS' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_NULL_OR_INVALID"
+    exit 0
+fi
+
+if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T00_BEFORE_CFStringCreateWithCString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_STAGE_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T01_AFTER_CFStringCreateWithCString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFSTRING_NO_RETURN"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Eq 'PM_POSTWINDOWTITLE_CFSTRING:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_RESULT:CFSTRING_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFSTRING_FAILED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T02_BEFORE_SetWindowTitleWithCFString' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_NOT_REACHED"
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T03_AFTER_SetWindowTitleWithCFString' "$RAW_LOG"; then
+        if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTED_REPLY:index=1 replyClass=SUCCESS' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        elif [ -n "$FONTSERVER_RPC_TRACE_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_RPC_TRACE_REQUEST:index=1 mode=lion-passive-v1' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_CAPTURED"
+        elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ] &&
+           /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=5 allowed=4 behavior=1 publicBehavior=4 anyObject=YES' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_PASS_POST_RPC_NO_RETURN"
+        elif [ -n "$FONTSERVER_COMPAT_MODE" ] &&
+           /usr/bin/grep -Fq 'PM_CGS_FONTSERVER_BOOTSTRAP_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+        else
+            log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_NO_RETURN"
+        fi
+        exit 0
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_STATUS:SetWindowTitleWithCFString=0' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_RESULT:SETWINDOWTITLE_PASS' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_SET_ERROR"
+        exit 0
+    fi
+    if [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow' "$RAW_LOG"; then
+            if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+               /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=7 allowed=5 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG"; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_PASS_SHOWWINDOW_NO_RETURN"
+            elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ] &&
+               /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG"; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+            elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_MODE" ]; then
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_TRACE_LEGACY_MINUS304"
+            elif [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
+                SHOWWINDOW_UNKNOWN_REQUEST_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow/{seen=1; next} seen && /PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow/{exit} seen && /PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_REQUEST:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+                SHOWWINDOW_UNKNOWN_RETURN_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSHOW_MILESTONE:S00_BEFORE_ShowWindow/{seen=1; next} seen && /PM_POSTWINDOWSHOW_MILESTONE:S01_AFTER_ShowWindow/{exit} seen && /PM_CGS_SHOWWINDOW_UNKNOWN_TRACE_MACH_RETURN:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+                log "showwindow_unknown_cgs_trace_request_count=$SHOWWINDOW_UNKNOWN_REQUEST_COUNT"
+                log "showwindow_unknown_cgs_trace_return_count=$SHOWWINDOW_UNKNOWN_RETURN_COUNT"
+                if [ "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" -lt 1 ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_NOT_REACHED"
+                elif [ "$SHOWWINDOW_UNKNOWN_RETURN_COUNT" -ne "$SHOWWINDOW_UNKNOWN_REQUEST_COUNT" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_INCOMPLETE"
+                elif [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                elif [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                elif [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ]; then
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_ADAPTER_PASS_POST_RPC_NO_RETURN"
+                else
+                    log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_CAPTURED"
+                fi
+            else
+                log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_NO_RETURN"
+            fi
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSHOW_RESULT:SHOWWINDOW_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_MARKER_INCOMPLETE"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWSELECT_RESULT:SELECTWINDOW_PASS' "$RAW_LOG"; then
+            log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_MARKER_INCOMPLETE"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_MILESTONE:S04_BEFORE_IsWindowVisible' "$RAW_LOG"; then
+            log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_MILESTONE:S05_AFTER_IsWindowVisible' "$RAW_LOG"; then
+            log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_VALUE:visible=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_RESULT:ISWINDOWVISIBLE_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWVISIBLE_RESULT:ISWINDOWVISIBLE_FALSE' "$RAW_LOG"; then
+            log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_VALUE_OR_MARKER_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_MILESTONE:S06_BEFORE_NewEventLoopTimerUPP' "$RAW_LOG"; then
+            log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_MILESTONE:S07_AFTER_NewEventLoopTimerUPP' "$RAW_LOG"; then
+            log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_POSTWINDOWTIMERUPP_POINTER:pointer=0x[0-9a-fA-F]+ nonzero=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_RESULT:NEWEVENTLOOPTIMERUPP_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPP_RESULT:NEWEVENTLOOPTIMERUPP_NULL' "$RAW_LOG"; then
+            log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_POINTER_OR_MARKER_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_MILESTONE:S08_BEFORE_GetMainEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_MILESTONE:S09_AFTER_GetMainEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Eq 'PM_POSTWINDOWMAINEVENTLOOP_POINTER:pointer=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_RESULT:GETMAINEVENTLOOP_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWMAINEVENTLOOP_RESULT:GETMAINEVENTLOOP_NULL' "$RAW_LOG"; then
+            log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_POINTER_OR_MARKER_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_MILESTONE:S10_BEFORE_InstallEventLoopTimer' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_MILESTONE:S11_AFTER_InstallEventLoopTimer' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_STATUS:InstallEventLoopTimer=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_POSTWINDOWTIMERINSTALL_POINTER:pointer=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_CALLBACK:fired=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_RETURNED_ERROR' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_NULL_TIMER' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_CALLBACK_FIRED_UNEXPECTEDLY' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_STATUS_POINTER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_MILESTONE:S12_BEFORE_QuitApplicationEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_MILESTONE:S13_AFTER_QuitApplicationEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_CALLBACK:fired=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_RESULT:QUITAPPLICATIONEVENTLOOP_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_RESULT:QUITAPPLICATIONEVENTLOOP_CALLBACK_FIRED_UNEXPECTEDLY' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MARKER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NOT_REACHED"
+            exit 0
+        fi
+        TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+        log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+        log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+        log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+        log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+        if [ "$TIMER_CB_ENTER_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_EXIT_COUNT" -ne 1 ] ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_CALLBACK_COUNT_MISMATCH' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_MARKER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
+    if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T04_BEFORE_CFRelease' "$RAW_LOG" ||
+       ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T05_AFTER_CFRelease' "$RAW_LOG"; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFRELEASE_INCOMPLETE"
+        exit 0
+    fi
+fi
+
+if ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M22_BEFORE_DisposeWindow' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M23_AFTER_DisposeWindow' "$RAW_LOG" ||
+   ! /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_DISPOSE_OR_SUCCESS_MILESTONE_MISSING"
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_CPS_REGISTRATION_COMPAT_CALL:index=2' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_SECOND_REGISTRATION_CALL"
+    exit 0
+fi
+
+if /usr/bin/grep -Fq 'PM_CPS_SETFRONT_COMPAT_CALL:index=2' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_SECOND_SETFRONT_CALL"
+    exit 0
+fi
+
+if [ -n "$REAL_REGISTRATION_MODE" ] &&
+   ! /usr/bin/grep -Eq "PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=$EXPECTED_REAL_REGISTRATION_COUNT callback=[0-9]+ rejects=0 exact=YES" "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_INCOMPLETE"
+    exit 0
+fi
+
+if [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+    HITOOLBOX_EXTRAS_TARGET_COUNT="$(/usr/bin/grep -c 'PM_HITOOLBOX_EXTRAS_COMPAT_TARGET:.*mode=lion-fallback-external-v1.*bundle=com.apple.HIToolbox name=Extras type=rsrc' "$RAW_LOG" 2>/dev/null || true)"
+    if [ "$HITOOLBOX_EXTRAS_TARGET_COUNT" -lt 1 ] ||
+       ! /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NONNULL' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NULL fallback=NULL' "$RAW_LOG" ||
+       /usr/bin/grep -Fq 'mode=lion-fallback-external-v1 original=NONNULL fallback=NOT_USED' "$RAW_LOG"; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_INCOMPLETE"
+        exit 0
+    fi
+fi
+
+if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" ||
+   ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_WAIT:pid=[0-9]+ exit=0$' "$RAW_LOG" ||
+   ! /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_INTERPOSER_EXIT:lookups=1 requests=[0-9]+ callbacks=[0-9]+$' "$RAW_LOG"; then
+    log "RESULT: CREATENEWWINDOW_DISTNOTIFY_LIFECYCLE_INCOMPLETE"
+    exit 0
+fi
+
+if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
+    if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
+        log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" ]; then
+        log "RESULT: POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE" ]; then
+        log "RESULT: POST_SELECTWINDOW_ISWINDOWVISIBLE_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
+        log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_SET_FRONT_WINDOW_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_SET_FRONT_WINDOW_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_CGS_ADD_TRACKING_AREA_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_UNKNOWN_CGS_TRACE_SHOWWINDOW_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-sixth-register-v1" ] &&
+       [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SIXTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$POST_WINDOWTITLE_SHOWWINDOW_MODE" ]; then
+        log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_VALIDATION_PASS"
+    elif [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$FONTSERVER_RPC_TRACE_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RPC_TRACE_TITLE_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-windowtitle-fontserver-register-v1" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FIFTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$FONTSERVER_COMPAT_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
+        log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_VALIDATION_PASS"
+    elif [ -n "$OPACITY_ALPHA_CREATE_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_CREATE_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$OPACITY_ALPHA_TRACE_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_OPACITY_ALPHA_TRACE_CREATEWINDOW_PASS"
+    elif [ -n "$RELEASEBACKING_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_RELEASEBACKING_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$NEWWINDOW_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_CGS_NEWWINDOW_COMPAT_INTEGRATION_PASS"
+    elif [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DOCKSERVER_BOOTSTRAP_COMPAT_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-createwindow-post-extras-register-v1" ]; then
+        log "RESULT: CREATENEWWINDOW_POST_EXTRAS_REGISTRATION_PASS"
+    elif [ -n "$HITOOLBOX_EXTRAS_COMPAT" ]; then
+        log "RESULT: CREATENEWWINDOW_HITOOLBOX_EXTRAS_EXTERNAL_COMPAT_PASS"
+    elif [ -n "$REAL_REGISTRATION_MODE" ]; then
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_REAL_REGISTRATION_PASS"
+    else
+        log "RESULT: CREATENEWWINDOW_DISTNOTIFY_INTEGRATION_PASS"
+    fi
+    exit 0
+fi
+
+log "RESULT: CREATENEWWINDOW_PROCESS_STATE_UNEXPECTED rc=$RC diagnostics=$FOUND"
+exit 0
+ "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "runapplicationeventloop_remaining_notification_registration_accept_count=$REMAINING_ACCEPT_COUNT"
+    log "thirteenth_notification_registration_accept_count=$THIRTEENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$REMAINING_ACCEPT_COUNT" -eq 8 ] &&
+       [ "$THIRTEENTH_ACCEPT_COUNT" -eq 1 ] &&
+       [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=21 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_REMAINING_NOTIFICATIONS_REGISTRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_REMAINING_NOTIFICATIONS_REGISTRATION_INCOMPLETE"
+    fi
+    exit 0
 fi
 
 if [ -n "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE" ]; then
