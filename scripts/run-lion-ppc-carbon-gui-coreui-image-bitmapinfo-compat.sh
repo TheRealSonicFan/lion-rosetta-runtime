@@ -33,6 +33,12 @@ IMAGE_COMPAT_INFO_FILE="${ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_INFO_FILE:-$IMA
 EXPECTED_IMAGE_COMPAT_BUILD_ID="coreui-image-bitmapinfo-compat-v1"
 EXPECTED_IMAGE_COMPAT_SOURCE_BLOB="9d44128acbe49de49621104c9ffc2b0c0cd74589"
 
+FRAME_TRACE="${ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_PATH:-}"
+FRAME_TRACE_SHA_FILE="${ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_SHA256_FILE:-${FRAME_TRACE:+$FRAME_TRACE.sha256}}"
+FRAME_TRACE_INFO_FILE="${ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_INFO_FILE:-${FRAME_TRACE:+$FRAME_TRACE.info.txt}}"
+EXPECTED_FRAME_TRACE_BUILD_ID="hitoolbox-windowframe-cuidraw-trace-v1"
+EXPECTED_FRAME_TRACE_SOURCE_BLOB="66b3849aeb9f0514223bea07ca19f95d76b8e62c"
+
 TRANSLATOR="/usr/libexec/oah/translate"
 PRIVATE_DYLD="/usr/oah/dyld"
 SYSTEM_DYLD="/usr/lib/dyld"
@@ -196,6 +202,19 @@ log "image_compat_sha256=$IMAGE_COMPAT_SHA"
 /usr/bin/strings "$IMAGE_COMPAT" | /usr/bin/grep -Fq "PM_COREUI_IMAGE_BITMAPINFO_COMPAT_RESULT:ADAPTER_PASS" || die 68 "image compatibility adapter marker missing"
 has_ppc32_arch "$IMAGE_COMPAT" || die 68 "image compatibility dylib is not 32-bit PPC"
 
+if [ -n "$FRAME_TRACE" ]; then
+    [ -f "$FRAME_TRACE" ] || die 66 "missing window-frame CUIDraw trace: $FRAME_TRACE"
+    [ -f "$FRAME_TRACE_SHA_FILE" ] || die 66 "missing window-frame CUIDraw trace SHA sidecar"
+    [ -f "$FRAME_TRACE_INFO_FILE" ] || die 66 "missing window-frame CUIDraw trace info"
+    FRAME_TRACE_SHA="$(sha256 "$FRAME_TRACE")"
+    [ "$(sidecar_sha "$FRAME_TRACE_SHA_FILE")" = "$FRAME_TRACE_SHA" ] || die 68 "window-frame CUIDraw trace sidecar mismatch"
+    /usr/bin/grep -Fq "trace_build_id=$EXPECTED_FRAME_TRACE_BUILD_ID" "$FRAME_TRACE_INFO_FILE" || die 68 "window-frame CUIDraw trace info build ID mismatch"
+    /usr/bin/grep -Fq "interposer_source_git_blob=$EXPECTED_FRAME_TRACE_SOURCE_BLOB" "$FRAME_TRACE_INFO_FILE" || die 68 "window-frame CUIDraw trace source blob mismatch"
+    /usr/bin/strings "$FRAME_TRACE" | /usr/bin/grep -Fq "PM_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_BUILD_ID:$EXPECTED_FRAME_TRACE_BUILD_ID" || die 68 "window-frame CUIDraw trace build marker missing"
+    has_ppc32_arch "$FRAME_TRACE" || die 68 "window-frame CUIDraw trace is not 32-bit PPC"
+    log "windowframe_cuidraw_trace_sha256=$FRAME_TRACE_SHA"
+fi
+
 [ -f "$HITOOLBOX_EXTRAS_RESOURCE" ] || die 66 "missing Snow HIToolbox Extras resource"
 HITOOLBOX_RESOURCE_SHA="$(sha256 "$HITOOLBOX_EXTRAS_RESOURCE")"
 log "hitoolbox_extras_resource_sha256=$HITOOLBOX_RESOURCE_SHA"
@@ -290,6 +309,9 @@ MARKER="$(/usr/bin/mktemp /tmp/lion-ppc-carbon-gui-windowserver-observation.XXXX
     die 73 "could not create diagnostic marker"
 
 INSERT_LIBS="$CORE_COMPAT:$SEC_INTERPOSER:$CGS_INTERPOSER:$HITOOLBOX_EXTRAS_COMPAT:$TITLEBAR_COMPAT:$IMAGE_COMPAT"
+if [ -n "$FRAME_TRACE" ]; then
+    INSERT_LIBS="$INSERT_LIBS:$FRAME_TRACE"
+fi
 log ""
 log "== SINGLE ORIGINAL PPC CARBON GUI BACKING-SYNC INTEGRATION RUN =="
 log "subject_sha256=$EXPECTED_EXE_SHA"
@@ -331,6 +353,7 @@ ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_PATH="$TITLEBAR_COMPAT" \
 ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_SHA256_FILE="$TITLEBAR_SHA_FILE" \
 ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_MODE=lion-exact-six-v1 \
 ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_MODE=lion-bitmapinfo-0x2002-v1 \
+ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_MODE=lion-passive-v1 \
 DYLD_INSERT_LIBRARIES="$INSERT_LIBS" \
 DYLD_SHARED_CACHE_DONT_VALIDATE=1 \
 DYLD_PRINT_LIBRARIES=1 \
