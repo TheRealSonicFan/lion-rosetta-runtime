@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED STATIC STEP after the completed all-ArtFile live bsearch-key trace.
+COMPLETED STATIC PASS. Both releases satisfy the Snow-PPC one-cell record contract; the remaining differences are confined to directly consumed render metrics and release-local image geometry. The next controlled step is `docs/ppc-carbon-gui-artfile-render-state-audit.md`.
 
 ## Reviewed result that advances this step
 
@@ -256,6 +256,28 @@ Stop. Isolate the first exact field/array offset that makes the old-loader calcu
 
 Stop. Treat the analyzer as stale and do not infer field semantics from the hard-coded map.
 
+## Observed result — record structure passes; metric and image-format discrimination remains
+
+Both returned reports pass.
+
+Snow's exact-six records are all 1x1 cells with `body_offset=0x68`, `14x16` image geometry, 896 image bytes, and a 1000-byte exact record span. All six share the directly consumed metric vector:
+
+```text
+0,2,14,14, 0,2,14,14, 0,2,14,14, 2
+```
+
+Lion's semantic-equivalent exact-six records are likewise valid under the same cached Snow-PPC loader contract: `body_offset=0x68`, `16x16` image geometry, 1024 image bytes, and a 1128-byte exact record span. All six share:
+
+```text
+2,2,13,14, 1,2,14,14, 1,2,14,14, 2
+```
+
+The `0x1e` halfword differs (`0xbfff` on Snow, `0x0000` on Lion) but the pinned Snow loader does not directly consume it, so it is not an authorized compatibility target. The data-offset, width, and height arrays all decode exactly and must not be patched.
+
+The next discriminator is not a metric rewrite. The release-local CoreUI disassembly shows that the thirteen metric values land in the same three four-float regions plus one scalar in `CUIElement`, while the image-construction contracts differ: Snow PPC can reach `CGImageCreate` with default-byte-order bitmap-info values `0x2` or `0x4` and has a conditional `CWMatchBitmap` path; Lion native CoreUI uses `0x2002`, explicitly selecting 32-bit little-endian alpha-first interpretation.
+
+Follow `docs/ppc-carbon-gui-artfile-render-state-audit.md` next. It statically verifies those consumer mappings and compares the raw exact-six image bodies under byte-0 versus byte-3 alpha diagnostics. Do not change any metric or pixel byte until those reports are reviewed.
+
 ## Return evidence
 
 Return exactly:
@@ -279,9 +301,14 @@ ArtFile live misses                              0
 titlebar exact-six translations                  6 / guard rejects 0
 Lion titlebar                                    PARTIAL / unchanged
 non-titlebarcontrols bsearch-key hypothesis      CLOSED for current subject
-old Snow-PPC loader header consumption           NEXT: STATIC FIELD PROOF
+old Snow-PPC loader header consumption           STATIC-PROVEN PASS
+Snow exact-six metrics                           0,2,14,14 / 0,2,14,14 / 0,2,14,14 / 2
+Lion exact-six metrics                           2,2,13,14 / 1,2,14,14 / 1,2,14,14 / 2
+data-offset/width/height arrays                   COMPATIBLE
+field 0x1e                                       NOT DIRECTLY CONSUMED
+next step                                        docs/ppc-carbon-gui-artfile-render-state-audit.md
 new mappings                                     NOT AUTHORIZED
-header/payload substitution                      NOT AUTHORIZED
+metric/header/payload substitution               NOT AUTHORIZED
 ArtFile200 forcing                               NOT AUTHORIZED
 XNU                                              no source change indicated
 ```
