@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED LIVE COMPATIBILITY STEP after the completed passive CoreUI image-constructor trace.
+COMPLETED LIVE-PROVEN PARTIAL PASS. The exact bitmap-info conversion is causal for traffic-light image fidelity and is retained, but the titlebar frame/background remains absent and dragging remains broken. The next controlled step is `docs/ppc-carbon-gui-hitoolbox-frame-hit-contract-audit.md`.
 
 ## Reviewed result that authorizes this step
 
@@ -307,6 +307,54 @@ Remove the bitmap-info adapter from the candidate fix path. Despite the proven f
 
 Stop. Preserve the raw log and do not broaden the predicate.
 
+## Observed result — bitmap-info adapter is causal but not sufficient
+
+The returned artifact matches the pinned source/build contract:
+
+```text
+interposer_source_git_blob=9d44128acbe49de49621104c9ffc2b0c0cd74589
+compat_build_id=coreui-image-bitmapinfo-compat-v1
+artifact_sha256=87a7c0cf397db0b93a0ad83af3b3fea71d9c8dd77c224ad5fc5d9729b9e7b9b5
+```
+
+Snow passes the exact passthrough control:
+
+```text
+titlebar_passthrough_count=6
+image_bitmapinfo_exact_passthrough_call_count=6
+image_bitmapinfo_passthrough_result_count=6
+image_bitmapinfo_predicate_reject_count=0
+image_bitmapinfo_adapted_count=0
+image_bitmapinfo_adapter_pass_count=0
+image_bitmapinfo_adapter_null_count=0
+RESULT: PPC_CARBON_GUI_COREUI_IMAGE_BITMAPINFO_COMPAT_SNOW_CONTROL_PASS
+RESULT: PASS
+```
+
+Manual Snow review remains fully positive: the titlebar is visually normal and draggable. The observer also records the window at a later non-origin position, independently confirming movement.
+
+Lion also passes the exact compatibility gate:
+
+```text
+titlebar_translated_count=6
+titlebar_guard_reject_count=0
+image_bitmapinfo_exact_call_count=6
+image_bitmapinfo_predicate_reject_count=0
+image_bitmapinfo_passthrough_result_count=0
+image_bitmapinfo_adapted_count=6
+image_bitmapinfo_adapter_pass_count=6
+image_bitmapinfo_adapter_null_count=0
+windowserver_observer_pass_count=1
+RESULT: PPC_CARBON_GUI_COREUI_IMAGE_BITMAPINFO_COMPAT_PASS
+RESULT: PASS
+```
+
+Manual Lion review shows a selective improvement: the red/yellow/green controls are now sharp rather than blurry, but the titlebar background remains transparent/absent, the top frame boundary is still missing, and dragging the titlebar still does not move the window.
+
+This is a positive causal result for the image adapter, so it stays in the accepted stack. It is not a complete titlebar fix, and the remaining visual and drag symptoms must not be addressed by broadening the `CGImageCreate` predicate or altering pixel buffers.
+
+Follow `docs/ppc-carbon-gui-hitoolbox-frame-hit-contract-audit.md` next. That audit is static and read-only and targets the Snow-era HIToolbox window-definition path shared by frame drawing and hit testing: `ThemeWindowDef::DrawFrame`, `ThemeWindowDef::HitSelf`, shape/region helpers, and the layout engine.
+
 ## Return evidence
 
 Return:
@@ -347,11 +395,15 @@ Lion native equivalent bitmapInfo                0x00002002
 Snow raw-body alpha position                     BYTE0
 Lion raw-body alpha position                     BYTE3
 image-format mismatch                            LIVE-PROVEN
-Lion titlebar appearance                         PARTIAL / unchanged
+Lion titlebar controls                           SHARP / materially improved
+Lion titlebar background                         absent / transparent
+Lion top frame boundary                          absent
 Lion titlebar drag                               NO
-next step                                        one exact bitmapInfo 0x2 -> 0x2002 integration
+bitmapInfo 0x2 -> 0x2002                         RETAIN / causal partial fix
+next step                                        docs/ppc-carbon-gui-hitoolbox-frame-hit-contract-audit.md
 pixel/resource rewrite                           NOT AUTHORIZED
 metric rewrite                                   NOT AUTHORIZED
+hit-test/part-code rewrite                       NOT AUTHORIZED
 new titlebar mappings                            NOT AUTHORIZED
 XNU                                              no source change indicated
 ```
