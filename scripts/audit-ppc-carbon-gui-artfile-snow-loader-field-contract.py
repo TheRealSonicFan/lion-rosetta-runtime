@@ -333,7 +333,9 @@ def verify_loader_code(tmpdir, issues):
 
     # 0x136(r1) is copied as part of the 0x68-byte header but is not one
     # of the fixed halfword loads used to populate the element metrics.
-    direct_1e = any("0x136(r1)" in line for line in rows.values())
+    direct_1e = any(
+        EXPECTED_LOAD_FROM_ARTFILE <= addr < 0x29c00 and "0x136(r1)" in line
+        for addr, line in rows.items())
     fields["direct_halfword_0x1e_observed"] = direct_1e
     if direct_1e:
         issues.append("unexpected direct read of header halfword 0x1e")
