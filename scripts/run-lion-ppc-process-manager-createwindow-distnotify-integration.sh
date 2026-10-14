@@ -45,6 +45,7 @@ POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE="${ROSETTA_POST_NEWEVENTLOOPTIME
 POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE="${ROSETTA_POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_VALIDATION_MODE:-}"
 POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE="${ROSETTA_POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_VALIDATION_MODE:-}"
 POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE="${ROSETTA_POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_VALIDATION_MODE:-}"
+POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE="${ROSETTA_POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_VALIDATION_MODE:-}"
 SHOWWINDOW_UNKNOWN_TRACE_MODE="${ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE:-}"
 SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE:-}"
 SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE:-}"
@@ -757,6 +758,17 @@ if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
         die 64 "RunApplicationEventLoop timer-quit validation requires accepted WindowBackingInfo compatibility"
     EXPECTED_SUBJECT_BUILD_ID="cps-runapplicationeventloop-timer-quit-validation-v2"
 fi
+if [ -n "$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" ]; then
+    [ "$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" = "lion-removeeventlooptimer-v1" ] ||
+        die 64 "unsupported ROSETTA_POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_VALIDATION_MODE: $POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE"
+    [ "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" = "lion-runapplicationeventloop-timer-quit-v2" ] ||
+        die 64 "RemoveEventLoopTimer validation requires lion-runapplicationeventloop-timer-quit-v2"
+    [ "$RUNAPPLICATIONEVENTLOOP_REMAINING_REGISTRATION_MODE" = "lion-remaining-register-v1" ] ||
+        die 64 "RemoveEventLoopTimer validation requires the live-proven exact twenty-one notification broker"
+    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] ||
+        die 64 "RemoveEventLoopTimer validation requires the reviewed exact-seven base registration mode"
+    EXPECTED_SUBJECT_BUILD_ID="cps-removeeventlooptimer-validation-v1"
+fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "lion-passive-v1" ] ||
         die 64 "unsupported ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE: $SHOWWINDOW_UNKNOWN_TRACE_MODE"
@@ -1267,6 +1279,21 @@ if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
         /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq "$marker" ||
             die 68 "RunApplicationEventLoop timer-quit subject marker missing: $marker"
     done
+fi
+if [ -n "$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" ]; then
+    for marker in \
+        'PM_POSTWINDOWTIMERREMOVE_MILESTONE:S16_BEFORE_RemoveEventLoopTimer' \
+        'PM_POSTWINDOWTIMERREMOVE_MILESTONE:S17_AFTER_RemoveEventLoopTimer' \
+        'PM_POSTWINDOWTIMERREMOVE_STATUS:RemoveEventLoopTimer=' \
+        'PM_POSTWINDOWTIMERREMOVE_RESULT:REMOVEEVENTLOOPTIMER_PASS'; do
+        /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "RemoveEventLoopTimer subject marker missing: $marker"
+    done
+    /usr/bin/nm -u "$SUBJECT" | /usr/bin/grep -Eq '(^|[[:space:]])_RemoveEventLoopTimer$' ||
+        die 68 "RemoveEventLoopTimer subject does not import _RemoveEventLoopTimer"
+    if /usr/bin/nm -u "$SUBJECT" | /usr/bin/grep -Eq '(^|[[:space:]])_DisposeEventLoopTimerUPP$'; then
+        die 68 "RemoveEventLoopTimer subject must not import _DisposeEventLoopTimerUPP"
+    fi
 fi
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
     "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || die 68 "CoreServices CPS registration compatibility build marker missing"
@@ -1931,6 +1958,9 @@ if [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
 fi
 if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
     log "post_quitapplicationeventloop_runapplicationeventloop_validation_mode=$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE"
+fi
+if [ -n "$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" ]; then
+    log "post_runapplicationeventloop_removeeventlooptimer_validation_mode=$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE"
 fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     log "showwindow_unknown_cgs_trace_mode=$SHOWWINDOW_UNKNOWN_TRACE_MODE"
@@ -3099,6 +3129,11 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_REMAINING_REGISTRATION_MODE" ]; then
     CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
     CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
     ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    REMOVE_BEFORE_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMERREMOVE_MILESTONE:S16_BEFORE_RemoveEventLoopTimer$' "$RAW_LOG" 2>/dev/null || true)"
+    REMOVE_AFTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMERREMOVE_MILESTONE:S17_AFTER_RemoveEventLoopTimer$' "$RAW_LOG" 2>/dev/null || true)"
+    REMOVE_STATUS_ZERO_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMERREMOVE_STATUS:RemoveEventLoopTimer=0$' "$RAW_LOG" 2>/dev/null || true)"
+    REMOVE_PASS_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMERREMOVE_RESULT:REMOVEEVENTLOOPTIMER_PASS$' "$RAW_LOG" 2>/dev/null || true)"
+    REMOVE_OK=1
     log "runapplicationeventloop_remaining_notification_registration_accept_count=$REMAINING_ACCEPT_COUNT"
     log "thirteenth_notification_registration_accept_count=$THIRTEENTH_ACCEPT_COUNT"
     log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
@@ -3109,6 +3144,25 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_REMAINING_REGISTRATION_MODE" ]; then
     log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
     log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
     log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ -n "$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" ]; then
+        log "removeeventlooptimer_before_count=$REMOVE_BEFORE_COUNT"
+        log "removeeventlooptimer_after_count=$REMOVE_AFTER_COUNT"
+        log "removeeventlooptimer_status_zero_count=$REMOVE_STATUS_ZERO_COUNT"
+        log "removeeventlooptimer_pass_count=$REMOVE_PASS_COUNT"
+        if [ "$REMOVE_BEFORE_COUNT" -ne 1 ] ||
+           [ "$REMOVE_AFTER_COUNT" -ne 1 ] ||
+           [ "$REMOVE_STATUS_ZERO_COUNT" -ne 1 ] ||
+           [ "$REMOVE_PASS_COUNT" -ne 1 ] ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERREMOVE_RESULT:REMOVEEVENTLOOPTIMER_RETURNED_ERROR' "$RAW_LOG"; then
+            REMOVE_OK=0
+        fi
+    else
+        if [ "$REMOVE_BEFORE_COUNT" -ne 0 ] ||
+           [ "$REMOVE_AFTER_COUNT" -ne 0 ] ||
+           [ "$REMOVE_PASS_COUNT" -ne 0 ]; then
+            REMOVE_OK=0
+        fi
+    fi
     if [ "$REMAINING_ACCEPT_COUNT" -eq 8 ] &&
        [ "$THIRTEENTH_ACCEPT_COUNT" -eq 1 ] &&
        [ "$RC" -eq 0 ] &&
@@ -3121,6 +3175,7 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_REMAINING_REGISTRATION_MODE" ]; then
        [ "$CPC_PASS_COUNT" -eq 1 ] &&
        [ "$CPR_PASS_COUNT" -eq 1 ] &&
        [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       [ "$REMOVE_OK" -eq 1 ] &&
        ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG" &&
        /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=21 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
        /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
@@ -3136,9 +3191,17 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_REMAINING_REGISTRATION_MODE" ]; then
        /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
        /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
        /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
-        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_REMAINING_NOTIFICATIONS_REGISTRATION_PASS"
+        if [ -n "$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" ]; then
+            log "RESULT: POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_VALIDATION_PASS"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_REMAINING_NOTIFICATIONS_REGISTRATION_PASS"
+        fi
     else
-        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_REMAINING_NOTIFICATIONS_REGISTRATION_INCOMPLETE"
+        if [ -n "$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" ]; then
+            log "RESULT: POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_VALIDATION_INCOMPLETE"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_REMAINING_NOTIFICATIONS_REGISTRATION_INCOMPLETE"
+        fi
     fi
     exit 0
 fi
