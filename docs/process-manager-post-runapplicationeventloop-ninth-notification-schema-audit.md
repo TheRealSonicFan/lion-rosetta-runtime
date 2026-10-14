@@ -360,17 +360,28 @@ lion-runapplicationeventloop-ninth-schema-audit.txt
 
 Also return any newly named crash report or crash plist if the runner reports one.
 
+## Observed result — request 9 is AppleTimePreferencesChangedNotification
+
+The request-9 audit completed cleanly. Request 9 decoded as an eight-key `register` dictionary for exact name `AppleTimePreferencesChangedNotification`, object `kCFNotificationAnyObject`, behavior 4 / Coalesce, counter 1, the established client/session scope, and a positive per-run entry. The broker preserved all eight prior registrations, captured exactly one request 9, reported zero audit failures and zero unexpected rejects, rejected 12 later requests only as unreviewed tail traffic, and ended `RUNAPPLICATIONEVENTLOOP_NINTH_AUDIT_PASS`. The timer-side-quit sequence still completed through S15, `fired=1`, `RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS`, and `M24_SUCCESS`; PPC exit was 0, WBI/ColorProfileClient/ResolveColorProfile and OrderFront counts remained exact, all six titlebar translations remained exact, no new diagnostic appeared, protected hashes were unchanged, and the dedicated runner result was `POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_SCHEMA_AUDIT_PASS`. The fresh syscall-295 preflight also remained EBADF/no-SIGSYS PASS.
+
+This evidence authorizes only one new exact registration tuple: registration 9 = allowed 7 / `AppleTimePreferencesChangedNotification` / AnyObject / behavior 4 / counter 1. Request 10 remains unreviewed. Continue only with `docs/process-manager-post-runapplicationeventloop-ninth-notification-registration.md`.
+
 ## Current boundary
 
 ```text
 RunApplicationEventLoop timer-side-quit Snow        LIVE-PROVEN PASS
 RunApplicationEventLoop timer-side-quit Lion        semantic sequence LIVE-PROVEN through S15
-request-8 schema audit                              PASS
 request-8 exact registration                        LIVE-PROVEN PASS
-request-9 geometry                                  bits=0x1111 id=4 size=332 payload=298
-next step                                           capture/decode request 9 only
-request 9                                           unreviewed / reject after capture
-request 10+                                         unreviewed tail / reject
+request-9 schema audit                              PASS
+request-9 operation                                 register
+request-9 name                                      AppleTimePreferencesChangedNotification
+request-9 object                                    kCFNotificationAnyObject
+request-9 behavior                                  4 / Coalesce
+request-9 counter                                   1
+request-10 geometry                                 bits=0x1111 id=4 size=332 payload=300
+next step                                           accept exact request 9 once
+request 10                                          unreviewed / reject
+request 11+                                         unreviewed tail / reject
 RemoveEventLoopTimer / DisposeEventLoopTimerUPP     HELD
 new compatibility families                         NO
 titlebar policy broadening                         NO
