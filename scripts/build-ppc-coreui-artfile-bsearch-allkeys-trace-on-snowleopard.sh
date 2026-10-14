@@ -19,7 +19,41 @@ trap 'rm -f "$TMP_DYLIB" "$TMP_LOG"' EXIT HUP INT TERM
     echo "error: stale all-ArtFile bsearch interposer source; pull current runtime main" >&2
     exit 66
 }
-SOURCE_BLOB="$(/usr/bin/git hash-object "$SRC" 2>/dev/null || true)"
+
+resolve_git() {
+    candidate="$(command -v git 2>/dev/null || true)"
+    if [ -n "$candidate" ] && [ -x "$candidate" ]; then
+        echo "$candidate"
+        return 0
+    fi
+
+    for candidate in \
+        /Developer-3.2.6/usr/bin/git \
+        /Developer/usr/bin/git \
+        /usr/local/git/bin/git \
+        /usr/local/bin/git \
+        /opt/local/bin/git \
+        /sw/bin/git \
+        /usr/bin/git; do
+        if [ -x "$candidate" ]; then
+            echo "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
+
+GIT_BIN="$(resolve_git || true)"
+[ -n "$GIT_BIN" ] || {
+    echo "error: no usable git executable found; Phase A requires git and the builder must use the same executable" >&2
+    exit 66
+}
+
+SOURCE_BLOB="$("$GIT_BIN" hash-object "$SRC" 2>/dev/null || true)"
+[ -n "$SOURCE_BLOB" ] || {
+    echo "error: git hash-object failed for all-ArtFile bsearch interposer source using: $GIT_BIN" >&2
+    exit 66
+}
 [ "$SOURCE_BLOB" = "$EXPECTED_SOURCE_BLOB" ] || {
     echo "error: all-ArtFile bsearch interposer source blob mismatch: $SOURCE_BLOB" >&2
     exit 66
@@ -95,7 +129,7 @@ is_ppc32_macho "$OUT" || {
     exit 70
 }
 
-RUNTIME_GIT_HEAD="$(cd "$ROOT" 2>/dev/null && /usr/bin/git rev-parse HEAD 2>/dev/null || true)"
+RUNTIME_GIT_HEAD="$(cd "$ROOT" 2>/dev/null && "$GIT_BIN" rev-parse HEAD 2>/dev/null || true)"
 [ -n "$RUNTIME_GIT_HEAD" ] || RUNTIME_GIT_HEAD="UNAVAILABLE_NON_GIT_CHECKOUT"
 SOURCE_SHA="$(/usr/bin/shasum -a 256 "$SRC" | /usr/bin/awk '{print $1}')"
 
