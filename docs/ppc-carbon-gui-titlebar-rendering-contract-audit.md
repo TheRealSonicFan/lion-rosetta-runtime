@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED STATIC STEP after the completed Snow/Lion live titlebar-key trace.
+COMPLETED STATIC PASS. The exact-six ArtFile metadata is release-specific, but the current reports do not justify payload/header substitution or ArtFile200 forcing. The next controlled discriminator is `docs/ppc-carbon-gui-artfile-live-key-trace.md`.
 
 ## Reviewed result that advances this step
 
@@ -263,6 +263,20 @@ If the archive header is compatible but Lion native titlebar rendering adds rele
 
 If the record contract, scale selection for the effective 1x path, and titlebar renderer inputs remain compatible, close those hypotheses and move to a passive all-ArtFile-key/render-state trace to determine whether the transparent titlebar background is produced by a non-`titlebarcontrols` semantic family.
 
+## Observed result — release-specific record metadata; trace the frame/background key set before adapting fields
+
+Both reports pass.
+
+Snow Leopard reports six distinct exact-six ArtFile10 `0x68` headers, each with the body offset field still equal to `0x68`. Lion ArtFile10 resolves the same six semantics but all six records share one `0x68` header. Lion ArtFile20 also resolves the same six semantics and shares a second header whose scale-dependent geometry is doubled relative to ArtFile10. Snow has no ArtFile20.
+
+The recipe/resource boundary is also release-specific: Snow's CoreUI recipe tree is present and contains `titlebarcontrols.xml`; Lion's recipe tree is absent. This is evidence of the resource-generation change, not authorization to copy the Snow recipe to Lion.
+
+The code side makes ArtFile20 a native-Lion implementation detail rather than an immediate Rosetta compatibility target. Lion native CoreUI has `ArtFile10SetupOnce`, `ArtFile20SetupOnce`, and `GetArtFileInfoForScaleFactor(float)`. The historical PPC subject on Lion is already proven to execute Snow-era PPC CoreUI from the Rosetta cache; that code carries the legacy `ArtFileSetupOnce()` path and its own `_CUIUseArtFile` gating. Do not force ArtFile20 or substitute resources from this differential.
+
+Most importantly for the still-transparent titlebar background, both release-local `CUIRenderer::DrawWindowTitleBar` implementations dispatch the relevant titlebar path to `CUIRenderer::DrawWindowFrameDark`. The completed live trace covered only `titlebarcontrols` keys. It did not establish which non-`titlebarcontrols` ArtFile keys the frame/background renderer requests.
+
+A field-level `0x68` header rewrite is therefore premature. Proceed first through `docs/ppc-carbon-gui-artfile-live-key-trace.md`, which preserves the exact-six translations and passively records every unique validated ArtFile bsearch key on one Snow control and one Lion run. If live frame/background keys miss or collide under Lion, isolate those semantics before touching payload metadata. If the broader key set is semantically clean, the next stage will decode only the old Snow-PPC loader fields against Lion ArtFile10.
+
 ## Return evidence
 
 Return exactly:
@@ -280,17 +294,18 @@ No binaries, ArtFile resources, or framework files are required.
 CGSShapeWindow inline adapter                    LIVE-PROVEN PASS
 backing-store synchronization adapter            LIVE-PROVEN PASS
 Lion exact titled frame                          400x222 at (120,98), onscreen
-Snow titlebar live keys                          exact six only
-Lion titlebar live keys                          exact six only
-outside-six live titlebarcontrols lookups        0 on both releases
-six titlebar mappings                            LIVE-PROVEN
-six payload records                              PRESENT
-fixed payload header size                        0x68 on both releases
-Lion titlebar                                    PARTIAL / unchanged
-new titlebar mappings                            NOT AUTHORIZED
-payload substitution                             NOT AUTHORIZED
-next step                                        static rendering/scale contract audit
-live PPC rerun                                   NO
-later CGS / LaunchServices / Finder / Cocoa      HELD
+titlebarcontrols live set                        exact six on both releases
+outside-six titlebarcontrols live lookups        0
+Snow ArtFile10 exact-six headers                 6 distinct / body offset 0x68
+Lion ArtFile10 exact-six headers                 1 shared / body offset 0x68
+Lion ArtFile20 exact-six headers                 1 shared / scale-dependent
+Snow titlebarcontrols recipe                     present
+Lion recipe tree                                 absent
+DrawWindowTitleBar -> DrawWindowFrameDark        static-proven on both
+non-titlebarcontrols ArtFile live set             UNKNOWN
+next step                                        docs/ppc-carbon-gui-artfile-live-key-trace.md
+new mappings                                     NOT AUTHORIZED
+payload/header substitution                      NOT AUTHORIZED
+ArtFile200 forcing                               NOT AUTHORIZED
 XNU                                              no source change indicated
 ```
