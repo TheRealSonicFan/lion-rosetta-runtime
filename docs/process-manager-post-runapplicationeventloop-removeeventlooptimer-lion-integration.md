@@ -1,5 +1,7 @@
 # Post-RunApplicationEventLoop RemoveEventLoopTimer Lion integration
 
+**Status: COMPLETE — PASS.** The exact Snow-proven Remove subject transferred unchanged to Lion, returned status 0, preserved the exact twenty-one notification policy and inherited runtime gates, and reached the dedicated Lion PASS discriminator. Current work advances to `docs/process-manager-post-removeeventlooptimer-disposeeventlooptimerupp-snow-control.md`.
+
 ## Objective
 
 Transfer the **exact Snow-proven** `RemoveEventLoopTimer()` subject to Lion 10.7.5 / 11G63 and perform exactly one guarded integration run on top of the live-proven exact twenty-one distributed-notification policy.
@@ -388,6 +390,16 @@ payload/lion-removeeventlooptimer.raw.log
 
 Also return any newly named crash report or crash plist if the runner reports one.
 
+## Reviewed Lion result
+
+The exact Snow-proven PPC subject ran on Lion 10.7.5 / 11G63 with SHA-256 `dd7800673066de223ea214833b940a64c838fe0f2b6c9cde8a67276c9b8ebae2` and the accepted kernel SHA-256 `fe68467b60b3bd7edfab61b2d6c8af7f988de5206c4b7b624151dc9f1a1061d3`. The fresh syscall-295 probe again returned EBADF without SIGSYS.
+
+The inherited timer-side-quit path reached S15 with exactly one callback. The transferred cleanup sequence then reached S16 and S17 exactly once, returned `RemoveEventLoopTimer=0`, emitted `REMOVEEVENTLOOPTIMER_PASS`, reached `M24_SUCCESS`, and exited 0.
+
+The exact twenty-one notification broker remained closed with binary SHA-256 `d7912d9761049f1382028ad0d16854915aa531fe0963df67be5678efb413b5d4`, ending `register=21 callback=0 rejects=0 exact=YES` / `PASS`; the ingress interposer observed exactly 21 requests and no later request. WBI / ColorProfileClient / ResolveColorProfile adapter-pass counts remained 1 / 1 / 1, OrderFront remained 2, all six titlebar translations remained exact with zero guard rejects, no new diagnostic appeared, and protected hashes were unchanged. The runner ended `POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_VALIDATION_PASS`.
+
+This closes `RemoveEventLoopTimer()` on both Snow and Lion without a new compatibility rule or XNU change. The next isolated cleanup boundary is `DisposeEventLoopTimerUPP()` on Snow Leopard.
+
 ## Current boundary
 
 ```text
@@ -395,8 +407,9 @@ RunApplicationEventLoop timer-side-quit Snow        LIVE-PROVEN PASS
 RunApplicationEventLoop timer-side-quit Lion        LIVE-PROVEN through S15
 all 21 reviewed Lion notification registrations     LIVE-PROVEN PASS
 RemoveEventLoopTimer Snow                            LIVE-PROVEN PASS
-RemoveEventLoopTimer Lion                            NEXT: guarded exact-binary transfer
-DisposeEventLoopTimerUPP                             HELD
+RemoveEventLoopTimer Lion                            LIVE-PROVEN PASS
+DisposeEventLoopTimerUPP Snow                        NEXT: isolated control
+DisposeEventLoopTimerUPP Lion                        HELD pending Snow result
 new compatibility families                          NO
 titlebar policy broadening                          NO
 XNU                                                  no source change indicated
