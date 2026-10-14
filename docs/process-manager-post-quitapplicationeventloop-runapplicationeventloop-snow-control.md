@@ -45,6 +45,16 @@ RESULT: FAIL
 
 Therefore the prequeued quit did not terminate the subsequent `RunApplicationEventLoop()` before the two-second one-shot timer became dispatchable. The v1 prequeue model is retired and must not be repeated.
 
+## Reviewed v2 runner failure
+
+The corrected timer-side-quit subject itself completed the intended Snow event-loop semantics successfully. The returned run reached S14, dispatched the installed one-shot timer exactly once, reached callback ENTER / BEFORE_Quit / AFTER_Quit / EXIT, returned through S15, reported `fired=1`, emitted `RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS`, reached `M24_SUCCESS`, and exited with `control_status=0`.
+
+Phase C nevertheless ended `RESULT: FAIL` because the Snow runner still carried the earlier pre-event-loop global `CGSOrderFrontConditionally` total of two. Entering the real application event loop produced one additional, fully native Snow passthrough OrderFront request before the timer callback. The log therefore contains exactly three compatibility calls / three legacy traces / three passthrough results, while the SelectWindow-bounded count remains exactly one. The third call is itself exact, uses the same accepted legacy request/reply contract, and emits no adapter result.
+
+The runner is corrected to preserve both scopes rather than broadly relaxing the count: in timer-side-quit v2 only, the global expected OrderFront total is exactly three, the existing SelectWindow-bounded count must remain exactly one, and a new S14-to-S15 `runapplicationeventloop_order_front_conditionally_call_count` must be exactly one with the third call remaining `mode=passthrough exact=YES`. All other stages retain their previous OrderFront totals. No compatibility interposer behavior is broadened.
+
+Because the subject and builder did not change in this correction, after pulling current `main` and passing Phase A, an existing v2 subject may be reused for Phase C if its SHA-256 is still `059341612986721ef8e513c247b3ba39cf34892f25bad3c73dc2ef97ca8102b7` and its adjacent SHA file agrees. Otherwise rerun Phase B before Phase C.
+
 ## Corrected implementation
 
 Current runtime `main` provides:
@@ -62,7 +72,7 @@ Pinned blobs:
 ```text
 RunApplicationEventLoop subject       97e410dd71e545c393e0ce6889678a6436ff8ea1
 RunApplicationEventLoop Snow builder  5691e3d2b73115f38e85907e07ba20dfbd46dfd0
-Snow full-stack runner                 42327c5b78707e6b3ba0e6b2e3927ec89588735b
+Snow full-stack runner                 6f5a3c129dab44245e5ce9a4f77c08c653842dd0
 ```
 
 Corrected build ID:
@@ -128,7 +138,7 @@ test "$(git hash-object ./scripts/build-ppc-process-manager-runapplicationeventl
   "5691e3d2b73115f38e85907e07ba20dfbd46dfd0" || exit 1
 
 test "$(git hash-object ./scripts/run-snowleopard-ppc-process-manager-createwindow-distnotify-integration-control.sh)" = \
-  "42327c5b78707e6b3ba0e6b2e3927ec89588735b" || exit 1
+  "6f5a3c129dab44245e5ce9a4f77c08c653842dd0" || exit 1
 
 /bin/bash -n ./scripts/build-ppc-process-manager-runapplicationeventloop-prequeued-quit-on-snowleopard.sh || exit 1
 /bin/bash -n ./scripts/run-snowleopard-ppc-process-manager-createwindow-distnotify-integration-control.sh || exit 1
@@ -256,10 +266,11 @@ runapplicationeventloop_timer_callback_enter_count=1
 runapplicationeventloop_timer_callback_before_quit_count=1
 runapplicationeventloop_timer_callback_after_quit_count=1
 runapplicationeventloop_timer_callback_exit_count=1
-cgs_order_front_conditionally_compat_call_count=2
-cgs_order_front_conditionally_legacy_trace_count=2
-cgs_order_front_conditionally_passthrough_count=2
+cgs_order_front_conditionally_compat_call_count=3
+cgs_order_front_conditionally_legacy_trace_count=3
+cgs_order_front_conditionally_passthrough_count=3
 selectwindow_order_front_conditionally_call_count=1
+runapplicationeventloop_order_front_conditionally_call_count=1
 coreui_titlebar_unexpected_action_count=0
 RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_SNOW_CONTROL_PASS
 RESULT: PASS
