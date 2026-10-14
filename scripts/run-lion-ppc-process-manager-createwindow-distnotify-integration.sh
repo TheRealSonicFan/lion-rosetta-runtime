@@ -44,6 +44,7 @@ POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE="${ROSETTA_POST_ISWINDOWVISIBLE_N
 POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE="${ROSETTA_POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_VALIDATION_MODE:-}"
 POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE="${ROSETTA_POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_VALIDATION_MODE:-}"
 POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE="${ROSETTA_POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_VALIDATION_MODE:-}"
+POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE="${ROSETTA_POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_VALIDATION_MODE:-}"
 SHOWWINDOW_UNKNOWN_TRACE_MODE="${ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE:-}"
 SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE:-}"
 SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE:-}"
@@ -346,6 +347,21 @@ if [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
     [ "$SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_MODE" = "lion-id-v1" ] ||
         die 64 "QuitApplicationEventLoop validation requires accepted WindowBackingInfo compatibility"
     EXPECTED_SUBJECT_BUILD_ID="cps-quitapplicationeventloop-validation-v1"
+fi
+if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+    [ "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" = "lion-runapplicationeventloop-timer-quit-v2" ] ||
+        die 64 "unsupported ROSETTA_POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_VALIDATION_MODE: $POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE"
+    [ "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" = "lion-installeventlooptimer-v1" ] ||
+        die 64 "RunApplicationEventLoop timer-quit validation requires the accepted InstallEventLoopTimer validation mode"
+    [ -z "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ] ||
+        die 64 "RunApplicationEventLoop timer-quit validation must not prequeue QuitApplicationEventLoop"
+    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] ||
+        die 64 "RunApplicationEventLoop timer-quit validation requires the accepted exact-seven notification broker"
+    [ "$SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_MODE" = "lion-id-v1" ] ||
+        die 64 "RunApplicationEventLoop timer-quit validation requires accepted ResolveColorProfile compatibility"
+    [ "$SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_MODE" = "lion-id-v1" ] ||
+        die 64 "RunApplicationEventLoop timer-quit validation requires accepted WindowBackingInfo compatibility"
+    EXPECTED_SUBJECT_BUILD_ID="cps-runapplicationeventloop-timer-quit-validation-v2"
 fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "lion-passive-v1" ] ||
@@ -844,6 +860,20 @@ if [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
             die 68 "QuitApplicationEventLoop subject marker missing: $marker"
     done
 fi
+if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+    for marker in \
+        'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' \
+        'PM_POSTWINDOWTIMER_CALLBACK:ENTER' \
+        'PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop' \
+        'PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop' \
+        'PM_POSTWINDOWTIMER_CALLBACK:EXIT' \
+        'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' \
+        'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=' \
+        'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS'; do
+        /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "RunApplicationEventLoop timer-quit subject marker missing: $marker"
+    done
+fi
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
     "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || die 68 "CoreServices CPS registration compatibility build marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
@@ -1172,6 +1202,9 @@ if [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
 fi
 if [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
     log "post_installeventlooptimer_quitapplicationeventloop_validation_mode=$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE"
+fi
+if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+    log "post_quitapplicationeventloop_runapplicationeventloop_validation_mode=$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE"
 fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     log "showwindow_unknown_cgs_trace_mode=$SHOWWINDOW_UNKNOWN_TRACE_MODE"
@@ -2461,11 +2494,22 @@ if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
     log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_ADAPTER_PASS_COUNT"
     if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
         SELECTWINDOW_ORDER_FRONT_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow/{seen=1; next} seen && /PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow/{exit} seen && /PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+        ORDER_FRONT_EXPECTED_COUNT=2
+        RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT=0
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            ORDER_FRONT_EXPECTED_COUNT=3
+            RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop/{seen=1; next} seen && /PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop/{exit} seen && /PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+        fi
         log "selectwindow_order_front_conditionally_call_count=$SELECTWINDOW_ORDER_FRONT_COUNT"
-        if [ "$ORDER_FRONT_COMPAT_COUNT" -ne 2 ] ||
-           [ "$ORDER_FRONT_TRACE_COUNT" -ne 2 ] ||
-           [ "$ORDER_FRONT_ADAPTER_PASS_COUNT" -ne 2 ] ||
-           [ "$SELECTWINDOW_ORDER_FRONT_COUNT" -ne 1 ]; then
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            log "runapplicationeventloop_order_front_conditionally_call_count=$RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT"
+        fi
+        if [ "$ORDER_FRONT_COMPAT_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$ORDER_FRONT_TRACE_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$ORDER_FRONT_ADAPTER_PASS_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
+           [ "$SELECTWINDOW_ORDER_FRONT_COUNT" -ne 1 ] ||
+           { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+             [ "$RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT" -ne 1 ]; }; then
             log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_COUNT_MISMATCH"
             exit 0
         fi
@@ -2478,12 +2522,21 @@ if [ -n "$SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE" ]; then
            ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=2 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
            ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=2 kr=0 hex=0x00000000' "$RAW_LOG" ||
            ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=2 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
-           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=2 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG"; then
+           ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=2 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG" ||
+           { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+             { ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=3 mode=lion-selectwindow-id-v1 exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=1' "$RAW_LOG" ||
+               ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REQUEST:index=3 legacyId=0x000072e7 lionId=0x000072ea send=0x00000034 recv=0x0000002c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 .*windowId=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]*' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_MACH_RETURN:index=3 kr=0 hex=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_NATIVE_REPLY:index=3 bits=0x00001200 size=0x00000024 id=0x0000734e result=0 ndrSwapped=YES replyClass=SUCCESS raw20=0x00000000' "$RAW_LOG" ||
+               ! /usr/bin/grep -Fq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_ADAPTED_REPLY:index=3 nativeId=0x0000734e legacyId=0x0000734b size=0x00000024 changedBytes=1 bodyChangedBytes=0 result=0 replyClass=SUCCESS' "$RAW_LOG"; }; }; then
             log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_CGS_ORDER_FRONT_CONDITIONALLY_ADAPTER_NOT_PASSED"
             exit 0
         fi
         log "cgs_order_front_conditionally_native_reply_class=SUCCESS"
         log "selectwindow_order_front_conditionally_native_reply_class=SUCCESS"
+        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+            log "runapplicationeventloop_order_front_conditionally_native_reply_class=SUCCESS"
+        fi
     else
         ORDER_FRONT_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
         ORDER_FRONT_TRACE_COUNT="$(/usr/bin/grep -c 'PM_CGS_CONNECTION_TRACE_REQUEST:.*kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY' "$RAW_LOG" 2>/dev/null || true)"
@@ -2778,6 +2831,32 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
             exit 0
         fi
     fi
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NOT_REACHED"
+            exit 0
+        fi
+        TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+        TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+        log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+        log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+        log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+        log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+        if [ "$TIMER_CB_ENTER_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_EXIT_COUNT" -ne 1 ] ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_CALLBACK_COUNT_MISMATCH' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_MARKER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
     if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T04_BEFORE_CFRelease' "$RAW_LOG" ||
        ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T05_AFTER_CFRelease' "$RAW_LOG"; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFRELEASE_INCOMPLETE"
@@ -2828,6 +2907,9 @@ fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
     if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
        [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
         log "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_VALIDATION_PASS"
     elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
