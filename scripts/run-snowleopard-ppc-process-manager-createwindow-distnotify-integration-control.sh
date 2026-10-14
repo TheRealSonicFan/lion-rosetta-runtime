@@ -1126,6 +1126,22 @@ if [ "$RC" -eq 0 ] &&
         fi
         echo "removeeventlooptimer_status=0" | /usr/bin/tee -a "$LOG"
     fi
+    if [ -n "$POST_REMOVEEVENTLOOPTIMER_DISPOSEEVENTLOOPTIMERUPP_MODE" ]; then
+        DISPOSE_BEFORE_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMERUPPDISPOSE_MILESTONE:S18_BEFORE_DisposeEventLoopTimerUPP$' "$LOG" 2>/dev/null || true)"
+        DISPOSE_AFTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMERUPPDISPOSE_MILESTONE:S19_AFTER_DisposeEventLoopTimerUPP$' "$LOG" 2>/dev/null || true)"
+        DISPOSE_PASS_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMERUPPDISPOSE_RESULT:DISPOSEEVENTLOOPTIMERUPP_PASS$' "$LOG" 2>/dev/null || true)"
+        if [ "$DISPOSE_BEFORE_COUNT" -ne 1 ] ||
+           [ "$DISPOSE_AFTER_COUNT" -ne 1 ] ||
+           [ "$DISPOSE_PASS_COUNT" -ne 1 ] ||
+           ! /usr/bin/grep -Eq 'PM_POSTWINDOWTIMERUPPDISPOSE_POINTER:before=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERUPPDISPOSE_RESULT:DISPOSEEVENTLOOPTIMERUPP_NULL_UPP' "$LOG"; then
+            echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
+            exit 1
+        fi
+        echo "disposeeventlooptimerupp_before_count=$DISPOSE_BEFORE_COUNT" | /usr/bin/tee -a "$LOG"
+        echo "disposeeventlooptimerupp_after_count=$DISPOSE_AFTER_COUNT" | /usr/bin/tee -a "$LOG"
+        echo "disposeeventlooptimerupp_pass_count=$DISPOSE_PASS_COUNT" | /usr/bin/tee -a "$LOG"
+    fi
     if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
         FONTSERVER_RENDEZVOUS_COMPAT_CALLS="$(/usr/bin/grep -c 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_CALL:' "$LOG" 2>/dev/null || true)"
         if [ "$FONTSERVER_RENDEZVOUS_COMPAT_CALLS" -ne 1 ] ||
@@ -1282,7 +1298,9 @@ if [ "$RC" -eq 0 ] &&
                             echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
                             exit 1
                         fi
-                        if [ -n "$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" ]; then
+                        if [ -n "$POST_REMOVEEVENTLOOPTIMER_DISPOSEEVENTLOOPTIMERUPP_MODE" ]; then
+                            echo "RESULT: POST_REMOVEEVENTLOOPTIMER_DISPOSEEVENTLOOPTIMERUPP_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+                        elif [ -n "$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" ]; then
                             echo "RESULT: POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
                         elif [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
                             echo "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
