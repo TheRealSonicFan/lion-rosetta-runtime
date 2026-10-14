@@ -46,6 +46,7 @@ POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE="${ROSETTA_POST_GETMAINEVENTLOO
 POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE="${ROSETTA_POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_VALIDATION_MODE:-}"
 POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE="${ROSETTA_POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_VALIDATION_MODE:-}"
 POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE="${ROSETTA_POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_VALIDATION_MODE:-}"
+POST_REMOVEEVENTLOOPTIMER_DISPOSEEVENTLOOPTIMERUPP_MODE="${ROSETTA_POST_REMOVEEVENTLOOPTIMER_DISPOSEEVENTLOOPTIMERUPP_VALIDATION_MODE:-}"
 SHOWWINDOW_UNKNOWN_TRACE_MODE="${ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE:-}"
 SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE:-}"
 SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE:-}"
@@ -769,6 +770,17 @@ if [ -n "$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" ]; then
         die 64 "RemoveEventLoopTimer validation requires the reviewed exact-seven base registration mode"
     EXPECTED_SUBJECT_BUILD_ID="cps-removeeventlooptimer-validation-v1"
 fi
+if [ -n "$POST_REMOVEEVENTLOOPTIMER_DISPOSEEVENTLOOPTIMERUPP_MODE" ]; then
+    [ "$POST_REMOVEEVENTLOOPTIMER_DISPOSEEVENTLOOPTIMERUPP_MODE" = "lion-disposeeventlooptimerupp-v1" ] ||
+        die 64 "unsupported ROSETTA_POST_REMOVEEVENTLOOPTIMER_DISPOSEEVENTLOOPTIMERUPP_VALIDATION_MODE: $POST_REMOVEEVENTLOOPTIMER_DISPOSEEVENTLOOPTIMERUPP_MODE"
+    [ "$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" = "lion-removeeventlooptimer-v1" ] ||
+        die 64 "DisposeEventLoopTimerUPP validation requires lion-removeeventlooptimer-v1"
+    [ "$RUNAPPLICATIONEVENTLOOP_REMAINING_REGISTRATION_MODE" = "lion-remaining-register-v1" ] ||
+        die 64 "DisposeEventLoopTimerUPP validation requires the live-proven exact twenty-one notification broker"
+    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] ||
+        die 64 "DisposeEventLoopTimerUPP validation requires the reviewed exact-seven base registration mode"
+    EXPECTED_SUBJECT_BUILD_ID="cps-disposeeventlooptimerupp-validation-v1"
+fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "lion-passive-v1" ] ||
         die 64 "unsupported ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE: $SHOWWINDOW_UNKNOWN_TRACE_MODE"
@@ -1291,9 +1303,20 @@ if [ -n "$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" ]; then
     done
     /usr/bin/nm -u "$SUBJECT" | /usr/bin/grep -Eq '(^|[[:space:]])_RemoveEventLoopTimer$' ||
         die 68 "RemoveEventLoopTimer subject does not import _RemoveEventLoopTimer"
-    if /usr/bin/nm -u "$SUBJECT" | /usr/bin/grep -Eq '(^|[[:space:]])_DisposeEventLoopTimerUPP$'; then
-        die 68 "RemoveEventLoopTimer subject must not import _DisposeEventLoopTimerUPP"
+    if [ -z "$POST_REMOVEEVENTLOOPTIMER_DISPOSEEVENTLOOPTIMERUPP_MODE" ] &&
+       /usr/bin/nm -u "$SUBJECT" | /usr/bin/grep -Eq '(^|[[:space:]])_DisposeEventLoopTimerUPP$'; then
+        die 68 "RemoveEventLoopTimer-only subject must not import _DisposeEventLoopTimerUPP"
     fi
+fi
+if [ -n "$POST_REMOVEEVENTLOOPTIMER_DISPOSEEVENTLOOPTIMERUPP_MODE" ]; then
+    for marker in \
+        'PM_POSTWINDOWTIMERUPPDISPOSE_POINTER:before=' \
+        'PM_POSTWINDOWTIMERUPPDISPOSE_MILESTONE:S18_BEFORE_DisposeEventLoopTimerUPP' \
+        'PM_POSTWINDOWTIMERUPPDISPOSE_MILESTONE:S19_AFTER_DisposeEventLoopTimerUPP' \
+        'PM_POSTWINDOWTIMERUPPDISPOSE_RESULT:DISPOSEEVENTLOOPTIMERUPP_PASS'; do
+        /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "DisposeEventLoopTimerUPP subject marker missing: $marker"
+    done
 fi
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
     "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || die 68 "CoreServices CPS registration compatibility build marker missing"
@@ -1960,7 +1983,10 @@ if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
     log "post_quitapplicationeventloop_runapplicationeventloop_validation_mode=$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE"
 fi
 if [ -n "$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" ]; then
-    log "post_runapplicationeventloop_removeeventlooptimer_validation_mode=$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE"
+    log "post_runapplicationeventloop_removeeventlooptimer_validation_mode=$POST_RUNAPPLICATIONEVENTLOOPTIMER_MODE"
+fi
+if [ -n "$POST_REMOVEEVENTLOOPTIMER_DISPOSEEVENTLOOPTIMERUPP_MODE" ]; then
+    log "post_removeeventlooptimer_disposeeventlooptimerupp_validation_mode=$POST_REMOVEEVENTLOOPTIMER_DISPOSEEVENTLOOPTIMERUPP_MODE"
 fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     log "showwindow_unknown_cgs_trace_mode=$SHOWWINDOW_UNKNOWN_TRACE_MODE"
