@@ -331,3 +331,14 @@ titlebar policy broadening                          NO
 LaunchServices / Finder / Cocoa / real applications HELD
 XNU                                                  no source change indicated
 ```
+
+
+## Reviewed Lion result
+
+The exact historical Snow-positive subject SHA-256 `fe2ddc8e76e996c242facd60e56aa2203ffc762dec941fc6b1bbf0fe25613067` executed to completion on Lion: it printed both `Rosetta PPC Carbon GUI window shown: ... visible=1` and `Rosetta PPC Carbon GUI smoke test: ... timer=1`, exited 0, produced no new diagnostic, preserved protected hashes, kept all six titlebar translations exact, and retained the accepted downstream CGS adapter counts. The process appeared in the Dock, but no Carbon window was visually observed.
+
+The run did **not** validate the intended full restored stack. Its legacy CPS CheckInApplication request was `id=0x7372`, `send=0x68`, `recv=0x2c`, `stringLength=0x26`; the accepted `lion-create-application-v1` predicate is deliberately pinned to the longer Process Manager validation basename/request, so it reported `exact=NO`, passed through unchanged, and Lion returned `-304 / MIG_BAD_ARGUMENTS`. The log explicitly reported failure to register the process with CPS/CoreGraphics. This is the current visual-presentation boundary.
+
+The exact-21 notification broker was also client-bound to the Process Manager validation basename and therefore rejected all 21 registrations with schema status 20. Because the subject still reached both markers and exit 0, notification policy is held rather than broadened in the next step.
+
+Current `main` advances to `docs/ppc-carbon-gui-cps-registration-integration.md`, which changes only the exact CPS registration predicate for `ppc-carbon-gui-smoketest-private-dyld` and deliberately leaves the 21 notification schema rejects unchanged for isolation.
