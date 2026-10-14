@@ -70,7 +70,7 @@ scripts/run-snowleopard-ppc-carbon-gui-coreui-image-constructor-trace-control.sh
 Git blob d67c16de996dfa6db0a4f2094a8ba723e369074d
 
 scripts/run-lion-ppc-carbon-gui-coreui-image-constructor-trace.sh
-Git blob a58939349b287a5943e94c353d1cc032606c8285
+Git blob c8bffe35bfc6f5d83f0e36902ce60354f83a4ee7
 ```
 
 Build ID:
@@ -86,7 +86,7 @@ Snow  snow-passive-image-v1
 Lion  lion-passive-image-v1
 ```
 
-The tracer records only the two exact Snow-PPC CoreUI call sites established by the static audit:
+The tracer logs only the exact target image geometries and records the caller image/offset for each call. The runners accept only the two Snow-PPC CoreUI call sites established by the static audit:
 
 ```text
 CGImageCreate return-site offset   0x000299e0
@@ -143,7 +143,7 @@ test "$(git hash-object ./scripts/run-snowleopard-ppc-carbon-gui-coreui-image-co
   "d67c16de996dfa6db0a4f2094a8ba723e369074d" || exit 1
 
 test "$(git hash-object ./scripts/run-lion-ppc-carbon-gui-coreui-image-constructor-trace.sh)" = \
-  "a58939349b287a5943e94c353d1cc032606c8285" || exit 1
+  "c8bffe35bfc6f5d83f0e36902ce60354f83a4ee7" || exit 1
 
 /bin/bash -n ./scripts/build-ppc-coreui-image-constructor-trace-on-snowleopard.sh || exit 1
 /bin/bash -n ./scripts/run-snowleopard-ppc-carbon-gui-coreui-image-constructor-trace-control.sh || exit 1
