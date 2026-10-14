@@ -88,7 +88,7 @@ tests/ppc-coreui-artfile-bsearch-allkeys-trace-interposer.c
 Git blob 32e6413d78ba3da7d327c35e199c46af1cc00b78
 
 scripts/build-ppc-coreui-artfile-bsearch-allkeys-trace-on-snowleopard.sh
-Git blob 2a1d5b2cca97c597fee2cb6f70942339551e9d6b
+Git blob 8c0ee95fa9c2bcd323f71b88b716bda569607b1a
 
 scripts/run-snowleopard-ppc-carbon-gui-artfile-bsearch-allkeys-trace-control.sh
 Git blob 48106be730fb6cb3eecb9a51fb95486671a7dd95
@@ -142,7 +142,7 @@ test "$(git hash-object ./tests/ppc-coreui-artfile-bsearch-allkeys-trace-interpo
   "32e6413d78ba3da7d327c35e199c46af1cc00b78" || exit 1
 
 test "$(git hash-object ./scripts/build-ppc-coreui-artfile-bsearch-allkeys-trace-on-snowleopard.sh)" = \
-  "2a1d5b2cca97c597fee2cb6f70942339551e9d6b" || exit 1
+  "8c0ee95fa9c2bcd323f71b88b716bda569607b1a" || exit 1
 
 test "$(git hash-object ./scripts/run-snowleopard-ppc-carbon-gui-artfile-bsearch-allkeys-trace-control.sh)" = \
   "48106be730fb6cb3eecb9a51fb95486671a7dd95" || exit 1
@@ -177,6 +177,18 @@ interposer_source_git_blob=32e6413d78ba3da7d327c35e199c46af1cc00b78
 ```
 
 and a 32-bit PowerPC Mach-O containing exactly one `__DATA,__interpose` tuple.
+
+### Phase B correction for blank source-blob errors
+
+The original v1 builder incorrectly invoked `/usr/bin/git` directly when verifying the source blob. On Snow Leopard, Phase A can succeed with a `git` executable elsewhere on `PATH` while `/usr/bin/git` is absent; in that case the builder produced the misleading error:
+
+```text
+error: all-ArtFile bsearch interposer source blob mismatch:
+```
+
+with an empty value. This is a builder-path bug, not evidence that the source file differs.
+
+Current `main` resolves the same usable `git` executable from `PATH` first, with Snow-era fallback locations, and uses it for both `hash-object` and `rev-parse`. After pulling current `main`, repeat Phase A's pin checks and rerun Phase B. Do not rebuild any previously accepted compatibility artifact, and do not proceed to Phase C unless the corrected Phase B completes normally.
 
 ## Phase C — one Snow passive all-key control
 
