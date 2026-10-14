@@ -160,7 +160,12 @@ echo "== observer report ==" | /usr/bin/tee -a "$SUBJECT_LOG"
 
 SHAPE_CALL_COUNT="$(/usr/bin/grep -c 'PM_CGS_SHAPEWINDOW_INLINE_COMPAT_CALL:index=1 mode=passthrough exact=YES' "$SUBJECT_LOG" 2>/dev/null || true)"
 SHAPE_PASS_COUNT="$(/usr/bin/grep -c '^PM_CGS_SHAPEWINDOW_INLINE_COMPAT_RESULT:PASSTHROUGH$' "$SUBJECT_LOG" 2>/dev/null || true)"
-SHAPE_ADAPTER_COUNT="$(/usr/bin/grep -c '^PM_CGS_SHAPEWINDOW_INLINE_COMPAT_RESULT:ADAPTER_PASS"$(/usr/bin/grep -c 'kind=CGS_SHAPEWINDOW_INLINE_LEGACY.*id=0x0000724d expectedReply=0x000072b1.*send=0x00000050 recv=0x0000002c' "$SUBJECT_LOG" 2>/dev/null || true)"
+SHAPE_ADAPTER_COUNT="$(/usr/bin/grep -c '^PM_CGS_SHAPEWINDOW_INLINE_COMPAT_RESULT:ADAPTER_PASS$' "$SUBJECT_LOG" 2>/dev/null || true)"
+SYNC_EXACT_COUNT="$(/usr/bin/grep -Ec '^PM_CGS_BACKING_SYNC_COMPAT_CALL:index=[0-9]+ exactIndex=[0-9]+ mode=passthrough exact=YES .*id=0x00007265 send=0x0000002c recv=0x0000002c .*arg1=3 arg2=1$' "$SUBJECT_LOG" 2>/dev/null || true)"
+SYNC_PASSTHROUGH_COUNT="$(/usr/bin/grep -c '^PM_CGS_BACKING_SYNC_COMPAT_RESULT:PASSTHROUGH$' "$SUBJECT_LOG" 2>/dev/null || true)"
+SYNC_ADAPTER_COUNT="$(/usr/bin/grep -c '^PM_CGS_BACKING_SYNC_COMPAT_RESULT:ADAPTER_PASS$' "$SUBJECT_LOG" 2>/dev/null || true)"
+SYNC_REJECT_COUNT="$(/usr/bin/grep -c '^PM_CGS_BACKING_SYNC_COMPAT_RESULT:PREDICATE_REJECTED_PASSTHROUGH$' "$SUBJECT_LOG" 2>/dev/null || true)"
+LEGACY_TRACE_COUNT="$(/usr/bin/grep -c 'kind=CGS_SHAPEWINDOW_INLINE_LEGACY.*id=0x0000724d expectedReply=0x000072b1.*send=0x00000050 recv=0x0000002c' "$SUBJECT_LOG" 2>/dev/null || true)"
 WINDOW_MARKER_COUNT="$(/usr/bin/grep -c '^Rosetta PPC Carbon GUI window shown:' "$SUBJECT_LOG" 2>/dev/null || true)"
 SMOKE_MARKER_COUNT="$(/usr/bin/grep -c '^Rosetta PPC Carbon GUI smoke test:' "$SUBJECT_LOG" 2>/dev/null || true)"
 OBSERVER_PASS_COUNT="$(/usr/bin/grep -c '^CGWINDOW_OBSERVER_RESULT:PASS$' "$OBSERVER_LOG" 2>/dev/null || true)"
@@ -199,175 +204,5 @@ if [ "$APP_RC" -eq 0 ] &&
 fi
 
 echo "RESULT: PPC_CARBON_GUI_BACKING_SYNC_SNOW_CONTROL_FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "RESULT: FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-exit 1
- "$SUBJECT_LOG" 2>/dev/null || true)"
-SYNC_EXACT_COUNT="$(/usr/bin/grep -Ec '^PM_CGS_BACKING_SYNC_COMPAT_CALL:index=[0-9]+ exactIndex=[0-9]+ mode=passthrough exact=YES .*id=0x00007265 send=0x0000002c recv=0x0000002c .*arg1=3 arg2=1"$(/usr/bin/grep -c 'kind=CGS_SHAPEWINDOW_INLINE_LEGACY.*id=0x0000724d expectedReply=0x000072b1.*send=0x00000050 recv=0x0000002c' "$SUBJECT_LOG" 2>/dev/null || true)"
-WINDOW_MARKER_COUNT="$(/usr/bin/grep -c '^Rosetta PPC Carbon GUI window shown:' "$SUBJECT_LOG" 2>/dev/null || true)"
-SMOKE_MARKER_COUNT="$(/usr/bin/grep -c '^Rosetta PPC Carbon GUI smoke test:' "$SUBJECT_LOG" 2>/dev/null || true)"
-OBSERVER_PASS_COUNT="$(/usr/bin/grep -c '^CGWINDOW_OBSERVER_RESULT:PASS$' "$OBSERVER_LOG" 2>/dev/null || true)"
-GEOMETRY_COUNT="$(/usr/bin/grep -c 'x=120 y=98 width=400 height=222.*name=Rosetta PPC Carbon GUI' "$OBSERVER_LOG" 2>/dev/null || true)"
-SUMMARY_LINE="$(/usr/bin/grep '^CGWINDOW_OBSERVER_SUMMARY:' "$OBSERVER_LOG" 2>/dev/null | /usr/bin/tail -1)"
-
-echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_passthrough_result_count=$SHAPE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_adapter_pass_count=$SHAPE_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_legacy_trace_count=$LEGACY_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_geometry_400x222_count=$GEOMETRY_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_summary=$SUMMARY_LINE" | /usr/bin/tee -a "$SUBJECT_LOG"
-
-if [ "$APP_RC" -eq 0 ] &&
-   [ "$OBSERVER_RC" -eq 0 ] &&
-   [ "$SHAPE_CALL_COUNT" -eq 1 ] &&
-   [ "$SHAPE_PASS_COUNT" -eq 1 ] &&
-   [ "$SHAPE_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$LEGACY_TRACE_COUNT" -eq 1 ] &&
-   [ "$WINDOW_MARKER_COUNT" -eq 1 ] &&
-   [ "$SMOKE_MARKER_COUNT" -eq 1 ] &&
-   [ "$OBSERVER_PASS_COUNT" -eq 1 ] &&
-   [ "$GEOMETRY_COUNT" -ge 1 ]; then
-    echo "RESULT: PPC_CARBON_GUI_CGSSHAPEWINDOW_INLINE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "manual_window_observation=REQUIRED" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "RESULT: PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    exit 0
-fi
-
-echo "RESULT: PPC_CARBON_GUI_CGSSHAPEWINDOW_INLINE_SNOW_CONTROL_FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "RESULT: FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-exit 1
- "$SUBJECT_LOG" 2>/dev/null || true)"
-SYNC_PASSTHROUGH_COUNT="$(/usr/bin/grep -c '^PM_CGS_BACKING_SYNC_COMPAT_RESULT:PASSTHROUGH"$(/usr/bin/grep -c 'kind=CGS_SHAPEWINDOW_INLINE_LEGACY.*id=0x0000724d expectedReply=0x000072b1.*send=0x00000050 recv=0x0000002c' "$SUBJECT_LOG" 2>/dev/null || true)"
-WINDOW_MARKER_COUNT="$(/usr/bin/grep -c '^Rosetta PPC Carbon GUI window shown:' "$SUBJECT_LOG" 2>/dev/null || true)"
-SMOKE_MARKER_COUNT="$(/usr/bin/grep -c '^Rosetta PPC Carbon GUI smoke test:' "$SUBJECT_LOG" 2>/dev/null || true)"
-OBSERVER_PASS_COUNT="$(/usr/bin/grep -c '^CGWINDOW_OBSERVER_RESULT:PASS$' "$OBSERVER_LOG" 2>/dev/null || true)"
-GEOMETRY_COUNT="$(/usr/bin/grep -c 'x=120 y=98 width=400 height=222.*name=Rosetta PPC Carbon GUI' "$OBSERVER_LOG" 2>/dev/null || true)"
-SUMMARY_LINE="$(/usr/bin/grep '^CGWINDOW_OBSERVER_SUMMARY:' "$OBSERVER_LOG" 2>/dev/null | /usr/bin/tail -1)"
-
-echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_passthrough_result_count=$SHAPE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_adapter_pass_count=$SHAPE_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_legacy_trace_count=$LEGACY_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_geometry_400x222_count=$GEOMETRY_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_summary=$SUMMARY_LINE" | /usr/bin/tee -a "$SUBJECT_LOG"
-
-if [ "$APP_RC" -eq 0 ] &&
-   [ "$OBSERVER_RC" -eq 0 ] &&
-   [ "$SHAPE_CALL_COUNT" -eq 1 ] &&
-   [ "$SHAPE_PASS_COUNT" -eq 1 ] &&
-   [ "$SHAPE_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$LEGACY_TRACE_COUNT" -eq 1 ] &&
-   [ "$WINDOW_MARKER_COUNT" -eq 1 ] &&
-   [ "$SMOKE_MARKER_COUNT" -eq 1 ] &&
-   [ "$OBSERVER_PASS_COUNT" -eq 1 ] &&
-   [ "$GEOMETRY_COUNT" -ge 1 ]; then
-    echo "RESULT: PPC_CARBON_GUI_CGSSHAPEWINDOW_INLINE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "manual_window_observation=REQUIRED" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "RESULT: PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    exit 0
-fi
-
-echo "RESULT: PPC_CARBON_GUI_CGSSHAPEWINDOW_INLINE_SNOW_CONTROL_FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "RESULT: FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-exit 1
- "$SUBJECT_LOG" 2>/dev/null || true)"
-SYNC_ADAPTER_COUNT="$(/usr/bin/grep -c '^PM_CGS_BACKING_SYNC_COMPAT_RESULT:ADAPTER_PASS"$(/usr/bin/grep -c 'kind=CGS_SHAPEWINDOW_INLINE_LEGACY.*id=0x0000724d expectedReply=0x000072b1.*send=0x00000050 recv=0x0000002c' "$SUBJECT_LOG" 2>/dev/null || true)"
-WINDOW_MARKER_COUNT="$(/usr/bin/grep -c '^Rosetta PPC Carbon GUI window shown:' "$SUBJECT_LOG" 2>/dev/null || true)"
-SMOKE_MARKER_COUNT="$(/usr/bin/grep -c '^Rosetta PPC Carbon GUI smoke test:' "$SUBJECT_LOG" 2>/dev/null || true)"
-OBSERVER_PASS_COUNT="$(/usr/bin/grep -c '^CGWINDOW_OBSERVER_RESULT:PASS$' "$OBSERVER_LOG" 2>/dev/null || true)"
-GEOMETRY_COUNT="$(/usr/bin/grep -c 'x=120 y=98 width=400 height=222.*name=Rosetta PPC Carbon GUI' "$OBSERVER_LOG" 2>/dev/null || true)"
-SUMMARY_LINE="$(/usr/bin/grep '^CGWINDOW_OBSERVER_SUMMARY:' "$OBSERVER_LOG" 2>/dev/null | /usr/bin/tail -1)"
-
-echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_passthrough_result_count=$SHAPE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_adapter_pass_count=$SHAPE_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_legacy_trace_count=$LEGACY_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_geometry_400x222_count=$GEOMETRY_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_summary=$SUMMARY_LINE" | /usr/bin/tee -a "$SUBJECT_LOG"
-
-if [ "$APP_RC" -eq 0 ] &&
-   [ "$OBSERVER_RC" -eq 0 ] &&
-   [ "$SHAPE_CALL_COUNT" -eq 1 ] &&
-   [ "$SHAPE_PASS_COUNT" -eq 1 ] &&
-   [ "$SHAPE_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$LEGACY_TRACE_COUNT" -eq 1 ] &&
-   [ "$WINDOW_MARKER_COUNT" -eq 1 ] &&
-   [ "$SMOKE_MARKER_COUNT" -eq 1 ] &&
-   [ "$OBSERVER_PASS_COUNT" -eq 1 ] &&
-   [ "$GEOMETRY_COUNT" -ge 1 ]; then
-    echo "RESULT: PPC_CARBON_GUI_CGSSHAPEWINDOW_INLINE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "manual_window_observation=REQUIRED" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "RESULT: PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    exit 0
-fi
-
-echo "RESULT: PPC_CARBON_GUI_CGSSHAPEWINDOW_INLINE_SNOW_CONTROL_FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "RESULT: FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-exit 1
- "$SUBJECT_LOG" 2>/dev/null || true)"
-SYNC_REJECT_COUNT="$(/usr/bin/grep -c '^PM_CGS_BACKING_SYNC_COMPAT_RESULT:PREDICATE_REJECTED_PASSTHROUGH"$(/usr/bin/grep -c 'kind=CGS_SHAPEWINDOW_INLINE_LEGACY.*id=0x0000724d expectedReply=0x000072b1.*send=0x00000050 recv=0x0000002c' "$SUBJECT_LOG" 2>/dev/null || true)"
-WINDOW_MARKER_COUNT="$(/usr/bin/grep -c '^Rosetta PPC Carbon GUI window shown:' "$SUBJECT_LOG" 2>/dev/null || true)"
-SMOKE_MARKER_COUNT="$(/usr/bin/grep -c '^Rosetta PPC Carbon GUI smoke test:' "$SUBJECT_LOG" 2>/dev/null || true)"
-OBSERVER_PASS_COUNT="$(/usr/bin/grep -c '^CGWINDOW_OBSERVER_RESULT:PASS$' "$OBSERVER_LOG" 2>/dev/null || true)"
-GEOMETRY_COUNT="$(/usr/bin/grep -c 'x=120 y=98 width=400 height=222.*name=Rosetta PPC Carbon GUI' "$OBSERVER_LOG" 2>/dev/null || true)"
-SUMMARY_LINE="$(/usr/bin/grep '^CGWINDOW_OBSERVER_SUMMARY:' "$OBSERVER_LOG" 2>/dev/null | /usr/bin/tail -1)"
-
-echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_passthrough_result_count=$SHAPE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_adapter_pass_count=$SHAPE_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_legacy_trace_count=$LEGACY_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_geometry_400x222_count=$GEOMETRY_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_summary=$SUMMARY_LINE" | /usr/bin/tee -a "$SUBJECT_LOG"
-
-if [ "$APP_RC" -eq 0 ] &&
-   [ "$OBSERVER_RC" -eq 0 ] &&
-   [ "$SHAPE_CALL_COUNT" -eq 1 ] &&
-   [ "$SHAPE_PASS_COUNT" -eq 1 ] &&
-   [ "$SHAPE_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$LEGACY_TRACE_COUNT" -eq 1 ] &&
-   [ "$WINDOW_MARKER_COUNT" -eq 1 ] &&
-   [ "$SMOKE_MARKER_COUNT" -eq 1 ] &&
-   [ "$OBSERVER_PASS_COUNT" -eq 1 ] &&
-   [ "$GEOMETRY_COUNT" -ge 1 ]; then
-    echo "RESULT: PPC_CARBON_GUI_CGSSHAPEWINDOW_INLINE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "manual_window_observation=REQUIRED" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "RESULT: PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    exit 0
-fi
-
-echo "RESULT: PPC_CARBON_GUI_CGSSHAPEWINDOW_INLINE_SNOW_CONTROL_FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "RESULT: FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-exit 1
- "$SUBJECT_LOG" 2>/dev/null || true)"
-LEGACY_TRACE_COUNT="$(/usr/bin/grep -c 'kind=CGS_SHAPEWINDOW_INLINE_LEGACY.*id=0x0000724d expectedReply=0x000072b1.*send=0x00000050 recv=0x0000002c' "$SUBJECT_LOG" 2>/dev/null || true)"
-WINDOW_MARKER_COUNT="$(/usr/bin/grep -c '^Rosetta PPC Carbon GUI window shown:' "$SUBJECT_LOG" 2>/dev/null || true)"
-SMOKE_MARKER_COUNT="$(/usr/bin/grep -c '^Rosetta PPC Carbon GUI smoke test:' "$SUBJECT_LOG" 2>/dev/null || true)"
-OBSERVER_PASS_COUNT="$(/usr/bin/grep -c '^CGWINDOW_OBSERVER_RESULT:PASS$' "$OBSERVER_LOG" 2>/dev/null || true)"
-GEOMETRY_COUNT="$(/usr/bin/grep -c 'x=120 y=98 width=400 height=222.*name=Rosetta PPC Carbon GUI' "$OBSERVER_LOG" 2>/dev/null || true)"
-SUMMARY_LINE="$(/usr/bin/grep '^CGWINDOW_OBSERVER_SUMMARY:' "$OBSERVER_LOG" 2>/dev/null | /usr/bin/tail -1)"
-
-echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_passthrough_result_count=$SHAPE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_adapter_pass_count=$SHAPE_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_legacy_trace_count=$LEGACY_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_geometry_400x222_count=$GEOMETRY_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_summary=$SUMMARY_LINE" | /usr/bin/tee -a "$SUBJECT_LOG"
-
-if [ "$APP_RC" -eq 0 ] &&
-   [ "$OBSERVER_RC" -eq 0 ] &&
-   [ "$SHAPE_CALL_COUNT" -eq 1 ] &&
-   [ "$SHAPE_PASS_COUNT" -eq 1 ] &&
-   [ "$SHAPE_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$LEGACY_TRACE_COUNT" -eq 1 ] &&
-   [ "$WINDOW_MARKER_COUNT" -eq 1 ] &&
-   [ "$SMOKE_MARKER_COUNT" -eq 1 ] &&
-   [ "$OBSERVER_PASS_COUNT" -eq 1 ] &&
-   [ "$GEOMETRY_COUNT" -ge 1 ]; then
-    echo "RESULT: PPC_CARBON_GUI_CGSSHAPEWINDOW_INLINE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "manual_window_observation=REQUIRED" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "RESULT: PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    exit 0
-fi
-
-echo "RESULT: PPC_CARBON_GUI_CGSSHAPEWINDOW_INLINE_SNOW_CONTROL_FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
 echo "RESULT: FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
 exit 1
