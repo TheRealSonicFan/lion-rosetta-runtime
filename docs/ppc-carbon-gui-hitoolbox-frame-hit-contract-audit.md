@@ -100,7 +100,7 @@ Current runtime `main` provides:
 
 ```text
 scripts/audit-ppc-carbon-gui-hitoolbox-frame-hit-contract.py
-Git blob 942fd692eb07bf288e2b5b236939051fc27c3ec1
+Git blob fa3b5492b3b7f8d6f26cf2cdec1f943e52ac5f04
 ```
 
 Analyzer contract:
@@ -173,7 +173,7 @@ git fetch origin || exit 1
 git pull --ff-only origin main || exit 1
 
 test "$(git hash-object ./scripts/audit-ppc-carbon-gui-hitoolbox-frame-hit-contract.py)" = \
-  "942fd692eb07bf288e2b5b236939051fc27c3ec1" || exit 1
+  "fa3b5492b3b7f8d6f26cf2cdec1f943e52ac5f04" || exit 1
 
 /usr/bin/grep -q '^ANALYZER_VERSION = "1"$' \
   ./scripts/audit-ppc-carbon-gui-hitoolbox-frame-hit-contract.py || exit 1
