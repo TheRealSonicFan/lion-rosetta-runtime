@@ -376,6 +376,10 @@ lion-runapplicationeventloop-thirteenth-schema-audit.txt
 
 Also return any newly named crash report or crash plist if the runner reports one.
 
+## Observed result
+
+The request-13 schema audit is a clean PASS. The first twelve reviewed registrations remained exact, request 13 was captured once at `bits=0x1111 id=4 size=356 payload=323`, binary length 323 / XML length 663, and the captured eight-key plist decodes exactly as `register` / `AppleKeyboardMenuPreferencesChangedNotification` / `kCFNotificationAnyObject` / behavior 4 / Coalesce / counter 1 with the established client/session and a positive per-run entry. The broker ended `register=12 callback=0 rejects=0 exact=YES`, `captures=1 failures=0 unexpectedRejects=0 postBoundaryRejects=8 exact=YES`, and `RUNAPPLICATIONEVENTLOOP_THIRTEENTH_AUDIT_PASS`; the timer-side-quit chain, compatibility/titlebar counts, no-new-diagnostics gate, protected hashes, and PPC exit 0 all remained intact. Request 14 is therefore the next unreviewed boundary, known only as `bits=0x1111 id=4 size=336 payload=302`, and the next operation is exact request-13 registration.
+
 ## Current boundary
 
 ```text
@@ -386,15 +390,16 @@ request-9 exact registration                        LIVE-PROVEN PASS
 request-10 exact registration                       LIVE-PROVEN PASS
 request-11 exact registration                       LIVE-PROVEN PASS
 request-12 exact registration                       LIVE-PROVEN PASS
-request-12 operation                                register
-request-12 name                                     AppleLanguagePreferencesChangedNotification
-request-12 object                                   kCFNotificationAnyObject
-request-12 behavior                                 4 / Coalesce
-request-12 counter                                  1
-request-13 geometry                                 bits=0x1111 id=4 size=356 payload=323
-next step                                           capture/decode request 13 only
-request 13                                          unreviewed / reject after capture
-request 14+                                         unreviewed tail / reject
+request-13 schema audit                             PASS
+request-13 operation                                register
+request-13 name                                     AppleKeyboardMenuPreferencesChangedNotification
+request-13 object                                   kCFNotificationAnyObject
+request-13 behavior                                 4 / Coalesce
+request-13 counter                                  1
+request-14 geometry                                 bits=0x1111 id=4 size=336 payload=302
+next step                                           accept exact request 13 once
+request 14                                          unreviewed / reject
+request 15+                                         unreviewed tail / reject
 RemoveEventLoopTimer / DisposeEventLoopTimerUPP     HELD
 new compatibility families                         NO
 titlebar policy broadening                         NO
