@@ -8,7 +8,7 @@ SRC="$ROOT/tests/ppc-process-manager-postidentity-runapplicationeventloop-preque
 PATCH_DYLINKER="$SCRIPT_DIR/patch-ppc-load-dylinker.py"
 INFO="$OUT.info.txt"
 SHA="$OUT.sha256"
-EXPECTED_BUILD_ID="cps-runapplicationeventloop-prequeued-quit-validation-v1"
+EXPECTED_BUILD_ID="cps-runapplicationeventloop-timer-quit-validation-v2"
 EXPECTED_BASENAME="ppc-process-manager-cgs-session-bootstrap-integration-private-dyld"
 CC_SELECTED="${CC:-/Developer-3.2.6/usr/bin/gcc-4.2}"
 
@@ -20,7 +20,7 @@ CC_SELECTED="${CC:-/Developer-3.2.6/usr/bin/gcc-4.2}"
     exit 64
 }
 /usr/bin/grep -Fq "$EXPECTED_BUILD_ID" "$SRC" || {
-    echo "error: stale prequeued-quit RunApplicationEventLoop subject source; pull current runtime main" >&2
+    echo "error: stale timer-quit RunApplicationEventLoop subject source; pull current runtime main" >&2
     exit 66
 }
 /usr/bin/grep -Fq 'timer_upp = NewEventLoopTimerUPP(ProbeTimer);' "$SRC" || {
@@ -43,8 +43,12 @@ CC_SELECTED="${CC:-/Developer-3.2.6/usr/bin/gcc-4.2}"
     echo "error: RunApplicationEventLoop source expression missing from validation subject" >&2
     exit 66
 }
-/usr/bin/grep -Fq '_exit(48);' "$SRC" || {
-    echo "error: timer callback failure tripwire missing from validation subject" >&2
+/usr/bin/grep -Fq 'marker("PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop");' "$SRC" || {
+    echo "error: timer callback quit marker missing from validation subject" >&2
+    exit 66
+}
+/usr/bin/grep -Fq 'marker("PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop");' "$SRC" || {
+    echo "error: timer callback post-quit marker missing from validation subject" >&2
     exit 66
 }
 
@@ -61,7 +65,7 @@ cleanup_on_exit() {
 trap cleanup_on_exit EXIT
 
 "$CC_SELECTED" -arch ppc -mmacosx-version-min=10.5 \
-    -DPM_CPS_RUNAPPLICATIONEVENTLOOP_PREQUEUED_QUIT_VALIDATION=1 \
+    -DPM_CPS_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_VALIDATION=1 \
     "$SRC" -framework Carbon -o "$OUT"
 /bin/chmod +x "$OUT"
 /usr/bin/python "$PATCH_DYLINKER" "$OUT" /usr/oah/dyld
@@ -165,14 +169,14 @@ for marker in \
     'PM_POSTWINDOWTIMERINSTALL_POINTER:pointer=' \
     'PM_POSTWINDOWTIMERINSTALL_CALLBACK:fired=' \
     'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_PASS' \
-    'PM_POSTWINDOWEVENTLOOPQUIT_MILESTONE:S12_BEFORE_QuitApplicationEventLoop' \
-    'PM_POSTWINDOWEVENTLOOPQUIT_MILESTONE:S13_AFTER_QuitApplicationEventLoop' \
-    'PM_POSTWINDOWEVENTLOOPQUIT_CALLBACK:fired=' \
-    'PM_POSTWINDOWEVENTLOOPQUIT_RESULT:QUITAPPLICATIONEVENTLOOP_PASS' \
     'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' \
+    'PM_POSTWINDOWTIMER_CALLBACK:ENTER' \
+    'PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop' \
+    'PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop' \
+    'PM_POSTWINDOWTIMER_CALLBACK:EXIT' \
     'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' \
     'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=' \
-    'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_PREQUEUED_QUIT_PASS' \
+    'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' \
     'PM_POSTWINDOWTITLE_MILESTONE:T04_BEFORE_CFRelease' \
     'PM_POSTWINDOWTITLE_MILESTONE:T05_AFTER_CFRelease' \
     'PM_POSTIDENTITY_MILESTONE:M22_BEFORE_DisposeWindow' \
@@ -189,7 +193,7 @@ RUNTIME_GIT_HEAD="$(cd "$ROOT" 2>/dev/null && /usr/bin/git rev-parse HEAD 2>/dev
 SOURCE_SHA="$(/usr/bin/shasum -a 256 "$SRC" | /usr/bin/awk '{print $1}')"
 
 {
-    echo "== PPC restored-stack post-QuitApplicationEventLoop RunApplicationEventLoop prequeued-quit validation subject =="
+    echo "== PPC restored-stack post-InstallEventLoopTimer RunApplicationEventLoop timer-quit validation subject =="
     echo "compiler=$CC_SELECTED"
     echo "source=$SRC"
     echo "runtime_git_head=$RUNTIME_GIT_HEAD"
@@ -205,13 +209,13 @@ SOURCE_SHA="$(/usr/bin/shasum -a 256 "$SRC" | /usr/bin/awk '{print $1}')"
     echo "installeventlooptimer_callback_expected_before_event_loop=0"
     echo "quitapplicationeventloop_source_expression=QuitApplicationEventLoop()"
     echo "quitapplicationeventloop_linkage=undefined-import"
-    echo "quitapplicationeventloop_context=prequeue-before-runapplicationeventloop"
-    echo "quitapplicationeventloop_callback_expected=0"
+    echo "quitapplicationeventloop_context=installed-timer-callback-while-runapplicationeventloop-active"
+    echo "quitapplicationeventloop_callback_expected=1"
     echo "runapplicationeventloop_source_expression=RunApplicationEventLoop()"
     echo "runapplicationeventloop_linkage=undefined-import"
-    echo "runapplicationeventloop_exit_condition=prequeued-kEventAppQuit"
-    echo "runapplicationeventloop_callback_expected=0"
-    echo "runapplicationeventloop_callback_failure_tripwire=_exit(48)"
+    echo "runapplicationeventloop_exit_condition=installed-timer-callback-calls-QuitApplicationEventLoop"
+    echo "runapplicationeventloop_callback_expected=1"
+    echo "runapplicationeventloop_callback_contract=exactly-one-callback-before-return"
     /usr/bin/file "$OUT"
     /usr/bin/lipo -info "$OUT" 2>/dev/null || true
     echo
