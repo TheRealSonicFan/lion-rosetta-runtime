@@ -38,6 +38,7 @@ POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE="${ROSETTA_POST_NEWEVENTLOOPTIME
 POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE="${ROSETTA_POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_VALIDATION_MODE:-}"
 POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE="${ROSETTA_POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_VALIDATION_MODE:-}"
 POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE="${ROSETTA_POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_VALIDATION_MODE:-}"
+POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE="${ROSETTA_POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_VALIDATION_MODE:-}"
 SHOWWINDOW_UNKNOWN_TRACE_MODE="${ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE:-}"
 SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE:-}"
 SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE:-}"
@@ -215,6 +216,13 @@ if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
     [ -z "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ] ||
         fail "Snow RunApplicationEventLoop timer-quit validation must not prequeue QuitApplicationEventLoop"
     EXPECTED_SUBJECT_BUILD_ID="cps-runapplicationeventloop-timer-quit-validation-v2"
+fi
+if [ -n "$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" ]; then
+    [ "$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" = "snow-removeeventlooptimer-v1" ] ||
+        fail "unsupported Snow post-RunApplicationEventLoop RemoveEventLoopTimer validation mode: $POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE"
+    [ "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" = "snow-runapplicationeventloop-timer-quit-v2" ] ||
+        fail "Snow RemoveEventLoopTimer validation requires the RunApplicationEventLoop timer-quit validation mode"
+    EXPECTED_SUBJECT_BUILD_ID="cps-removeeventlooptimer-validation-v1"
 fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "snow-passive-v1" ] ||
@@ -510,6 +518,16 @@ if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
             fail "RunApplicationEventLoop timer-quit subject marker missing: $marker"
     done
 fi
+if [ -n "$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" ]; then
+    for marker in \
+        'PM_POSTWINDOWTIMERREMOVE_MILESTONE:S16_BEFORE_RemoveEventLoopTimer' \
+        'PM_POSTWINDOWTIMERREMOVE_MILESTONE:S17_AFTER_RemoveEventLoopTimer' \
+        'PM_POSTWINDOWTIMERREMOVE_STATUS:RemoveEventLoopTimer=' \
+        'PM_POSTWINDOWTIMERREMOVE_RESULT:REMOVEEVENTLOOPTIMER_PASS'; do
+        /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq "$marker" ||
+            fail "RemoveEventLoopTimer subject marker missing: $marker"
+    done
+fi
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
     "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || fail "CoreServices CPS registration compatibility build marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
@@ -740,6 +758,9 @@ if [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
 fi
 if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
     echo "post_quitapplicationeventloop_runapplicationeventloop_validation_mode=$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" | /usr/bin/tee -a "$LOG"
+fi
+if [ -n "$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" ]; then
+    echo "post_runapplicationeventloop_removeeventlooptimer_validation_mode=$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" | /usr/bin/tee -a "$LOG"
 fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     echo "showwindow_unknown_cgs_trace_mode=$SHOWWINDOW_UNKNOWN_TRACE_MODE" | /usr/bin/tee -a "$LOG"
@@ -1073,6 +1094,17 @@ if [ "$RC" -eq 0 ] &&
         echo "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT" | /usr/bin/tee -a "$LOG"
         echo "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT" | /usr/bin/tee -a "$LOG"
     fi
+    if [ -n "$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERREMOVE_MILESTONE:S16_BEFORE_RemoveEventLoopTimer' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERREMOVE_MILESTONE:S17_AFTER_RemoveEventLoopTimer' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERREMOVE_STATUS:RemoveEventLoopTimer=0' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERREMOVE_RESULT:REMOVEEVENTLOOPTIMER_PASS' "$LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERREMOVE_RESULT:REMOVEEVENTLOOPTIMER_RETURNED_ERROR' "$LOG"; then
+            echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
+            exit 1
+        fi
+        echo "removeeventlooptimer_status=0" | /usr/bin/tee -a "$LOG"
+    fi
     if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
         FONTSERVER_RENDEZVOUS_COMPAT_CALLS="$(/usr/bin/grep -c 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_CALL:' "$LOG" 2>/dev/null || true)"
         if [ "$FONTSERVER_RENDEZVOUS_COMPAT_CALLS" -ne 1 ] ||
@@ -1229,7 +1261,9 @@ if [ "$RC" -eq 0 ] &&
                             echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
                             exit 1
                         fi
-                        if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+                        if [ -n "$POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_MODE" ]; then
+                            echo "RESULT: POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+                        elif [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
                             echo "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
                         elif [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
                             echo "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
