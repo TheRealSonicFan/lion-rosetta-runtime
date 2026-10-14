@@ -93,6 +93,7 @@ RUNAPPLICATIONEVENTLOOP_NINTH_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFIC
 RUNAPPLICATIONEVENTLOOP_TENTH_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_TENTH_SCHEMA_AUDIT_REPORT:-}"
 RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE:-}"
 RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE:-}"
+RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE:-}"
 REAL_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE:-}"
 EXPECTED_REAL_REGISTRATION_COUNT=3
 if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
@@ -117,6 +118,9 @@ elif [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_SCHEMA_AUDIT_REPORT" ]; then
 elif [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_SCHEMA_AUDIT_REPORT" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-runapplicationeventloop-tenth-schema-audit-broker-v1"
     EXPECTED_REAL_REGISTRATION_COUNT=9
+elif [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ]; then
+    EXPECTED_BROKER_BUILD_ID="distributed-notifications-runapplicationeventloop-tenth-registration-broker-v1"
+    EXPECTED_REAL_REGISTRATION_COUNT=10
 elif [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-runapplicationeventloop-ninth-registration-broker-v1"
     EXPECTED_REAL_REGISTRATION_COUNT=9
@@ -169,6 +173,8 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ]; then
         die 64 "RunApplicationEventLoop eighth registration and request-10 schema audit are mutually exclusive"
     [ -z "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ] ||
         die 64 "RunApplicationEventLoop exact-eight and exact-nine registration modes are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ] ||
+        die 64 "RunApplicationEventLoop exact-eight and exact-ten registration modes are mutually exclusive"
 fi
 
 if [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_SCHEMA_AUDIT_REPORT" ]; then
@@ -184,6 +190,8 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_SCHEMA_AUDIT_REPORT" ]; then
         die 64 "RunApplicationEventLoop request-9 and request-10 schema audits are mutually exclusive"
     [ -z "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ] ||
         die 64 "RunApplicationEventLoop request-9 schema audit and exact-nine registration are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ] ||
+        die 64 "RunApplicationEventLoop request-9 schema audit and exact-ten registration are mutually exclusive"
 fi
 
 if [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ]; then
@@ -201,6 +209,8 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ]; then
         die 64 "RunApplicationEventLoop exact-nine registration uses its own first-nine broker; do not enable exact-eight separately"
     [ -z "$RUNAPPLICATIONEVENTLOOP_TENTH_SCHEMA_AUDIT_REPORT" ] ||
         die 64 "RunApplicationEventLoop exact-nine registration and request-10 schema audit are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ] ||
+        die 64 "RunApplicationEventLoop exact-nine and exact-ten registration modes are mutually exclusive"
 fi
 
 if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_SCHEMA_AUDIT_REPORT" ]; then
@@ -216,6 +226,27 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_SCHEMA_AUDIT_REPORT" ]; then
         die 64 "RunApplicationEventLoop request-10 schema audit uses its own exact-nine broker; do not enable exact-eight separately"
     [ -z "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ] ||
         die 64 "RunApplicationEventLoop request-10 schema audit uses its own exact-nine broker; do not enable exact-nine registration mode separately"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ] ||
+        die 64 "RunApplicationEventLoop request-10 schema audit and exact-ten registration are mutually exclusive"
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ]; then
+    [ "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" = "lion-tenth-register-v1" ] ||
+        die 64 "unsupported ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE: $RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE"
+    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] ||
+        die 64 "RunApplicationEventLoop tenth registration requires the reviewed exact-seven registration base mode"
+    [ "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" = "lion-runapplicationeventloop-timer-quit-v2" ] ||
+        die 64 "RunApplicationEventLoop tenth registration requires lion-runapplicationeventloop-timer-quit-v2"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT" ] ||
+        die 64 "RunApplicationEventLoop tenth registration and request-8 schema audit are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_NINTH_SCHEMA_AUDIT_REPORT" ] ||
+        die 64 "RunApplicationEventLoop tenth registration and request-9 schema audit are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_TENTH_SCHEMA_AUDIT_REPORT" ] ||
+        die 64 "RunApplicationEventLoop tenth registration and request-10 schema audit are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ] ||
+        die 64 "RunApplicationEventLoop exact-ten registration uses its own first-ten broker; do not enable exact-eight separately"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ] ||
+        die 64 "RunApplicationEventLoop exact-ten registration uses its own first-ten broker; do not enable exact-nine separately"
 fi
 
 if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
@@ -1123,6 +1154,20 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_SCHEMA_AUDIT_REPORT" ]; then
             die 68 "RunApplicationEventLoop tenth-request schema-audit broker marker missing: $marker"
     done
 fi
+if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ]; then
+    for marker in \
+        'PM_DISTRIBUTED_NOTIFICATIONS_SHOWWINDOW_SIXTH_REGISTRATION_POLICY:index=6 allowed=3 counter=2' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_SHOWWINDOW_SEVENTH_REGISTRATION_POLICY:index=7 allowed=5 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_POLICY:index=8 allowed=6 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_POLICY:index=9 allowed=7 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_POLICY:index=10 allowed=8 counter=1' \
+        'AppleDatePreferencesChangedNotification' \
+        'AppleTimePreferencesChangedNotification' \
+        'AppleNumberPreferencesChangedNotification'; do
+        /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "RunApplicationEventLoop exact-ten registration broker marker missing: $marker"
+    done
+fi
 if [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ]; then
     for marker in \
         'PM_DISTRIBUTED_NOTIFICATIONS_SHOWWINDOW_SIXTH_REGISTRATION_POLICY:index=6 allowed=3 counter=2' \
@@ -1302,6 +1347,9 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ]; then
 fi
 if [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ]; then
     log "distributed_notifications_runapplicationeventloop_ninth_registration_mode=$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE"
+fi
+if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ]; then
+    log "distributed_notifications_runapplicationeventloop_tenth_registration_mode=$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE"
 fi
 if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
     log "dockserver_bootstrap_compat_mode=$DOCKSERVER_COMPAT_MODE"
@@ -2223,6 +2271,62 @@ if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
         exit 0
     else
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ]; then
+    TENTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=10 allowed=8 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "tenth_notification_registration_accept_count=$TENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ "$TENTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=11 bits=0x00001111 id=4 size=356 payload=323' "$RAW_LOG" &&
+           [ "$RC" -eq 0 ] &&
+           [ "$FOUND" -eq 0 ] &&
+           [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+           [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+           [ "$WBI_PASS_COUNT" -eq 1 ] &&
+           [ "$CPC_PASS_COUNT" -eq 1 ] &&
+           [ "$CPR_PASS_COUNT" -eq 1 ] &&
+           [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+           /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+           /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_PASS_ELEVENTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED_INHERITED_CHAIN_MISMATCH"
+        fi
         exit 0
     fi
 fi
@@ -3390,7 +3494,11 @@ if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:P
 fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
-    if [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ] &&
+    if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ] &&
        [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
        [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
         log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
