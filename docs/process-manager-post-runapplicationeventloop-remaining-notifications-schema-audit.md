@@ -1,5 +1,7 @@
 # Post-RunApplicationEventLoop remaining distributed-notification schema audit
 
+**Status: COMPLETE — PASS.** The one-run audit captured and decoded requests 14–21 exactly, and the reviewed result now advances to `docs/process-manager-post-runapplicationeventloop-remaining-notifications-registration.md`. This document remains the audit procedure and evidence contract.
+
 ## Objective
 
 Audit the **entire remaining observed notification-registration wave in one Lion run** while preserving the exact reviewed first-thirteen registrations and every inherited compatibility gate.
@@ -331,15 +333,22 @@ lion-runapplicationeventloop-remaining-schema-audit.txt
 
 Also return any newly named crash report or crash plist if the runner reports one.
 
+## Observed result
+
+The remaining-wave audit is a clean PASS. Requests 14–21 were captured exactly once and deliberately rejected during audit, with `captures=8 failures=0 unexpectedRejects=0 postBoundaryRejects=0 exact=YES`. Every decoded plist is a `register` operation for the established client and session, with `kCFNotificationAnyObject`, behavior 4 / Coalesce, counter 1, and a positive unique per-run entry. The eight reviewed names are `AppleKeyboardPreferencesChangedNotification`, `AppleKeyboardPreferencesSelectedItemsChangedNotification`, `AppleSelectedInputMethodPasteboardInvalidNotification`, `AppleTextInputMenuExtraDidLoadNotification`, `AppleInstalledInputSourcesChangedNotification`, `AppleEnabledInputSourcesChangedNotification`, `AppleSelectedInputSourcesChangedNotification`, and `com.apple.accessibility.api`. The inherited timer-side-quit chain completed through S15 and `M24_SUCCESS`; PPC exit remained 0, compatibility/titlebar counts stayed exact, no new diagnostic appeared, and protected hashes remained unchanged. This closes the schema-audit boundary and authorizes only the guarded combined exact requests-14–21 registration experiment.
+
 ## Current boundary
 
 ```text
 request-13 exact registration                       LIVE-PROVEN PASS
-remaining observed registrations                    8 (requests 14–21)
-request-14 through request-21 schemas                UNREVIEWED
-safe one-run acceleration                           capture/decode all eight; reject all eight
-bulk acceptance now                                 NOT AUTHORIZED
-possible next acceptance after review               one combined exact requests-14–21 policy
+requests 14-21 schema audit                         LIVE-PROVEN PASS
+requests 14-21 operation                            register
+requests 14-21 object                               kCFNotificationAnyObject
+requests 14-21 behavior                             4 / Coalesce
+requests 14-21 counter                              1 each
+combined exact requests-14-21 policy                PREPARED / NOT YET LIVE-PROVEN
+next procedure                                      remaining-notifications-registration.md
+request after 21                                    unreviewed / reject
 request-14-only failed run                          preflight runner bug; PPC subject did not launch
 RemoveEventLoopTimer / DisposeEventLoopTimerUPP     HELD
 new compatibility families                         NO
