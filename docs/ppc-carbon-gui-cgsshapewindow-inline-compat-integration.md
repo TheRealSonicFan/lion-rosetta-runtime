@@ -92,7 +92,7 @@ scripts/build-ppc-carbon-gui-cgsshapewindow-inline-compat-on-snowleopard.sh
   Git blob 977424d4f63b3754aa9dc2bbc9d3922e0c92a205
 
 scripts/run-snowleopard-ppc-carbon-gui-cgsshapewindow-inline-control.sh
-  Git blob 1a9ccff345c615f14c56514d14acced18fb2fe0e
+  Git blob f668a0e61b551b690a90134c7b97a30f69209247
 
 scripts/run-lion-ppc-carbon-gui-cgsshapewindow-inline-integration.sh
   Git blob 9832dfb208f0dedb20a213c4ed8bd6e7c6fa695f
@@ -227,6 +227,8 @@ RESULT: PASS
 ```
 
 Manually confirm the Snow Carbon window is visible.
+
+The Snow control runner validates Mach-O architecture by parsing `lipo -info` rather than relying on `lipo -verify_arch`. This is intentional: the earlier runner could falsely reject the Snow-built thin PPC compatibility dylib even when `file` correctly reported a PPC Mach-O. If a run stopped only at `error: compatibility dylib is not PPC` after the subject/core/observer/private-dyld hashes were logged, pull current `main` and rerun Phase C with the existing built dylib and sidecar; no rebuild is required unless its sidecar no longer matches.
 
 If the predicate is not exact on Snow, stop. Do not run Lion.
 
