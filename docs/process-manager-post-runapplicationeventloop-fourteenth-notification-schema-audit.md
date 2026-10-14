@@ -46,7 +46,7 @@ Pinned blobs:
 ```text
 request-14 audit broker source          57259e8035ef9868c824fe829b42a4d7c1c679de
 request-14 audit broker builder         83d30bbf0c01e9dd4703f87a03e11c3626f5fea4
-Lion integration runner                 ba6f6d1563e07981033a63aa53b75dc6dca334c2
+Lion integration runner                 c484d0f49667d9ebbc521ca50867fd48a76f84c0
 RunApplicationEventLoop subject         97e410dd71e545c393e0ce6889678a6436ff8ea1
 XNU syscall-295 runner                  eaecc9bfbf4d780664c7e66471a832a0289aebb6
 ```
@@ -167,7 +167,7 @@ test "$(git hash-object ./scripts/build-lion-dn-runapplicationeventloop-14-schem
   "83d30bbf0c01e9dd4703f87a03e11c3626f5fea4" || exit 1
 
 test "$(git hash-object ./scripts/run-lion-ppc-process-manager-createwindow-distnotify-integration.sh)" = \
-  "ba6f6d1563e07981033a63aa53b75dc6dca334c2" || exit 1
+  "c484d0f49667d9ebbc521ca50867fd48a76f84c0" || exit 1
 
 test "$(git hash-object ./tests/ppc-process-manager-postidentity-runapplicationeventloop-prequeued-quit.c)" = \
   "97e410dd71e545c393e0ce6889678a6436ff8ea1" || exit 1
