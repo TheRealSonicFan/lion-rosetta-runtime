@@ -1129,15 +1129,23 @@ if [ "$RC" -eq 0 ] &&
                 ORDER_FRONT_PASSTHROUGH_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:PASSTHROUGH' "$LOG" 2>/dev/null || true)"
                 ORDER_FRONT_EXPECTED_COUNT=1
                 SELECTWINDOW_ORDER_FRONT_COUNT=0
+                RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT=0
                 if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
                     ORDER_FRONT_EXPECTED_COUNT=2
                     SELECTWINDOW_ORDER_FRONT_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWSELECT_MILESTONE:S02_BEFORE_SelectWindow/{seen=1; next} seen && /PM_POSTWINDOWSELECT_MILESTONE:S03_AFTER_SelectWindow/{exit} seen && /PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=/{n++} END{print n+0}' "$LOG" 2>/dev/null)"
+                fi
+                if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+                    ORDER_FRONT_EXPECTED_COUNT=3
+                    RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop/{seen=1; next} seen && /PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop/{exit} seen && /PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=/{n++} END{print n+0}' "$LOG" 2>/dev/null)"
                 fi
                 echo "cgs_order_front_conditionally_compat_call_count=$ORDER_FRONT_COMPAT_COUNT" | /usr/bin/tee -a "$LOG"
                 echo "cgs_order_front_conditionally_legacy_trace_count=$ORDER_FRONT_TRACE_COUNT" | /usr/bin/tee -a "$LOG"
                 echo "cgs_order_front_conditionally_passthrough_count=$ORDER_FRONT_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$LOG"
                 if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
                     echo "selectwindow_order_front_conditionally_call_count=$SELECTWINDOW_ORDER_FRONT_COUNT" | /usr/bin/tee -a "$LOG"
+                fi
+                if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+                    echo "runapplicationeventloop_order_front_conditionally_call_count=$RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT" | /usr/bin/tee -a "$LOG"
                 fi
                 if [ "$ORDER_FRONT_COMPAT_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
                    [ "$ORDER_FRONT_TRACE_COUNT" -ne "$ORDER_FRONT_EXPECTED_COUNT" ] ||
@@ -1150,7 +1158,10 @@ if [ "$RC" -eq 0 ] &&
                    ! /usr/bin/grep -Fq 'kind=CGS_ORDER_FRONT_CONDITIONALLY_LEGACY bits=0x00001200 size=0x00000024 id=0x0000734b expected=0x0000734b idMatch=YES' "$LOG" ||
                    { [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ] &&
                      { [ "$SELECTWINDOW_ORDER_FRONT_COUNT" -ne 1 ] ||
-                       ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=2 mode=passthrough exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=1' "$LOG"; }; }; then
+                       ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=2 mode=passthrough exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=1' "$LOG"; }; } ||
+                   { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+                     { [ "$RUNAPPLICATIONEVENTLOOP_ORDER_FRONT_COUNT" -ne 1 ] ||
+                       ! /usr/bin/grep -Eq 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_CALL:index=3 mode=passthrough exact=YES .*opacityCreateCompatCalls=1 addTrackingCompatCalls=1' "$LOG"; }; }; then
                     echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
                     exit 1
                 fi
