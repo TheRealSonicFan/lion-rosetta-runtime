@@ -170,6 +170,21 @@ def parse_symbols(text):
     return ordered, by_name
 
 
+def parse_all_symbols(text):
+    by_name = {}
+    for line in text.splitlines():
+        parts = line.split()
+        if len(parts) < 2:
+            continue
+        addr = parse_hex_token(parts[0])
+        if addr is None:
+            continue
+        name = parts[-1]
+        if name not in by_name:
+            by_name[name] = addr
+    return by_name
+
+
 def parse_instructions(text):
     rows = []
     for line in text.splitlines():
@@ -274,6 +289,7 @@ def main():
         slice_sha = "MISSING"
         symbols = []
         by_name = {}
+        all_by_name = {}
         rows = []
         cstring_hits = []
 
@@ -291,6 +307,7 @@ def main():
                 issues.append("HIToolbox nm failed")
             else:
                 symbols, by_name = parse_symbols(nm_out)
+                all_by_name = parse_all_symbols(nm_out)
 
             rc, dis_out = run(["/usr/bin/otool", "-tvV", thin])
             if rc != 0:
@@ -321,7 +338,7 @@ def main():
             issues.append("unexpected Lion DrawDocumentWindowWithCoreUI symbol")
 
         use_unrolled_names = [
-            name for name in by_name
+            name for name in all_by_name
             if "sUseUnrolledWindows" in name
         ]
 
@@ -353,7 +370,7 @@ def main():
             write_line(fp, "document_window_with_coreui_present=%s" % ("YES" if document_coreui_present else "NO"))
             write_line(fp, "sUseUnrolledWindows_symbol_count=%d" % len(use_unrolled_names))
             for name in use_unrolled_names:
-                write_line(fp, "sUseUnrolledWindows_symbol=%s address=0x%x" % (name, by_name[name]))
+                write_line(fp, "sUseUnrolledWindows_symbol=%s address=0x%x" % (name, all_by_name[name]))
             write_line(fp, "focused_cstring_count=%d" % len(cstring_hits))
             for line in cstring_hits:
                 write_line(fp, line)
