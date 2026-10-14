@@ -360,7 +360,7 @@ The guarded Lion 10.7.5 / 11G63 `GetMainEventLoop()` run passes completely with 
 
 After the inherited ShowWindow/SelectWindow/IsWindowVisible/NewEventLoopTimerUPP path succeeds, S08 and S09 both execute, `GetMainEventLoop()` returns the nonzero EventLoopRef `0x004a6da0`, and `GETMAINEVENTLOOP_PASS` is emitted. Cleanup reaches `M24_SUCCESS`, the PPC execution status is 0, exact-seven remains `register=7 callback=0 rejects=0 exact=YES`, all six titlebar translations occur once with zero guard rejects, WindowBackingInfo and ResolveColorProfile each preserve one successful adapter call, both OrderFront calls preserve successful adaptation with exactly one SelectWindow-bounded call, protected hashes remain unchanged, no new diagnostic is created, and the runner ends with `POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_VALIDATION_PASS`.
 
-This closes main-event-loop acquisition as a live Lion boundary without a new compatibility rule. The subsequent Snow-first `InstallEventLoopTimer` control also passes with exact subject SHA-256 `e2716844ad59ceb12319a63446e876f4a274276e320b2ec80656aad25a1e040d`: status 0, nonzero EventLoopTimerRef `0x0041f400`, callback `fired=0`, `INSTALLEVENTLOOPTIMER_PASS`, `M24_SUCCESS`, transparent Snow compatibility, and final PASS. Current `main` therefore advances to `docs/process-manager-post-getmaineventloop-installeventlooptimer-lion-integration.md` for exactly one guarded Lion timer-install run. `RunApplicationEventLoop`, callback execution, `RemoveEventLoopTimer`, and `DisposeEventLoopTimerUPP` remain held.
+This closes main-event-loop acquisition as a live Lion boundary without a new compatibility rule. The subsequent Snow-first and guarded Lion `InstallEventLoopTimer` stages also pass with exact subject SHA-256 `e2716844ad59ceb12319a63446e876f4a274276e320b2ec80656aad25a1e040d`; Lion returns status 0 and nonzero EventLoopTimerRef `0x00333db0`, keeps callback `fired=0`, reaches `M24_SUCCESS`, preserves exact-seven and the accepted user-space stack, and ends with `POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_VALIDATION_PASS`. Current `main` therefore advances to `docs/process-manager-post-installeventlooptimer-quitapplicationeventloop-snow-control.md`, which isolates only the direct `QuitApplicationEventLoop()` call/return boundary on Snow before application-event-loop entry is attempted. `RunApplicationEventLoop`, timer callback dispatch, `RemoveEventLoopTimer`, and `DisposeEventLoopTimerUPP` remain held.
 
 ## Current boundary
 
@@ -372,9 +372,10 @@ NewEventLoopTimerUPP on Lion                     LIVE-PROVEN PASS
 GetMainEventLoop on Snow                         PASS
 GetMainEventLoop on Lion                         LIVE-PROVEN PASS
 InstallEventLoopTimer on Snow                    PASS
-InstallEventLoopTimer on Lion                    NEXT: one guarded run
+InstallEventLoopTimer on Lion                    LIVE-PROVEN PASS
+QuitApplicationEventLoop                         NEXT: Snow call/return control only
 RunApplicationEventLoop                         HELD
-timer callback invocation                       HELD
+timer callback dispatch                         HELD
 RemoveEventLoopTimer / DisposeEventLoopTimerUPP  HELD
 new compatibility families                      NO
 titlebar policy broadening                      NO
