@@ -26,7 +26,7 @@
 #define LION_PAYLOAD_START 0x088f8U
 
 #define CALLER_COMPARATOR_DELTA 0x38f0UL
-#define MAX_UNIQUE_TRACE_KEYS 256U
+#define MAX_UNIQUE_TRACE_KEYS 512U
 #define MAX_TARGET_LOGS_PER_PATH 16U
 #define MAX_COMPONENT_TEXT 64U
 
@@ -371,7 +371,7 @@ log_trace_unique(const void *base,
     if (unique == -2) {
         if (!gTraceLimitLogged) {
             log_build_once();
-            write_literal("PM_COREUI_ARTFILE_BSEARCH_TRACE_LIMIT:unique_limit=256\n");
+            write_literal("PM_COREUI_ARTFILE_BSEARCH_TRACE_LIMIT:unique_limit=512\n");
             gTraceLimitLogged = 1;
         }
         return;
