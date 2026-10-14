@@ -2,7 +2,11 @@
 
 ## Status
 
-**NEXT CONTROLLED LIVE STEP.** The CGSShapeWindow inline ID-only integration is complete and restores the historical Carbon window's geometry and visual presentation on Lion. The exact subject now reaches an onscreen 400x222 window at (120,98), and the user manually observed the window. The remaining visible defect is titlebar fidelity: the titlebar appears transparent/background-colored and the three traffic-light controls appear uniformly yellow rather than normal Aqua red/yellow/green.
+**CORRECTED CONTROL GATE; NEXT LIVE STEP IS ONE PHASE C RERUN.** The CGSShapeWindow inline ID-only integration is complete and restores the historical Carbon window's geometry and visual presentation on Lion. The exact subject now reaches an onscreen 400x222 window at (120,98), and the user manually observed the window. The remaining visible defect is titlebar fidelity: the titlebar appears transparent/background-colored and the three traffic-light controls appear uniformly yellow rather than normal Aqua red/yellow/green.
+
+The first Phase C return exposed a control-harness assumption error rather than a runtime failure. On Snow Leopard the exact historical subject completed normally, the ShapeWindow passthrough and observer gates passed, and the 400x222 titled window was onscreen, but the healthy Snow path issued **no** `0x7265 / 0x72c9` backing-synchronization transaction. Therefore zero backing-sync calls is the expected Snow non-regression control for this exact subject. Requiring one or more Snow calls incorrectly treated the absence of Lion's failure/retry path as a failure.
+
+The Lion adapter target remains independently grounded by the prior live Lion ShapeWindow run, which emitted 12 exact `0x7265 / 0x72c9`, `0x2c / 0x2c`, window/3/1 transactions returning `-304` immediately before `_CGSLockWindow: Cannot synchronize window backing store`, and by the static Snow/Lion CoreGraphics audit below. The Snow control is not used to prove live invocation of the adapter target; it proves that loading the v6 interposer does not perturb the healthy Snow path.
 
 The completed run also exposes a previously known but now visually relevant generated-MIG collision in the backing-store synchronization path. The Lion trace repeatedly sends the Snow PPC transaction:
 
@@ -79,7 +83,7 @@ scripts/build-ppc-carbon-gui-backing-sync-compat-on-snowleopard.sh
 Git blob 454e9803d389640388a89220f6ac800dc1ecaf83
 
 scripts/run-snowleopard-ppc-carbon-gui-backing-sync-control.sh
-Git blob 7822f7466708cc4f8745d7d9aa0c8cc73f202be1
+Git blob fee9b4722b0badacb2c247a3cba7611b66b2e864
 
 scripts/run-lion-ppc-carbon-gui-backing-sync-integration.sh
 Git blob dcef472c5e63c00ed3bac44b552b2be417e80d03
@@ -166,7 +170,7 @@ fe68467b60b3bd7edfab61b2d6c8af7f988de5206c4b7b624151dc9f1a1061d3
 - Do not adapt more than 32 exact same-window synchronization calls.
 - Do not patch CoreGraphics, CoreUI, WindowServer, system resources, Rosetta, dyld, caches, or XNU.
 - Do not restart WindowServer, Dock, Finder, distnoted, launchd, or the machine.
-- Run the Snow subject once and Lion subject once before review.
+- After pulling this correction, run the corrected Snow Phase C control exactly once. Run the Lion integration exactly once only if that corrected control passes.
 
 ## Phase A — pull and pin current main
 
@@ -182,7 +186,7 @@ test "$(git hash-object ./tests/ppc-process-manager-coreservices-sessioninit-com
 test "$(git hash-object ./scripts/build-ppc-carbon-gui-backing-sync-compat-on-snowleopard.sh)" = \
   "454e9803d389640388a89220f6ac800dc1ecaf83" || exit 1
 test "$(git hash-object ./scripts/run-snowleopard-ppc-carbon-gui-backing-sync-control.sh)" = \
-  "7822f7466708cc4f8745d7d9aa0c8cc73f202be1" || exit 1
+  "fee9b4722b0badacb2c247a3cba7611b66b2e864" || exit 1
 test "$(git hash-object ./scripts/run-lion-ppc-carbon-gui-backing-sync-integration.sh)" = \
   "dcef472c5e63c00ed3bac44b552b2be417e80d03" || exit 1
 ```
@@ -230,8 +234,8 @@ Require:
 
 ```text
 shape inline predicate exact / PASSTHROUGH exactly once
-backing-sync exact count >= 1
-backing-sync PASSTHROUGH count == exact count
+backing-sync exact count = 0
+backing-sync PASSTHROUGH count = 0
 backing-sync ADAPTER_PASS count = 0
 backing-sync predicate rejects = 0
 subject exit 0
@@ -244,7 +248,9 @@ RESULT: PASS
 
 Manually record whether the Snow Carbon window and titlebar remain visually normal.
 
-If the explicit Snow synchronization predicate is never reached, stop before Lion. Do not infer the live Lion adapter from static evidence alone.
+The exact healthy Snow subject is expected **not** to reach the synchronization predicate. Zero backing-sync calls is therefore the positive control. If the corrected Snow run emits any `PM_CGS_BACKING_SYNC_COMPAT_CALL:` or any nonzero backing-sync count, stop before Lion and review the changed Snow chronology rather than broadening the predicate.
+
+Proceed to Lion only after the corrected Snow control passes. The exact live Lion target is already established by the preserved prior Lion trace and is independently corroborated by the static CoreGraphics protocol audit; no inference from a nonexistent Snow call is required.
 
 ## Phase D — transfer the exact v6 artifact to Lion
 
@@ -411,9 +417,9 @@ Review chronology and exact request ownership. Do not adapt AutofillColor or ano
 
 Stop. Preserve raw evidence. Do not translate the result or synthesize backing state.
 
-### Predicate reject or Snow control failure
+### Predicate reject, unexpected Snow backing-sync call, or Snow control failure
 
-Stop. Do not broaden the predicate and do not run Lion.
+Stop. Do not broaden the predicate and do not run Lion. A healthy Snow control for this exact subject has zero backing-sync compatibility calls.
 
 ## Return for review
 
@@ -450,10 +456,12 @@ Lion manual window                            VISIBLE
 Lion titlebar                                 VISIBLE BUT VISUALLY ABNORMAL
 titlebar exact-six bsearch translations       6 / guard rejects 0
 Snow SynchronizeWindowBackingStore            0x7265 / 0x72c9
+healthy Snow exact subject                    zero backing-sync calls
 Lion SynchronizeWindowBackingStore            0x7266 / 0x72ca
 Lion 0x7265 / 0x72c9                          SetWindowAutofillColor collision
-current live sync result                      repeated -304 + lock-sync failure
-next step                                     exact same-window sync ID-only integration
+prior live Lion exact calls                   12
+current live Lion sync result                 repeated -304 + lock-sync failure
+next step                                     rerun corrected Snow control, then one Lion ID-only integration
 CoreUI/ArtFile payload changes                HELD
 later CGS adapters                            HELD
 LaunchServices / Finder / Cocoa               HELD
