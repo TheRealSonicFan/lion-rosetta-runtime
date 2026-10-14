@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED LIVE DISCRIMINATOR after the completed ArtFile render-state/image-format audit.
+COMPLETED LIVE-PROVEN PASS. Snow and Lion each make exactly six cached Snow-PPC CoreUI `CGImageCreate` calls with bitmap-info `0x00000002`; neither run enters `CWMatchBitmap`. The next controlled step is `docs/ppc-carbon-gui-coreui-image-bitmapinfo-compat-integration.md`.
 
 ## Reviewed result that advances this step
 
@@ -300,6 +300,49 @@ Do not infer a bitmap-info fix yet. First determine whether ColorSync is normali
 
 Stop. Preserve the raw log and do not broaden the tracer or add a rendering adapter.
 
+## Observed result — live PPC constructor confirms the format mismatch
+
+The returned passive trace artifact matches the pinned source/build identity and both live controls pass.
+
+Snow:
+
+```text
+titlebar_passthrough_count=6
+image_constructor_coreui_exact_call_count=6
+image_constructor_bitmapinfo_0x2_count=6
+image_constructor_bitmapinfo_0x4_count=0
+image_constructor_unexpected_bitmapinfo_count=0
+cwmatch_exact_coreui_count=0
+cwmatch_all_coreui_count=0
+RESULT: PPC_CARBON_GUI_COREUI_IMAGE_CONSTRUCTOR_TRACE_SNOW_CONTROL_PASS
+RESULT: PASS
+```
+
+Lion:
+
+```text
+titlebar_translated_count=6
+titlebar_guard_reject_count=0
+image_constructor_coreui_exact_call_count=6
+image_constructor_bitmapinfo_0x2_count=6
+image_constructor_bitmapinfo_0x4_count=0
+image_constructor_bitmapinfo_0x2002_count=0
+image_constructor_other_bitmapinfo_count=0
+cwmatch_exact_coreui_count=0
+cwmatch_all_coreui_count=0
+windowserver_observer_pass_count=1
+windowserver_observer_geometry_400x222_count=64
+windowserver_observer_onscreen_400x222_count=45
+RESULT: PPC_CARBON_GUI_COREUI_IMAGE_CONSTRUCTOR_TRACE_PASS
+RESULT: PASS
+```
+
+Manual review remains Snow normal versus Lion partial/unchanged, and Lion's titlebar is additionally reported non-draggable.
+
+This satisfies the first decision gate exactly: the cached Snow-PPC loader constructs Lion's byte-3-alpha bodies with Snow's live `0x2` default-byte-order semantics, while Lion native CoreUI's equivalent static path uses `0x2002`. `CWMatchBitmap` does not execute on either live path, so ColorSync does not explain the release delta.
+
+Follow `docs/ppc-carbon-gui-coreui-image-bitmapinfo-compat-integration.md` next. That step changes only `CGImageCreate bitmapInfo 0x2 -> 0x2002` at the exact live-proven Lion PPC CoreUI call site and 16x16/8/32/64 geometry, after a Snow passthrough control. It also records titlebar dragging separately so a remaining move/hit-test defect is not conflated with image-format fidelity.
+
 ## Return evidence
 
 Return:
@@ -336,9 +379,12 @@ Snow raw exact-six alpha diagnostic              BYTE0 for 6/6
 Lion raw exact-six alpha diagnostic              BYTE3 for 6/6
 Snow PPC static bitmapInfo                       0x2 or 0x4 / default byte order
 Lion native static bitmapInfo                    0x2002 / 32-bit little endian
-live old-PPC bitmapInfo on Lion                  UNKNOWN
-live old-PPC CWMatchBitmap branch                UNKNOWN
-next step                                        one Snow + one Lion passive constructor trace
+live old-PPC bitmapInfo on Snow                  0x00000002 for 6/6
+live old-PPC bitmapInfo on Lion                  0x00000002 for 6/6
+live old-PPC CWMatchBitmap                       0 on both
+image-format mismatch                            LIVE-PROVEN
+Lion titlebar                                    PARTIAL / non-draggable
+next step                                        docs/ppc-carbon-gui-coreui-image-bitmapinfo-compat-integration.md
 metric/header/pixel rewrite                      NOT AUTHORIZED
 new titlebar mappings                            NOT AUTHORIZED
 ArtFile200 forcing                               NOT AUTHORIZED
