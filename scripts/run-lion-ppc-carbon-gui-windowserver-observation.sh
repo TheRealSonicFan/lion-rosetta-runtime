@@ -71,7 +71,7 @@ die() {
     code="$1"
     shift
     log "ERROR: $*"
-    log "RESULT: PPC_CARBON_GUI_NOTIFICATION_REGISTRATION_PRECHECK_FAIL"
+    log "RESULT: PPC_CARBON_GUI_WINDOWSERVER_OBSERVATION_PRECHECK_FAIL"
     exit "$code"
 }
 
