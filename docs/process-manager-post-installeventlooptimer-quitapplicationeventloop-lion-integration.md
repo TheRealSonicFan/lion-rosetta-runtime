@@ -359,7 +359,7 @@ The guarded Lion 10.7.5 / 11G63 no-active-loop `QuitApplicationEventLoop()` run 
 
 After the inherited ShowWindow / SelectWindow / IsWindowVisible / NewEventLoopTimerUPP / GetMainEventLoop / InstallEventLoopTimer path succeeds, S12 and S13 both execute, the timer callback remains `fired=0`, and `QUITAPPLICATIONEVENTLOOP_PASS` is emitted. Cleanup reaches `M24_SUCCESS`, PPC execution status is 0, exact-seven remains `register=7 callback=0 rejects=0 exact=YES`, all six titlebar translations occur once with zero guard rejects, WindowBackingInfo and ResolveColorProfile each preserve one successful compatibility pass, both OrderFront calls preserve successful adaptation with exactly one SelectWindow-bounded call, protected hashes remain unchanged, no new diagnostic is created, and the runner ends with `POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_VALIDATION_PASS`.
 
-This closes the direct no-active-loop quit call on Lion without a new compatibility rule. Current `main` now advances to `docs/process-manager-post-quitapplicationeventloop-runapplicationeventloop-snow-control.md`. That Snow-first control prequeues the already proven quit event before adding only `RunApplicationEventLoop()`; acceptance requires the application event loop to return before the installed timer callback is dispatched. The callback is a failure tripwire only and immediately exits if unexpectedly invoked. This does not claim timer-callback dispatch or active-loop callback-side quit semantics.
+This closes the direct no-active-loop quit call on Lion without a new compatibility rule. The subsequent Snow investigation retired the prequeued-quit v1 test design, then live-proved timer-side-quit v2 with exact subject SHA-256 `059341612986721ef8e513c247b3ba39cf34892f25bad3c73dc2ef97ca8102b7`: one installed timer callback dispatches while `RunApplicationEventLoop()` is active, callback-side `QuitApplicationEventLoop()` returns, the callback exits, and `RunApplicationEventLoop()` returns with `fired=1`. Current `main` therefore advances to the exact-binary Lion transfer in `docs/process-manager-post-quitapplicationeventloop-runapplicationeventloop-lion-integration.md`.
 
 ## Current boundary
 
@@ -370,13 +370,13 @@ IsWindowVisible on Lion                          LIVE-PROVEN PASS
 NewEventLoopTimerUPP on Lion                     LIVE-PROVEN PASS
 GetMainEventLoop on Lion                         LIVE-PROVEN PASS
 InstallEventLoopTimer on Lion                    LIVE-PROVEN PASS
-QuitApplicationEventLoop on Snow                 PASS
-QuitApplicationEventLoop on Lion                 LIVE-PROVEN PASS
-RunApplicationEventLoop                          NEXT: Snow prequeued-quit call/return control
-timer callback dispatch                         HELD (tripwire only)
-active-loop callback-side Quit                   HELD
+QuitApplicationEventLoop direct/no-active-loop   LIVE-PROVEN PASS on Snow + Lion
+RunApplicationEventLoop timer-side-quit v2 Snow  LIVE-PROVEN PASS
+timer callback dispatch on Snow                  LIVE-PROVEN PASS in v2 context
+active-loop callback-side Quit on Snow            LIVE-PROVEN PASS in v2 context
+RunApplicationEventLoop timer-side-quit v2 Lion  NEXT: guarded exact-binary transfer
 RemoveEventLoopTimer / DisposeEventLoopTimerUPP  HELD
 new compatibility families                      NO
 titlebar policy broadening                      NO
-XNU                                              no change indicated
+XNU                                              no source change indicated
 ```
