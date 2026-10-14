@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED STEP after the completed backing-store synchronization compatibility integration.
+COMPLETED STATIC PASS. The returned Snow/Lion reports establish a structurally compatible payload boundary for the six already translated titlebar semantics; the next controlled step is the static silent semantic-collision inventory in `docs/ppc-carbon-gui-titlebar-silent-collision-audit.md`.
 
 ## Reviewed result that advances this step
 
@@ -193,6 +193,14 @@ Compare the six payload records and the two release-local consumer bodies before
 - If either report fails provenance, index, or symbol validation, fix the analyzer/audit before any live run.
 - A visual defect by itself does not authorize a broader titlebar translation table.
 
+## Observed result — payload rewrite not indicated
+
+Both reports pass. Each of the six semantic paths resolves to exactly one release-local index record. At the image-record boundary actually consumed by `CUIElement::LoadFromArtFile`, both releases use a fixed `0x68` header followed by 32-bit image data: Snow's records are 1x1-cell, 14x16 assets with `0x68 + 14*16*4 = 1000` byte spans, while Lion's are 1x1-cell, 16x16 assets with `0x68 + 16*16*4 = 1128` byte spans. Snow PPC explicitly copies `0x68` bytes before decoding the record; Lion i386 copies `0x1a` dwords, also `0x68` bytes, before decoding the corresponding tables.
+
+The release-local consumers differ in implementation and the actual asset geometry/content differs, but this audit does not show an incompatible serialized record layout that would justify copying Snow payloads, translating payload bytes, or interposing `memcpy`. The remaining visual defect therefore advances to the archive-key discriminator already defined by this document: inventory all Snow `titlebarcontrols` keys and test the full Lion index for silent same-byte/different-semantic collisions outside the known six.
+
+Follow `docs/ppc-carbon-gui-titlebar-silent-collision-audit.md`. No live PPC run is authorized by this result.
+
 ## Current boundary
 
 ```text
@@ -204,10 +212,13 @@ Lion exact titled frame                          400x222 at (120,98), onscreen
 Lion Carbon window                               manually visible
 titlebar exact-six translations                  6
 titlebar guard rejects                           0
+six payload records                              STATIC-PROVEN PRESENT
+payload fixed-header/image-body structure        STRUCTURALLY COMPATIBLE
 Lion titlebar                                    transparent; controls distinct but distorted
-next step                                        static six-payload/consumer fidelity differential
+next step                                        docs/ppc-carbon-gui-titlebar-silent-collision-audit.md
 new titlebar keys                                NOT AUTHORIZED
 ArtFile payload substitution                     NOT AUTHORIZED
+live PPC rerun                                   NO
 later CGS / LaunchServices / Finder / Cocoa      HELD
 XNU                                              no source change indicated
 ```
