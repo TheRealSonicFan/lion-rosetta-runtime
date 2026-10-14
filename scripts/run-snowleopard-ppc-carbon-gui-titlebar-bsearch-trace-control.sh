@@ -111,7 +111,7 @@ echo "private_dyld_sha256=$DYLD_SHA" | /usr/bin/tee -a "$SUBJECT_LOG"
 [ "$(sidecar_sha "$CORE_COMPAT_SHA_FILE")" = "$CORE_SHA" ] || fail "core compatibility sidecar mismatch"
 [ "$(sidecar_sha "$OBSERVER_SHA_FILE")" = "$OBSERVER_SHA" ] || fail "observer sidecar mismatch"
 [ "$(sidecar_sha "$TITLEBAR_TRACE_SHA_FILE")" = "$TITLEBAR_TRACE_SHA" ] || fail "titlebar trace sidecar mismatch"
-[ "$DYLD_SHA" = "$EXPECTED_DYLD_SHA" || fail "private dyld hash mismatch"
+[ "$DYLD_SHA" = "$EXPECTED_DYLD_SHA" ] || fail "private dyld hash mismatch"
 
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_BUILD_ID" || fail "core compatibility build marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'PM_CGS_SHAPEWINDOW_INLINE_COMPAT_RESULT:PASSTHROUGH' || fail "shape passthrough marker missing"
@@ -185,7 +185,16 @@ OBSERVER_PASS_COUNT="$(/usr/bin/grep -c '^CGWINDOW_OBSERVER_RESULT:PASS$' "$OBSE
 GEOMETRY_COUNT="$(/usr/bin/grep -c 'x=120 y=98 width=400 height=222.*name=Rosetta PPC Carbon GUI' "$OBSERVER_LOG" 2>/dev/null || true)"
 SUMMARY_LINE="$(/usr/bin/grep '^CGWINDOW_OBSERVER_SUMMARY:' "$OBSERVER_LOG" 2>/dev/null | /usr/bin/tail -1)"
 
-TITLEBAR_TRACE_COUNT="$(/usr/bin/grep -Ec '^PM_COREUI_TITLEBAR_BSEARCH_TRACE:index=[0-9]+ mode=snow-passive-trace-v1 raw_key=[0-9a-f]{16} known_exact_six=(YES|NO) action=PASSTHROUGH
+TITLEBAR_TRACE_COUNT="$(/usr/bin/grep -Ec '^PM_COREUI_TITLEBAR_BSEARCH_TRACE:index=[0-9]+ mode=snow-passive-trace-v1 raw_key=[0-9a-f]{16} known_exact_six=(YES|NO) action=PASSTHROUGH$' "$SUBJECT_LOG" 2>/dev/null || true)"
+TITLEBAR_TRACE_OUTSIDE_COUNT="$(/usr/bin/grep -Ec '^PM_COREUI_TITLEBAR_BSEARCH_TRACE:index=[0-9]+ mode=snow-passive-trace-v1 raw_key=[0-9a-f]{16} known_exact_six=NO action=PASSTHROUGH$' "$SUBJECT_LOG" 2>/dev/null || true)"
+TITLEBAR_TRACE_LIMIT_COUNT="$(/usr/bin/grep -c '^PM_COREUI_TITLEBAR_BSEARCH_TRACE_LIMIT:limit=512$' "$SUBJECT_LOG" 2>/dev/null || true)"
+TITLEBAR_DISABLED_CLEAR_COUNT="$(/usr/bin/grep -Ec 'raw_key=a613161f7a000000 known_exact_six=YES action=PASSTHROUGH$' "$SUBJECT_LOG" 2>/dev/null || true)"
+TITLEBAR_DISABLED_MINUS_COUNT="$(/usr/bin/grep -Ec 'raw_key=a6161f567a000000 known_exact_six=YES action=PASSTHROUGH$' "$SUBJECT_LOG" 2>/dev/null || true)"
+TITLEBAR_DISABLED_ZOOM_COUNT="$(/usr/bin/grep -Ec 'raw_key=a6161f7ab6000000 known_exact_six=YES action=PASSTHROUGH$' "$SUBJECT_LOG" 2>/dev/null || true)"
+TITLEBAR_ACTIVE_CLEAR_COUNT="$(/usr/bin/grep -Ec 'raw_key=a60113167a000000 known_exact_six=YES action=PASSTHROUGH$' "$SUBJECT_LOG" 2>/dev/null || true)"
+TITLEBAR_ACTIVE_MINUS_COUNT="$(/usr/bin/grep -Ec 'raw_key=a60116567a000000 known_exact_six=YES action=PASSTHROUGH$' "$SUBJECT_LOG" 2>/dev/null || true)"
+TITLEBAR_ACTIVE_ZOOM_COUNT="$(/usr/bin/grep -Ec 'raw_key=a601167ab6000000 known_exact_six=YES action=PASSTHROUGH$' "$SUBJECT_LOG" 2>/dev/null || true)"
+
 echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
 echo "shape_passthrough_result_count=$SHAPE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
 echo "shape_adapter_pass_count=$SHAPE_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
@@ -196,7 +205,6 @@ echo "backing_sync_predicate_reject_count=$SYNC_REJECT_COUNT" | /usr/bin/tee -a 
 echo "shape_legacy_trace_count=$LEGACY_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
 echo "observer_geometry_400x222_count=$GEOMETRY_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
 echo "observer_summary=$SUMMARY_LINE" | /usr/bin/tee -a "$SUBJECT_LOG"
-
 echo "titlebar_trace_count=$TITLEBAR_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
 echo "titlebar_trace_outside_six_count=$TITLEBAR_TRACE_OUTSIDE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
 echo "titlebar_trace_limit_count=$TITLEBAR_TRACE_LIMIT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
@@ -229,330 +237,6 @@ if [ "$APP_RC" -eq 0 ] &&
    [ "$TITLEBAR_ACTIVE_CLEAR_COUNT" -ge 1 ] &&
    [ "$TITLEBAR_ACTIVE_MINUS_COUNT" -ge 1 ] &&
    [ "$TITLEBAR_ACTIVE_ZOOM_COUNT" -ge 1 ]; then
-    echo "RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "manual_window_observation=REQUIRED" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "RESULT: PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    exit 0
-fi
-
-echo "RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "RESULT: FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-exit 1
- "$SUBJECT_LOG" 2>/dev/null || true)"
-TITLEBAR_TRACE_OUTSIDE_COUNT="$(/usr/bin/grep -Ec '^PM_COREUI_TITLEBAR_BSEARCH_TRACE:index=[0-9]+ mode=snow-passive-trace-v1 raw_key=[0-9a-f]{16} known_exact_six=NO action=PASSTHROUGH
-echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_passthrough_result_count=$SHAPE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_adapter_pass_count=$SHAPE_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_exact_count=$SYNC_EXACT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_passthrough_count=$SYNC_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_adapter_pass_count=$SYNC_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_predicate_reject_count=$SYNC_REJECT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_legacy_trace_count=$LEGACY_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_geometry_400x222_count=$GEOMETRY_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_summary=$SUMMARY_LINE" | /usr/bin/tee -a "$SUBJECT_LOG"
-
-if [ "$APP_RC" -eq 0 ] &&
-   [ "$OBSERVER_RC" -eq 0 ] &&
-   [ "$SHAPE_CALL_COUNT" -eq 1 ] &&
-   [ "$SHAPE_PASS_COUNT" -eq 1 ] &&
-   [ "$SHAPE_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$SYNC_EXACT_COUNT" -eq 0 ] &&
-   [ "$SYNC_PASSTHROUGH_COUNT" -eq 0 ] &&
-   [ "$SYNC_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$SYNC_REJECT_COUNT" -eq 0 ] &&
-   [ "$LEGACY_TRACE_COUNT" -eq 1 ] &&
-   [ "$WINDOW_MARKER_COUNT" -eq 1 ] &&
-   [ "$SMOKE_MARKER_COUNT" -eq 1 ] &&
-   [ "$OBSERVER_PASS_COUNT" -eq 1 ] &&
-   [ "$GEOMETRY_COUNT" -ge 1 ]; then
-    echo "RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "manual_window_observation=REQUIRED" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "RESULT: PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    exit 0
-fi
-
-echo "RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "RESULT: FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-exit 1
- "$SUBJECT_LOG" 2>/dev/null || true)"
-TITLEBAR_TRACE_LIMIT_COUNT="$(/usr/bin/grep -c '^PM_COREUI_TITLEBAR_BSEARCH_TRACE_LIMIT:limit=512
-echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_passthrough_result_count=$SHAPE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_adapter_pass_count=$SHAPE_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_exact_count=$SYNC_EXACT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_passthrough_count=$SYNC_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_adapter_pass_count=$SYNC_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_predicate_reject_count=$SYNC_REJECT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_legacy_trace_count=$LEGACY_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_geometry_400x222_count=$GEOMETRY_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_summary=$SUMMARY_LINE" | /usr/bin/tee -a "$SUBJECT_LOG"
-
-if [ "$APP_RC" -eq 0 ] &&
-   [ "$OBSERVER_RC" -eq 0 ] &&
-   [ "$SHAPE_CALL_COUNT" -eq 1 ] &&
-   [ "$SHAPE_PASS_COUNT" -eq 1 ] &&
-   [ "$SHAPE_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$SYNC_EXACT_COUNT" -eq 0 ] &&
-   [ "$SYNC_PASSTHROUGH_COUNT" -eq 0 ] &&
-   [ "$SYNC_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$SYNC_REJECT_COUNT" -eq 0 ] &&
-   [ "$LEGACY_TRACE_COUNT" -eq 1 ] &&
-   [ "$WINDOW_MARKER_COUNT" -eq 1 ] &&
-   [ "$SMOKE_MARKER_COUNT" -eq 1 ] &&
-   [ "$OBSERVER_PASS_COUNT" -eq 1 ] &&
-   [ "$GEOMETRY_COUNT" -ge 1 ]; then
-    echo "RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "manual_window_observation=REQUIRED" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "RESULT: PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    exit 0
-fi
-
-echo "RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "RESULT: FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-exit 1
- "$SUBJECT_LOG" 2>/dev/null || true)"
-TITLEBAR_DISABLED_CLEAR_COUNT="$(/usr/bin/grep -Ec 'raw_key=a613161f7a000000 known_exact_six=YES action=PASSTHROUGH
-echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_passthrough_result_count=$SHAPE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_adapter_pass_count=$SHAPE_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_exact_count=$SYNC_EXACT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_passthrough_count=$SYNC_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_adapter_pass_count=$SYNC_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_predicate_reject_count=$SYNC_REJECT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_legacy_trace_count=$LEGACY_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_geometry_400x222_count=$GEOMETRY_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_summary=$SUMMARY_LINE" | /usr/bin/tee -a "$SUBJECT_LOG"
-
-if [ "$APP_RC" -eq 0 ] &&
-   [ "$OBSERVER_RC" -eq 0 ] &&
-   [ "$SHAPE_CALL_COUNT" -eq 1 ] &&
-   [ "$SHAPE_PASS_COUNT" -eq 1 ] &&
-   [ "$SHAPE_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$SYNC_EXACT_COUNT" -eq 0 ] &&
-   [ "$SYNC_PASSTHROUGH_COUNT" -eq 0 ] &&
-   [ "$SYNC_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$SYNC_REJECT_COUNT" -eq 0 ] &&
-   [ "$LEGACY_TRACE_COUNT" -eq 1 ] &&
-   [ "$WINDOW_MARKER_COUNT" -eq 1 ] &&
-   [ "$SMOKE_MARKER_COUNT" -eq 1 ] &&
-   [ "$OBSERVER_PASS_COUNT" -eq 1 ] &&
-   [ "$GEOMETRY_COUNT" -ge 1 ]; then
-    echo "RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "manual_window_observation=REQUIRED" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "RESULT: PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    exit 0
-fi
-
-echo "RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "RESULT: FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-exit 1
- "$SUBJECT_LOG" 2>/dev/null || true)"
-TITLEBAR_DISABLED_MINUS_COUNT="$(/usr/bin/grep -Ec 'raw_key=a6161f567a000000 known_exact_six=YES action=PASSTHROUGH
-echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_passthrough_result_count=$SHAPE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_adapter_pass_count=$SHAPE_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_exact_count=$SYNC_EXACT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_passthrough_count=$SYNC_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_adapter_pass_count=$SYNC_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_predicate_reject_count=$SYNC_REJECT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_legacy_trace_count=$LEGACY_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_geometry_400x222_count=$GEOMETRY_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_summary=$SUMMARY_LINE" | /usr/bin/tee -a "$SUBJECT_LOG"
-
-if [ "$APP_RC" -eq 0 ] &&
-   [ "$OBSERVER_RC" -eq 0 ] &&
-   [ "$SHAPE_CALL_COUNT" -eq 1 ] &&
-   [ "$SHAPE_PASS_COUNT" -eq 1 ] &&
-   [ "$SHAPE_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$SYNC_EXACT_COUNT" -eq 0 ] &&
-   [ "$SYNC_PASSTHROUGH_COUNT" -eq 0 ] &&
-   [ "$SYNC_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$SYNC_REJECT_COUNT" -eq 0 ] &&
-   [ "$LEGACY_TRACE_COUNT" -eq 1 ] &&
-   [ "$WINDOW_MARKER_COUNT" -eq 1 ] &&
-   [ "$SMOKE_MARKER_COUNT" -eq 1 ] &&
-   [ "$OBSERVER_PASS_COUNT" -eq 1 ] &&
-   [ "$GEOMETRY_COUNT" -ge 1 ]; then
-    echo "RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "manual_window_observation=REQUIRED" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "RESULT: PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    exit 0
-fi
-
-echo "RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "RESULT: FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-exit 1
- "$SUBJECT_LOG" 2>/dev/null || true)"
-TITLEBAR_DISABLED_ZOOM_COUNT="$(/usr/bin/grep -Ec 'raw_key=a6161f7ab6000000 known_exact_six=YES action=PASSTHROUGH
-echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_passthrough_result_count=$SHAPE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_adapter_pass_count=$SHAPE_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_exact_count=$SYNC_EXACT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_passthrough_count=$SYNC_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_adapter_pass_count=$SYNC_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_predicate_reject_count=$SYNC_REJECT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_legacy_trace_count=$LEGACY_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_geometry_400x222_count=$GEOMETRY_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_summary=$SUMMARY_LINE" | /usr/bin/tee -a "$SUBJECT_LOG"
-
-if [ "$APP_RC" -eq 0 ] &&
-   [ "$OBSERVER_RC" -eq 0 ] &&
-   [ "$SHAPE_CALL_COUNT" -eq 1 ] &&
-   [ "$SHAPE_PASS_COUNT" -eq 1 ] &&
-   [ "$SHAPE_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$SYNC_EXACT_COUNT" -eq 0 ] &&
-   [ "$SYNC_PASSTHROUGH_COUNT" -eq 0 ] &&
-   [ "$SYNC_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$SYNC_REJECT_COUNT" -eq 0 ] &&
-   [ "$LEGACY_TRACE_COUNT" -eq 1 ] &&
-   [ "$WINDOW_MARKER_COUNT" -eq 1 ] &&
-   [ "$SMOKE_MARKER_COUNT" -eq 1 ] &&
-   [ "$OBSERVER_PASS_COUNT" -eq 1 ] &&
-   [ "$GEOMETRY_COUNT" -ge 1 ]; then
-    echo "RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "manual_window_observation=REQUIRED" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "RESULT: PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    exit 0
-fi
-
-echo "RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "RESULT: FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-exit 1
- "$SUBJECT_LOG" 2>/dev/null || true)"
-TITLEBAR_ACTIVE_CLEAR_COUNT="$(/usr/bin/grep -Ec 'raw_key=a60113167a000000 known_exact_six=YES action=PASSTHROUGH
-echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_passthrough_result_count=$SHAPE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_adapter_pass_count=$SHAPE_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_exact_count=$SYNC_EXACT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_passthrough_count=$SYNC_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_adapter_pass_count=$SYNC_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_predicate_reject_count=$SYNC_REJECT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_legacy_trace_count=$LEGACY_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_geometry_400x222_count=$GEOMETRY_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_summary=$SUMMARY_LINE" | /usr/bin/tee -a "$SUBJECT_LOG"
-
-if [ "$APP_RC" -eq 0 ] &&
-   [ "$OBSERVER_RC" -eq 0 ] &&
-   [ "$SHAPE_CALL_COUNT" -eq 1 ] &&
-   [ "$SHAPE_PASS_COUNT" -eq 1 ] &&
-   [ "$SHAPE_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$SYNC_EXACT_COUNT" -eq 0 ] &&
-   [ "$SYNC_PASSTHROUGH_COUNT" -eq 0 ] &&
-   [ "$SYNC_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$SYNC_REJECT_COUNT" -eq 0 ] &&
-   [ "$LEGACY_TRACE_COUNT" -eq 1 ] &&
-   [ "$WINDOW_MARKER_COUNT" -eq 1 ] &&
-   [ "$SMOKE_MARKER_COUNT" -eq 1 ] &&
-   [ "$OBSERVER_PASS_COUNT" -eq 1 ] &&
-   [ "$GEOMETRY_COUNT" -ge 1 ]; then
-    echo "RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "manual_window_observation=REQUIRED" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "RESULT: PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    exit 0
-fi
-
-echo "RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "RESULT: FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-exit 1
- "$SUBJECT_LOG" 2>/dev/null || true)"
-TITLEBAR_ACTIVE_MINUS_COUNT="$(/usr/bin/grep -Ec 'raw_key=a60116567a000000 known_exact_six=YES action=PASSTHROUGH
-echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_passthrough_result_count=$SHAPE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_adapter_pass_count=$SHAPE_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_exact_count=$SYNC_EXACT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_passthrough_count=$SYNC_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_adapter_pass_count=$SYNC_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_predicate_reject_count=$SYNC_REJECT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_legacy_trace_count=$LEGACY_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_geometry_400x222_count=$GEOMETRY_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_summary=$SUMMARY_LINE" | /usr/bin/tee -a "$SUBJECT_LOG"
-
-if [ "$APP_RC" -eq 0 ] &&
-   [ "$OBSERVER_RC" -eq 0 ] &&
-   [ "$SHAPE_CALL_COUNT" -eq 1 ] &&
-   [ "$SHAPE_PASS_COUNT" -eq 1 ] &&
-   [ "$SHAPE_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$SYNC_EXACT_COUNT" -eq 0 ] &&
-   [ "$SYNC_PASSTHROUGH_COUNT" -eq 0 ] &&
-   [ "$SYNC_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$SYNC_REJECT_COUNT" -eq 0 ] &&
-   [ "$LEGACY_TRACE_COUNT" -eq 1 ] &&
-   [ "$WINDOW_MARKER_COUNT" -eq 1 ] &&
-   [ "$SMOKE_MARKER_COUNT" -eq 1 ] &&
-   [ "$OBSERVER_PASS_COUNT" -eq 1 ] &&
-   [ "$GEOMETRY_COUNT" -ge 1 ]; then
-    echo "RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "manual_window_observation=REQUIRED" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "RESULT: PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    exit 0
-fi
-
-echo "RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "RESULT: FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-exit 1
- "$SUBJECT_LOG" 2>/dev/null || true)"
-TITLEBAR_ACTIVE_ZOOM_COUNT="$(/usr/bin/grep -Ec 'raw_key=a601167ab6000000 known_exact_six=YES action=PASSTHROUGH
-echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_passthrough_result_count=$SHAPE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_adapter_pass_count=$SHAPE_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_exact_count=$SYNC_EXACT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_passthrough_count=$SYNC_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_adapter_pass_count=$SYNC_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_predicate_reject_count=$SYNC_REJECT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_legacy_trace_count=$LEGACY_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_geometry_400x222_count=$GEOMETRY_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_summary=$SUMMARY_LINE" | /usr/bin/tee -a "$SUBJECT_LOG"
-
-if [ "$APP_RC" -eq 0 ] &&
-   [ "$OBSERVER_RC" -eq 0 ] &&
-   [ "$SHAPE_CALL_COUNT" -eq 1 ] &&
-   [ "$SHAPE_PASS_COUNT" -eq 1 ] &&
-   [ "$SHAPE_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$SYNC_EXACT_COUNT" -eq 0 ] &&
-   [ "$SYNC_PASSTHROUGH_COUNT" -eq 0 ] &&
-   [ "$SYNC_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$SYNC_REJECT_COUNT" -eq 0 ] &&
-   [ "$LEGACY_TRACE_COUNT" -eq 1 ] &&
-   [ "$WINDOW_MARKER_COUNT" -eq 1 ] &&
-   [ "$SMOKE_MARKER_COUNT" -eq 1 ] &&
-   [ "$OBSERVER_PASS_COUNT" -eq 1 ] &&
-   [ "$GEOMETRY_COUNT" -ge 1 ]; then
-    echo "RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "manual_window_observation=REQUIRED" | /usr/bin/tee -a "$SUBJECT_LOG"
-    echo "RESULT: PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
-    exit 0
-fi
-
-echo "RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "RESULT: FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
-exit 1
- "$SUBJECT_LOG" 2>/dev/null || true)"
-
-echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_passthrough_result_count=$SHAPE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_adapter_pass_count=$SHAPE_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_exact_count=$SYNC_EXACT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_passthrough_count=$SYNC_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_adapter_pass_count=$SYNC_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "backing_sync_predicate_reject_count=$SYNC_REJECT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "shape_legacy_trace_count=$LEGACY_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_geometry_400x222_count=$GEOMETRY_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "observer_summary=$SUMMARY_LINE" | /usr/bin/tee -a "$SUBJECT_LOG"
-
-if [ "$APP_RC" -eq 0 ] &&
-   [ "$OBSERVER_RC" -eq 0 ] &&
-   [ "$SHAPE_CALL_COUNT" -eq 1 ] &&
-   [ "$SHAPE_PASS_COUNT" -eq 1 ] &&
-   [ "$SHAPE_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$SYNC_EXACT_COUNT" -eq 0 ] &&
-   [ "$SYNC_PASSTHROUGH_COUNT" -eq 0 ] &&
-   [ "$SYNC_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$SYNC_REJECT_COUNT" -eq 0 ] &&
-   [ "$LEGACY_TRACE_COUNT" -eq 1 ] &&
-   [ "$WINDOW_MARKER_COUNT" -eq 1 ] &&
-   [ "$SMOKE_MARKER_COUNT" -eq 1 ] &&
-   [ "$OBSERVER_PASS_COUNT" -eq 1 ] &&
-   [ "$GEOMETRY_COUNT" -ge 1 ]; then
     echo "RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
     echo "manual_window_observation=REQUIRED" | /usr/bin/tee -a "$SUBJECT_LOG"
     echo "RESULT: PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
