@@ -331,7 +331,7 @@ Lion WindowServer geometry                          1x1 at (120,98), onscreen, a
 Snow manual Carbon window                           VISIBLE
 Lion manual Carbon window                           NOT OBSERVED
 live legacy 0x724d / 0x72b1                        -304 + CGSShapeWindow type-check failure
-next step                                           static CGSShapeWindow inner-helper differential
+next step                                           exact CGSShapeWindow inline ID-only integration
 new live CGS/display compatibility                  NO
 LaunchServices / Finder / Cocoa                     HELD
 XNU                                                 no source change indicated
@@ -346,4 +346,6 @@ The Lion observation run preserved every accepted restored-stack gate, produced 
 
 The native main display ID was 0x5b81c5c0 on both systems. The active display geometry differs between the two test environments, but the target window origin is the same and is well inside both displays. The Lion failure is therefore a collapsed frame, not an off-display window.
 
-The Lion trace's request 0x724d targets the same WindowServer window ID reported by the observer and carries values matching the Snow frame edges. Lion returns reply 0x72b1 with result -304 immediately before the CGSShapeWindow type-check diagnostic. This is now the first geometry-specific compatibility boundary. The earlier display-0, color-space, and backing-lock diagnostics remain held until the inner shape protocol is statically attributed.
+The Lion trace's request 0x724d targets the same WindowServer window ID reported by the observer and carries values matching the Snow frame edges. Lion returns reply 0x72b1 with result -304 immediately before the CGSShapeWindow type-check diagnostic. The subsequent static audit now attributes that failure exactly: Snow PPC __CGSSetWindowShapeInline uses 0x724d/0x72b1 with bits 0x1513 and dynamic 0x2c+4*count geometry, while Lion's equivalent inline client moved to 0x724e/0x72b2; Lion reused 0x724d/0x72b1 for a different non-inline request with bits 0x80001513 and fixed size 0x3c.
+
+Current main therefore advances to docs/ppc-carbon-gui-cgsshapewindow-inline-compat-integration.md. Only the exact count-9 historical inline request may be ID-translated in that phase. The payload, display ID, later shape traffic, color-space, backing-lock behavior, LaunchServices/Cocoa, and XNU remain held.
