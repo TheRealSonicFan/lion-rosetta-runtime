@@ -29,6 +29,42 @@ sidecar_sha() {
     /usr/bin/awk 'NR==1 {print $1}' "$1"
 }
 
+macho_archs() {
+    file="$1"
+    info="$(/usr/bin/lipo -info "$file" 2>/dev/null || true)"
+    case "$info" in
+        *" is architecture: "*)
+            echo "$info" | /usr/bin/sed 's/^.* is architecture: //'
+            ;;
+        *" are: "*)
+            echo "$info" | /usr/bin/sed 's/^.* are: //'
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
+has_ppc32_arch() {
+    archs="$(macho_archs "$1")" || return 1
+    for arch in $archs; do
+        case "$arch" in
+            ppc|ppc601|ppc603|ppc603e|ppc603ev|ppc604|ppc604e|ppc750|ppc7400|ppc7450|ppc970)
+                return 0
+                ;;
+        esac
+    done
+    return 1
+}
+
+has_i386_arch() {
+    archs="$(macho_archs "$1")" || return 1
+    for arch in $archs; do
+        [ "$arch" = "i386" ] && return 0
+    done
+    return 1
+}
+
 : > "$SUBJECT_LOG" || exit 73
 : > "$OBSERVER_LOG" || exit 73
 
@@ -74,9 +110,15 @@ echo "private_dyld_sha256=$DYLD_SHA" | /usr/bin/tee -a "$SUBJECT_LOG"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'PM_CGS_SHAPEWINDOW_INLINE_COMPAT_RESULT:PASSTHROUGH' || fail "shape passthrough marker missing"
 /usr/bin/strings "$OBSERVER" | /usr/bin/grep -Fq "CGWINDOW_OBSERVER_BUILD_ID:$EXPECTED_OBSERVER_BUILD_ID" || fail "observer build marker missing"
 
-/usr/bin/lipo -verify_arch ppc "$EXE" >/dev/null 2>&1 || /usr/bin/lipo "$EXE" -verify_arch ppc >/dev/null 2>&1 || fail "historical subject is not PPC"
-/usr/bin/lipo -verify_arch ppc "$CORE_COMPAT" >/dev/null 2>&1 || /usr/bin/lipo "$CORE_COMPAT" -verify_arch ppc >/dev/null 2>&1 || fail "compatibility dylib is not PPC"
-/usr/bin/lipo -verify_arch i386 "$OBSERVER" >/dev/null 2>&1 || /usr/bin/lipo "$OBSERVER" -verify_arch i386 >/dev/null 2>&1 || fail "observer is not i386"
+EXE_ARCHS="$(macho_archs "$EXE" 2>/dev/null || true)"
+CORE_ARCHS="$(macho_archs "$CORE_COMPAT" 2>/dev/null || true)"
+OBSERVER_ARCHS="$(macho_archs "$OBSERVER" 2>/dev/null || true)"
+echo "subject_archs=$EXE_ARCHS" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "core_compat_archs=$CORE_ARCHS" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "observer_archs=$OBSERVER_ARCHS" | /usr/bin/tee -a "$SUBJECT_LOG"
+has_ppc32_arch "$EXE" || fail "historical subject is not 32-bit PPC"
+has_ppc32_arch "$CORE_COMPAT" || fail "compatibility dylib is not 32-bit PPC"
+has_i386_arch "$OBSERVER" || fail "observer is not i386"
 
 echo "== one exact Snow passthrough control ==" | /usr/bin/tee -a "$SUBJECT_LOG"
 DYLD_INSERT_LIBRARIES="$CORE_COMPAT" \
