@@ -269,6 +269,14 @@ pm-installeventlooptimer-snow.log
 
 Do not transfer or execute this new subject on Lion until the Snow evidence is reviewed.
 
+## Reviewed Snow result
+
+The Snow Leopard 10.6.8 / 10K549 control passes completely. The exact PPC7400 subject SHA-256 is `e2716844ad59ceb12319a63446e876f4a274276e320b2ec80656aad25a1e040d`; it uses `/usr/oah/dyld`, preserves SDK-lowered `NewEventLoopTimerUPP(ProbeTimer)`, and carries undefined imports for both `_GetMainEventLoop` and `_InstallEventLoopTimer`. After the inherited window/visibility/UPP/main-loop path passes, S10 and S11 both execute, `InstallEventLoopTimer` returns status 0, the EventLoopTimerRef is nonzero (`0x0041f400`), the callback remains unfired (`fired=0`), and `INSTALLEVENTLOOPTIMER_PASS` is emitted.
+
+Cleanup reaches `M24_SUCCESS` with `control_status=0`; both OrderFront calls remain passthrough with exactly one SelectWindow-bounded call, all six titlebar targets remain passthrough with zero unexpected action, no compatibility family emits `ADAPTER_PASS`, and the run ends `POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_SNOW_CONTROL_PASS` / `PASS`. No timer-install-specific compatibility rule is indicated.
+
+Current `main` therefore advances only to `docs/process-manager-post-getmaineventloop-installeventlooptimer-lion-integration.md`: transfer the exact Snow-proven subject, keep the accepted GetMainEventLoop-era Lion user-space stack unchanged, rebuild the exact-seven broker, repeat the fresh syscall-295 preflight, and execute exactly one guarded Lion `InstallEventLoopTimer` run. Do not enter the event loop, invoke the timer callback, remove the timer, or dispose the UPP until that result is reviewed.
+
 ## Current boundary
 
 ```text
@@ -277,7 +285,8 @@ SelectWindow on Lion                             LIVE-PROVEN PASS
 IsWindowVisible on Lion                          LIVE-PROVEN PASS
 NewEventLoopTimerUPP on Lion                     LIVE-PROVEN PASS
 GetMainEventLoop on Lion                         LIVE-PROVEN PASS
-InstallEventLoopTimer                            NEXT: Snow control only
+InstallEventLoopTimer on Snow                    PASS
+InstallEventLoopTimer on Lion                    NEXT: one guarded run
 timer callback invocation                       HELD
 RunApplicationEventLoop                         HELD
 RemoveEventLoopTimer / DisposeEventLoopTimerUPP  HELD
