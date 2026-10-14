@@ -188,8 +188,8 @@ if [ "$APP_RC" -eq 0 ] &&
    [ "$SHAPE_CALL_COUNT" -eq 1 ] &&
    [ "$SHAPE_PASS_COUNT" -eq 1 ] &&
    [ "$SHAPE_ADAPTER_COUNT" -eq 0 ] &&
-   [ "$SYNC_EXACT_COUNT" -ge 1 ] &&
-   [ "$SYNC_PASSTHROUGH_COUNT" -eq "$SYNC_EXACT_COUNT" ] &&
+   [ "$SYNC_EXACT_COUNT" -eq 0 ] &&
+   [ "$SYNC_PASSTHROUGH_COUNT" -eq 0 ] &&
    [ "$SYNC_ADAPTER_COUNT" -eq 0 ] &&
    [ "$SYNC_REJECT_COUNT" -eq 0 ] &&
    [ "$LEGACY_TRACE_COUNT" -eq 1 ] &&
