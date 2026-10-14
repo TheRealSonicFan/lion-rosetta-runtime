@@ -208,11 +208,13 @@ if [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
     EXPECTED_SUBJECT_BUILD_ID="cps-quitapplicationeventloop-validation-v1"
 fi
 if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
-    [ "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" = "snow-runapplicationeventloop-prequeued-quit-v1" ] ||
-        fail "unsupported Snow post-QuitApplicationEventLoop RunApplicationEventLoop validation mode: $POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE"
-    [ "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" = "snow-quitapplicationeventloop-v1" ] ||
-        fail "Snow RunApplicationEventLoop validation requires the QuitApplicationEventLoop validation mode"
-    EXPECTED_SUBJECT_BUILD_ID="cps-runapplicationeventloop-prequeued-quit-validation-v1"
+    [ "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" = "snow-runapplicationeventloop-timer-quit-v2" ] ||
+        fail "unsupported Snow RunApplicationEventLoop timer-quit validation mode: $POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE"
+    [ "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" = "snow-installeventlooptimer-v1" ] ||
+        fail "Snow RunApplicationEventLoop timer-quit validation requires the InstallEventLoopTimer validation mode"
+    [ -z "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ] ||
+        fail "Snow RunApplicationEventLoop timer-quit validation must not prequeue QuitApplicationEventLoop"
+    EXPECTED_SUBJECT_BUILD_ID="cps-runapplicationeventloop-timer-quit-validation-v2"
 fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "snow-passive-v1" ] ||
@@ -497,11 +499,15 @@ fi
 if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
     for marker in \
         'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' \
+        'PM_POSTWINDOWTIMER_CALLBACK:ENTER' \
+        'PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop' \
+        'PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop' \
+        'PM_POSTWINDOWTIMER_CALLBACK:EXIT' \
         'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' \
         'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=' \
-        'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_PREQUEUED_QUIT_PASS'; do
+        'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS'; do
         /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq "$marker" ||
-            fail "RunApplicationEventLoop subject marker missing: $marker"
+            fail "RunApplicationEventLoop timer-quit subject marker missing: $marker"
     done
 fi
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
@@ -1045,15 +1051,27 @@ if [ "$RC" -eq 0 ] &&
         fi
     fi
     if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        TIMER_CB_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$LOG" 2>/dev/null || true)"
+        TIMER_CB_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$LOG" 2>/dev/null || true)"
+        TIMER_CB_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$LOG" 2>/dev/null || true)"
+        TIMER_CB_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$LOG" 2>/dev/null || true)"
         if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$LOG" ||
+           [ "$TIMER_CB_ENTER_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_BEFORE_QUIT_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_AFTER_QUIT_COUNT" -ne 1 ] ||
+           [ "$TIMER_CB_EXIT_COUNT" -ne 1 ] ||
            ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$LOG" ||
-           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=0' "$LOG" ||
-           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_PREQUEUED_QUIT_PASS' "$LOG" ||
-           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_CALLBACK_FIRED_UNEXPECTEDLY' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_CALLBACK_COUNT_MISMATCH' "$LOG" ||
            /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$LOG"; then
             echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
             exit 1
         fi
+        echo "runapplicationeventloop_timer_callback_enter_count=$TIMER_CB_ENTER_COUNT" | /usr/bin/tee -a "$LOG"
+        echo "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_CB_BEFORE_QUIT_COUNT" | /usr/bin/tee -a "$LOG"
+        echo "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_CB_AFTER_QUIT_COUNT" | /usr/bin/tee -a "$LOG"
+        echo "runapplicationeventloop_timer_callback_exit_count=$TIMER_CB_EXIT_COUNT" | /usr/bin/tee -a "$LOG"
     fi
     if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
         FONTSERVER_RENDEZVOUS_COMPAT_CALLS="$(/usr/bin/grep -c 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_CALL:' "$LOG" 2>/dev/null || true)"
@@ -1201,7 +1219,7 @@ if [ "$RC" -eq 0 ] &&
                             exit 1
                         fi
                         if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
-                            echo "RESULT: POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+                            echo "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
                         elif [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
                             echo "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
                         elif [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
