@@ -237,7 +237,7 @@ Cleanup reaches `M24_SUCCESS` with `control_status=0`; all six titlebar actions 
 
 The subsequent guarded Lion no-active-loop `QuitApplicationEventLoop()` run also passes with the exact Snow-proven subject. Lion reaches S12/S13, preserves callback `fired=0`, emits `QUITAPPLICATIONEVENTLOOP_PASS`, reaches `M24_SUCCESS`, exits 0, preserves exact-seven and all accepted user-space compatibility counts, changes no protected hash, creates no new diagnostic, and ends with `POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_VALIDATION_PASS`.
 
-Current `main` therefore advances only to `docs/process-manager-post-quitapplicationeventloop-runapplicationeventloop-snow-control.md`. That Snow-first control prequeues the already proven quit event before adding only `RunApplicationEventLoop()`; the installed timer callback is retained solely as a failure tripwire and must remain undispatched on an accepted run.
+The subsequent Snow event-loop work first retired the prequeued-quit v1 design, then live-proved timer-side-quit v2 with exact subject SHA-256 `059341612986721ef8e513c247b3ba39cf34892f25bad3c73dc2ef97ca8102b7`: the installed timer dispatches exactly once while `RunApplicationEventLoop()` is active, callback-side `QuitApplicationEventLoop()` returns, the callback exits, and the event loop returns with `fired=1`. Current `main` now advances to the exact-binary Lion transfer in `docs/process-manager-post-quitapplicationeventloop-runapplicationeventloop-lion-integration.md`.
 
 ## Current boundary
 
@@ -248,13 +248,13 @@ IsWindowVisible on Lion                          LIVE-PROVEN PASS
 NewEventLoopTimerUPP on Lion                     LIVE-PROVEN PASS
 GetMainEventLoop on Lion                         LIVE-PROVEN PASS
 InstallEventLoopTimer on Lion                    LIVE-PROVEN PASS
-QuitApplicationEventLoop on Snow                 PASS
-QuitApplicationEventLoop on Lion                 LIVE-PROVEN PASS
-RunApplicationEventLoop                          NEXT: Snow prequeued-quit call/return control
-timer callback dispatch                         HELD (tripwire only)
-active-loop callback-side Quit                   HELD
+QuitApplicationEventLoop direct/no-active-loop   LIVE-PROVEN PASS on Snow + Lion
+RunApplicationEventLoop timer-side-quit v2 Snow  LIVE-PROVEN PASS
+timer callback dispatch on Snow                  LIVE-PROVEN PASS in v2 context
+active-loop callback-side Quit on Snow            LIVE-PROVEN PASS in v2 context
+RunApplicationEventLoop timer-side-quit v2 Lion  NEXT: guarded exact-binary transfer
 RemoveEventLoopTimer / DisposeEventLoopTimerUPP  HELD
 new compatibility families                      NO
 titlebar policy broadening                      NO
-XNU                                              no change indicated
+XNU                                              no source change indicated
 ```
