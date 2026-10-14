@@ -380,6 +380,14 @@ payload/lion-installeventlooptimer.raw.log
 
 Also return any new crash report or crash plist explicitly named by the runner. Do not upload a large core unless requested.
 
+## Reviewed Lion result
+
+The guarded Lion 10.7.5 / 11G63 `InstallEventLoopTimer` run passes completely with the exact Snow-proven subject SHA-256 `e2716844ad59ceb12319a63446e876f4a274276e320b2ec80656aad25a1e040d`. The accepted kernel, Rosetta, private dyld, shared-cache, CoreGraphics, v3 CoreServices, exact-six titlebar, security, CGS, HIToolbox Extras, and exact-seven broker identities all match their pinned values. The fresh syscall-295 preflight again reaches the compatibility front-end and returns EBADF without SIGSYS.
+
+After the inherited ShowWindow/SelectWindow/IsWindowVisible/NewEventLoopTimerUPP/GetMainEventLoop path succeeds, S10 and S11 both execute, `InstallEventLoopTimer` returns status 0, the EventLoopTimerRef is nonzero (`0x00333db0`), the callback remains unfired (`fired=0`), and `INSTALLEVENTLOOPTIMER_PASS` is emitted. Cleanup reaches `M24_SUCCESS`, the PPC execution status is 0, exact-seven remains `register=7 callback=0 rejects=0 exact=YES`, all six titlebar translations occur once with zero guard rejects, WindowBackingInfo and ResolveColorProfile each preserve one successful adapter call, both OrderFront calls preserve successful adaptation with exactly one SelectWindow-bounded call, protected hashes remain unchanged, no new diagnostic is created, and the runner ends with `POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_VALIDATION_PASS`.
+
+This closes timer installation as a live Lion boundary without a new compatibility rule. To preserve one-public-operation-at-a-time discipline before the historical `RunApplicationEventLoop` stage, current `main` next isolates its callback-side prerequisite `QuitApplicationEventLoop()` on Snow Leopard in `docs/process-manager-post-installeventlooptimer-quitapplicationeventloop-snow-control.md`. That control deliberately calls `QuitApplicationEventLoop()` while no application event loop is active and proves only the call/return ABI boundary; it does not claim active-loop quit semantics. Timer callback dispatch, `RunApplicationEventLoop`, `RemoveEventLoopTimer`, and `DisposeEventLoopTimerUPP` remain held.
+
 ## Current boundary
 
 ```text
@@ -389,8 +397,9 @@ IsWindowVisible on Lion                          LIVE-PROVEN PASS
 NewEventLoopTimerUPP on Lion                     LIVE-PROVEN PASS
 GetMainEventLoop on Lion                         LIVE-PROVEN PASS
 InstallEventLoopTimer on Snow                    PASS
-InstallEventLoopTimer on Lion                    NEXT: one guarded run
-timer callback invocation                       HELD
+InstallEventLoopTimer on Lion                    LIVE-PROVEN PASS
+QuitApplicationEventLoop                         NEXT: Snow call/return control only
+timer callback dispatch                         HELD
 RunApplicationEventLoop                         HELD
 RemoveEventLoopTimer / DisposeEventLoopTimerUPP  HELD
 new compatibility families                      NO
