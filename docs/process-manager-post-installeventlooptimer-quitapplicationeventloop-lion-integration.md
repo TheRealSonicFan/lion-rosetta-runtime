@@ -353,6 +353,14 @@ payload/lion-quitapplicationeventloop.raw.log
 
 Also return any new crash report or crash plist explicitly named by the runner. Do not upload a large core unless requested.
 
+## Reviewed Lion result
+
+The guarded Lion 10.7.5 / 11G63 no-active-loop `QuitApplicationEventLoop()` run passes completely with the exact Snow-proven subject SHA-256 `af36d6efe9e3193c3b68ac149d50be5627f1ba33ad0c5223e2ed1bdf3982eb01`. The accepted kernel, Rosetta, private dyld, shared-cache, CoreGraphics, v3 CoreServices, exact-six titlebar, security, CGS, HIToolbox Extras, and exact-seven broker identities all match their pinned values. The fresh syscall-295 preflight again returns EBADF without SIGSYS.
+
+After the inherited ShowWindow / SelectWindow / IsWindowVisible / NewEventLoopTimerUPP / GetMainEventLoop / InstallEventLoopTimer path succeeds, S12 and S13 both execute, the timer callback remains `fired=0`, and `QUITAPPLICATIONEVENTLOOP_PASS` is emitted. Cleanup reaches `M24_SUCCESS`, PPC execution status is 0, exact-seven remains `register=7 callback=0 rejects=0 exact=YES`, all six titlebar translations occur once with zero guard rejects, WindowBackingInfo and ResolveColorProfile each preserve one successful compatibility pass, both OrderFront calls preserve successful adaptation with exactly one SelectWindow-bounded call, protected hashes remain unchanged, no new diagnostic is created, and the runner ends with `POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_VALIDATION_PASS`.
+
+This closes the direct no-active-loop quit call on Lion without a new compatibility rule. Current `main` now advances to `docs/process-manager-post-quitapplicationeventloop-runapplicationeventloop-snow-control.md`. That Snow-first control prequeues the already proven quit event before adding only `RunApplicationEventLoop()`; acceptance requires the application event loop to return before the installed timer callback is dispatched. The callback is a failure tripwire only and immediately exits if unexpectedly invoked. This does not claim timer-callback dispatch or active-loop callback-side quit semantics.
+
 ## Current boundary
 
 ```text
@@ -362,10 +370,11 @@ IsWindowVisible on Lion                          LIVE-PROVEN PASS
 NewEventLoopTimerUPP on Lion                     LIVE-PROVEN PASS
 GetMainEventLoop on Lion                         LIVE-PROVEN PASS
 InstallEventLoopTimer on Lion                    LIVE-PROVEN PASS
-QuitApplicationEventLoop on Snow                 PASS (no-active-loop call/return)
-QuitApplicationEventLoop on Lion                 NEXT: one guarded no-active-loop run
-timer callback dispatch                         HELD
-RunApplicationEventLoop                         HELD
+QuitApplicationEventLoop on Snow                 PASS
+QuitApplicationEventLoop on Lion                 LIVE-PROVEN PASS
+RunApplicationEventLoop                          NEXT: Snow prequeued-quit call/return control
+timer callback dispatch                         HELD (tripwire only)
+active-loop callback-side Quit                   HELD
 RemoveEventLoopTimer / DisposeEventLoopTimerUPP  HELD
 new compatibility families                      NO
 titlebar policy broadening                      NO
