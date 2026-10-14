@@ -458,7 +458,7 @@ SET_FRONT_WINDOW_PASS_COUNT="$(/usr/bin/grep -c '^PM_CGS_SET_FRONT_WINDOW_COMPAT
 ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c '^PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS$' "$RAW_LOG" 2>/dev/null || true)"
 
 TITLEBAR_TRANSLATED_COUNT="$(/usr/bin/grep -Ec '^PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=(disabled-clear|disabled-minus|disabled-zoom|active-clear|active-minus|active-zoom) mode=lion-exact-six-v1 action=TRANSLATED$' "$RAW_LOG" 2>/dev/null || true)"
-TITLEBAR_GUARD_REJECT_COUNT="$(/usr/bin/grep -c 'PM_COREUI_TITLEBAR_BSEARCH_GUARD_REJECT' "$RAW_LOG" 2>/dev/null || true)"
+TITLEBAR_GUARD_REJECT_COUNT="$(/usr/bin/grep -Ec '^PM_COREUI_TITLEBAR_BSEARCH_TARGET:path=.* mode=lion-exact-six-v1 action=GUARD_REJECT_PASSTHROUGH$|PM_COREUI_TITLEBAR_BSEARCH_GUARD_REJECT' "$RAW_LOG" 2>/dev/null || true)"
 IMAGE_TRACE_COUNT="$(/usr/bin/grep -Ec '^PM_COREUI_IMAGE_TRACE_CGIMAGE:seq=[0-9]+ mode=lion-passive-image-v1 width=16 height=16 bpc=8 bpp=32 bpr=64 bitmapInfo=0x[0-9a-f]{8} coreui=YES caller_offset=0x000299e0$' "$RAW_LOG" 2>/dev/null || true)"
 IMAGE_BITMAP2_COUNT="$(/usr/bin/grep -Ec '^PM_COREUI_IMAGE_TRACE_CGIMAGE:.* mode=lion-passive-image-v1 width=16 height=16 bpc=8 bpp=32 bpr=64 bitmapInfo=0x00000002 coreui=YES caller_offset=0x000299e0$' "$RAW_LOG" 2>/dev/null || true)"
 IMAGE_BITMAP4_COUNT="$(/usr/bin/grep -Ec '^PM_COREUI_IMAGE_TRACE_CGIMAGE:.* mode=lion-passive-image-v1 width=16 height=16 bpc=8 bpp=32 bpr=64 bitmapInfo=0x00000004 coreui=YES caller_offset=0x000299e0$' "$RAW_LOG" 2>/dev/null || true)"
