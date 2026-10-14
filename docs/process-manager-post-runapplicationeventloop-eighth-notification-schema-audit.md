@@ -367,15 +367,45 @@ Also return any new crash report or crash plist explicitly named by the runner. 
 
 Review the request-8 XML and exact binary bytes before deciding whether it extends a known notification tuple or introduces a new name/schema. Only the exact reviewed request may become a future compatibility policy. Do not infer request 9 or later from request 8.
 
+## Observed result — request 8 is AppleDatePreferencesChangedNotification
+
+The request-8 schema audit completed PASS. The i386 broker used build ID `distributed-notifications-runapplicationeventloop-eighth-schema-audit-broker-v1`; its binary SHA-256 was `9950c165f0691812798e06dd2c43afd853dbcb4643659383056ed8caa73f9639`, matching its sidecar. Syscall 295 again returned EBADF without SIGSYS on the accepted kernel.
+
+The existing exact-seven registration sequence remained exact, then one request 8 was captured at legacy Mach geometry `bits=0x00001111 id=4 size=332 payload=298`. The binary plist decodes as:
+
+```text
+message_type  register
+client        ppc-process-manager-cgs-session-bootstrap-integration-private-dyld
+name          AppleDatePreferencesChangedNotification
+object        kCFNotificationAnyObject
+behavior      4
+counter       1
+entry         3565952 in this run
+sessionid     6D in this run
+```
+
+The broker deliberately rejected request 8 with status 25, rejected exactly 13 later tail requests without capturing them, and ended `register=7 callback=0 rejects=0 exact=YES`, `captures=1 failures=0 unexpectedRejects=0 postBoundaryRejects=13 exact=YES`, and `RUNAPPLICATIONEVENTLOOP_EIGHTH_AUDIT_PASS`. The timer-side-quit event-loop sequence again reached S15 with exactly one callback and `RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS`; `M24_SUCCESS`, no new diagnostics, protected hashes unchanged, all six titlebar translations, and the dedicated schema-audit PASS were preserved.
+
+This exact schema is sufficient to authorize one narrow sequence extension for registration 8 only. It does not authorize request 9 or later. Current `main` advances to:
+
+```text
+docs/process-manager-post-runapplicationeventloop-eighth-notification-registration.md
+```
+
 ## Current boundary
 
 ```text
 RunApplicationEventLoop timer-side-quit Snow        LIVE-PROVEN PASS
 RunApplicationEventLoop timer-side-quit Lion        semantic sequence LIVE-PROVEN through S15
 exact-seven notification policy on Lion             LIVE-PROVEN through registration 7
-first active-loop extra notification request        index=8 id=4 size=332 payload=298; unreviewed
-request indexes 8..21 in prior run                  rejected; no policy authorized
-next step                                           capture/decode request 8 only
+request-8 schema audit                              PASS
+request-8 operation                                 register
+request-8 name                                      AppleDatePreferencesChangedNotification
+request-8 object                                    kCFNotificationAnyObject
+request-8 behavior                                  4 / Coalesce
+request-8 counter                                   1
+next step                                           accept exact request 8 once
+request 9                                           unreviewed / reject
 RemoveEventLoopTimer / DisposeEventLoopTimerUPP     HELD
 new compatibility families                         NO
 titlebar policy broadening                         NO
