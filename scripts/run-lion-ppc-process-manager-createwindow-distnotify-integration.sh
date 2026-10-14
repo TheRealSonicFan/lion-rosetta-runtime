@@ -89,6 +89,7 @@ POST_FONTSERVER_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_FO
 POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT:-}"
 POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT:-}"
 RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT:-}"
+RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE:-}"
 REAL_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE:-}"
 EXPECTED_REAL_REGISTRATION_COUNT=3
 if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
@@ -107,6 +108,9 @@ elif [ -n "$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT" ]; then
 elif [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-runapplicationeventloop-eighth-schema-audit-broker-v1"
     EXPECTED_REAL_REGISTRATION_COUNT=7
+elif [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ]; then
+    EXPECTED_BROKER_BUILD_ID="distributed-notifications-runapplicationeventloop-eighth-registration-broker-v1"
+    EXPECTED_REAL_REGISTRATION_COUNT=8
 elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-showwindow-seventh-registration-broker-v1"
     EXPECTED_REAL_REGISTRATION_COUNT=7
@@ -137,6 +141,17 @@ die() {
     log "ERROR: $*"
     exit "$code"
 }
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ]; then
+    [ "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" = "lion-eighth-register-v1" ] ||
+        die 64 "unsupported ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE: $RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE"
+    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] ||
+        die 64 "RunApplicationEventLoop eighth registration requires the reviewed exact-seven registration base mode"
+    [ "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" = "lion-runapplicationeventloop-timer-quit-v2" ] ||
+        die 64 "RunApplicationEventLoop eighth registration requires lion-runapplicationeventloop-timer-quit-v2"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT" ] ||
+        die 64 "RunApplicationEventLoop eighth registration and request-8 schema audit are mutually exclusive"
+fi
 
 if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
     [ "$DOCKSERVER_COMPAT_MODE" = "lion-dockserver-v1" ] ||
@@ -1015,6 +1030,16 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT" ]; then
             die 68 "RunApplicationEventLoop eighth-request schema-audit broker marker missing: $marker"
     done
 fi
+if [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ]; then
+    for marker in \
+        'PM_DISTRIBUTED_NOTIFICATIONS_SHOWWINDOW_SIXTH_REGISTRATION_POLICY:index=6 allowed=3 counter=2' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_SHOWWINDOW_SEVENTH_REGISTRATION_POLICY:index=7 allowed=5 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_POLICY:index=8 allowed=6 counter=1' \
+        'AppleDatePreferencesChangedNotification'; do
+        /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "RunApplicationEventLoop exact-eight registration broker marker missing: $marker"
+    done
+fi
 /usr/bin/strings "$SEC_INTERPOSER" | /usr/bin/grep -Fq \
     "PM_SECURITY_SESSION_API_COMPAT_BUILD_ID:$EXPECTED_SEC_BUILD_ID" || die 68 "Security build marker missing"
 /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq \
@@ -1154,6 +1179,9 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT" ]; then
 fi
 if [ -n "$REAL_REGISTRATION_MODE" ]; then
     log "distributed_notifications_real_registration_mode=$REAL_REGISTRATION_MODE"
+fi
+if [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ]; then
+    log "distributed_notifications_runapplicationeventloop_eighth_registration_mode=$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE"
 fi
 if [ -n "$DOCKSERVER_COMPAT_MODE" ]; then
     log "dockserver_bootstrap_compat_mode=$DOCKSERVER_COMPAT_MODE"
@@ -1957,6 +1985,23 @@ if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
         exit 0
     else
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_FONTSERVER_RENDEZVOUS_COMPAT_NATIVE_REPLY_UNEXPECTED"
+        exit 0
+    fi
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ]; then
+    EIGHTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=8 allowed=6 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    log "eighth_notification_registration_accept_count=$EIGHTH_ACCEPT_COUNT"
+    if [ "$EIGHTH_ACCEPT_COUNT" -ne 1 ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_NOT_ACCEPTED"
+        exit 0
+    fi
+    if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=9 ' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_PASS_NINTH_PROTOCOL_REJECTED"
+        else
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_PASS_LATER_PROTOCOL_REJECTED"
+        fi
         exit 0
     fi
 fi
@@ -3012,7 +3057,11 @@ if ! /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:P
 fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
-    if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+    if [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ] &&
+       [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
        [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
         log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_VALIDATION_PASS"
     elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
