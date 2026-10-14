@@ -2,7 +2,7 @@
 
 ## Status
 
-**NEXT CONTROLLED STEP.** The Snow/Lion WindowServer observation differential is complete and valid. The exact same native observer binary SHA-256 0416a9b3bd9466708f6e540616be94fcc2ba65c5a89a68844602eee7bb220634 observed the same titled Carbon window on both systems, but the geometry differs decisively:
+**COMPLETE — PASS.** The Snow/Lion WindowServer observation differential is complete and valid. The exact same native observer binary SHA-256 0416a9b3bd9466708f6e540616be94fcc2ba65c5a89a68844602eee7bb220634 observed the same titled Carbon window on both systems, but the geometry differs decisively:
 
 ~~~text
 Snow Leopard 10.6.8 / 10K549
@@ -203,3 +203,25 @@ new live CGS/display compatibility             NO
 LaunchServices / Finder / Cocoa               HELD
 XNU                                           no source change indicated
 ~~~
+
+
+## Reviewed static result
+
+Both analyzer-v1 reports pass with the required release and architecture slices. Snow's outer _CGSShapeWindow reaches __CGSWindowShape; Lion's outer _CGSShapeWindow reaches __CGSCopyWindowShape. The decisive generated-MIG result is farther down the set-shape path:
+
+~~~text
+Snow PPC  __CGSSetWindowShapeInline   0x724d / 0x72b1   bits 0x1513
+Lion i386 __CGSSetWindowShapeInline   0x724e / 0x72b2   bits 0x1513
+~~~
+
+Both inline clients impose count <= 0x1000, use send size 0x2c + 4*count, receive size 0x2c, Mach option 0x3, and accept a 0x24 reply with equivalent NDR/result handling. The live historical request has count 9, so the observed send size 0x50 is exactly this inline contract.
+
+Lion simultaneously assigns the old Snow inline IDs 0x724d / 0x72b1 to its different non-inline __CGSSetWindowShape client, whose request uses complex bits 0x80001513 and a fixed 0x3c send size. The live PPC request is therefore colliding with the wrong Lion server contract. That explains the -304 / MIG_BAD_ARGUMENTS and CGSShapeWindow type-check diagnostic without requiring a payload or display-ID hypothesis.
+
+Current main advances to:
+
+~~~text
+docs/ppc-carbon-gui-cgsshapewindow-inline-compat-integration.md
+~~~
+
+That phase performs a Snow passthrough control and exactly one Lion ID-only conversion of the pinned count-9 historical request: 0x724d -> 0x724e and native reply 0x72b2 -> 0x72b1. The body, sizes, ports, NDR, region data, result, display state, and every later shape request remain unchanged.
