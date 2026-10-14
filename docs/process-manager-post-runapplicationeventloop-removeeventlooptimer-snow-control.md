@@ -253,8 +253,9 @@ RunApplicationEventLoop timer-side-quit Lion        LIVE-PROVEN through S15
 all 21 reviewed Lion notification registrations     LIVE-PROVEN PASS
 RemoveEventLoopTimer Snow                            LIVE-PROVEN PASS
 RemoveEventLoopTimer Lion                            LIVE-PROVEN PASS
-DisposeEventLoopTimerUPP Snow                        NEXT: isolated control
-DisposeEventLoopTimerUPP Lion                        HELD pending Snow result
+DisposeEventLoopTimerUPP Snow                        LIVE-PROVEN PASS
+DisposeEventLoopTimerUPP Lion                        LIVE-PROVEN PASS
+original Carbon GUI smoke under restored stack      NEXT: exact historical-binary retest
 new compatibility families                          NO
 titlebar policy broadening                          NO
 XNU                                                  no source change indicated
