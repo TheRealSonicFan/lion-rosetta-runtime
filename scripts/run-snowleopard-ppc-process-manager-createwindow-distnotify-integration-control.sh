@@ -36,6 +36,7 @@ POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE="${ROSETTA_POST_SELECTWINDOW_ISWINDOWVISI
 POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE="${ROSETTA_POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_VALIDATION_MODE:-}"
 POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE="${ROSETTA_POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_VALIDATION_MODE:-}"
 POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE="${ROSETTA_POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_VALIDATION_MODE:-}"
+POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE="${ROSETTA_POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_VALIDATION_MODE:-}"
 SHOWWINDOW_UNKNOWN_TRACE_MODE="${ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE:-}"
 SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE:-}"
 SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE:-}"
@@ -197,6 +198,13 @@ if [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
     [ "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" = "snow-getmaineventloop-v1" ] ||
         fail "Snow InstallEventLoopTimer validation requires the GetMainEventLoop validation mode"
     EXPECTED_SUBJECT_BUILD_ID="cps-installeventlooptimer-validation-v1"
+fi
+if [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
+    [ "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" = "snow-quitapplicationeventloop-v1" ] ||
+        fail "unsupported Snow post-InstallEventLoopTimer QuitApplicationEventLoop validation mode: $POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE"
+    [ "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" = "snow-installeventlooptimer-v1" ] ||
+        fail "Snow QuitApplicationEventLoop validation requires the InstallEventLoopTimer validation mode"
+    EXPECTED_SUBJECT_BUILD_ID="cps-quitapplicationeventloop-validation-v1"
 fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "snow-passive-v1" ] ||
@@ -468,6 +476,16 @@ if [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
             fail "InstallEventLoopTimer subject marker missing: $marker"
     done
 fi
+if [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
+    for marker in \
+        'PM_POSTWINDOWEVENTLOOPQUIT_MILESTONE:S12_BEFORE_QuitApplicationEventLoop' \
+        'PM_POSTWINDOWEVENTLOOPQUIT_MILESTONE:S13_AFTER_QuitApplicationEventLoop' \
+        'PM_POSTWINDOWEVENTLOOPQUIT_CALLBACK:fired=' \
+        'PM_POSTWINDOWEVENTLOOPQUIT_RESULT:QUITAPPLICATIONEVENTLOOP_PASS'; do
+        /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq "$marker" ||
+            fail "QuitApplicationEventLoop subject marker missing: $marker"
+    done
+fi
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
     "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || fail "CoreServices CPS registration compatibility build marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
@@ -692,6 +710,9 @@ if [ -n "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" ]; then
 fi
 if [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
     echo "post_getmaineventloop_installeventlooptimer_validation_mode=$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" | /usr/bin/tee -a "$LOG"
+fi
+if [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
+    echo "post_installeventlooptimer_quitapplicationeventloop_validation_mode=$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" | /usr/bin/tee -a "$LOG"
 fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     echo "showwindow_unknown_cgs_trace_mode=$SHOWWINDOW_UNKNOWN_TRACE_MODE" | /usr/bin/tee -a "$LOG"
@@ -991,6 +1012,17 @@ if [ "$RC" -eq 0 ] &&
             exit 1
         fi
     fi
+    if [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_MILESTONE:S12_BEFORE_QuitApplicationEventLoop' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_MILESTONE:S13_AFTER_QuitApplicationEventLoop' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_CALLBACK:fired=0' "$LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_RESULT:QUITAPPLICATIONEVENTLOOP_PASS' "$LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPQUIT_RESULT:QUITAPPLICATIONEVENTLOOP_CALLBACK_FIRED_UNEXPECTEDLY' "$LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$LOG"; then
+            echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
+            exit 1
+        fi
+    fi
     if [ -n "$FONTSERVER_RENDEZVOUS_COMPAT_MODE" ]; then
         FONTSERVER_RENDEZVOUS_COMPAT_CALLS="$(/usr/bin/grep -c 'PM_CGS_FONTSERVER_RENDEZVOUS_COMPAT_CALL:' "$LOG" 2>/dev/null || true)"
         if [ "$FONTSERVER_RENDEZVOUS_COMPAT_CALLS" -ne 1 ] ||
@@ -1136,7 +1168,9 @@ if [ "$RC" -eq 0 ] &&
                             echo "RESULT: FAIL" | /usr/bin/tee -a "$LOG"
                             exit 1
                         fi
-                        if [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
+                        if [ -n "$POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_MODE" ]; then
+                            echo "RESULT: POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
+                        elif [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
                             echo "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
                         elif [ -n "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" ]; then
                             echo "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$LOG"
