@@ -27,6 +27,12 @@ IMAGE_COMPAT_INFO_FILE="${ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_INFO_FILE:-$IMA
 EXPECTED_IMAGE_COMPAT_BUILD_ID="coreui-image-bitmapinfo-compat-v1"
 EXPECTED_IMAGE_COMPAT_SOURCE_BLOB="9d44128acbe49de49621104c9ffc2b0c0cd74589"
 
+FRAME_TRACE="${ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_PATH:-}"
+FRAME_TRACE_SHA_FILE="${ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_SHA256_FILE:-${FRAME_TRACE:+$FRAME_TRACE.sha256}}"
+FRAME_TRACE_INFO_FILE="${ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_INFO_FILE:-${FRAME_TRACE:+$FRAME_TRACE.info.txt}}"
+EXPECTED_FRAME_TRACE_BUILD_ID="hitoolbox-windowframe-cuidraw-trace-v1"
+EXPECTED_FRAME_TRACE_SOURCE_BLOB="66b3849aeb9f0514223bea07ca19f95d76b8e62c"
+
 fail() {
     echo "error: $*" | /usr/bin/tee -a "$SUBJECT_LOG" >&2
     exit 1
@@ -126,6 +132,19 @@ echo "private_dyld_sha256=$DYLD_SHA" | /usr/bin/tee -a "$SUBJECT_LOG"
 /usr/bin/grep -Fq "interposer_source_git_blob=$EXPECTED_IMAGE_COMPAT_SOURCE_BLOB" "$IMAGE_COMPAT_INFO_FILE" || fail "image compatibility source blob mismatch"
 [ "$DYLD_SHA" = "$EXPECTED_DYLD_SHA" ] || fail "private dyld hash mismatch"
 
+if [ -n "$FRAME_TRACE" ]; then
+    for file in "$FRAME_TRACE" "$FRAME_TRACE_SHA_FILE" "$FRAME_TRACE_INFO_FILE"; do
+        [ -e "$file" ] || fail "missing window-frame CUIDraw trace artifact: $file"
+    done
+    FRAME_TRACE_SHA="$(sha256 "$FRAME_TRACE")"
+    [ "$(sidecar_sha "$FRAME_TRACE_SHA_FILE")" = "$FRAME_TRACE_SHA" ] || fail "window-frame CUIDraw trace sidecar mismatch"
+    /usr/bin/grep -Fq "trace_build_id=$EXPECTED_FRAME_TRACE_BUILD_ID" "$FRAME_TRACE_INFO_FILE" || fail "window-frame CUIDraw trace info build ID mismatch"
+    /usr/bin/grep -Fq "interposer_source_git_blob=$EXPECTED_FRAME_TRACE_SOURCE_BLOB" "$FRAME_TRACE_INFO_FILE" || fail "window-frame CUIDraw trace source blob mismatch"
+    /usr/bin/strings "$FRAME_TRACE" | /usr/bin/grep -Fq "PM_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_BUILD_ID:$EXPECTED_FRAME_TRACE_BUILD_ID" || fail "window-frame CUIDraw trace build marker missing"
+    has_ppc32_arch "$FRAME_TRACE" || fail "window-frame CUIDraw trace is not 32-bit PPC"
+    echo "windowframe_cuidraw_trace_sha256=$FRAME_TRACE_SHA" | /usr/bin/tee -a "$SUBJECT_LOG"
+fi
+
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_BUILD_ID" || fail "core compatibility build marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'PM_CGS_SHAPEWINDOW_INLINE_COMPAT_RESULT:PASSTHROUGH' || fail "shape passthrough marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'PM_CGS_BACKING_SYNC_COMPAT_RESULT:PASSTHROUGH' || fail "backing-sync passthrough marker missing"
@@ -153,7 +172,11 @@ has_ppc32_arch "$IMAGE_COMPAT" || fail "image compatibility dylib is not 32-bit 
 has_i386_arch "$OBSERVER" || fail "observer is not i386"
 
 echo "== one exact Snow CoreUI bitmap-info passthrough compatibility control ==" | /usr/bin/tee -a "$SUBJECT_LOG"
-DYLD_INSERT_LIBRARIES="$CORE_COMPAT:$TITLEBAR_COMPAT:$IMAGE_COMPAT" \
+INSERT_LIBS="$CORE_COMPAT:$TITLEBAR_COMPAT:$IMAGE_COMPAT"
+if [ -n "$FRAME_TRACE" ]; then
+    INSERT_LIBS="$INSERT_LIBS:$FRAME_TRACE"
+fi
+DYLD_INSERT_LIBRARIES="$INSERT_LIBS" \
 DYLD_PRINT_LIBRARIES=1 \
 ROSETTA_CORESERVICES_COMPAT_MODE=passthrough \
 ROSETTA_CGS_SERVER_VERSION_COMPAT_MODE=passthrough \
@@ -174,6 +197,7 @@ ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_MODE=passthrough \
 ROSETTA_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_MODE=passthrough \
 ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_MODE=passthrough \
 ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_MODE=snow-passthrough-v1 \
+ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_MODE=snow-passive-v1 \
 "$EXE" >> "$SUBJECT_LOG" 2>&1 &
 APP_PID=$!
 echo "subject_pid=$APP_PID" | /usr/bin/tee -a "$SUBJECT_LOG"
