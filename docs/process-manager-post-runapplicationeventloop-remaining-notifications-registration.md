@@ -1,6 +1,6 @@
 # Post-RunApplicationEventLoop remaining distributed-notification registration
 
-**Status: COMPLETE — PASS.** The guarded exact twenty-one-registration Lion run passed with zero broker rejects and no request after index 21. The next isolated boundary is `RemoveEventLoopTimer()` on Snow Leopard.
+**Status: COMPLETE — PASS.** The guarded exact twenty-one-registration Lion run passed with zero broker rejects and no request after index 21. The subsequent isolated Snow `RemoveEventLoopTimer()` control also passed; current work advances to `docs/process-manager-post-runapplicationeventloop-removeeventlooptimer-lion-integration.md`.
 
 ## Objective
 
@@ -345,7 +345,8 @@ total reviewed notification registrations           21
 post-request-21 traffic observed                     none in reviewed exact run
 post-request-21 policy                               unreviewed / reject if seen
 RunApplicationEventLoop timer-side-quit Lion         LIVE-PROVEN through S15
-RemoveEventLoopTimer                                 NEXT: isolated Snow control
+RemoveEventLoopTimer Snow                            LIVE-PROVEN PASS
+RemoveEventLoopTimer Lion                            NEXT: guarded exact-binary transfer
 DisposeEventLoopTimerUPP                             HELD
 new compatibility families                          NO
 titlebar policy broadening                          NO
