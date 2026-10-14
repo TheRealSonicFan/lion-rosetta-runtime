@@ -112,6 +112,10 @@ for sym in _GetProcessForPID _GetProcessPID _TransformProcessType _SetFrontProce
         exit 72
     }
 done
+if /usr/bin/nm -u "$OUT" | /usr/bin/grep -Eq '(^|[[:space:]])_DisposeEventLoopTimerUPP$'; then
+    echo "error: RemoveEventLoopTimer control must not import DisposeEventLoopTimerUPP" >&2
+    exit 72
+fi
 
 if /usr/bin/nm -u "$OUT" | /usr/bin/grep -Eq '(^|[[:space:]])_NewEventLoopTimerUPP$'; then
     NEWEVENTLOOPTIMERUPP_LINKAGE="undefined-import"
