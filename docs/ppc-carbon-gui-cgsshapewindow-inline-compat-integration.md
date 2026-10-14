@@ -2,7 +2,7 @@
 
 ## Status
 
-**NEXT CONTROLLED LIVE STEP.** Both static protocol audits pass and resolve the first collapsed-window geometry failure to a narrow generated-MIG ID collision.
+**COMPLETE — MACHINE PASS / VISUAL GEOMETRY PASS.** Both static protocol audits resolved the collapsed-window geometry failure to a narrow generated-MIG ID collision, and the live ID-only integration now succeeds on Lion.
 
 The Snow Leopard PPC client used by the historical Carbon path is:
 
@@ -433,3 +433,35 @@ later shape adapters                            HELD
 LaunchServices / Finder / Cocoa                 HELD
 XNU                                             no source change indicated
 ```
+
+
+## Reviewed result
+
+The Snow passthrough control passed with the exact historical subject, the exact new v5 compatibility artifact SHA-256 3ef1034f4cbbbbe9497771d6a679f7cd133e15a30799c38b84e0afd1f32f1d21, the exact observer, and the expected 400x222 titled window. The user manually observed the Snow window.
+
+The Lion integration passed the exact ShapeWindow discriminator:
+
+~~~text
+legacy request             0x724d
+Lion inline request        0x724e
+native Lion reply          0x72b2 / result 0
+legacy-facing reply        0x72b1 / result 0
+request body changes       0
+reply body changes         0
+adapter                    PASS
+CGSShapeWindow type-check  absent
+~~~
+
+WindowServer changed from the prior persistent 1x1 state to the intended geometry: after the initial creation sample, the exact titled target became 400x222 at (120,98), layer 0, alpha 1, and later onscreen=YES. The user manually observed the Lion Carbon window for the first time.
+
+Visual fidelity is not yet closed. The user reports that the Lion titlebar appears transparent/background-colored and all three traffic-light controls appear yellow. The machine titlebar gate still reports all six exact semantic-key translations and zero guard rejects, so this is not evidence for broadening the six-key bsearch policy.
+
+The current raw trace instead exposes a more immediate exact CGS mismatch: repeated Snow-PPC 0x7265/0x72c9 synchronization requests (0x2c/0x2c, body window/3/1) receive -304 and are immediately followed by _CGSLockWindow: Cannot synchronize window backing store. The already completed static backing-lock audit proves that Snow 0x7265/0x72c9 is __CGSSynchronizeWindowBackingStore, Lion moves that helper to 0x7266/0x72ca, and Lion reuses 0x7265/0x72c9 for __CGSSetWindowAutofillColor with a different request layout.
+
+Current main therefore advances to:
+
+~~~text
+docs/ppc-carbon-gui-backing-sync-compat-integration.md
+~~~
+
+That phase tests only an exact same-window ID conversion 0x7265 -> 0x7266 and 0x72ca -> 0x72c9. CoreUI/ArtFile payload changes, later CGS rules, LaunchServices/Finder/Cocoa, and XNU remain held.
