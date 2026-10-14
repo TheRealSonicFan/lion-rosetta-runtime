@@ -384,6 +384,10 @@ payload/lion-runapplicationeventloop-ninth-registration.raw.log
 
 Also return any newly named crash report or crash plist if the runner reports one.
 
+## Live result
+
+The exact-ninth registration operation completed at its planned narrow discriminator. Registration 9 was accepted exactly once as allowed 7 / `AppleTimePreferencesChangedNotification` / `kCFNotificationAnyObject` / behavior 4 / Coalesce / counter 1, request 10 then appeared at `bits=0x1111 id=4 size=332 payload=300` and was deliberately rejected together with requests 11–21. The exact-nine broker therefore ended `register=9 callback=0 rejects=12 exact=NO` / `FAIL` solely because all 12 post-boundary requests were intentionally outside its reviewed policy. The inherited event-loop sequence still completed through one timer callback, S15, `fired=1`, `RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS`, `M24_SUCCESS`, and PPC exit 0; WBI/ColorProfileClient/ResolveColorProfile and OrderFront counts remained exact, all six titlebar translations remained exact, no new diagnostic appeared, protected hashes were unchanged, and the runner ended `POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_NINTH_NOTIFICATION_REGISTRATION_PASS_TENTH_PROTOCOL_REJECTED`. The next operation is the request-10-only schema audit in `docs/process-manager-post-runapplicationeventloop-tenth-notification-schema-audit.md`.
+
 ## Current boundary
 
 ```text
@@ -391,13 +395,16 @@ RunApplicationEventLoop timer-side-quit Snow        LIVE-PROVEN PASS
 RunApplicationEventLoop timer-side-quit Lion        semantic sequence LIVE-PROVEN through S15
 request-8 exact registration                        LIVE-PROVEN PASS
 request-9 schema audit                              PASS
+request-9 exact registration                        LIVE-PROVEN PASS
 request-9 operation                                 register
 request-9 name                                      AppleTimePreferencesChangedNotification
 request-9 object                                    kCFNotificationAnyObject
 request-9 behavior                                  4 / Coalesce
 request-9 counter                                   1
-next step                                           accept exact request 9 once
-request 10                                          unreviewed / reject
+request-10 geometry                                 bits=0x1111 id=4 size=332 payload=300
+next step                                           capture/decode request 10 only
+request 10                                          unreviewed / reject after capture
+request 11+                                         unreviewed tail / reject
 RemoveEventLoopTimer / DisposeEventLoopTimerUPP     HELD
 new compatibility families                         NO
 titlebar policy broadening                         NO
