@@ -229,6 +229,14 @@ pm-quitapplicationeventloop-snow.log
 
 Do not transfer or execute this new subject on Lion until the Snow evidence is reviewed.
 
+## Reviewed Snow result
+
+The Snow Leopard 10.6.8 / 10K549 call/return control passes completely. The exact PPC7400 subject SHA-256 is `af36d6efe9e3193c3b68ac149d50be5627f1ba33ad0c5223e2ed1bdf3982eb01`; its build ID is `cps-quitapplicationeventloop-validation-v1`, it uses `/usr/oah/dyld`, and it carries undefined imports for `_GetMainEventLoop`, `_InstallEventLoopTimer`, and `_QuitApplicationEventLoop`. The inherited timer installation still returns status 0 with EventLoopTimerRef `0x0041f400` and callback `fired=0`. S12 and S13 both execute, the callback remains unfired after the direct no-active-loop quit call, and `QUITAPPLICATIONEVENTLOOP_PASS` is emitted.
+
+Cleanup reaches `M24_SUCCESS` with `control_status=0`; all six titlebar actions remain passthrough with zero unexpected action, both OrderFront calls remain passthrough with exactly one SelectWindow-bounded call, no compatibility family emits `ADAPTER_PASS`, and the run ends `POST_INSTALLEVENTLOOPTIMER_QUITAPPLICATIONEVENTLOOP_SNOW_CONTROL_PASS` / `PASS`. This proves only the direct `QuitApplicationEventLoop()` call/return ABI boundary while no application event loop is active; it does not prove active-loop quit semantics.
+
+Current `main` therefore advances only to `docs/process-manager-post-installeventlooptimer-quitapplicationeventloop-lion-integration.md`: transfer the exact Snow-proven subject, preserve the accepted Lion InstallEventLoopTimer-era user-space stack unchanged, rebuild the exact-seven broker, repeat the fresh syscall-295 preflight, and execute exactly one guarded Lion no-active-loop `QuitApplicationEventLoop()` run.
+
 ## Current boundary
 
 ```text
@@ -238,7 +246,8 @@ IsWindowVisible on Lion                          LIVE-PROVEN PASS
 NewEventLoopTimerUPP on Lion                     LIVE-PROVEN PASS
 GetMainEventLoop on Lion                         LIVE-PROVEN PASS
 InstallEventLoopTimer on Lion                    LIVE-PROVEN PASS
-QuitApplicationEventLoop                         NEXT: Snow call/return control only
+QuitApplicationEventLoop on Snow                 PASS (no-active-loop call/return)
+QuitApplicationEventLoop on Lion                 NEXT: one guarded no-active-loop run
 timer callback dispatch                         HELD
 RunApplicationEventLoop                         HELD
 RemoveEventLoopTimer / DisposeEventLoopTimerUPP  HELD
