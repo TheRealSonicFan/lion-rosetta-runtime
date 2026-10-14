@@ -327,7 +327,7 @@ If the exact eighth is accepted and the next unreviewed request appears, the run
 RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_PASS_NINTH_PROTOCOL_REJECTED
 ```
 
-Preserve request 9's Mach geometry and broker rejection. Do not decode or accept it in this step. This is a successful closure of the exact-eighth registration operation and establishes request 9 as the next schema-audit boundary.
+Preserve request 9's Mach geometry and broker rejection. The inherited chain must still complete with exactly one timer callback, S15, `fired=1`, `RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS`, `M24_SUCCESS`, PPC exit 0, no new diagnostic, protected hashes unchanged, WBI/ColorProfileClient/ResolveColorProfile adapter PASS counts of 1/1/1, OrderFront adapter PASS count 2, all six titlebar translations exactly once, and zero titlebar guard rejects. The exact-eight broker may end non-exact/FAIL solely because request 9 is deliberately unreviewed and rejected; that is expected for this discriminator. Do not decode or accept request 9 in this step. This is a successful closure of the exact-eighth registration operation and establishes request 9 as the next schema-audit boundary.
 
 ### Full integration pass — no request 9 appears
 
