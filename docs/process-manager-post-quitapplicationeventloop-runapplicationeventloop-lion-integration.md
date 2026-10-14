@@ -424,6 +424,16 @@ payload/lion-runapplicationeventloop-timer-quit.raw.log
 
 Also return any new crash report or crash plist explicitly named by the runner. Do not upload a large core unless requested.
 
+## Reviewed Lion result — Carbon semantics pass; request 8 is the new boundary
+
+The exact Snow-proven v2 subject ran on Lion 10.7.5 / 11G63 with exact SHA-256 `059341612986721ef8e513c247b3ba39cf34892f25bad3c73dc2ef97ca8102b7` and the accepted kernel. The fresh syscall-295 probe again returned EBADF without SIGSYS.
+
+The inherited ShowWindow / SelectWindow / IsWindowVisible / NewEventLoopTimerUPP / GetMainEventLoop / InstallEventLoopTimer sequence passed. Lion then reached S14, dispatched the installed timer exactly once, returned from callback-side `QuitApplicationEventLoop()`, reached callback EXIT and S15, reported `fired=1`, emitted `RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS`, reached `M24_SUCCESS`, and the PPC subject exited 0. All six titlebar translations remained exact, no new diagnostic was created, and protected hashes remained unchanged.
+
+The integration did not reach the planned final runner PASS because active event-loop processing exposed a later distributed-notification boundary. The exact-seven broker accepted the reviewed seven registrations, then request indexes 8 through 21 appeared and were rejected. The first unreviewed request has legacy Mach geometry `index=8 bits=0x00001111 id=4 size=332 payload=298`. The broker therefore ended `register=7 callback=0 rejects=14 exact=NO`, and the runner correctly classified `POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_REGISTRATION_PASS_EIGHTH_PROTOCOL_REJECTED`.
+
+This is not evidence of a `RunApplicationEventLoop`, timer-callback, callback-side Quit, or XNU failure. It also does not authorize the previously predicted extra Lion WBI/OrderFront calls: with request 8 still rejected, this run preserved only the already accepted WBI count of one and OrderFront adapter count of two. Current `main` now advances to `docs/process-manager-post-runapplicationeventloop-eighth-notification-schema-audit.md`, which accepts only the existing seven registrations, captures/decode request 8, and rejects all later tail traffic without adding a notification policy.
+
 ## Current boundary
 
 ```text
@@ -435,9 +445,11 @@ GetMainEventLoop on Lion                         LIVE-PROVEN PASS
 InstallEventLoopTimer on Lion                    LIVE-PROVEN PASS
 QuitApplicationEventLoop direct/no-active-loop   LIVE-PROVEN PASS on Snow + Lion
 RunApplicationEventLoop timer-side-quit v2 Snow  LIVE-PROVEN PASS
-timer callback dispatch on Snow                  LIVE-PROVEN PASS in v2 context
-active-loop callback-side Quit on Snow            LIVE-PROVEN PASS in v2 context
-RunApplicationEventLoop timer-side-quit v2 Lion  NEXT: one guarded exact-binary transfer
+RunApplicationEventLoop timer-side-quit v2 Lion  semantic sequence LIVE-PROVEN through S15
+timer callback dispatch on Lion                  LIVE-PROVEN PASS in v2 context
+active-loop callback-side Quit on Lion           LIVE-PROVEN PASS in v2 context
+exact-seven notification policy                 LIVE-PROVEN through registration 7
+request 8 after event-loop activation            unreviewed; NEXT schema audit
 RemoveEventLoopTimer / DisposeEventLoopTimerUPP  HELD
 new compatibility families                      NO
 titlebar policy broadening                      NO
