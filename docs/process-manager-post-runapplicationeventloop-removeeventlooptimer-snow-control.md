@@ -1,5 +1,7 @@
 # Post-RunApplicationEventLoop RemoveEventLoopTimer Snow control
 
+**Status: COMPLETE — PASS.** The isolated Snow control returned `RemoveEventLoopTimer=0`, preserved the proven timer-side-quit sequence, and completed with the dedicated Snow PASS discriminator. The next step is the exact-binary Lion transfer in `docs/process-manager-post-runapplicationeventloop-removeeventlooptimer-lion-integration.md`.
+
 ## Objective
 
 Advance exactly one new public Carbon cleanup call, `RemoveEventLoopTimer()`, beyond the now live-proven RunApplicationEventLoop timer-side-quit path and the closed twenty-one-registration distributed-notification boundary.
@@ -237,14 +239,20 @@ pm-removeeventlooptimer-snow.log
 
 Do not run a Lion RemoveEventLoopTimer transfer and do not add `DisposeEventLoopTimerUPP()` until this Snow result is reviewed.
 
+## Reviewed Snow result
+
+The exact Snow Leopard 10.6.8 / 10K549 control used subject SHA-256 `dd7800673066de223ea214833b940a64c838fe0f2b6c9cde8a67276c9b8ebae2`, source SHA-256 `2021886ba715439a9f2f4fbcb206170b1dae652ddd3c2a616f6ee494d47a1dde`, build ID `cps-removeeventlooptimer-validation-v1`, PowerPC 7400, and `/usr/oah/dyld`. The binary imports `_RemoveEventLoopTimer` and does not import `_DisposeEventLoopTimerUPP`.
+
+The inherited timer-side-quit sequence remained exact through S15 with one callback. S16 and S17 both executed, `RemoveEventLoopTimer=0`, `REMOVEEVENTLOOPTIMER_PASS` was emitted, cleanup reached `M24_SUCCESS`, and `control_status=0`. All six titlebar actions remained passthrough with zero unexpected actions; OrderFront remained 3/3/3 passthrough with one SelectWindow-bounded and one RunApplicationEventLoop-bounded call. The runner ended `POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_SNOW_CONTROL_PASS` and `RESULT: PASS`.
+
 ## Current boundary
 
 ```text
 RunApplicationEventLoop timer-side-quit Snow        LIVE-PROVEN PASS
 RunApplicationEventLoop timer-side-quit Lion        LIVE-PROVEN through S15
 all 21 reviewed Lion notification registrations     LIVE-PROVEN PASS
-RemoveEventLoopTimer Snow                            NEXT: isolated control
-RemoveEventLoopTimer Lion                            HELD pending Snow result
+RemoveEventLoopTimer Snow                            LIVE-PROVEN PASS
+RemoveEventLoopTimer Lion                            NEXT: exact-binary guarded transfer
 DisposeEventLoopTimerUPP                             HELD
 new compatibility families                          NO
 titlebar policy broadening                          NO
