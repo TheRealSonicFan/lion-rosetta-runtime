@@ -1,5 +1,7 @@
 # Post-RemoveEventLoopTimer DisposeEventLoopTimerUPP Lion integration
 
+**Status: COMPLETE — PASS.** The exact Snow-proven UPP-disposal subject transferred unchanged to Lion, preserved the exact twenty-one notification policy and accepted runtime gates, returned through S18/S19, and completed with the dedicated Lion PASS discriminator. The incremental Carbon window/event-loop lifecycle is now closed through cleanup; current work advances to `docs/ppc-carbon-gui-restored-stack-retest.md`, which reruns the original Snow-positive Carbon GUI smoke binary under the completed restored stack.
+
 ## Objective
 
 Transfer the **exact Snow-proven** `DisposeEventLoopTimerUPP()` subject to Lion 10.7.5 / 11G63 and perform exactly one guarded integration run on top of the already live-proven `RemoveEventLoopTimer()` boundary and exact twenty-one distributed-notification policy.
@@ -410,16 +412,27 @@ payload/lion-disposeeventlooptimerupp.raw.log
 
 Also return any newly named crash report or crash plist if the runner reports one.
 
+## Reviewed Lion result
+
+The exact Snow-proven PPC subject ran on Lion 10.7.5 / 11G63 with subject SHA-256 `15848bd9dc1a7837dbb6a0756b96e5f83f58d549c88dcfe4eeeeaa28ca8e204c` and accepted kernel SHA-256 `fe68467b60b3bd7edfab61b2d6c8af7f988de5206c4b7b624151dc9f1a1061d3`. The fresh syscall-295 probe again returned EBADF without SIGSYS.
+
+The inherited timer-side-quit path completed exactly once, `RemoveEventLoopTimer()` returned status 0, and the UPP pointer remained nonzero. S18 and S19 each executed exactly once and `DISPOSEEVENTLOOPTIMERUPP_PASS` was emitted. Cleanup continued through title release, `DisposeWindow`, and `M24_SUCCESS`.
+
+The exact twenty-one distributed-notification broker remained closed with `register=21 callback=0 rejects=0 exact=YES` / `PASS`, broker exit 0, and ingress exit `lookups=1 requests=21 callbacks=0`; no request 22 and no broker reject were observed. The six titlebar translations remained exact with zero guard rejects, no new diagnostic appeared, protected hashes were unchanged, the accepted WBI / ColorProfileClient / ResolveColorProfile adapter counts remained 1 / 1 / 1, OrderFront remained 2, and the runner ended `POST_REMOVEEVENTLOOPTIMER_DISPOSEEVENTLOOPTIMERUPP_VALIDATION_PASS`.
+
+This closes the incremental Carbon GUI lifecycle through event-loop timer disposal and window cleanup. The next controlled question is no longer another isolated API boundary: it is whether the original Snow-positive `ppc-carbon-gui-smoketest` that historically aborted on Lion now completes unchanged under the fully restored stack.
+
 ## Current boundary
 
 ```text
 RunApplicationEventLoop timer-side-quit Snow        LIVE-PROVEN PASS
-RunApplicationEventLoop timer-side-quit Lion        LIVE-PROVEN through S15
+RunApplicationEventLoop timer-side-quit Lion        LIVE-PROVEN PASS
 all 21 reviewed Lion notification registrations     LIVE-PROVEN PASS
 RemoveEventLoopTimer Snow                            LIVE-PROVEN PASS
 RemoveEventLoopTimer Lion                            LIVE-PROVEN PASS
 DisposeEventLoopTimerUPP Snow                        LIVE-PROVEN PASS
-DisposeEventLoopTimerUPP Lion                        NEXT: guarded exact-binary transfer
+DisposeEventLoopTimerUPP Lion                        LIVE-PROVEN PASS
+original Carbon GUI smoke under restored stack       NEXT: exact historical-binary retest
 new compatibility families                          NO
 titlebar policy broadening                          NO
 XNU                                                  no source change indicated
