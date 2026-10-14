@@ -107,7 +107,7 @@ LEGACY_TRACE_COUNT="$(/usr/bin/grep -c 'kind=CGS_SHAPEWINDOW_INLINE_LEGACY.*id=0
 WINDOW_MARKER_COUNT="$(/usr/bin/grep -c '^Rosetta PPC Carbon GUI window shown:' "$SUBJECT_LOG" 2>/dev/null || true)"
 SMOKE_MARKER_COUNT="$(/usr/bin/grep -c '^Rosetta PPC Carbon GUI smoke test:' "$SUBJECT_LOG" 2>/dev/null || true)"
 OBSERVER_PASS_COUNT="$(/usr/bin/grep -c '^CGWINDOW_OBSERVER_RESULT:PASS$' "$OBSERVER_LOG" 2>/dev/null || true)"
-GEOMETRY_COUNT="$(/usr/bin/grep -c 'name=Rosetta PPC Carbon GUI.*x=120 y=98 width=400 height=222' "$OBSERVER_LOG" 2>/dev/null || true)"
+GEOMETRY_COUNT="$(/usr/bin/grep -c 'x=120 y=98 width=400 height=222.*name=Rosetta PPC Carbon GUI' "$OBSERVER_LOG" 2>/dev/null || true)"
 SUMMARY_LINE="$(/usr/bin/grep '^CGWINDOW_OBSERVER_SUMMARY:' "$OBSERVER_LOG" 2>/dev/null | /usr/bin/tail -1)"
 
 echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
