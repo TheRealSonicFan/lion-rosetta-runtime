@@ -2,7 +2,7 @@
 
 ## Status
 
-**NEXT CONTROLLED STEP.** The historical-client CPS registration adaptation is now live-proven on Lion. The exact `0x68` CheckInApplication request matched, translated to Lion CreateApplication, returned native result zero, translated back to the legacy reply, and eliminated the prior `-304/MIG_BAD_ARGUMENTS` failure. The process still appeared in the Dock without a visually observed Carbon window.
+**COMPLETE — PASS.** The dedicated historical-client notification broker accepted the complete reviewed 21-registration sequence exactly on Lion with zero rejects, no request 22, broker PASS/exit 0, and the rest of the restored stack unchanged. The process still appeared in the Dock without a visually observed Carbon window, so the next boundary is read-only WindowServer state observation rather than another compatibility change.
 
 The only deliberately held restored-stack difference is now distributed-notification client identity. The unchanged historical subject sent 21 registration requests, but the Process Manager exact-21 broker was pinned to:
 
@@ -310,3 +310,14 @@ titlebar / CGS compatibility                        held at accepted state
 LaunchServices / Finder / Cocoa                     HELD
 XNU                                                  no source change indicated
 ```
+
+
+## Reviewed Lion result
+
+The dedicated Carbon GUI broker built as i386 with build ID distributed-notifications-carbon-gui-registration-broker-v1 and SHA-256 ba7477848f84bbefdbdaa188f847aa8c369ccb0d63c9ac88bbbd752fc7bed5ac. The unchanged historical subject remained SHA-256 fe2ddc8e76e996c242facd60e56aa2203ffc762dec941fc6b1bbf0fe25613067 and the proven CPS/full-stack compatibility dylib remained SHA-256 519bd455d9f343821b2bd7d4eb22222bb18379f9c30bdc0d3a225ca9ac3d4c30.
+
+All 21 notification registrations were accepted under the preserved reviewed policy. The run ended register=21 callback=0 rejects=0 exact=YES, broker PASS, broker exit 0, ingress lookups=1 requests=21 callbacks=0, and no request 22. CPS registration remained exact with native result zero; all accepted downstream adapter counts and six titlebar translations remained exact; no new diagnostic appeared; protected hashes were unchanged; the subject printed both historical markers and exited 0. The runner ended PPC_CARBON_GUI_NOTIFICATION_REGISTRATION_INTEGRATION_PASS / PASS.
+
+Manual observation remains negative: no Carbon GUI window was actually visible even though the process appeared in the Dock and Carbon reported visible=1. Because both CPS registration and the exact historical-client notification policy are now closed, there is no remaining intentional client-policy gap to broaden.
+
+Current main advances to docs/ppc-carbon-gui-windowserver-observation.md. That procedure builds one read-only native CGWindowList observer on Snow Leopard and uses the exact same observer on Snow and Lion to determine whether WindowServer reports the target window, whether it is onscreen, its alpha/layer/bounds/title, and the active display identity before any further CGS compatibility work.
