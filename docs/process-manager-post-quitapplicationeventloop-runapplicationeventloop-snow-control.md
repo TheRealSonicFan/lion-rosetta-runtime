@@ -117,7 +117,7 @@ The one-shot timer interval remains two seconds and its repeat interval remains 
 - No kernel rebuild or reboot.
 - If S14 is reached and neither the callback ENTER marker nor S15 appears within 10 seconds, interrupt externally, preserve the complete log, and stop.
 - If the callback ENTER marker appears but the callback does not reach AFTER_QuitApplicationEventLoop and EXIT, preserve the complete log and stop.
-- Do not execute a Lion v2 integration until the corrected Snow result is reviewed.
+- The corrected Snow result is now reviewed PASS. Any Lion transfer must follow `docs/process-manager-post-quitapplicationeventloop-runapplicationeventloop-lion-integration.md` exactly.
 
 ## Phase A — update and pin
 
@@ -298,7 +298,17 @@ ppc-process-manager-cgs-session-bootstrap-integration-private-dyld.sha256
 pm-runapplicationeventloop-timer-quit-snow.log
 ```
 
-Do not transfer or execute the corrected v2 subject on Lion until the Snow evidence is reviewed.
+The returned Snow evidence has now been reviewed. Do not repeat this control unless a later investigation explicitly requires it.
+
+## Reviewed Snow result
+
+The corrected Snow 10.6.8 / 10K549 timer-side-quit v2 control passes completely with exact subject SHA-256 `059341612986721ef8e513c247b3ba39cf34892f25bad3c73dc2ef97ca8102b7`, source SHA-256 `b5f2c461a93c3cdb6bc9601b7540abba9f622ba3e70d46c736b361ad5051d166`, build ID `cps-runapplicationeventloop-timer-quit-validation-v2`, PowerPC 7400 architecture, and `/usr/oah/dyld`.
+
+The inherited ShowWindow / SelectWindow / IsWindowVisible / NewEventLoopTimerUPP / GetMainEventLoop / InstallEventLoopTimer sequence passes. The installed timer starts with callback state zero; S14 is reached; the timer callback executes exactly once; callback-side `QuitApplicationEventLoop()` returns; callback EXIT is reached; S15 is reached; `fired=1`; and `RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS` is emitted. Cleanup reaches `M24_SUCCESS` with `control_status=0`.
+
+The accepted active-loop side effects remain native Snow behavior: all six titlebar actions stay passthrough with zero unexpected actions; OrderFront totals are exactly 3/3/3 passthrough with exactly one SelectWindow-bounded call and exactly one S14-to-S15 call; there is no compatibility `ADAPTER_PASS`, no legacy callback-failure marker, no callback-count mismatch, and the runner ends with both `POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_SNOW_CONTROL_PASS` and `RESULT: PASS`.
+
+This closes the Snow `RunApplicationEventLoop()` timer-side-quit boundary and, in that exact context, live-proves one timer callback dispatch plus active-loop callback-side `QuitApplicationEventLoop()`. The next step is the exact-binary Lion transfer in `docs/process-manager-post-quitapplicationeventloop-runapplicationeventloop-lion-integration.md`.
 
 ## Current boundary
 
@@ -309,14 +319,14 @@ IsWindowVisible on Lion                          LIVE-PROVEN PASS
 NewEventLoopTimerUPP on Lion                     LIVE-PROVEN PASS
 GetMainEventLoop on Lion                         LIVE-PROVEN PASS
 InstallEventLoopTimer on Lion                    LIVE-PROVEN PASS
-QuitApplicationEventLoop on Snow                 PASS (direct no-active-loop)
-QuitApplicationEventLoop on Lion                 LIVE-PROVEN PASS (direct no-active-loop)
+QuitApplicationEventLoop direct/no-active-loop   LIVE-PROVEN PASS on Snow + Lion
 RunApplicationEventLoop prequeued-quit v1        FAILED TEST DESIGN; RETIRED
-RunApplicationEventLoop timer-side-quit v2       NEXT: corrected Snow control
-timer callback dispatch                         exercised only inside corrected v2
-active-loop callback-side Quit                   exercised only inside corrected v2
+RunApplicationEventLoop timer-side-quit v2 Snow  LIVE-PROVEN PASS
+timer callback dispatch on Snow                  LIVE-PROVEN PASS in v2 context
+active-loop callback-side Quit on Snow            LIVE-PROVEN PASS in v2 context
+RunApplicationEventLoop timer-side-quit v2 Lion  NEXT: guarded exact-binary transfer
 RemoveEventLoopTimer / DisposeEventLoopTimerUPP  HELD
 new compatibility families                      NO
 titlebar policy broadening                      NO
-XNU                                              no change indicated
+XNU                                              no source change indicated
 ```
