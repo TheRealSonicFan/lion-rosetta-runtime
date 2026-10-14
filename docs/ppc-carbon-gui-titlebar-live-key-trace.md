@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED LIVE DISCRIMINATOR after the completed static titlebar silent-collision inventory.
+COMPLETED LIVE-PROVEN PASS. Snow and Lion both execute exactly the known six titlebar-control bsearch keys, with zero outside-six lookups. The next controlled step is `docs/ppc-carbon-gui-titlebar-rendering-contract-audit.md`.
 
 ## Reviewed result that advances this step
 
@@ -288,6 +288,43 @@ A key classified `MISSING_EQUIVALENT`, or a Lion-only key not present in the Sno
 
 Stop and preserve the raw log. Do not broaden the trace or translation table in the same run.
 
+## Observed result — exact six is the complete live titlebarcontrols set
+
+The returned trace artifact matches the pinned source and build identity:
+
+```text
+interposer_source_sha256=f6b08e07d681bf9c04270a372642037e30384a269c86d2b16c3c144678a14fd6
+compat_build_id=coreui-titlebar-bsearch-exact-six-trace-v1
+artifact_sha256=23f98478a9c0b5076415a83a064f2e3d775c5eee42d17c6b219e9dfc0fbea1ac
+```
+
+Snow passes with exactly six validated `titlebarcontrols` lookups, all known exact-six keys and all passthrough:
+
+```text
+titlebar_trace_count=6
+titlebar_trace_outside_six_count=0
+titlebar_trace_limit_count=0
+RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_SNOW_CONTROL_PASS
+RESULT: PASS
+```
+
+Lion passes with the identical six raw source keys, exactly six translations, zero guard rejects, and zero outside-six lookups:
+
+```text
+titlebar_translated_count=6
+titlebar_guard_reject_count=0
+titlebar_trace_count=6
+titlebar_trace_known_six_count=6
+titlebar_trace_outside_six_count=0
+titlebar_trace_limit_count=0
+RESULT: PPC_CARBON_GUI_TITLEBAR_BSEARCH_TRACE_PASS
+RESULT: PASS
+```
+
+The live order is the same on both releases: disabled close, disabled minimize, disabled zoom, active close, active minimize, active zoom. The WindowServer observers pass and preserve the exact 400x222 title. Manual review reports Snow visually normal and Lion still only partially correct with the same titlebar defect.
+
+This closes additional `titlebarcontrols` key translation for the current historical subject. Do not add any of the 191 static outside-six semantic-equivalent candidates. Proceed only through `docs/ppc-carbon-gui-titlebar-rendering-contract-audit.md`.
+
 ## Return evidence
 
 Return:
@@ -319,12 +356,12 @@ backing-store synchronization adapter            LIVE-PROVEN PASS
 Lion exact titled frame                          400x222 at (120,98), onscreen
 six titlebar mappings                            LIVE-PROVEN
 six payload record structure                     STATIC-PROVEN COMPATIBLE
-Snow titlebar index entries                      223
-Lion same-byte silent collisions                 0
-Lion semantic-equivalent translations            197 total
-outside-six translation candidates               191
-outside-six live execution                       UNKNOWN
-next step                                        one Snow + one Lion passive key trace
+Snow titlebar live lookup count                  6
+Lion titlebar live lookup count                  6
+outside-six titlebarcontrols live lookups        0 on both releases
+additional titlebar key hypothesis               CLOSED for current subject
+Lion titlebar                                    PARTIAL / unchanged
+next step                                        docs/ppc-carbon-gui-titlebar-rendering-contract-audit.md
 new titlebar mappings                            NOT AUTHORIZED
 payload substitution                             NOT AUTHORIZED
 XNU                                              no source change indicated
