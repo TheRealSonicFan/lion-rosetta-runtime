@@ -402,6 +402,10 @@ payload/lion-runapplicationeventloop-thirteenth-registration.raw.log
 
 Also return any newly named crash report or crash plist if the runner reports one.
 
+## Observed result
+
+The exact-thirteen registration run is a clean narrow-boundary PASS. Registration 13 was accepted exactly once as allowed 11 / `AppleKeyboardMenuPreferencesChangedNotification` / `kCFNotificationAnyObject` / behavior 4 / Coalesce / counter 1, then request 14 appeared at `bits=0x1111 id=4 size=336 payload=302` and requests 14–21 were deliberately rejected as unreviewed traffic. The exact-thirteen broker therefore ended `register=13 callback=0 rejects=8 exact=NO` / `FAIL` solely because those eight later requests were intentionally outside policy; the runner still ended `POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_NOTIFICATION_REGISTRATION_PASS_FOURTEENTH_PROTOCOL_REJECTED`. The inherited timer-side-quit sequence completed through S15 and `M24_SUCCESS`, PPC exit remained 0, WBI/ColorProfileClient/ResolveColorProfile and OrderFront counts stayed exact, all six titlebar translations stayed exact with zero guard rejects, no new diagnostic appeared, and protected hashes remained unchanged. This live-proves the exact request-13 registration and authorizes only request-14 schema capture next.
+
 ## Current boundary
 
 ```text
@@ -412,15 +416,15 @@ request-9 exact registration                        LIVE-PROVEN PASS
 request-10 exact registration                       LIVE-PROVEN PASS
 request-11 exact registration                       LIVE-PROVEN PASS
 request-12 exact registration                       LIVE-PROVEN PASS
-request-13 schema audit                             PASS
+request-13 exact registration                       LIVE-PROVEN PASS
 request-13 operation                                register
 request-13 name                                     AppleKeyboardMenuPreferencesChangedNotification
 request-13 object                                   kCFNotificationAnyObject
 request-13 behavior                                 4 / Coalesce
 request-13 counter                                  1
 request-14 geometry                                 bits=0x1111 id=4 size=336 payload=302
-next step                                           accept exact request 13 once
-request 14                                          unreviewed / reject
+next step                                           capture/decode request 14 only
+request 14                                          unreviewed / reject after capture
 request 15+                                         unreviewed tail / reject
 RemoveEventLoopTimer / DisposeEventLoopTimerUPP     HELD
 new compatibility families                         NO
