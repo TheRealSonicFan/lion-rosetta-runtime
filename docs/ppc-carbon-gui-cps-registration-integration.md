@@ -2,7 +2,7 @@
 
 ## Status
 
-**NEXT CONTROLLED STEP.** The previous restored-stack retest did not expose another timer, titlebar, or XNU failure. Instead, it revealed that the historical Carbon smoke subject does not match the already accepted Process Manager CPS-registration predicate.
+**COMPLETE — PASS.** The dedicated historical-client CPS registration mode matched exactly on Lion, translated the `0x68` legacy CheckInApplication request to Lion CreateApplication, received a native success reply, translated it back to the legacy reply, and eliminated the prior `-304/MIG_BAD_ARGUMENTS` registration failure. The Carbon process still appeared in the Dock without a visually observed window, so the next controlled variable is the still-held notification client identity.
 
 The exact historical subject still completed its Carbon code path and exited 0, but no window was visually observed. The decisive trace is earlier: its legacy `CPS_CHECKIN_APPLICATION` request used:
 
@@ -321,3 +321,14 @@ titlebar broadening                                 NO
 LaunchServices / Finder / Cocoa                     HELD
 XNU                                                  no source change indicated
 ```
+
+
+## Reviewed Lion result
+
+The Lion run passed every gate of this phase. The historical subject remained exact at SHA-256 `fe2ddc8e76e996c242facd60e56aa2203ffc762dec941fc6b1bbf0fe25613067`; the dedicated compatibility artifact SHA-256 was `519bd455d9f343821b2bd7d4eb22222bb18379f9c30bdc0d3a225ca9ac3d4c30`. The CPS predicate reported `exact=YES` for the observed `0x68` request and `0x26` name length, adapted request ID `0x7372 -> 0x73c1`, received native reply ID `0x7425` with result zero, translated the reply to `0x73d6`, and emitted `PM_CPS_REGISTRATION_COMPAT_RESULT:ADAPTER_PASS`. The prior `_RegisterApplication() ... err=-304` message was absent.
+
+The application again reached `Rosetta PPC Carbon GUI window shown: ... visible=1` and the final smoke marker, exited 0, produced no new diagnostic, preserved all protected hashes, retained every accepted CGS/titlebar adapter count, and ended with `RESULT: PPC_CARBON_GUI_CPS_REGISTRATION_INTEGRATION_PASS` / `RESULT: PASS`. Nevertheless, no Carbon GUI window was visually observed.
+
+The intentionally held Process Manager-bound notification broker rejected all 21 registrations: `register=0 callback=0 rejects=21 exact=NO`, broker `FAIL`, no request 22, and ingress exit `requests=21 callbacks=0`. With CPS registration now proven, this is the only deliberately unresolved compatibility difference in the restored-stack run.
+
+Current work therefore advances to `docs/ppc-carbon-gui-notification-registration-integration.md`. That step changes only the broker's exact client identity from the Process Manager validation basename to `ppc-carbon-gui-smoketest-private-dyld` while preserving the same 21 reviewed names, objects, behaviors, counters, order, and callback policy. No titlebar, CGS, LaunchServices, Cocoa, or XNU broadening is authorized.
