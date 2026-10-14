@@ -42,6 +42,7 @@ POST_SHOWWINDOW_SELECTWINDOW_MODE="${ROSETTA_POST_SHOWWINDOW_SELECTWINDOW_VALIDA
 POST_SELECTWINDOW_ISWINDOWVISIBLE_MODE="${ROSETTA_POST_SELECTWINDOW_ISWINDOWVISIBLE_VALIDATION_MODE:-}"
 POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE="${ROSETTA_POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_VALIDATION_MODE:-}"
 POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE="${ROSETTA_POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_VALIDATION_MODE:-}"
+POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE="${ROSETTA_POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_VALIDATION_MODE:-}"
 SHOWWINDOW_UNKNOWN_TRACE_MODE="${ROSETTA_CGS_SHOWWINDOW_UNKNOWN_TRACE_MODE:-}"
 SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ADD_TRACKING_AREA_COMPAT_MODE:-}"
 SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE="${ROSETTA_CGS_SHOWWINDOW_ORDER_FRONT_CONDITIONALLY_COMPAT_MODE:-}"
@@ -318,6 +319,19 @@ if [ -n "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" ]; then
     [ "$SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_MODE" = "lion-id-v1" ] ||
         die 64 "GetMainEventLoop validation requires accepted WindowBackingInfo compatibility"
     EXPECTED_SUBJECT_BUILD_ID="cps-getmaineventloop-validation-v1"
+fi
+if [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
+    [ "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" = "lion-installeventlooptimer-v1" ] ||
+        die 64 "unsupported ROSETTA_POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_VALIDATION_MODE: $POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE"
+    [ "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" = "lion-getmaineventloop-v1" ] ||
+        die 64 "InstallEventLoopTimer validation requires the accepted GetMainEventLoop validation mode"
+    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] ||
+        die 64 "InstallEventLoopTimer validation requires the accepted exact-seven notification broker"
+    [ "$SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_MODE" = "lion-id-v1" ] ||
+        die 64 "InstallEventLoopTimer validation requires accepted ResolveColorProfile compatibility"
+    [ "$SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_MODE" = "lion-id-v1" ] ||
+        die 64 "InstallEventLoopTimer validation requires accepted WindowBackingInfo compatibility"
+    EXPECTED_SUBJECT_BUILD_ID="cps-installeventlooptimer-validation-v1"
 fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     [ "$SHOWWINDOW_UNKNOWN_TRACE_MODE" = "lion-passive-v1" ] ||
@@ -794,6 +808,18 @@ if [ -n "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" ]; then
             die 68 "GetMainEventLoop subject marker missing: $marker"
     done
 fi
+if [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
+    for marker in \
+        'PM_POSTWINDOWTIMERINSTALL_MILESTONE:S10_BEFORE_InstallEventLoopTimer' \
+        'PM_POSTWINDOWTIMERINSTALL_MILESTONE:S11_AFTER_InstallEventLoopTimer' \
+        'PM_POSTWINDOWTIMERINSTALL_STATUS:InstallEventLoopTimer=' \
+        'PM_POSTWINDOWTIMERINSTALL_POINTER:pointer=' \
+        'PM_POSTWINDOWTIMERINSTALL_CALLBACK:fired=' \
+        'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_PASS'; do
+        /usr/bin/strings "$SUBJECT" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "InstallEventLoopTimer subject marker missing: $marker"
+    done
+fi
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
     "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_CORE_COMPAT_BUILD_ID" || die 68 "CoreServices CPS registration compatibility build marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq \
@@ -1116,6 +1142,9 @@ if [ -n "$POST_ISWINDOWVISIBLE_NEWEVENTLOOPTIMERUPP_MODE" ]; then
 fi
 if [ -n "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" ]; then
     log "post_neweventlooptimerupp_getmaineventloop_validation_mode=$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE"
+fi
+if [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
+    log "post_getmaineventloop_installeventlooptimer_validation_mode=$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE"
 fi
 if [ -n "$SHOWWINDOW_UNKNOWN_TRACE_MODE" ]; then
     log "showwindow_unknown_cgs_trace_mode=$SHOWWINDOW_UNKNOWN_TRACE_MODE"
@@ -2684,6 +2713,27 @@ if [ -n "$POST_CREATEWINDOW_TITLE_MODE" ]; then
             exit 0
         fi
     fi
+    if [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_MILESTONE:S10_BEFORE_InstallEventLoopTimer' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_NOT_REACHED"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_MILESTONE:S11_AFTER_InstallEventLoopTimer' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_NO_RETURN"
+            exit 0
+        fi
+        if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_STATUS:InstallEventLoopTimer=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_POSTWINDOWTIMERINSTALL_POINTER:pointer=0x[0-9a-fA-F]*[1-9a-fA-F][0-9a-fA-F]* nonzero=YES' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_CALLBACK:fired=0' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_PASS' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_RETURNED_ERROR' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_NULL_TIMER' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMERINSTALL_RESULT:INSTALLEVENTLOOPTIMER_CALLBACK_FIRED_UNEXPECTEDLY' "$RAW_LOG" ||
+           /usr/bin/grep -Fq 'PM_POSTWINDOWTIMER_CALLBACK:FIRED' "$RAW_LOG"; then
+            log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_STATUS_POINTER_OR_CALLBACK_MISMATCH"
+            exit 0
+        fi
+    fi
     if ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T04_BEFORE_CFRelease' "$RAW_LOG" ||
        ! /usr/bin/grep -Fq 'PM_POSTWINDOWTITLE_MILESTONE:T05_AFTER_CFRelease' "$RAW_LOG"; then
         log "RESULT: POST_CREATEWINDOW_WINDOWTITLE_CFRELEASE_INCOMPLETE"
@@ -2734,6 +2784,9 @@ fi
 
 if [ "$RC" -eq 0 ] && [ "$FOUND" -eq 0 ]; then
     if [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
+       [ -n "$POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_MODE" ]; then
+        log "RESULT: POST_GETMAINEVENTLOOP_INSTALLEVENTLOOPTIMER_VALIDATION_PASS"
+    elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
        [ -n "$POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_MODE" ]; then
         log "RESULT: POST_NEWEVENTLOOPTIMERUPP_GETMAINEVENTLOOP_VALIDATION_PASS"
     elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] &&
