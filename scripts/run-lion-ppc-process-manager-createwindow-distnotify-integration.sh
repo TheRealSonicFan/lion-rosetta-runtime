@@ -88,6 +88,7 @@ POST_EXTRAS_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_EXTRAS
 POST_FONTSERVER_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_FONTSERVER_SCHEMA_AUDIT_REPORT:-}"
 POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT:-}"
 POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT:-}"
+RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT:-}"
 REAL_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_REAL_REGISTRATION_MODE:-}"
 EXPECTED_REAL_REGISTRATION_COUNT=3
 if [ -n "$SCHEMA_AUDIT_REPORT" ]; then
@@ -103,6 +104,9 @@ elif [ -n "$POST_SHOWWINDOW_SCHEMA_AUDIT_REPORT" ]; then
 elif [ -n "$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-showwindow-seventh-schema-audit-broker-v1"
     EXPECTED_REAL_REGISTRATION_COUNT=6
+elif [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT" ]; then
+    EXPECTED_BROKER_BUILD_ID="distributed-notifications-runapplicationeventloop-eighth-schema-audit-broker-v1"
+    EXPECTED_REAL_REGISTRATION_COUNT=7
 elif [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-showwindow-seventh-registration-broker-v1"
     EXPECTED_REAL_REGISTRATION_COUNT=7
@@ -1000,6 +1004,17 @@ if [ -n "$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT" ]; then
             die 68 "seventh-request schema-audit broker marker missing: $marker"
     done
 fi
+if [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT" ]; then
+    for marker in \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_CAPTURE:' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REJECT:' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_TAIL_REJECT:' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_SUMMARY:' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:RUNAPPLICATIONEVENTLOOP_EIGHTH_AUDIT_PASS'; do
+        /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "RunApplicationEventLoop eighth-request schema-audit broker marker missing: $marker"
+    done
+fi
 /usr/bin/strings "$SEC_INTERPOSER" | /usr/bin/grep -Fq \
     "PM_SECURITY_SESSION_API_COMPAT_BUILD_ID:$EXPECTED_SEC_BUILD_ID" || die 68 "Security build marker missing"
 /usr/bin/strings "$CGS_INTERPOSER" | /usr/bin/grep -Fq \
@@ -1130,6 +1145,12 @@ if [ -n "$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT" ]; then
         die 73 "could not initialize seventh-request schema audit report: $POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT"
     export ROSETTA_DISTRIBUTED_NOTIFICATIONS_POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT="$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT"
     log "distributed_notifications_post_showwindow_seventh_schema_audit_report=$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT"
+fi
+if [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT" ]; then
+    : > "$RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT" ||
+        die 73 "could not initialize RunApplicationEventLoop eighth-request schema audit report: $RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT"
+    export ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT="$RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT"
+    log "distributed_notifications_runapplicationeventloop_eighth_schema_audit_report=$RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT"
 fi
 if [ -n "$REAL_REGISTRATION_MODE" ]; then
     log "distributed_notifications_real_registration_mode=$REAL_REGISTRATION_MODE"
@@ -1751,6 +1772,65 @@ if [ -n "$POST_SHOWWINDOW_SEVENTH_SCHEMA_AUDIT_REPORT" ]; then
         exit 0
     fi
     log "RESULT: POST_WINDOWTITLE_SHOWWINDOW_SEVENTH_NOTIFICATION_SCHEMA_AUDIT_INCOMPLETE"
+    exit 0
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT" ]; then
+    EIGHTH_CAPTURE_COUNT="$(/usr/bin/grep -c 'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_CAPTURE:index=' "$RAW_LOG" 2>/dev/null || true)"
+    SEVENTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=7 allowed=5 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "runapplicationeventloop_eighth_schema_audit_capture_count=$EIGHTH_CAPTURE_COUNT"
+    log "seventh_notification_registration_accept_count=$SEVENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ -s "$RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT" ] &&
+       [ "$EIGHTH_CAPTURE_COUNT" -eq 1 ] &&
+       [ "$SEVENTH_ACCEPT_COUNT" -eq 1 ] &&
+       [ "$TIMER_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       [ "$RC" -eq 0 ] &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=8 bits=0x00001111 id=4 size=332 payload=298' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REJECT:status=25 intentional=YES capture=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_SUMMARY:captures=1 failures=0 unexpectedRejects=0 postBoundaryRejects=[0-9]+ exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=7 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:RUNAPPLICATIONEVENTLOOP_EIGHTH_AUDIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+        log "runapplicationeventloop_eighth_schema_audit_output_sha256=$(sha256 "$RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT")"
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_SCHEMA_AUDIT_PASS"
+        exit 0
+    fi
+    log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_SCHEMA_AUDIT_INCOMPLETE"
     exit 0
 fi
 
