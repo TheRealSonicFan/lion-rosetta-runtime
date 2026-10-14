@@ -2,11 +2,11 @@
 
 ## Status
 
-**CORRECTED CONTROL GATE; NEXT LIVE STEP IS ONE PHASE C RERUN.** The CGSShapeWindow inline ID-only integration is complete and restores the historical Carbon window's geometry and visual presentation on Lion. The exact subject now reaches an onscreen 400x222 window at (120,98), and the user manually observed the window. The remaining visible defect is titlebar fidelity: the titlebar appears transparent/background-colored and the three traffic-light controls appear uniformly yellow rather than normal Aqua red/yellow/green.
+**COMPLETED LIVE-PROVEN PASS.** The corrected Snow control and the one authorized Lion integration have both passed. Snow Leopard remains the healthy non-regression control with zero backing-sync compatibility calls, while Lion reaches one exact legacy synchronization call, rewrites only the request/reply IDs, receives native result zero from Lion's synchronization routine, and reports no remaining backing-store lock-synchronization failure.
 
-The first Phase C return exposed a control-harness assumption error rather than a runtime failure. On Snow Leopard the exact historical subject completed normally, the ShapeWindow passthrough and observer gates passed, and the 400x222 titled window was onscreen, but the healthy Snow path issued **no** `0x7265 / 0x72c9` backing-synchronization transaction. Therefore zero backing-sync calls is the expected Snow non-regression control for this exact subject. Requiring one or more Snow calls incorrectly treated the absence of Lion's failure/retry path as a failure.
+The exact historical Carbon window remains visible on Lion at 400x222 at (120,98). All six previously accepted CoreUI titlebar semantic-key translations still fire with zero guard rejects. The remaining defect is now isolated to visual fidelity above the closed CGS synchronization boundary: the titlebar remains transparent/background-colored and the red/yellow/green controls are distinct but visibly distorted rather than normal Aqua controls.
 
-The Lion adapter target remains independently grounded by the prior live Lion ShapeWindow run, which emitted 12 exact `0x7265 / 0x72c9`, `0x2c / 0x2c`, window/3/1 transactions returning `-304` immediately before `_CGSLockWindow: Cannot synchronize window backing store`, and by the static Snow/Lion CoreGraphics audit below. The Snow control is not used to prove live invocation of the adapter target; it proves that loading the v6 interposer does not perturb the healthy Snow path.
+The authoritative next step is the static, read-only differential in `docs/ppc-carbon-gui-titlebar-payload-fidelity-audit.md`. Do not broaden the backing-sync predicate, add another CGS adapter, or change the six-key translation table from this visual defect alone.
 
 The completed run also exposes a previously known but now visually relevant generated-MIG collision in the backing-store synchronization path. The Lion trace repeatedly sends the Snow PPC transaction:
 
@@ -421,6 +421,33 @@ Stop. Preserve raw evidence. Do not translate the result or synthesize backing s
 
 Stop. Do not broaden the predicate and do not run Lion. A healthy Snow control for this exact subject has zero backing-sync compatibility calls.
 
+## Observed result — backing-sync boundary closed
+
+The returned evidence satisfies the successful-but-titlebar-still-abnormal decision branch:
+
+```text
+Snow backing-sync exact count                 0
+Snow backing-sync passthrough count           0
+Snow control                                  PASS
+Lion backing-sync exact count                 1
+Lion adapted request count                    1
+Lion native success count                     1
+Lion adapted reply count                      1
+Lion adapter pass count                       1
+Lion predicate/native rejects                 0 / 0
+Lion backing-sync lock failures               0
+ShapeWindow inline adapter                    PASS
+WindowBackingInfo / color-profile / later CGS accepted gates  PASS
+titlebar exact-six translations               6
+titlebar guard rejects                        0
+Lion WindowServer observer                    400x222 at (120,98), onscreen
+new diagnostics                               none
+protected hashes                              unchanged
+final Lion result                             PPC_CARBON_GUI_BACKING_SYNC_INTEGRATION_PASS
+```
+
+Manual review confirms the Snow titlebar is normal and the Lion titlebar remains visually abnormal: transparent/background-colored with distinct but distorted red/yellow/green controls. This closes the synchronization experiment and advances only to the read-only titlebar payload/consumer audit.
+
 ## Return for review
 
 Return:
@@ -451,19 +478,21 @@ Return any new crash/core artifact only if the Lion runner explicitly names one.
 
 ```text
 CGSShapeWindow inline adapter                  LIVE-PROVEN PASS
-Lion frame                                    400x222 at (120,98), onscreen
-Lion manual window                            VISIBLE
-Lion titlebar                                 VISIBLE BUT VISUALLY ABNORMAL
-titlebar exact-six bsearch translations       6 / guard rejects 0
-Snow SynchronizeWindowBackingStore            0x7265 / 0x72c9
-healthy Snow exact subject                    zero backing-sync calls
-Lion SynchronizeWindowBackingStore            0x7266 / 0x72ca
-Lion 0x7265 / 0x72c9                          SetWindowAutofillColor collision
-prior live Lion exact calls                   12
-current live Lion sync result                 repeated -304 + lock-sync failure
-next step                                     rerun corrected Snow control, then one Lion ID-only integration
-CoreUI/ArtFile payload changes                HELD
-later CGS adapters                            HELD
-LaunchServices / Finder / Cocoa               HELD
-XNU                                           no source change indicated
+backing-store synchronization adapter          LIVE-PROVEN PASS
+backing-sync native result                     0
+backing-sync lock failure                      absent
+Lion frame                                     400x222 at (120,98), onscreen
+Lion manual window                             VISIBLE
+Lion titlebar                                  VISIBLE BUT VISUALLY ABNORMAL
+titlebar exact-six bsearch translations        6 / guard rejects 0
+Snow SynchronizeWindowBackingStore             0x7265 / 0x72c9
+healthy Snow exact subject                     zero backing-sync calls
+Lion SynchronizeWindowBackingStore             0x7266 / 0x72ca
+Lion 0x7265 / 0x72c9                           SetWindowAutofillColor collision
+current live Lion exact calls                  1 / adapter PASS
+next step                                      docs/ppc-carbon-gui-titlebar-payload-fidelity-audit.md
+new titlebar keys                              NOT AUTHORIZED
+ArtFile payload substitution                   NOT AUTHORIZED
+later CGS / LaunchServices / Finder / Cocoa    HELD
+XNU                                            no source change indicated
 ```
