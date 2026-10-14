@@ -395,6 +395,10 @@ payload/lion-runapplicationeventloop-eleventh-registration.raw.log
 
 Also return any newly named crash report or crash plist if the runner reports one.
 
+## Live result
+
+The exact-eleven registration operation completed at its planned narrow discriminator. Registration 11 was accepted exactly once as allowed 9 / `AppleTextBehaviorPreferencesChangedNotification` / `kCFNotificationAnyObject` / behavior 4 / Coalesce / counter 1. Request 12 then appeared at `bits=0x1111 id=4 size=336 payload=302` and was deliberately rejected together with requests 13–21. The exact-eleven broker therefore ended `register=11 callback=0 rejects=10 exact=NO` / `FAIL` solely because all ten post-boundary requests were intentionally outside its reviewed policy. The inherited event-loop sequence still completed through one timer callback, S15, `fired=1`, `RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS`, `M24_SUCCESS`, and PPC exit 0; WBI/ColorProfileClient/ResolveColorProfile and OrderFront counts remained exact, all six titlebar translations remained exact, no new diagnostic appeared, protected hashes were unchanged, and the runner ended `POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_PASS_TWELFTH_PROTOCOL_REJECTED`. The next operation is the request-12-only schema audit in `docs/process-manager-post-runapplicationeventloop-twelfth-notification-schema-audit.md`.
+
 ## Current boundary
 
 ```text
@@ -404,14 +408,15 @@ request-8 exact registration                        LIVE-PROVEN PASS
 request-9 exact registration                        LIVE-PROVEN PASS
 request-10 exact registration                       LIVE-PROVEN PASS
 request-11 schema audit                             PASS
+request-11 exact registration                       LIVE-PROVEN PASS
 request-11 operation                                register
 request-11 name                                     AppleTextBehaviorPreferencesChangedNotification
 request-11 object                                   kCFNotificationAnyObject
 request-11 behavior                                 4 / Coalesce
 request-11 counter                                  1
 request-12 geometry                                 bits=0x1111 id=4 size=336 payload=302
-next step                                           accept exact request 11 once
-request 12                                          unreviewed / reject
+next step                                           capture/decode request 12 only
+request 12                                          unreviewed / reject after capture
 request 13+                                         unreviewed tail / reject
 RemoveEventLoopTimer / DisposeEventLoopTimerUPP     HELD
 new compatibility families                         NO
