@@ -2146,7 +2146,7 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ]; then
         exit 0
     fi
     if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_REJECT:' "$RAW_LOG"; then
-        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=10 ' "$RAW_LOG" &&
+        if /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=10 bits=0x00001111 id=4 size=332 payload=300' "$RAW_LOG" &&
            [ "$RC" -eq 0 ] &&
            [ "$FOUND" -eq 0 ] &&
            [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
