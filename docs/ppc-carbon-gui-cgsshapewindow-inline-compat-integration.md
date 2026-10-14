@@ -92,7 +92,7 @@ scripts/build-ppc-carbon-gui-cgsshapewindow-inline-compat-on-snowleopard.sh
   Git blob 977424d4f63b3754aa9dc2bbc9d3922e0c92a205
 
 scripts/run-snowleopard-ppc-carbon-gui-cgsshapewindow-inline-control.sh
-  Git blob f668a0e61b551b690a90134c7b97a30f69209247
+  Git blob 808f88063ccf103a15ca085e4a9a50635c6eb658
 
 scripts/run-lion-ppc-carbon-gui-cgsshapewindow-inline-integration.sh
   Git blob 9832dfb208f0dedb20a213c4ed8bd6e7c6fa695f
@@ -228,7 +228,9 @@ RESULT: PASS
 
 Manually confirm the Snow Carbon window is visible.
 
-The Snow control runner validates Mach-O architecture by parsing `lipo -info` rather than relying on `lipo -verify_arch`. This is intentional: the earlier runner could falsely reject the Snow-built thin PPC compatibility dylib even when `file` correctly reported a PPC Mach-O. If a run stopped only at `error: compatibility dylib is not PPC` after the subject/core/observer/private-dyld hashes were logged, pull current `main` and rerun Phase C with the existing built dylib and sidecar; no rebuild is required unless its sidecar no longer matches.
+The Snow control runner validates Mach-O architecture by parsing `lipo -info` rather than relying on `lipo -verify_arch`. This is intentional: the earlier runner could falsely reject the Snow-built thin PPC compatibility dylib even when `file` correctly reported a PPC Mach-O.
+
+The control also forces **every compatibility path compiled into the combined v5 dylib to passthrough on Snow** while leaving only the passive unknown-CGS trace enabled and the new shape rule in passthrough mode. This is required because the combined dylib also interposes CoreServices/bootstrap and distributed-notification ingress; leaving those modes unset causes the Snow-positive subject to fail before window creation (for example, CoreServices exact lookup mode unset, distributed-notification ingress mode unset, then TransformProcessType returns -600). If a prior Phase C run failed there, pull current `main` and rerun Phase C with the existing built dylib and sidecar; no rebuild is required unless its sidecar no longer matches.
 
 If the predicate is not exact on Snow, stop. Do not run Lion.
 
