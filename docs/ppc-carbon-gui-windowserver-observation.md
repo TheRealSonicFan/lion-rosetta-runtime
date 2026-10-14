@@ -2,11 +2,11 @@
 
 ## Status
 
-**NEXT CONTROLLED STEP.** The exact historical Carbon GUI subject now passes the complete restored compatibility stack on Lion: CPS registration succeeds, all 21 distributed-notification registrations are accepted exactly, the subject reaches both historical markers, exits 0, produces no new diagnostic, preserves protected hashes, and retains all accepted CGS/titlebar adapter counts. The process appears in the Dock, but the **Rosetta PPC Carbon GUI** window is still not visually observable.
+**COMPLETE — DIFFERENTIAL IS DECISIVE.** The same native observer binary SHA-256 0416a9b3bd9466708f6e540616be94fcc2ba65c5a89a68844602eee7bb220634 was used on Snow Leopard and Lion. Snow presented the exact titled target as an onscreen 400x222 window at (120,98), alpha 1.0, layer 0, and the window was manually visible. Lion presented the exact titled target to WindowServer as an onscreen 1x1 window at the same (120,98) origin, alpha 1.0, layer 0, while no Carbon window was manually visible.
 
-This means no known client-policy compatibility gate remains intentionally held. The next question is purely observational: **what does WindowServer itself report for the historical window while the application claims IsWindowVisible(window) == true?**
+The visual discrepancy is therefore no longer an abstract WindowServer-presence problem: Lion creates and orders the window, but its frame remains collapsed to 1x1 instead of the Snow 400x222 frame. The raw Lion trace immediately identifies the first geometry-specific failed transaction: legacy request 0x724d / reply 0x72b1, send 0x50 / receive 0x2c, targeting the same window ID, returns -304 and is followed by the CGSShapeWindow server type-check diagnostic.
 
-Do not patch any CGS transaction yet. The Lion raw trace still contains older diagnostics such as CGSGetDisplayBounds (display 0), CGSShapeWindow type-check failure, invalid display 0x0 color-space lookup, and repeated _CGSLockWindow backing synchronization failures. Those signatures also occurred during earlier Process Manager validation runs, so the current evidence does not isolate any one of them as the cause of the manual visibility discrepancy.
+Current main advances to docs/ppc-carbon-gui-cgsshapewindow-protocol-audit.md. That stage is static and read-only: it compares the Snow PPC _CGSShapeWindow -> __CGSWindowShape path with Lion i386 _CGSShapeWindow -> __CGSCopyWindowShape before any live shape or display compatibility is added.
 
 ## Objective
 
@@ -326,9 +326,24 @@ Return any new crash/core diagnostic named by either runner.
 historical subject / full restored stack            MACHINE-PROVEN PASS
 historical CPS registration                         LIVE-PROVEN PASS
 historical-client exact-21 notifications            LIVE-PROVEN PASS
-manual Lion Carbon window                           NOT OBSERVED
-WindowServer Snow/Lion window-state differential    NEXT: read-only observation
-new CGS/display compatibility                       NO
+Snow WindowServer geometry                          400x222 at (120,98), onscreen, alpha 1
+Lion WindowServer geometry                          1x1 at (120,98), onscreen, alpha 1
+Snow manual Carbon window                           VISIBLE
+Lion manual Carbon window                           NOT OBSERVED
+live legacy 0x724d / 0x72b1                        -304 + CGSShapeWindow type-check failure
+next step                                           static CGSShapeWindow inner-helper differential
+new live CGS/display compatibility                  NO
 LaunchServices / Finder / Cocoa                     HELD
-XNU                                                  no source change indicated
+XNU                                                 no source change indicated
 ~~~
+
+
+## Reviewed result
+
+The Snow control ended PPC_CARBON_GUI_WINDOWSERVER_SNOW_CONTROL_PASS / PASS. Its observer sampled the target window in 50 of 70 samples, onscreen in 48, and with the exact title in all 50 target-window samples. The observed frame was consistently x=120 y=98 width=400 height=222, layer 0, alpha 1.000.
+
+The Lion observation run preserved every accepted restored-stack gate, produced no new diagnostic, preserved protected hashes, and ended PPC_CARBON_GUI_WINDOWSERVER_OBSERVATION_COMPLETE / PASS. Its observer sampled the exact target window in 52 of 70 samples and onscreen in 45, with the exact title in all 52 target-window samples. The observed frame was consistently x=120 y=98 width=1 height=1, layer 0, alpha 1.000.
+
+The native main display ID was 0x5b81c5c0 on both systems. The active display geometry differs between the two test environments, but the target window origin is the same and is well inside both displays. The Lion failure is therefore a collapsed frame, not an off-display window.
+
+The Lion trace's request 0x724d targets the same WindowServer window ID reported by the observer and carries values matching the Snow frame edges. Lion returns reply 0x72b1 with result -304 immediately before the CGSShapeWindow type-check diagnostic. This is now the first geometry-specific compatibility boundary. The earlier display-0, color-space, and backing-lock diagnostics remain held until the inner shape protocol is statically attributed.
