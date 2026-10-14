@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED STATIC STEP after the bitmap-info compatibility integration improved the Lion traffic-light rendering but left the titlebar frame/background absent and the titlebar non-draggable.
+COMPLETED STATIC PASS. The frame path is release-refactored while the hit-mask-to-part-code semantics remain structurally aligned; no hit-test rewrite is justified. The next controlled step is `docs/ppc-carbon-gui-hitoolbox-windowframe-cuidraw-live-trace.md`.
 
 ## Reviewed result that advances this step
 
@@ -258,6 +258,21 @@ Do not force dragging immediately. First prepare a passive Snow/Lion trace that 
 
 Do not patch these functions. The next discriminator should be live input/output capture at the exported frame/region boundaries, preserving the bitmap-info adapter and all current compatibility rules.
 
+## Observed result
+
+Both returned reports pass with exact pinned provenance and no modification:
+
+```text
+Snow 10.6.8 / 10K549 ppc7400   frame_hit_contract_exact=YES
+Lion 10.7.5 / 11G63 i386       frame_hit_contract_exact=YES
+```
+
+The frame side shows a clear release refactor. Snow PPC `HIThemeDrawWindowFrameInternal` has an explicit `__HIThemeUseCoreUI` branch and calls the separate `_HIThemeDrawDocumentWindowWithCoreUI` helper. That helper contains six possible `CUIDraw` calls. Lion native HIToolbox has no separate `DrawDocumentWindowWithCoreUI` symbol and folds the corresponding work into its larger frame-internal routine, which also contains six `CUIDraw` calls.
+
+The hit side does not expose a corresponding semantic remap. Snow PPC and Lion native `_HIThemeGetWindowRegionHit` both call `DataEngine::GetWindowRegionHitMask` and use the same mask-to-classic-window-part mapping. Architecture-specific instruction sequences and validation details differ, but the static reports do not justify translating a titlebar part code.
+
+Because the historical Lion PPC process executes the accepted Snow PPC HIToolbox image from the unchanged Rosetta shared cache, the next discriminator must observe what that old frame helper actually asks CoreUI to draw on each OS. Follow `docs/ppc-carbon-gui-hitoolbox-windowframe-cuidraw-live-trace.md`. Keep the non-draggable titlebar as a separate later hit-result discriminator.
+
 ## Return evidence
 
 Return exactly:
@@ -283,10 +298,12 @@ Snow titlebar drag                              YES
 Lion titlebar drag                              NO
 Snow observer movement                          observed
 Lion initial exact frame                        400x222 at (120,98), onscreen
-next step                                       static HIToolbox frame/hit differential
+frame/hit static differential                  COMPLETED PASS
+hit part-code remap                             NOT DEMONSTRATED
+next step                                       docs/ppc-carbon-gui-hitoolbox-windowframe-cuidraw-live-trace.md
 metric rewrite                                  NOT AUTHORIZED
 hit-test/part-code rewrite                      NOT AUTHORIZED
-frame renderer interposition                    NOT AUTHORIZED
+frame argument adaptation                       NOT AUTHORIZED
 new CGS rule                                    NOT AUTHORIZED
 XNU                                             no source change indicated
 ```
