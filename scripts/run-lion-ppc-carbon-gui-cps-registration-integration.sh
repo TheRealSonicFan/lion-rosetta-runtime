@@ -14,7 +14,7 @@ CGS_INTERPOSER="${7:-$ROOT/payload/ppc-process-manager-cgs-session-dockserver-fo
 CGS_SHA_FILE="${8:-$CGS_INTERPOSER.sha256}"
 BROKER="${9:-$ROOT/dn-runapplicationeventloop-remaining-registration-broker}"
 BROKER_SHA_FILE="${10:-$BROKER.sha256}"
-REPORT="${11:-$ROOT/payload/lion-ppc-carbon-gui-restored-stack.log}"
+REPORT="${11:-$ROOT/payload/lion-ppc-carbon-gui-cps-registration.log}"
 REPORT_DIR="$(/usr/bin/dirname "$REPORT")"
 RAW_LOG="${REPORT%.log}.raw.log"
 
