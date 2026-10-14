@@ -208,13 +208,14 @@ echo "observer_geometry_400x222_count=$GEOMETRY_COUNT" | /usr/bin/tee -a "$SUBJE
 echo "observer_summary=$SUMMARY_LINE" | /usr/bin/tee -a "$SUBJECT_LOG"
 echo "artfile_trace_unique_count=$ARTFILE_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
 echo "artfile_trace_outside_six_unique_count=$ARTFILE_TRACE_OUTSIDE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "artfile_trace_miss_unique_count=$ARTFILE_TRACE_MISS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"\necho "artfile_trace_limit_count=$ARTFILE_TRACE_LIMIT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "artfile_trace_disabled_clear_count=$TITLEBAR_DISABLED_CLEAR_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "artfile_trace_disabled_minus_count=$TITLEBAR_DISABLED_MINUS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "artfile_trace_disabled_zoom_count=$TITLEBAR_DISABLED_ZOOM_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "artfile_trace_active_clear_count=$TITLEBAR_ACTIVE_CLEAR_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "artfile_trace_active_minus_count=$TITLEBAR_ACTIVE_MINUS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
-echo "artfile_trace_active_zoom_count=$TITLEBAR_ACTIVE_ZOOM_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "artfile_trace_miss_unique_count=$ARTFILE_TRACE_MISS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "artfile_trace_limit_count=$ARTFILE_TRACE_LIMIT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "artfile_trace_disabled_clear_count=$ARTFILE_DISABLED_CLEAR_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "artfile_trace_disabled_minus_count=$ARTFILE_DISABLED_MINUS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "artfile_trace_disabled_zoom_count=$ARTFILE_DISABLED_ZOOM_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "artfile_trace_active_clear_count=$ARTFILE_ACTIVE_CLEAR_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "artfile_trace_active_minus_count=$ARTFILE_ACTIVE_MINUS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "artfile_trace_active_zoom_count=$ARTFILE_ACTIVE_ZOOM_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
 
 if [ "$APP_RC" -eq 0 ] &&
    [ "$OBSERVER_RC" -eq 0 ] &&
@@ -232,12 +233,12 @@ if [ "$APP_RC" -eq 0 ] &&
    [ "$GEOMETRY_COUNT" -ge 1 ] &&
    [ "$ARTFILE_TRACE_COUNT" -ge 6 ] &&
    [ "$ARTFILE_TRACE_LIMIT_COUNT" -eq 0 ] &&
-   [ "$TITLEBAR_DISABLED_CLEAR_COUNT" -ge 1 ] &&
-   [ "$TITLEBAR_DISABLED_MINUS_COUNT" -ge 1 ] &&
-   [ "$TITLEBAR_DISABLED_ZOOM_COUNT" -ge 1 ] &&
-   [ "$TITLEBAR_ACTIVE_CLEAR_COUNT" -ge 1 ] &&
-   [ "$TITLEBAR_ACTIVE_MINUS_COUNT" -ge 1 ] &&
-   [ "$TITLEBAR_ACTIVE_ZOOM_COUNT" -ge 1 ]; then
+   [ "$ARTFILE_DISABLED_CLEAR_COUNT" -ge 1 ] &&
+   [ "$ARTFILE_DISABLED_MINUS_COUNT" -ge 1 ] &&
+   [ "$ARTFILE_DISABLED_ZOOM_COUNT" -ge 1 ] &&
+   [ "$ARTFILE_ACTIVE_CLEAR_COUNT" -ge 1 ] &&
+   [ "$ARTFILE_ACTIVE_MINUS_COUNT" -ge 1 ] &&
+   [ "$ARTFILE_ACTIVE_ZOOM_COUNT" -ge 1 ]; then
     echo "RESULT: PPC_CARBON_GUI_ARTFILE_BSEARCH_ALLKEYS_TRACE_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
     echo "manual_window_observation=REQUIRED" | /usr/bin/tee -a "$SUBJECT_LOG"
     echo "RESULT: PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
