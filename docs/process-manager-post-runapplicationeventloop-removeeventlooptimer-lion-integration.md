@@ -360,7 +360,7 @@ Also require PPC exit 0, `M24_SUCCESS`, WBI / ColorProfileClient / ResolveColorP
 Final discriminator:
 
 ```text
-RESULT: POST_RUNAPPLICATIONEVENTLOOPTIMER_REMOVEEVENTLOOPTIMER_VALIDATION_PASS
+RESULT: POST_RUNAPPLICATIONEVENTLOOP_REMOVEEVENTLOOPTIMER_VALIDATION_PASS
 ```
 
 There must be no `REMOVEEVENTLOOPTIMER_RETURNED_ERROR`, no notification request after 21, no broker reject, no `_DisposeEventLoopTimerUPP` import, no new compatibility behavior, and no protected-hash change.
