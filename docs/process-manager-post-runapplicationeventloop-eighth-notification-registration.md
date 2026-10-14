@@ -47,7 +47,7 @@ Pinned blobs:
 ```text
 exact-eight registration broker source    c21cfd64425508be2dd2baf477de0d94cb2e3e55
 exact-eight registration broker builder   1558907e88439934f8bb007dab3675eb4321f045
-Lion integration runner                   cf5f99f57e76b0e70e3b47b9a9114ae8b6331f3c
+Lion integration runner                   100d87a7758c33d24cb1f10aaaba01b6b320c222
 RunApplicationEventLoop subject           97e410dd71e545c393e0ce6889678a6436ff8ea1
 XNU syscall-295 runner                    eaecc9bfbf4d780664c7e66471a832a0289aebb6
 ```
@@ -145,7 +145,7 @@ test "$(git hash-object ./scripts/build-lion-dn-runapplicationeventloop-8-regist
   "1558907e88439934f8bb007dab3675eb4321f045" || exit 1
 
 test "$(git hash-object ./scripts/run-lion-ppc-process-manager-createwindow-distnotify-integration.sh)" = \
-  "cf5f99f57e76b0e70e3b47b9a9114ae8b6331f3c" || exit 1
+  "100d87a7758c33d24cb1f10aaaba01b6b320c222" || exit 1
 
 test "$(git hash-object ./tests/ppc-process-manager-postidentity-runapplicationeventloop-prequeued-quit.c)" = \
   "97e410dd71e545c393e0ce6889678a6436ff8ea1" || exit 1
