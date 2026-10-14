@@ -376,19 +376,25 @@ payload/lion-runapplicationeventloop-eighth-registration.raw.log
 
 Also return any newly named crash report or crash plist if the runner reports one.
 
+## Live result
+
+The exact-eighth registration operation completed at its planned narrow discriminator. Registration 8 was accepted exactly once with the reviewed allowed/name/object/behavior/counter tuple, request 9 then appeared at `bits=0x1111 id=4 size=332 payload=298` and was deliberately rejected, and the runner ended `POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_EIGHTH_NOTIFICATION_REGISTRATION_PASS_NINTH_PROTOCOL_REJECTED`. The inherited event-loop chain still completed through one timer callback, S15, `fired=1`, `RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS`, `M24_SUCCESS`, and PPC exit 0; compatibility/titlebar counts stayed exact, no new diagnostic appeared, and protected hashes remained unchanged. The next operation is the request-9-only schema audit in `docs/process-manager-post-runapplicationeventloop-ninth-notification-schema-audit.md`.
+
 ## Current boundary
 
 ```text
 RunApplicationEventLoop timer-side-quit Snow        LIVE-PROVEN PASS
 RunApplicationEventLoop timer-side-quit Lion        semantic sequence LIVE-PROVEN through S15
 request-8 schema audit                              PASS
-request-8 operation                                 register
+request-8 exact registration                        LIVE-PROVEN PASS
 request-8 name                                      AppleDatePreferencesChangedNotification
 request-8 object                                    kCFNotificationAnyObject
 request-8 behavior                                  4 / Coalesce
 request-8 counter                                   1
-next step                                           accept exact request 8 once
-request 9                                           unreviewed / reject
+request-9 geometry                                  bits=0x1111 id=4 size=332 payload=298
+next step                                           capture/decode request 9 only
+request 9                                           unreviewed / reject after capture
+request 10+                                         unreviewed tail / reject
 RemoveEventLoopTimer / DisposeEventLoopTimerUPP     HELD
 new compatibility families                         NO
 titlebar policy broadening                         NO
