@@ -15,7 +15,10 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                          uint64_t);
 extern mach_port_t mig_get_reply_port(void);
 
-#if defined(PM_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_INTEGRATION) || \
+#if defined(PM_CPS_REGISTRATION_CARBON_SMOKETEST_COMPAT) && \
+    defined(PM_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_INTEGRATION)
+#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-carbon-smoketest-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-selectwindow-orderfront-compat-v4"
+#elif defined(PM_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_INTEGRATION) || \
     defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_INTEGRATION) || \
     defined(PM_CGS_SHOWWINDOW_COLOR_PROFILE_CLIENT_COMPAT_INTEGRATION)
 #define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-selectwindow-orderfront-compat-v3"
@@ -250,24 +253,34 @@ static const char kDistributedNotificationsName[] =
 #ifdef PM_CPS_REGISTRATION_COMPAT_INTEGRATION
 #define CPS_REGISTRATION_COMPAT_ENV "ROSETTA_CPS_REGISTRATION_COMPAT_MODE"
 #define CPS_REGISTRATION_COMPAT_PASSTHROUGH "passthrough"
+#ifdef PM_CPS_REGISTRATION_CARBON_SMOKETEST_COMPAT
+#define CPS_REGISTRATION_COMPAT_LION_V1 "lion-create-application-carbon-smoketest-v1"
+#define CPS_REGISTRATION_LEGACY_SEND_SIZE 0x00000068U
+#define CPS_REGISTRATION_LION_SEND_SIZE 0x00000074U
+#define CPS_REGISTRATION_EXPECTED_STRING_LENGTH 0x00000026U
+#define CPS_REGISTRATION_TAIL_BYTE_OFF 0x68U
+#define CPS_REGISTRATION_TAIL_U32_0_OFF 0x6cU
+#define CPS_REGISTRATION_TAIL_U32_1_OFF 0x70U
+#else
 #define CPS_REGISTRATION_COMPAT_LION_V1 "lion-create-application-v1"
-#define CPS_REGISTRATION_LEGACY_BITS 0x00001513U
-#define CPS_REGISTRATION_MSG_OPTIONS 0x00000003U
 #define CPS_REGISTRATION_LEGACY_SEND_SIZE 0x00000084U
 #define CPS_REGISTRATION_LION_SEND_SIZE 0x00000090U
+#define CPS_REGISTRATION_EXPECTED_STRING_LENGTH 0x00000043U
+#define CPS_REGISTRATION_TAIL_BYTE_OFF 0x84U
+#define CPS_REGISTRATION_TAIL_U32_0_OFF 0x88U
+#define CPS_REGISTRATION_TAIL_U32_1_OFF 0x8cU
+#endif
+#define CPS_REGISTRATION_LEGACY_BITS 0x00001513U
+#define CPS_REGISTRATION_MSG_OPTIONS 0x00000003U
 #define CPS_REGISTRATION_RECV_SIZE 0x0000002cU
 #define CPS_REGISTRATION_SUCCESS_REPLY_BITS 0x00001200U
 #define CPS_REGISTRATION_SUCCESS_REPLY_SIZE 0x00000024U
 #define CPS_REGISTRATION_NDR_OFF 0x18U
 #define CPS_REGISTRATION_STRING_LENGTH_OFF 0x3cU
 #define CPS_REGISTRATION_STRING_OFF 0x40U
-#define CPS_REGISTRATION_EXPECTED_STRING_LENGTH 0x00000043U
 #define CPS_REGISTRATION_REPLY_NDR_OFF 0x18U
 #define CPS_REGISTRATION_REPLY_RESULT_OFF 0x20U
 #define CPS_REGISTRATION_PRIVATE_BUFFER_SIZE 0x00000100U
-#define CPS_REGISTRATION_TAIL_BYTE_OFF 0x84U
-#define CPS_REGISTRATION_TAIL_U32_0_OFF 0x88U
-#define CPS_REGISTRATION_TAIL_U32_1_OFF 0x8cU
 #endif
 
 #ifdef PM_CPS_SETFRONT_COMPAT_PROTOCOL
@@ -527,8 +540,13 @@ static const char kDistributedNotificationsName[] =
 static const char *kCoreServicesDName =
     "com.apple.CoreServices.coreservicesd";
 #ifdef PM_CPS_REGISTRATION_COMPAT_INTEGRATION
+#ifdef PM_CPS_REGISTRATION_CARBON_SMOKETEST_COMPAT
+static const char kCPSRegistrationObservedName[] =
+    "ppc-carbon-gui-smoketest-private-dyld";
+#else
 static const char kCPSRegistrationObservedName[] =
     "ppc-process-manager-cgs-session-bootstrap-integration-private-dyld";
+#endif
 #endif
 
 typedef kern_return_t (*bootstrap_lookup2_fn)(mach_port_t,
