@@ -2492,6 +2492,28 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_ELEVENTH_REGISTRATION_MODE" ]; then
         fi
         exit 0
     fi
+    if [ "$RC" -eq 0 ] &&
+       [ "$FOUND" -eq 0 ] &&
+       [ "$TIMER_CB_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_CB_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=11 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT"; then
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_PASS"
+    else
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_ELEVENTH_NOTIFICATION_REGISTRATION_INTEGRATION_INCOMPLETE"
+    fi
+    exit 0
 fi
 
 
