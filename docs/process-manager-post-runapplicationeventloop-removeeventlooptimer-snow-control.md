@@ -1,6 +1,6 @@
 # Post-RunApplicationEventLoop RemoveEventLoopTimer Snow control
 
-**Status: COMPLETE — PASS.** The isolated Snow control returned `RemoveEventLoopTimer=0`, preserved the proven timer-side-quit sequence, and completed with the dedicated Snow PASS discriminator. The next step is the exact-binary Lion transfer in `docs/process-manager-post-runapplicationeventloop-removeeventlooptimer-lion-integration.md`.
+**Status: COMPLETE — PASS.** The isolated Snow control returned `RemoveEventLoopTimer=0`, preserved the proven timer-side-quit sequence, and completed with the dedicated Snow PASS discriminator. The subsequent exact-binary Lion transfer also passed; current work advances to `docs/process-manager-post-removeeventlooptimer-disposeeventlooptimerupp-snow-control.md`.
 
 ## Objective
 
@@ -252,8 +252,9 @@ RunApplicationEventLoop timer-side-quit Snow        LIVE-PROVEN PASS
 RunApplicationEventLoop timer-side-quit Lion        LIVE-PROVEN through S15
 all 21 reviewed Lion notification registrations     LIVE-PROVEN PASS
 RemoveEventLoopTimer Snow                            LIVE-PROVEN PASS
-RemoveEventLoopTimer Lion                            NEXT: exact-binary guarded transfer
-DisposeEventLoopTimerUPP                             HELD
+RemoveEventLoopTimer Lion                            LIVE-PROVEN PASS
+DisposeEventLoopTimerUPP Snow                        NEXT: isolated control
+DisposeEventLoopTimerUPP Lion                        HELD pending Snow result
 new compatibility families                          NO
 titlebar policy broadening                          NO
 XNU                                                  no source change indicated
