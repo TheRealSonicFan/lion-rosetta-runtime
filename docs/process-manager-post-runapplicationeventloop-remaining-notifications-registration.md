@@ -1,5 +1,7 @@
 # Post-RunApplicationEventLoop remaining distributed-notification registration
 
+**Status: COMPLETE — PASS.** The guarded exact twenty-one-registration Lion run passed with zero broker rejects and no request after index 21. The next isolated boundary is `RemoveEventLoopTimer()` on Snow Leopard.
+
 ## Objective
 
 Accept **only the eight reviewed registrations at request indexes 14 through 21** while preserving the exact first-thirteen registration sequence and every inherited compatibility gate. This produces one exact twenty-one-registration user-space policy. Any request after index 21 remains unreviewed and must be rejected.
@@ -329,20 +331,23 @@ payload/lion-runapplicationeventloop-remaining-registration.raw.log
 
 Also return any newly named crash report or crash plist if the runner reports one.
 
+## Observed result
+
+The exact remaining-wave registration run is a clean PASS. Registrations 14 through 21 were each accepted exactly once at allowed indexes 12 through 19, with behavior 4 / Coalesce, AnyObject, counter 1, positive unique entries, and the established client/session contract. The broker ended `register=21 callback=0 rejects=0 exact=YES` and `PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:PASS`; the ingress interposer ended with exactly 21 requests and no later distributed-notification request. The timer callback still executed exactly once, callback-side Quit returned, S15 and `M24_SUCCESS` were reached, all six titlebar translations remained exact with zero guard rejects, no new diagnostic appeared, protected hashes were unchanged, and the runner ended `POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_REMAINING_NOTIFICATIONS_REGISTRATION_PASS`. The fresh syscall-295 preflight again returned EBADF without SIGSYS on the accepted kernel. This closes the notification-registration tail and authorizes no further notification-policy broadening.
+
 ## Current boundary
 
 ```text
 request-13 exact registration                       LIVE-PROVEN PASS
 requests 14-21 schema audit                         LIVE-PROVEN PASS
-requests 14-21 operation                            register
-requests 14-21 object                               kCFNotificationAnyObject
-requests 14-21 behavior                             4 / Coalesce
-requests 14-21 counter                              1 each
-requests 14-21 client/session semantics             compatible with established sequence
-exact requests 14-21 acceptance                    PREPARED / NOT YET LIVE-PROVEN
-post-request-21 traffic                             unreviewed / reject
-RemoveEventLoopTimer / DisposeEventLoopTimerUPP     HELD
-new compatibility families                         NO
-titlebar policy broadening                         NO
-XNU                                                 no source change indicated
+requests 14-21 exact acceptance                     LIVE-PROVEN PASS
+total reviewed notification registrations           21
+post-request-21 traffic observed                     none in reviewed exact run
+post-request-21 policy                               unreviewed / reject if seen
+RunApplicationEventLoop timer-side-quit Lion         LIVE-PROVEN through S15
+RemoveEventLoopTimer                                 NEXT: isolated Snow control
+DisposeEventLoopTimerUPP                             HELD
+new compatibility families                          NO
+titlebar policy broadening                          NO
+XNU                                                  no source change indicated
 ```
