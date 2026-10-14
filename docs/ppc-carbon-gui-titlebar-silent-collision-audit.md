@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED STEP after the completed six-payload/consumer fidelity differential.
+COMPLETED STATIC PASS. The 223-key cross-release inventory finds no same-byte/different-semantic Lion collisions. The next controlled step is the passive live bsearch-key discriminator in `docs/ppc-carbon-gui-titlebar-live-key-trace.md`.
 
 ## Reviewed result that advances this step
 
@@ -208,6 +208,28 @@ Do not change live policy until both reports are reviewed together.
 - If both outside-six counts are zero, do not modify titlebar keys. The next discriminator moves away from key translation and toward release-specific rendering/recipe/scale behavior while keeping payload substitution held.
 - If either report fails provenance or the known exact-six control changes, fix the analyzer/audit before any live run.
 
+## Observed result — no silent collisions; live usage remains unresolved
+
+The returned Snow report inventories 223 unique `titlebarcontrols` semantic paths and preserves the six known source keys. The Lion cross-release pass classifies all 223 Snow paths without ambiguity:
+
+```text
+identity_same_semantic_count=0
+silent_collision_count=0
+translation_required_count=197
+missing_equivalent_count=26
+unresolved_component_count=0
+ambiguous_count=0
+known_exact_six_translation_count=6
+outside_six_silent_collision_count=0
+outside_six_translation_required_count=191
+RESULT=PASS
+RESULT: PASS
+```
+
+The static result is decisive against the silent-collision hypothesis: no Snow titlebar raw key is a direct Lion index hit with different semantics. It is **not** evidence for adding 191 translations. Those 191 entries are only archive-level semantic equivalents, and current execution has not shown that the historical subject requests any of them.
+
+Proceed only through `docs/ppc-carbon-gui-titlebar-live-key-trace.md`. That phase preserves the existing six live mappings and adds passive logging for validated outside-six titlebar bsearch keys. No mapping is added by the trace artifact.
+
 ## Return evidence
 
 Return exactly:
@@ -228,10 +250,13 @@ Lion exact titled frame                          400x222 at (120,98), onscreen
 titlebar exact-six live translations             6 / guard rejects 0
 six release-local payload records                STATIC-PROVEN PRESENT
 payload fixed-header/image-body structure        STRUCTURALLY COMPATIBLE
-payload substitution                             NOT AUTHORIZED
-additional titlebar semantic-key collisions      NEXT: STATIC INVENTORY
+Snow titlebar index entries                      223
+same-byte Lion semantic collisions               0
+outside-six semantic equivalents                 191
+outside-six live execution                       UNKNOWN
+next step                                        docs/ppc-carbon-gui-titlebar-live-key-trace.md
 new titlebar mappings                            NOT AUTHORIZED
-live PPC rerun                                   NO
+payload substitution                             NOT AUTHORIZED
 later CGS / LaunchServices / Finder / Cocoa      HELD
 XNU                                              no source change indicated
 ```
