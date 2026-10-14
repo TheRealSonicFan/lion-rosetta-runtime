@@ -47,7 +47,7 @@ Pinned blobs:
 ```text
 exact-eight registration broker source    c21cfd64425508be2dd2baf477de0d94cb2e3e55
 exact-eight registration broker builder   1558907e88439934f8bb007dab3675eb4321f045
-Lion integration runner                   100d87a7758c33d24cb1f10aaaba01b6b320c222
+Lion integration runner                   7b00ec679f2f5625231ad649870a4018013480f3
 RunApplicationEventLoop subject           97e410dd71e545c393e0ce6889678a6436ff8ea1
 XNU syscall-295 runner                    eaecc9bfbf4d780664c7e66471a832a0289aebb6
 ```
@@ -125,6 +125,12 @@ The broker must reject any ninth request. A ninth request is a new boundary even
 - No kernel rebuild or reboot.
 - Run the PPC subject exactly once before review.
 
+## Phase A syntax-failure correction
+
+An initial attempt at this operation stopped correctly in Phase A: the runner blob `100d87a7758c33d24cb1f10aaaba01b6b320c222` had been corrupted while adding the exact-eight discriminator, causing `/bin/bash -n` to report an unmatched single quote and unexpected EOF. No PPC subject run occurred and no experimental evidence from later phases exists for that attempt.
+
+The runner has been reconstructed from the previously live-used request-8 audit runner blob `efe82cbc140478e2749e685f9e57e42430f0dfd5` and only the exact-eight mode has been reapplied. The corrected runner is pinned below as `7b00ec679f2f5625231ad649870a4018013480f3`. Restart at Phase A; do not skip the `/bin/bash -n` gate.
+
 ## Phase A — update and pin
 
 On Lion:
@@ -145,7 +151,7 @@ test "$(git hash-object ./scripts/build-lion-dn-runapplicationeventloop-8-regist
   "1558907e88439934f8bb007dab3675eb4321f045" || exit 1
 
 test "$(git hash-object ./scripts/run-lion-ppc-process-manager-createwindow-distnotify-integration.sh)" = \
-  "100d87a7758c33d24cb1f10aaaba01b6b320c222" || exit 1
+  "7b00ec679f2f5625231ad649870a4018013480f3" || exit 1
 
 test "$(git hash-object ./tests/ppc-process-manager-postidentity-runapplicationeventloop-prequeued-quit.c)" = \
   "97e410dd71e545c393e0ce6889678a6436ff8ea1" || exit 1
