@@ -2456,11 +2456,24 @@ if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
     CPR_COMPAT_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:index=' "$RAW_LOG" 2>/dev/null || true)"
     CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
     CPR_PASSTHROUGH_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:PASSTHROUGH' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_EXPECTED_COUNT=1
+    RUNAPPLICATIONEVENTLOOP_WBI_COUNT=0
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        WBI_EXPECTED_COUNT=2
+        RUNAPPLICATIONEVENTLOOP_WBI_COUNT="$(/usr/bin/awk '/PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop/{seen=1; next} seen && /PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop/{exit} seen && /PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=/{n++} END{print n+0}' "$RAW_LOG" 2>/dev/null)"
+    fi
     log "window_backing_info_compat_call_count=$WBI_COMPAT_COUNT"
     log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "runapplicationeventloop_window_backing_info_call_count=$RUNAPPLICATIONEVENTLOOP_WBI_COUNT"
+    fi
     log "color_profile_resolve_compat_call_count=$CPR_COMPAT_COUNT"
     log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
-    if [ "$WBI_COMPAT_COUNT" -ne 1 ] || [ "$WBI_PASS_COUNT" -ne 1 ] || [ "$WBI_PASSTHROUGH_COUNT" -ne 0 ] ||
+    if [ "$WBI_COMPAT_COUNT" -ne "$WBI_EXPECTED_COUNT" ] ||
+       [ "$WBI_PASS_COUNT" -ne "$WBI_EXPECTED_COUNT" ] ||
+       [ "$WBI_PASSTHROUGH_COUNT" -ne 0 ] ||
+       { [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ] &&
+         [ "$RUNAPPLICATIONEVENTLOOP_WBI_COUNT" -ne 1 ]; } ||
        [ "$CPR_COMPAT_COUNT" -ne 1 ] || [ "$CPR_PASS_COUNT" -ne 1 ] || [ "$CPR_PASSTHROUGH_COUNT" -ne 0 ]; then
         log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_ACCEPTED_FULL_STACK_COUNT_MISMATCH"
         exit 0
@@ -2473,6 +2486,16 @@ if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
         log "RESULT: POST_SHOWWINDOW_SELECTWINDOW_WINDOW_BACKING_INFO_BASELINE_NOT_PASSED"
         exit 0
     fi
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        if ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_CALL:index=2 adapted=0 mode=lion-id-v1 exact=YES applicationPortExact=YES .*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REQUEST:index=2 legacyId=0x00007263 lionId=0x00007264 send=0x00000024 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 windowId=[1-9][0-9]*' "$RAW_LOG" ||
+           ! /usr/bin/grep -Fq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_MACH_RETURN:index=2 kr=0 hex=0x00000000' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_NATIVE_REPLY:index=2 bits=0x00001200 size=0x00000034 id=0x000072c8 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG" ||
+           ! /usr/bin/grep -Eq 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_ADAPTED_REPLY:index=2 nativeId=0x000072c8 legacyId=0x000072c7 size=0x00000034 changedBytes=1 bodyChangedBytes=0 resultRaw=0x00000000 .*replyClass=SUCCESS' "$RAW_LOG"; then
+            log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_WINDOW_BACKING_INFO_NOT_PASSED"
+            exit 0
+        fi
+    fi
     if ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_CALL:index=1 adapted=0 mode=lion-id-v1 exact=YES provenanceExact=YES clientId=[1-9][0-9]* expectedClientId=[1-9][0-9]* profileId=1 .*' "$RAW_LOG" ||
        ! /usr/bin/grep -Eq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_ADAPTED_REQUEST:index=1 legacyId=0x000074d7 lionId=0x000074d9 send=0x00000038 recv=0x0000003c changedBytes=1 bodyChangedBytes=0 sourceChangedBytes=0 clientId=[1-9][0-9]* profileId=1' "$RAW_LOG" ||
        ! /usr/bin/grep -Fq 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_NATIVE_MACH_RETURN:index=1 kr=0 hex=0x00000000' "$RAW_LOG" ||
@@ -2482,6 +2505,9 @@ if [ -n "$POST_SHOWWINDOW_SELECTWINDOW_MODE" ]; then
         exit 0
     fi
     log "window_backing_info_native_reply_class=SUCCESS"
+    if [ -n "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" ]; then
+        log "runapplicationeventloop_window_backing_info_native_reply_class=SUCCESS"
+    fi
     log "color_profile_resolve_native_reply_class=SUCCESS"
 fi
 
