@@ -341,4 +341,4 @@ The run did **not** validate the intended full restored stack. Its legacy CPS Ch
 
 The exact-21 notification broker was also client-bound to the Process Manager validation basename and therefore rejected all 21 registrations with schema status 20. Because the subject still reached both markers and exit 0, notification policy is held rather than broadened in the next step.
 
-Current `main` advances to `docs/ppc-carbon-gui-cps-registration-integration.md`, which changes only the exact CPS registration predicate for `ppc-carbon-gui-smoketest-private-dyld` and deliberately leaves the 21 notification schema rejects unchanged for isolation.
+The subsequent dedicated CPS-registration integration has now passed and eliminated the historical client's `-304` registration failure, while the window remains visually absent. Current `main` advances to `docs/ppc-carbon-gui-notification-registration-integration.md`, which changes only the notification broker's exact expected client to `ppc-carbon-gui-smoketest-private-dyld` and preserves the reviewed 21-request schema.
