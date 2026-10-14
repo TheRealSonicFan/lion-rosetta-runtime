@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED LIVE DISCRIMINATOR after the completed titlebar rendering/scale contract audit.
+COMPLETED LIVE-PROVEN PASS. Both Snow and Lion execute only the existing exact-six ArtFile lookups, with zero outside-six keys and zero misses. The next controlled step is the static field-level audit in `docs/ppc-carbon-gui-artfile-snow-loader-field-audit.md`.
 
 ## Reviewed result that advances this step
 
@@ -313,6 +313,41 @@ If the exact six are the entire ArtFile lookup set, the transparent titlebar bac
 
 Stop and preserve the raw log. Do not broaden the trace or translation table in the same run.
 
+## Observed result — complete validated ArtFile bsearch set is exact six
+
+The trace artifact matches the pinned source/build identity and both control runs pass.
+
+Snow Leopard:
+
+```text
+artfile_trace_unique_count=6
+artfile_trace_outside_six_unique_count=0
+artfile_trace_miss_unique_count=0
+artfile_trace_limit_count=0
+RESULT: PPC_CARBON_GUI_ARTFILE_BSEARCH_ALLKEYS_TRACE_SNOW_CONTROL_PASS
+RESULT: PASS
+```
+
+Lion:
+
+```text
+titlebar_translated_count=6
+titlebar_guard_reject_count=0
+artfile_trace_unique_count=6
+artfile_trace_known_six_count=6
+artfile_trace_outside_six_unique_count=0
+artfile_trace_miss_unique_count=0
+artfile_trace_limit_count=0
+RESULT: PPC_CARBON_GUI_ARTFILE_BSEARCH_ALLKEYS_TRACE_PASS
+RESULT: PASS
+```
+
+The raw-key sequence is the same six Snow titlebar-control keys on both systems. Snow passes all six through and hits its local records. On Lion the same raw bytes decode to unrelated Lion-local component names, but the exact-six translation rewrites each to the intended semantic-equivalent Lion key and all six effective lookups hit. No additional validated ArtFile bsearch key is observed on either release.
+
+The accepted full stack remains intact, the observer reaches the exact 400x222 titled window, protected hashes remain unchanged, and manual review still reports Snow normal versus Lion partial/unchanged.
+
+This closes the non-`titlebarcontrols` bsearch-key hypothesis for the exact historical subject at this loader boundary. Do not add a seventh mapping. Follow `docs/ppc-carbon-gui-artfile-snow-loader-field-audit.md` next to prove which Lion record fields the Snow-PPC loader actually consumes before considering any field-level compatibility experiment.
+
 ## Return evidence
 
 Return:
@@ -342,16 +377,16 @@ Do not return the trace dylib binary unless specifically requested.
 CGSShapeWindow inline adapter                    LIVE-PROVEN PASS
 backing-store synchronization adapter            LIVE-PROVEN PASS
 Lion exact titled frame                          400x222 at (120,98), onscreen
-titlebarcontrols live set                        exact six on both releases
-outside-six titlebarcontrols live lookups        0
+validated ArtFile live set                       exact six on both releases
+outside-six ArtFile live lookups                 0
+ArtFile live misses                              0
+titlebar exact-six translations                  6 / guard rejects 0
+non-titlebarcontrols bsearch-key hypothesis      CLOSED for current subject
 Snow ArtFile10 exact-six headers                 6 distinct
 Lion ArtFile10 exact-six headers                 1 shared
 Lion ArtFile20 exact-six headers                 1 shared / scale-dependent
-Snow titlebarcontrols recipe                     present
-Lion recipe tree                                 absent
-DrawWindowTitleBar -> DrawWindowFrameDark        static-proven on both
-non-titlebarcontrols ArtFile live set             UNKNOWN
-next step                                        one Snow + one Lion all-ArtFile key trace
+Lion titlebar                                    PARTIAL / unchanged
+next step                                        docs/ppc-carbon-gui-artfile-snow-loader-field-audit.md
 new mappings                                     NOT AUTHORIZED
 payload/header substitution                      NOT AUTHORIZED
 ArtFile200 forcing                               NOT AUTHORIZED
