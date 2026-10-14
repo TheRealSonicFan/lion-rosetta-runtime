@@ -95,6 +95,7 @@ RUNAPPLICATIONEVENTLOOP_ELEVENTH_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTI
 RUNAPPLICATIONEVENTLOOP_TWELFTH_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_TWELFTH_SCHEMA_AUDIT_REPORT:-}"
 RUNAPPLICATIONEVENTLOOP_THIRTEENTH_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_SCHEMA_AUDIT_REPORT:-}"
 RUNAPPLICATIONEVENTLOOP_FOURTEENTH_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_FOURTEENTH_SCHEMA_AUDIT_REPORT:-}"
+RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT:-}"
 RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE:-}"
 RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE:-}"
 RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE="${ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE:-}"
@@ -137,26 +138,10 @@ elif [ -n "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_SCHEMA_AUDIT_REPORT" ]; then
 elif [ -n "$RUNAPPLICATIONEVENTLOOP_FOURTEENTH_SCHEMA_AUDIT_REPORT" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-runapplicationeventloop-fourteenth-schema-audit-broker-v1"
     EXPECTED_REAL_REGISTRATION_COUNT=13
-elif [ -n "$RUNAPPLICATIONEVENTLOOP_FOURTEENTH_SCHEMA_AUDIT_REPORT" ]; then
-    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] ||
-        die 64 "RunApplicationEventLoop request-14 schema audit requires the reviewed exact-seven base mode plus the dedicated exact-thirteen audit broker"
-    [ "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" = "lion-runapplicationeventloop-timer-quit-v2" ] ||
-        die 64 "RunApplicationEventLoop request-14 schema audit requires lion-runapplicationeventloop-timer-quit-v2"
-    [ -z "$RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-8 and request-14 schema audits are mutually exclusive"
-    [ -z "$RUNAPPLICATIONEVENTLOOP_NINTH_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-9 and request-14 schema audits are mutually exclusive"
-    [ -z "$RUNAPPLICATIONEVENTLOOP_TENTH_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-10 and request-14 schema audits are mutually exclusive"
-    [ -z "$RUNAPPLICATIONEVENTLOOP_ELEVENTH_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-11 and request-14 schema audits are mutually exclusive"
-    [ -z "$RUNAPPLICATIONEVENTLOOP_TWELFTH_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-12 and request-14 schema audits are mutually exclusive"
-    [ -z "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-13 and request-14 schema audits are mutually exclusive"
-    [ -z "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop request-14 schema audit uses its own exact-thirteen broker; do not enable exact-eight separately"
-    [ -z "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop request-14 schema audit uses its own exact-thirteen broker; do not enable exact-nine separately"
-    [ -z "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop request-14 schema audit uses its own exact-thirteen broker; do not enable exact-ten separately"
-    [ -z "$RUNAPPLICATIONEVENTLOOP_ELEVENTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop request-14 schema audit uses its own exact-thirteen broker; do not enable exact-eleven separately"
-    [ -z "$RUNAPPLICATIONEVENTLOOP_TWELFTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop request-14 schema audit uses its own exact-thirteen broker; do not enable exact-twelve separately"
-    [ -z "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop request-14 schema audit uses its own exact-thirteen broker; do not enable exact-thirteen registration mode separately"
-fi
-
-if [ -n "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE" ]; then
+elif [ -n "$RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT" ]; then
+    EXPECTED_BROKER_BUILD_ID="distributed-notifications-runapplicationeventloop-remaining-schema-audit-broker-v1"
+    EXPECTED_REAL_REGISTRATION_COUNT=13
+elif [ -n "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE" ]; then
     EXPECTED_BROKER_BUILD_ID="distributed-notifications-runapplicationeventloop-thirteenth-registration-broker-v1"
     EXPECTED_REAL_REGISTRATION_COUNT=13
 elif [ -n "$RUNAPPLICATIONEVENTLOOP_TWELFTH_REGISTRATION_MODE" ]; then
@@ -427,6 +412,46 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_SCHEMA_AUDIT_REPORT" ]; then
         die 64 "RunApplicationEventLoop request-13 schema audit uses its own exact-twelve broker; do not enable exact-twelve registration mode separately"
 fi
 
+if [ -n "$RUNAPPLICATIONEVENTLOOP_FOURTEENTH_SCHEMA_AUDIT_REPORT" ]; then
+    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] ||
+        die 64 "RunApplicationEventLoop request-14 schema audit requires the reviewed exact-seven base mode plus the dedicated exact-thirteen audit broker"
+    [ "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" = "lion-runapplicationeventloop-timer-quit-v2" ] ||
+        die 64 "RunApplicationEventLoop request-14 schema audit requires lion-runapplicationeventloop-timer-quit-v2"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-8 and request-14 schema audits are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_NINTH_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-9 and request-14 schema audits are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_TENTH_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-10 and request-14 schema audits are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_ELEVENTH_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-11 and request-14 schema audits are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_TWELFTH_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-12 and request-14 schema audits are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-13 and request-14 schema audits are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-14 and remaining-wave schema audits are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop request-14 schema audit uses its own exact-thirteen broker; do not enable exact-eight separately"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop request-14 schema audit uses its own exact-thirteen broker; do not enable exact-nine separately"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop request-14 schema audit uses its own exact-thirteen broker; do not enable exact-ten separately"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_ELEVENTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop request-14 schema audit uses its own exact-thirteen broker; do not enable exact-eleven separately"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_TWELFTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop request-14 schema audit uses its own exact-thirteen broker; do not enable exact-twelve separately"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop request-14 schema audit uses its own exact-thirteen broker; do not enable exact-thirteen registration mode separately"
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT" ]; then
+    [ "$REAL_REGISTRATION_MODE" = "lion-showwindow-seventh-register-v1" ] ||
+        die 64 "RunApplicationEventLoop remaining-wave schema audit requires the reviewed exact-seven base mode plus the dedicated exact-thirteen audit broker"
+    [ "$POST_QUITAPPLICATIONEVENTLOOP_RUNAPPLICATIONEVENTLOOP_MODE" = "lion-runapplicationeventloop-timer-quit-v2" ] ||
+        die 64 "RunApplicationEventLoop remaining-wave schema audit requires lion-runapplicationeventloop-timer-quit-v2"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_EIGHTH_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-8 and remaining-wave schema audits are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_NINTH_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-9 and remaining-wave schema audits are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_TENTH_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-10 and remaining-wave schema audits are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_ELEVENTH_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-11 and remaining-wave schema audits are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_TWELFTH_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-12 and remaining-wave schema audits are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-13 and remaining-wave schema audits are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_FOURTEENTH_SCHEMA_AUDIT_REPORT" ] || die 64 "RunApplicationEventLoop request-14 and remaining-wave schema audits are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop remaining-wave schema audit uses its own exact-thirteen broker; do not enable exact-eight separately"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop remaining-wave schema audit uses its own exact-thirteen broker; do not enable exact-nine separately"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop remaining-wave schema audit uses its own exact-thirteen broker; do not enable exact-ten separately"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_ELEVENTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop remaining-wave schema audit uses its own exact-thirteen broker; do not enable exact-eleven separately"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_TWELFTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop remaining-wave schema audit uses its own exact-thirteen broker; do not enable exact-twelve separately"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE" ] || die 64 "RunApplicationEventLoop remaining-wave schema audit uses its own exact-thirteen broker; do not enable exact-thirteen registration mode separately"
+fi
+
 if [ -n "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE" ]; then
     [ "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE" = "lion-thirteenth-register-v1" ] ||
         die 64 "unsupported ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE: $RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE"
@@ -448,6 +473,8 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE" ]; then
         die 64 "RunApplicationEventLoop thirteenth registration and request-13 schema audit are mutually exclusive"
     [ -z "$RUNAPPLICATIONEVENTLOOP_FOURTEENTH_SCHEMA_AUDIT_REPORT" ] ||
         die 64 "RunApplicationEventLoop thirteenth registration and request-14 schema audit are mutually exclusive"
+    [ -z "$RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT" ] ||
+        die 64 "RunApplicationEventLoop thirteenth registration and remaining-wave schema audit are mutually exclusive"
     [ -z "$RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_MODE" ] ||
         die 64 "RunApplicationEventLoop exact-thirteen registration uses its own first-thirteen broker; do not enable exact-eight separately"
     [ -z "$RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_MODE" ] ||
@@ -1445,6 +1472,30 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_FOURTEENTH_SCHEMA_AUDIT_REPORT" ]; then
             die 68 "RunApplicationEventLoop fourteenth-request schema-audit broker marker missing: $marker"
     done
 fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT" ]; then
+    for marker in \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_EIGHTH_REGISTRATION_POLICY:index=8 allowed=6 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_NINTH_REGISTRATION_POLICY:index=9 allowed=7 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_TENTH_REGISTRATION_POLICY:index=10 allowed=8 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_ELEVENTH_REGISTRATION_POLICY:index=11 allowed=9 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_TWELFTH_REGISTRATION_POLICY:index=12 allowed=10 counter=1' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_POLICY:index=13 allowed=11 counter=1' \
+        'AppleDatePreferencesChangedNotification' \
+        'AppleTimePreferencesChangedNotification' \
+        'AppleNumberPreferencesChangedNotification' \
+        'AppleTextBehaviorPreferencesChangedNotification' \
+        'AppleLanguagePreferencesChangedNotification' \
+        'AppleKeyboardMenuPreferencesChangedNotification' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_CAPTURE:' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REJECT:' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_TAIL_REJECT:' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_SUMMARY:' \
+        'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:RUNAPPLICATIONEVENTLOOP_REMAINING_AUDIT_PASS'; do
+        /usr/bin/strings "$BROKER" | /usr/bin/grep -Fq "$marker" ||
+            die 68 "RunApplicationEventLoop remaining-wave schema-audit broker marker missing: $marker"
+    done
+fi
 if [ -n "$RUNAPPLICATIONEVENTLOOP_THIRTEENTH_REGISTRATION_MODE" ]; then
     for marker in \
         'PM_DISTRIBUTED_NOTIFICATIONS_SHOWWINDOW_SIXTH_REGISTRATION_POLICY:index=6 allowed=3 counter=2' \
@@ -1707,6 +1758,12 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_FOURTEENTH_SCHEMA_AUDIT_REPORT" ]; then
         die 73 "could not initialize RunApplicationEventLoop fourteenth-request schema audit report: $RUNAPPLICATIONEVENTLOOP_FOURTEENTH_SCHEMA_AUDIT_REPORT"
     export ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_FOURTEENTH_SCHEMA_AUDIT_REPORT="$RUNAPPLICATIONEVENTLOOP_FOURTEENTH_SCHEMA_AUDIT_REPORT"
     log "distributed_notifications_runapplicationeventloop_fourteenth_schema_audit_report=$RUNAPPLICATIONEVENTLOOP_FOURTEENTH_SCHEMA_AUDIT_REPORT"
+fi
+if [ -n "$RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT" ]; then
+    : > "$RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT" ||
+        die 73 "could not initialize RunApplicationEventLoop remaining-wave schema audit report: $RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT"
+    export ROSETTA_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT="$RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT"
+    log "distributed_notifications_runapplicationeventloop_remaining_schema_audit_report=$RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT"
 fi
 if [ -n "$REAL_REGISTRATION_MODE" ]; then
     log "distributed_notifications_real_registration_mode=$REAL_REGISTRATION_MODE"
@@ -2523,6 +2580,71 @@ if [ -n "$RUNAPPLICATIONEVENTLOOP_TENTH_SCHEMA_AUDIT_REPORT" ]; then
         exit 0
     fi
     log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_TENTH_NOTIFICATION_SCHEMA_AUDIT_INCOMPLETE"
+    exit 0
+fi
+
+if [ -n "$RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT" ]; then
+    REMAINING_CAPTURE_COUNT="$(/usr/bin/grep -c 'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_CAPTURE:index=' "$RAW_LOG" 2>/dev/null || true)"
+    THIRTEENTH_ACCEPT_COUNT="$(/usr/bin/grep -Ec 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_ACCEPT:index=13 allowed=11 behavior=4 publicBehavior=2 anyObject=YES entry=0x[0-9a-fA-F]+ counter=0x1$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_ENTER_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:ENTER$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_BEFORE_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:BEFORE_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_AFTER_QUIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:AFTER_QuitApplicationEventLoop$' "$RAW_LOG" 2>/dev/null || true)"
+    TIMER_EXIT_COUNT="$(/usr/bin/grep -c '^PM_POSTWINDOWTIMER_CALLBACK:EXIT$' "$RAW_LOG" 2>/dev/null || true)"
+    WBI_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_WINDOW_BACKING_INFO_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPC_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_CLIENT_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    CPR_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_COLOR_PROFILE_RESOLVE_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    ORDER_FRONT_PASS_COUNT="$(/usr/bin/grep -c 'PM_CGS_ORDER_FRONT_CONDITIONALLY_COMPAT_RESULT:ADAPTER_PASS' "$RAW_LOG" 2>/dev/null || true)"
+    log "runapplicationeventloop_remaining_schema_audit_capture_count=$REMAINING_CAPTURE_COUNT"
+    log "thirteenth_notification_registration_accept_count=$THIRTEENTH_ACCEPT_COUNT"
+    log "runapplicationeventloop_timer_callback_enter_count=$TIMER_ENTER_COUNT"
+    log "runapplicationeventloop_timer_callback_before_quit_count=$TIMER_BEFORE_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_after_quit_count=$TIMER_AFTER_QUIT_COUNT"
+    log "runapplicationeventloop_timer_callback_exit_count=$TIMER_EXIT_COUNT"
+    log "window_backing_info_compat_pass_count=$WBI_PASS_COUNT"
+    log "color_profile_client_compat_pass_count=$CPC_PASS_COUNT"
+    log "color_profile_resolve_compat_pass_count=$CPR_PASS_COUNT"
+    log "cgs_order_front_conditionally_adapter_pass_count=$ORDER_FRONT_PASS_COUNT"
+    if [ -s "$RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT" ] &&
+       [ "$REMAINING_CAPTURE_COUNT" -eq 8 ] &&
+       [ "$THIRTEENTH_ACCEPT_COUNT" -eq 1 ] &&
+       [ "$TIMER_ENTER_COUNT" -eq 1 ] &&
+       [ "$TIMER_BEFORE_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_AFTER_QUIT_COUNT" -eq 1 ] &&
+       [ "$TIMER_EXIT_COUNT" -eq 1 ] &&
+       [ "$WBI_PASS_COUNT" -eq 1 ] &&
+       [ "$CPC_PASS_COUNT" -eq 1 ] &&
+       [ "$CPR_PASS_COUNT" -eq 1 ] &&
+       [ "$ORDER_FRONT_PASS_COUNT" -eq 2 ] &&
+       [ "$RC" -eq 0 ] &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S14_BEFORE_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=14 bits=0x00001111 id=4 size=336 payload=302' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=15 bits=0x00001111 id=4 size=364 payload=332' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=16 bits=0x00001111 id=4 size=364 payload=329' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=17 bits=0x00001111 id=4 size=336 payload=301' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=18 bits=0x00001111 id=4 size=336 payload=304' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=19 bits=0x00001111 id=4 size=336 payload=302' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=20 bits=0x00001111 id=4 size=336 payload=303' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_MACH_REQUEST:index=21 bits=0x00001111 id=4 size=320 payload=286' "$RAW_LOG" &&
+       /usr/bin/grep -Eq 'PM_DISTRIBUTED_NOTIFICATIONS_RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_SUMMARY:captures=8 failures=0 unexpectedRejects=0 postBoundaryRejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_CREATEWINDOW_REGISTER_SUMMARY:register=13 callback=0 rejects=0 exact=YES' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_DISTRIBUTED_NOTIFICATIONS_PPC_INGRESS_BROKER_RESULT:RUNAPPLICATIONEVENTLOOP_REMAINING_AUDIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_MILESTONE:S15_AFTER_RunApplicationEventLoop' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_CALLBACK:fired=1' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTWINDOWEVENTLOOPRUN_RESULT:RUNAPPLICATIONEVENTLOOP_TIMER_QUIT_PASS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'PM_POSTIDENTITY_MILESTONE:M24_SUCCESS' "$RAW_LOG" &&
+       /usr/bin/grep -Fq 'protected_hashes_unchanged=YES' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_disabled_clear_translated_count=1' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_disabled_minus_translated_count=1' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_disabled_zoom_translated_count=1' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_active_clear_translated_count=1' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_active_minus_translated_count=1' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_active_zoom_translated_count=1' "$REPORT" &&
+       /usr/bin/grep -Fq 'coreui_titlebar_guard_reject_count=0' "$REPORT"; then
+        log "runapplicationeventloop_remaining_schema_audit_output_sha256=$(sha256 "$RUNAPPLICATIONEVENTLOOP_REMAINING_SCHEMA_AUDIT_REPORT")"
+        log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_REMAINING_NOTIFICATIONS_SCHEMA_AUDIT_PASS"
+        exit 0
+    fi
+    log "RESULT: POST_INSTALLEVENTLOOPTIMER_RUNAPPLICATIONEVENTLOOP_REMAINING_NOTIFICATIONS_SCHEMA_AUDIT_INCOMPLETE"
     exit 0
 fi
 

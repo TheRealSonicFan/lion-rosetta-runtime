@@ -46,7 +46,7 @@ Pinned blobs:
 ```text
 request-14 audit broker source          57259e8035ef9868c824fe829b42a4d7c1c679de
 request-14 audit broker builder         83d30bbf0c01e9dd4703f87a03e11c3626f5fea4
-Lion integration runner                 ba6f6d1563e07981033a63aa53b75dc6dca334c2
+Lion integration runner                 c484d0f49667d9ebbc521ca50867fd48a76f84c0
 RunApplicationEventLoop subject         97e410dd71e545c393e0ce6889678a6436ff8ea1
 XNU syscall-295 runner                  eaecc9bfbf4d780664c7e66471a832a0289aebb6
 ```
@@ -167,7 +167,7 @@ test "$(git hash-object ./scripts/build-lion-dn-runapplicationeventloop-14-schem
   "83d30bbf0c01e9dd4703f87a03e11c3626f5fea4" || exit 1
 
 test "$(git hash-object ./scripts/run-lion-ppc-process-manager-createwindow-distnotify-integration.sh)" = \
-  "ba6f6d1563e07981033a63aa53b75dc6dca334c2" || exit 1
+  "c484d0f49667d9ebbc521ca50867fd48a76f84c0" || exit 1
 
 test "$(git hash-object ./tests/ppc-process-manager-postidentity-runapplicationeventloop-prequeued-quit.c)" = \
   "97e410dd71e545c393e0ce6889678a6436ff8ea1" || exit 1
@@ -413,26 +413,25 @@ lion-runapplicationeventloop-fourteenth-schema-audit.txt
 
 Also return any newly named crash report or crash plist if the runner reports one.
 
+## Observed Phase-E preflight failure
+
+The first Phase-E attempt did **not** execute the PPC subject. The processed integration log stopped at `ERROR: broker build marker missing`, and the raw log remained empty. The broker artifact itself was valid i386 and its reported SHA-256 matched the sidecar, so the failure was not a broker build failure.
+
+The root cause was runner control flow introduced with the request-14 mode: the request-14 validation block accidentally split the initial broker-selection `if/elif` chain. The later base-registration branch then overwrote the request-14 audit build ID with the exact-seven base broker build ID, causing the generic broker-marker preflight to reject the correctly built request-14 audit broker before the subject launched. The runner has been corrected.
+
+Because the previous exact-thirteen run already exposed a stable eight-request tail, requests 14–21, this single-request procedure is now superseded by `docs/process-manager-post-runapplicationeventloop-remaining-notifications-schema-audit.md`. That procedure captures and decodes all eight remaining requests in one run while still rejecting all eight after capture.
+
 ## Current boundary
 
 ```text
-RunApplicationEventLoop timer-side-quit Snow        LIVE-PROVEN PASS
-RunApplicationEventLoop timer-side-quit Lion        semantic sequence LIVE-PROVEN through S15
-request-8 exact registration                        LIVE-PROVEN PASS
-request-9 exact registration                        LIVE-PROVEN PASS
-request-10 exact registration                       LIVE-PROVEN PASS
-request-11 exact registration                       LIVE-PROVEN PASS
-request-12 exact registration                       LIVE-PROVEN PASS
 request-13 exact registration                       LIVE-PROVEN PASS
-request-13 operation                                register
-request-13 name                                     AppleKeyboardMenuPreferencesChangedNotification
-request-13 object                                   kCFNotificationAnyObject
-request-13 behavior                                 4 / Coalesce
-request-13 counter                                  1
-request-14 geometry                                 bits=0x1111 id=4 size=336 payload=302
-next step                                           capture/decode request 14 only
-request 14                                          unreviewed / reject after capture
-request 15+                                         unreviewed tail / reject
+request-14-only Phase E                             PRE-SUBJECT PREFLIGHT FAIL
+failure cause                                       runner broker-selection control-flow bug
+PPC subject executed                                NO
+raw log                                             empty
+remaining observed registrations                    8 (requests 14–21)
+next step                                           one-shot capture/decode requests 14–21
+bulk acceptance                                     NOT YET AUTHORIZED
 RemoveEventLoopTimer / DisposeEventLoopTimerUPP     HELD
 new compatibility families                         NO
 titlebar policy broadening                         NO
