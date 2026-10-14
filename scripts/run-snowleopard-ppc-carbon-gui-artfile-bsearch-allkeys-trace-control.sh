@@ -188,7 +188,7 @@ SUMMARY_LINE="$(/usr/bin/grep '^CGWINDOW_OBSERVER_SUMMARY:' "$OBSERVER_LOG" 2>/d
 ARTFILE_TRACE_COUNT="$(/usr/bin/grep -Ec '^PM_COREUI_ARTFILE_BSEARCH_TRACE:unique_index=[0-9]+ mode=snow-passive-allkeys-v1 raw_key=[0-9a-f]{16} .*known_exact_six=(YES|NO) action=PASSTHROUGH .*result=(HIT|MISS) result_index=' "$SUBJECT_LOG" 2>/dev/null || true)"
 ARTFILE_TRACE_OUTSIDE_COUNT="$(/usr/bin/grep -Ec '^PM_COREUI_ARTFILE_BSEARCH_TRACE:.* mode=snow-passive-allkeys-v1 .*known_exact_six=NO action=PASSTHROUGH ' "$SUBJECT_LOG" 2>/dev/null || true)"
 ARTFILE_TRACE_MISS_COUNT="$(/usr/bin/grep -Ec '^PM_COREUI_ARTFILE_BSEARCH_TRACE:.* mode=snow-passive-allkeys-v1 .* result=MISS result_index=NONE$' "$SUBJECT_LOG" 2>/dev/null || true)"
-ARTFILE_TRACE_LIMIT_COUNT="$(/usr/bin/grep -c '^PM_COREUI_ARTFILE_BSEARCH_TRACE_LIMIT:unique_limit=256$' "$SUBJECT_LOG" 2>/dev/null || true)"
+ARTFILE_TRACE_LIMIT_COUNT="$(/usr/bin/grep -c '^PM_COREUI_ARTFILE_BSEARCH_TRACE_LIMIT:unique_limit=512$' "$SUBJECT_LOG" 2>/dev/null || true)"
 ARTFILE_DISABLED_CLEAR_COUNT="$(/usr/bin/grep -Ec 'raw_key=a613161f7a000000 .*known_exact_six=YES action=PASSTHROUGH .*result=HIT ' "$SUBJECT_LOG" 2>/dev/null || true)"
 ARTFILE_DISABLED_MINUS_COUNT="$(/usr/bin/grep -Ec 'raw_key=a6161f567a000000 .*known_exact_six=YES action=PASSTHROUGH .*result=HIT ' "$SUBJECT_LOG" 2>/dev/null || true)"
 ARTFILE_DISABLED_ZOOM_COUNT="$(/usr/bin/grep -Ec 'raw_key=a6161f7ab6000000 .*known_exact_six=YES action=PASSTHROUGH .*result=HIT ' "$SUBJECT_LOG" 2>/dev/null || true)"
