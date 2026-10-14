@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED STATIC STEP after the completed Snow-PPC loader field-contract audit.
+COMPLETED STATIC PASS. Snow's six exact bodies consistently favor BYTE0 alpha while Lion's six consistently favor BYTE3; the release-local image-constructor contracts also differ exactly at byte-order semantics. The next controlled step is `docs/ppc-carbon-gui-coreui-image-constructor-live-trace.md`.
 
 ## Reviewed result that advances this step
 
@@ -271,6 +271,46 @@ Close raw body byte order as the immediate explanation. Return to the three dire
 
 Stop. Preserve the report and treat the analyzer as stale for that release.
 
+## Observed result — raw channel layout is release-specific
+
+Both reports pass their identity, instruction-contract, metric-layout, and raw-body validation gates.
+
+Snow Leopard:
+
+```text
+coreui_instruction_contract=PASS
+metric_layout_grouping_shared=YES
+image_constructor_bitmapinfo_values=0x00000004|0x00000002
+image_constructor_byte_order_mask=DEFAULT
+image_constructor_matchbitmap_branch=PRESENT
+preferred_alpha_byte0_count=6
+preferred_alpha_byte3_count=0
+preferred_alpha_ambiguous_count=0
+render_state_image_contract_exact=YES
+RESULT: PASS
+```
+
+Lion:
+
+```text
+coreui_instruction_contract=PASS
+metric_layout_grouping_shared=YES
+image_constructor_bitmapinfo_values=0x00002002
+image_constructor_byte_order_mask=32_LITTLE
+image_constructor_matchbitmap_branch=ABSENT
+preferred_alpha_byte0_count=0
+preferred_alpha_byte3_count=6
+preferred_alpha_ambiguous_count=0
+render_state_image_contract_exact=YES
+RESULT: PASS
+```
+
+The metric layout is not the immediate discriminator: both release-local loaders map the same thirteen serialized positions into the same three four-float regions plus one scalar. The raw image bodies are, however, unambiguously release-specific under the diagnostic models: all six Snow bodies fit byte-0 alpha with zero premultiplication violations, while all six Lion bodies fit byte-3 alpha with zero violations.
+
+This aligns with the static constructor split: Snow PPC uses default byte order with bitmap-info `0x2` or `0x4` and has a conditional `CWMatchBitmap` path; Lion native CoreUI uses `0x2002`, explicitly selecting the little-endian 32-bit interpretation appropriate to the Lion bodies.
+
+That is not yet permission to change pixels or metrics. The historical Lion process executes the cached Snow PPC CoreUI path, so the next controlled discriminator is the actual live PPC constructor behavior. Follow `docs/ppc-carbon-gui-coreui-image-constructor-live-trace.md`: one Snow passive control, then one Lion passive trace, recording only the exact CoreUI `CGImageCreate` bitmap-info value and whether `CWMatchBitmap` executes.
+
 ## Return evidence
 
 Return exactly:
@@ -296,7 +336,13 @@ field 0x1e                                       copied but not directly consume
 Snow exact-six metrics                           0,2,14,14 / 0,2,14,14 / 0,2,14,14 / 2
 Lion exact-six metrics                           2,2,13,14 / 1,2,14,14 / 1,2,14,14 / 2
 metric/header rewrite                            NOT AUTHORIZED
-raw image byte-order contract                    NEXT: STATIC DISCRIMINATOR
+raw image byte-order contract                    RELEASE-SPECIFIC STATIC PROOF
+Snow exact-six alpha diagnostic                  BYTE0 for 6/6
+Lion exact-six alpha diagnostic                  BYTE3 for 6/6
+Snow PPC constructor                             0x2|0x4 / default byte order / CWMatch branch
+Lion native constructor                          0x2002 / 32-bit little endian / no CWMatch branch
+next step                                        docs/ppc-carbon-gui-coreui-image-constructor-live-trace.md
+metric/header/pixel rewrite                      NOT AUTHORIZED
 new mappings                                     NOT AUTHORIZED
 payload/resource substitution                    NOT AUTHORIZED
 ArtFile200 forcing                               NOT AUTHORIZED
