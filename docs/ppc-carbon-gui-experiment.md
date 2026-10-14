@@ -369,3 +369,10 @@ The preserved `/cores/core.1311` has now been analyzed postmortem. Rosetta's dir
 This means the failure is guest-requested, not a second missing Lion syscall ABI.
 
 The core does not resolve whether the guest abort occurs before `main()` or inside one of the early Carbon/Process Manager calls. The next experiment is therefore `docs/carbon-gui-milestone-experiment.md`.
+
+
+## Current-path note after full restored-stack closure
+
+The historical Lion failure documented above is no longer the current boundary. The Process Manager, Carbon window construction, title/show/select/visibility path, timer/event-loop path, exact twenty-one distributed-notification tail, `RemoveEventLoopTimer()`, and `DisposeEventLoopTimerUPP()` have now each been live-proven on Lion under the accepted restored stack, with cleanup reaching the final success boundary and no new XNU change.
+
+The authoritative next procedure is `docs/ppc-carbon-gui-restored-stack-retest.md`. It reruns the **exact original Snow-positive binary** SHA-256 `fe2ddc8e76e996c242facd60e56aa2203ffc762dec941fc6b1bbf0fe25613067` once under the completed accepted stack. Do not use the older bare Lion runner in this document for the current gate, and do not rebuild or instrument the historical subject.
