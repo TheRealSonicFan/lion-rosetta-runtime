@@ -430,7 +430,7 @@ OBSERVER_BUILD_COUNT="$(/usr/bin/grep -c '^CGWINDOW_OBSERVER_BUILD_ID:cgwindowli
 OBSERVER_MAIN_DISPLAY_COUNT="$(/usr/bin/grep -c '^CGWINDOW_OBSERVER_MAIN_DISPLAY:' "$OBSERVER_REPORT" 2>/dev/null || true)"
 OBSERVER_SUMMARY_COUNT="$(/usr/bin/grep -c '^CGWINDOW_OBSERVER_SUMMARY:' "$OBSERVER_REPORT" 2>/dev/null || true)"
 OBSERVER_PASS_COUNT="$(/usr/bin/grep -c '^CGWINDOW_OBSERVER_RESULT:PASS$' "$OBSERVER_REPORT" 2>/dev/null || true)"
-OBSERVER_GEOMETRY_400X222_COUNT="$(/usr/bin/grep -c 'name=Rosetta PPC Carbon GUI.*x=120 y=98 width=400 height=222' "$OBSERVER_REPORT" 2>/dev/null || true)"
+OBSERVER_GEOMETRY_400X222_COUNT="$(/usr/bin/grep -c 'x=120 y=98 width=400 height=222.*name=Rosetta PPC Carbon GUI' "$OBSERVER_REPORT" 2>/dev/null || true)"
 OBSERVER_ONSCREEN_400X222_COUNT="$(/usr/bin/grep -c 'onscreen=YES .*x=120 y=98 width=400 height=222 .*name=Rosetta PPC Carbon GUI' "$OBSERVER_REPORT" 2>/dev/null || true)"
 OBSERVER_SUMMARY_LINE="$(/usr/bin/grep '^CGWINDOW_OBSERVER_SUMMARY:' "$OBSERVER_REPORT" 2>/dev/null | /usr/bin/tail -1)"
 
