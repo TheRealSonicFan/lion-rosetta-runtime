@@ -2,7 +2,7 @@
 
 ## Status
 
-PHASE C v1 DIAGNOSTIC INVALIDATED / v2 PREPARED. PHASE E PROCEDURE CORRECTED: the earlier revision named `lion-ppc-carbon-gui-titlebar-drag-live.log` only at the summarizer step and omitted the Lion runner invocation that creates it. That failed attempt produced no Lion interaction evidence and must not be interpreted as a runtime result.
+SNOW v2 CONTROL PASS / LION EVENT-TRANSPORT FAILURE ISOLATED. The corrected Lion Phase E produced a real report. The v2 dispatcher monitor loaded, installed successfully, and extended the diagnostic timer, but captured no mouse event. The unchanged CGS passive trace simultaneously records the legacy `0x7292 / 0x72f6` event transaction returning a simple 0x24 error reply whose PPC/NDR-swapped result is -304, immediately followed by `MIG: server type check failure: CGSGetNextEventRecord (Inline)`. The WindowServer observer records no movement. This is the first direct interaction-path failure and supersedes the earlier public-hit discriminator. The next controlled step is `docs/ppc-carbon-gui-cgs-get-next-event-record-protocol-audit.md`.
 
 The first Snow live attempt did not fail the restored rendering stack. The
 shared-art rendering summary remained an exact Snow PASS, the v1 trace artifact
@@ -347,6 +347,42 @@ PUBLIC_HIT_IN_DRAG_MOVED
 
 `NO_VALID_PUBLIC_HIT`, a missing report, or any summary FAIL is a hard stop.
 
+## Observed Lion v2 result
+
+The Snow positive control passes exactly: the dispatcher handler installs,
+the subject timer is extended to eight seconds, six mouse-downs have valid
+public `FindWindow` results, all six classify as `inDrag (4)`, and the
+independent observer records movement.
+
+On Lion, the same v2 monitor installs with status 0 and the subject's 2-second
+timer is extended to 8 seconds, but no
+`PM_HITOOLBOX_TITLEBAR_INPUT_EVENT` line appears. The 400x222 observer window
+remains at x=120, y=98 until the subject exits.
+
+At the attempted interaction boundary, Snow PPC CoreGraphics sends:
+
+```text
+request 0x7292
+reply   0x72f6
+bits    0x1513
+send    0x18
+recv    0x4030
+```
+
+and receives a successful variable-size event record. Lion receives instead a
+simple 0x24 reply with raw error word `0xd0feffff`; applying the PPC/NDR
+byte-order convention gives `0xfffffed0`, signed -304. CoreGraphics then logs
+exactly:
+
+```text
+MIG: server type check failure: CGSGetNextEventRecord (Inline)
+```
+
+The user's beach-ball observation is therefore consistent with the event loop
+failing at its WindowServer event-retrieval RPC before the public Carbon
+dispatcher handler can see the mouse-down. Do not infer a part-code defect from
+the absence of dispatcher events.
+
 ## Review gate
 
 ### Lion: PUBLIC_HIT_NOT_IN_DRAG
@@ -398,5 +434,5 @@ private HIToolbox patch                         NOT AUTHORIZED
 notification policy                             unchanged
 CGS policy                                      unchanged
 XNU                                             no source change indicated
-next step                                       if Snow v2 PASS is already established, rerun corrected Lion Phase E; otherwise rerun Snow Phase C
+next step                                       docs/ppc-carbon-gui-cgs-get-next-event-record-protocol-audit.md
 ```
