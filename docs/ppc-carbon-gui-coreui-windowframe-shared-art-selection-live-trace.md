@@ -8,7 +8,7 @@ NEXT CONTROLLED LIVE STEP after the static SArtFile frame-record audit proved th
 
 Both returned SArtFile record reports pass against the pinned CoreUI slices and exact release-local `SArtFile.bin` files.
 
-Snow's seven frame records are all legacy shared-art type `2` with one entry. Under the accepted Snow-PPC `CUISharedArtReader::CreateImage(float)` implementation, type `2` always selects raw slot 0. The decoded slot-0 geometries are:
+Snow's seven frame records are all legacy shared-art type `2` with one entry. Under the accepted Snow-PPC `CUISharedArtReader::CreateImage(long,float)` implementation, type `2` always selects raw slot 0. The decoded slot-0 geometries are:
 
 ```text
 0x4e8e  11x11
@@ -276,7 +276,7 @@ Stop. The diagnostic is intrusive or the caller-frame derivation is wrong.
 
 ### Lion raw IDs correlate but ImageIO IDs do not account for the Snow-active remainder
 
-Trace only the `CreateImage(float)` return/result for the unresolved live IDs before designing compatibility.
+Trace only the `CreateImage(long,float)` return/result for the unresolved live IDs before designing compatibility.
 
 ## Return evidence
 
