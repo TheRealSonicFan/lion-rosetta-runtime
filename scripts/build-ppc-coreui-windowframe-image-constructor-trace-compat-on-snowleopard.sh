@@ -118,7 +118,7 @@ if [ -z "$CC_SELECTED" ]; then
 fi
 
 [ -n "$CC_SELECTED" ] || {
-    echo "error: no installed compiler/toolchain could build the PPC CoreUI bitmap-info compatibility dylib" >&2
+    echo "error: no installed compiler/toolchain could build the PPC CoreUI window-frame image trace dylib" >&2
     exit 69
 }
 
