@@ -30,9 +30,8 @@
 #define FRAME_ID_7 0x00004e91U
 
 #define READ_CALLER_SAVED_U32(stack_offset, out_value, out_ok) do { \
-    uintptr_t _trace_sp = 0; \
+    uintptr_t _trace_sp = (uintptr_t)__builtin_frame_address(0); \
     uintptr_t _trace_caller_sp = 0; \
-    __asm__ volatile("mr %0,1" : "=r"(_trace_sp)); \
     if (_trace_sp != 0) \
         _trace_caller_sp = *(const volatile uintptr_t *)(uintptr_t)_trace_sp; \
     if (_trace_caller_sp != 0) { \
