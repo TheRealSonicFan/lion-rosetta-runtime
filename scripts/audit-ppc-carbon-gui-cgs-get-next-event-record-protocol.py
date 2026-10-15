@@ -8,8 +8,8 @@ import subprocess
 import sys
 import tempfile
 
-ANALYZER_VERSION = "2"
-AUDIT_CONTRACT = "carbon-gui-cgs-get-next-event-record-protocol-v2"
+ANALYZER_VERSION = "3"
+AUDIT_CONTRACT = "carbon-gui-cgs-get-next-event-record-protocol-v3"
 
 COREGRAPHICS = "/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/CoreGraphics.framework/Versions/A/CoreGraphics"
 ROSETTA_CACHE = "/private/var/db/dyld/dyld_shared_cache_rosetta"
@@ -30,6 +30,15 @@ LIVE_RECV_SIZE = 0x4030
 LIVE_LION_RAW_ERROR_WORD = 0xd0feffff
 LIVE_LION_PPC_SWAPPED_ERROR = 0xfffffed0
 LIVE_LION_ERROR_SIGNED = -304
+
+SNOW_NATIVE_REQUEST_ID = 0x00007292
+SNOW_NATIVE_REPLY_ID = 0x000072f6
+LION_NATIVE_REQUEST_ID = 0x00007295
+LION_NATIVE_REPLY_ID = 0x000072f9
+NATIVE_SEND_SIZE = 0x18
+NATIVE_RECV_SIZE = 0x4030
+INLINE_HELPER_NAME = "__CGSGetPortStreamInline"
+OUTOFLINE_HELPER_NAME = "__CGSGetPortStreamOutofline"
 
 TARGET_RE = re.compile(r"CGS.*GetNextEventRecord|GetNextEventRecord", re.I)
 FOCUS_RE = re.compile(
@@ -497,75 +506,122 @@ def main():
 
 
                         write_line(fp)
-                        write_line(fp, "== Resolved _snarfEvents and generated-MIG transport ==")
+                        write_line(fp, "== Resolved _snarfEvents native event-stream transport ==")
                         snarf_indexes = [i for i, item in enumerate(symbols)
                                          if item[1] == "_snarfEvents"]
+                        inline_indexes = [i for i, item in enumerate(symbols)
+                                          if item[1] == INLINE_HELPER_NAME]
+                        outofline_indexes = [i for i, item in enumerate(symbols)
+                                             if item[1] == OUTOFLINE_HELPER_NAME]
                         write_line(fp, "snarf_events_symbol_count=%d" % len(snarf_indexes))
+                        write_line(fp, "inline_helper_symbol_count=%d" % len(inline_indexes))
+                        write_line(fp, "outofline_helper_symbol_count=%d" % len(outofline_indexes))
+
                         for i in snarf_indexes:
                             write_line(fp, "snarf_events_symbol=%s address=0x%x" %
                                        (symbols[i][1], symbols[i][0]))
                             emit_resolved_symbol(
                                 fp, "snarf-events symbol", rows, symbols, i)
 
-                        transport_indexes = []
-                        for i, selected in groups.items():
-                            values = values_in_selected(selected)
-                            if (LIVE_LEGACY_REQUEST_ID in values and
-                                    LIVE_LEGACY_REPLY_ID in values and
-                                    selected_has_mig_transport(selected)):
-                                transport_indexes.append(i)
-
-                        write_line(fp, "legacy_transport_candidate_count=%d" %
-                                   len(transport_indexes))
-                        for i in transport_indexes:
-                            write_line(fp, "legacy_transport_candidate=%s address=0x%x" %
-                                       (symbols[i][1], symbols[i][0]))
-
-                        expected_send = LIVE_SEND_SIZE if mode == "snow" else 0x24
-                        expected_recv = LIVE_RECV_SIZE if mode == "snow" else 0x0c30
+                        native_request_id = (SNOW_NATIVE_REQUEST_ID
+                                             if mode == "snow"
+                                             else LION_NATIVE_REQUEST_ID)
+                        native_reply_id = (SNOW_NATIVE_REPLY_ID
+                                           if mode == "snow"
+                                           else LION_NATIVE_REPLY_ID)
                         write_line(fp, "native_expected_request_id=0x%08x" %
-                                   LIVE_LEGACY_REQUEST_ID)
+                                   native_request_id)
                         write_line(fp, "native_expected_reply_id=0x%08x" %
-                                   LIVE_LEGACY_REPLY_ID)
+                                   native_reply_id)
                         write_line(fp, "native_expected_request_bits=0x%08x" %
                                    LIVE_REQUEST_BITS)
                         write_line(fp, "native_expected_send_size=0x%x" %
-                                   expected_send)
+                                   NATIVE_SEND_SIZE)
                         write_line(fp, "native_expected_recv_size=0x%x" %
-                                   expected_recv)
+                                   NATIVE_RECV_SIZE)
 
                         if len(snarf_indexes) != 1:
                             issues.append("expected exactly one _snarfEvents symbol")
-                        if len(transport_indexes) != 1:
-                            issues.append("expected exactly one generated-MIG transport candidate")
-                        else:
-                            ti = transport_indexes[0]
+                        if len(inline_indexes) != 1:
+                            issues.append("expected exactly one __CGSGetPortStreamInline symbol")
+                        if len(outofline_indexes) != 1:
+                            issues.append("expected exactly one __CGSGetPortStreamOutofline symbol")
+
+                        snarf_calls_inline = False
+                        snarf_calls_outofline = False
+                        if len(snarf_indexes) == 1:
+                            selected = groups.get(snarf_indexes[0], [])
+                            for addr, line in selected:
+                                if INLINE_HELPER_NAME in line:
+                                    snarf_calls_inline = True
+                                if OUTOFLINE_HELPER_NAME in line:
+                                    snarf_calls_outofline = True
+                        write_line(fp, "snarf_events_calls_inline=%s" %
+                                   ("YES" if snarf_calls_inline else "NO"))
+                        write_line(fp, "snarf_events_calls_outofline=%s" %
+                                   ("YES" if snarf_calls_outofline else "NO"))
+                        if not snarf_calls_inline:
+                            issues.append("_snarfEvents does not call __CGSGetPortStreamInline")
+                        if not snarf_calls_outofline:
+                            issues.append("_snarfEvents does not call __CGSGetPortStreamOutofline")
+
+                        if len(inline_indexes) == 1:
+                            ti = inline_indexes[0]
                             transport_values = values_in_selected(groups.get(ti, []))
                             checks = [
-                                ("request_id", LIVE_LEGACY_REQUEST_ID),
-                                ("reply_id", LIVE_LEGACY_REPLY_ID),
-                                ("send_size", expected_send),
-                                ("recv_size", expected_recv),
+                                ("request_id", native_request_id),
+                                ("reply_id", native_reply_id),
+                                ("send_size", NATIVE_SEND_SIZE),
+                                ("recv_size", NATIVE_RECV_SIZE),
                             ]
-                            geometry_ok = True
+                            geometry_ok = selected_has_mig_transport(groups.get(ti, []))
+                            write_line(fp, "native_inline_has_mig_transport=%s" %
+                                       ("YES" if geometry_ok else "NO"))
+                            if not geometry_ok:
+                                issues.append("native inline helper has no Mach/MIG transport")
                             for label, value in checks:
                                 present = value in transport_values
                                 write_line(fp, "native_%s_present=%s value=0x%x" %
                                            (label, "YES" if present else "NO", value))
                                 if not present:
                                     geometry_ok = False
-                                    issues.append("native transport missing %s 0x%x" %
+                                    issues.append("native inline helper missing %s 0x%x" %
                                                   (label, value))
                             bits_present = LIVE_REQUEST_BITS in transport_values
                             write_line(fp, "native_request_bits_immediate_present=%s value=0x%x" %
                                        ("YES" if bits_present else "NO",
                                         LIVE_REQUEST_BITS))
-                            write_line(fp, "native_event_transport_candidate_exact_geometry=%s" %
+                            write_line(fp, "native_event_transport_exact=%s" %
                                        ("YES" if geometry_ok else "NO"))
                             emit_resolved_symbol(
-                                fp, "generated-MIG transport candidate",
+                                fp, "native generated-MIG inline event transport",
                                 rows, symbols, ti)
                             emit_symbol_callers(fp, groups, symbols, ti)
+
+                        write_line(fp)
+                        write_line(fp, "== Legacy ID collision inventory ==")
+                        collision_indexes = []
+                        for i, selected in groups.items():
+                            if i in inline_indexes:
+                                continue
+                            values = values_in_selected(selected)
+                            if (LIVE_LEGACY_REQUEST_ID in values and
+                                    LIVE_LEGACY_REPLY_ID in values and
+                                    selected_has_mig_transport(selected)):
+                                collision_indexes.append(i)
+                        write_line(fp, "legacy_id_collision_symbol_count=%d" %
+                                   len(collision_indexes))
+                        for i in collision_indexes:
+                            write_line(fp, "legacy_id_collision_symbol=%s address=0x%x" %
+                                       (symbols[i][1], symbols[i][0]))
+                            emit_resolved_symbol(
+                                fp, "legacy-ID collision owner",
+                                rows, symbols, i)
+                            emit_symbol_callers(fp, groups, symbols, i)
+                        if mode == "lion":
+                            names = [symbols[i][1] for i in collision_indexes]
+                            if "__CGSGetDisplayPalette" not in names:
+                                issues.append("Lion legacy 0x7292/0x72f6 collision owner not resolved")
 
             write_line(fp)
             write_line(fp, "== Audit validation ==")
