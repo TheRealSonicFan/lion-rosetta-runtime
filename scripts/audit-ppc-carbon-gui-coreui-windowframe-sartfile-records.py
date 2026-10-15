@@ -11,8 +11,8 @@ import subprocess
 import sys
 import tempfile
 
-ANALYZER_VERSION = "1"
-AUDIT_CONTRACT = "carbon-gui-coreui-windowframe-sartfile-records-v1"
+ANALYZER_VERSION = "2"
+AUDIT_CONTRACT = "carbon-gui-coreui-windowframe-sartfile-records-v2"
 
 COREUI = "/System/Library/PrivateFrameworks/CoreUI.framework/Versions/A/CoreUI"
 SARTFILE = "/System/Library/PrivateFrameworks/CoreUI.framework/Versions/A/Resources/SArtFile.bin"
@@ -49,7 +49,7 @@ FRAME_IDS = [
 ]
 
 SHARED_IMAGE_ID_BASE = 0x4e20
-OFFSET_TABLE_BASE = 0x04
+OFFSET_TABLE_BASE = 0x08
 OFFSET_TABLE_STRIDE = 4
 CONSTRUCTOR_SLOT_STRIDE = 0x0c
 CONSTRUCTOR_WIDTH_OFFSET = 0x0c
@@ -289,7 +289,7 @@ def main():
                 issues.append("SArtFile size mismatch")
             if sart_digest != expected["sart_sha"]:
                 issues.append("SArtFile SHA mismatch")
-            if len(sart_data) < 4:
+            if len(sart_data) < 8:
                 issues.append("SArtFile header too short")
             else:
                 sart_version = u16le(sart_data, 0)
@@ -300,6 +300,19 @@ def main():
                     issues.append("SArtFile count mismatch")
                 if OFFSET_TABLE_BASE + sart_count * OFFSET_TABLE_STRIDE > len(sart_data):
                     issues.append("SArtFile offset table outside file")
+
+        setup_table_base_verified = None
+        if product == "10.6.8":
+            setup_addr, setup_body = body_for_name(
+                rows, symbols, by_name, "__ZN18CUISharedArtReader5SetupEv")
+            setup_has_base = any("addi\tr7,r11,0x8" in raw
+                                 for a, raw in setup_body)
+            setup_stores_base = any("stw\tr7,0x34f8" in raw
+                                    for a, raw in setup_body)
+            setup_table_base_verified = (
+                setup_addr is not None and setup_has_base and setup_stores_base)
+            if not setup_table_base_verified:
+                issues.append("Snow Setup does not prove SArtFile offset table base +0x08")
 
         fp = open(report, "w")
         try:
@@ -334,6 +347,12 @@ def main():
             line(fp, "shared_image_id_base=0x%04x" % SHARED_IMAGE_ID_BASE)
             line(fp, "image_id_to_index_formula=image_id-0x%04x" % SHARED_IMAGE_ID_BASE)
             line(fp, "sartfile_offset_table_base=0x%02x" % OFFSET_TABLE_BASE)
+            line(fp, "sartfile_offset_table_base_source=Snow_Setup_mapped_base_plus_0x08")
+            if product == "10.6.8":
+                line(fp, "snow_setup_offset_table_base_verified=%s" %
+                     ("YES" if setup_table_base_verified else "NO"))
+            else:
+                line(fp, "snow_setup_offset_table_base_verified=accepted_snow_ppc_contract")
             line(fp, "sartfile_offset_table_stride=%d" % OFFSET_TABLE_STRIDE)
             line(fp, "constructor_slot_stride=0x%02x" % CONSTRUCTOR_SLOT_STRIDE)
             line(fp, "constructor_width_offset=slot_base+0x%02x" % CONSTRUCTOR_WIDTH_OFFSET)
@@ -351,7 +370,7 @@ def main():
 
             line(fp)
             line(fp, "== Target SArtFile frame-image records ==")
-            if sart_count is not None and len(sart_data) >= 4:
+            if sart_count is not None and len(sart_data) >= 8:
                 for call_order, image_id in FRAME_IDS:
                     index = image_id - SHARED_IMAGE_ID_BASE
                     table_off = OFFSET_TABLE_BASE + index * OFFSET_TABLE_STRIDE
