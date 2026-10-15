@@ -2,9 +2,9 @@
 
 ## Status
 
-NEXT CONTROLLED STATIC STEP after the frame-ID relocation audit proved the
-complete five-ID semantic relocation and showed that every Lion target has a
-11x11 slot 0 plus a 22x22 slot 1.
+COMPLETED STATIC PASS. The exact Snow-PPC runtime path confirms that the private shared-art selector is reached by a direct internal branch from `_CUICreateImage`, while the raw and ImageIO branches expose usable public CoreGraphics/ImageIO call boundaries. In particular, `CreateImageSource(long)` saves its incoming `r30` at frame offset `+0x58` before calling `CGDataProviderCreateWithData` and `CGImageSourceCreateWithDataProvider`, so the original legacy image ID can be recovered there before the parent later clears/reuses `r30`.
+
+The next controlled step is `docs/ppc-carbon-gui-coreui-windowframe-shared-art-external-boundary-live-trace.md`.
 
 The compatibility problem is now narrower than resource discovery:
 
@@ -167,7 +167,9 @@ Lion slot1                                       22x22 / 1936 for all five
 old PPC type1 high-scale behavior                can select slot1
 ID-only remap                                    insufficient
 new adapter                                      NOT YET DESIGNED
-next step                                        static implementation-boundary audit
+ImageIO exact-ID recovery boundary               +0x58 saved incoming r30 / STATICALLY PROVEN
+source-pointer correlation                       LIVE PROOF REQUIRED
+next step                                        Snow/Lion external-boundary correlation trace
 PPC subject                                      DO NOT RUN
 XNU                                              no source change indicated
 ```
