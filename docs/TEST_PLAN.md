@@ -963,9 +963,9 @@ The shared-art source reports pass on both systems. Snow's unique raw-bytes call
 
 Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md` next. Run `scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py` statically on Snow and Lion and return the two text reports. Do not launch the PPC subject, alter records/resources/geometry, broaden bitmap-info or CGS rules, change hit handling, or modify XNU before the exact seven record geometries and raw-byte slots are compared.
 
-## Corrected SArtFile/live correlation complete; current step — payload fingerprints
+## Payload fingerprints complete; current step — Lion provenance across CoreUI archives
 
-The corrected v2 SArtFile reports pass on Snow and Lion, and the corrected Lion live summary also passes. Snow's five live-active IDs are all type-2/count-1 11x11 raw records. Lion's exact raw subset is `0x4e8e -> 256x256` and `0x4e8d -> 2x62`; the remaining active IDs `0x4e90`, `0x4e8f`, and `0x4e91` are type-3/count-3 and account exactly for the three non-NULL ImageIO calls. Branch selection is therefore fully correlated without another PPC run.
+The Snow/Lion payload fingerprint reports pass. Three exact Snow frame payloads survive byte-for-byte in Lion SArtFile under different IDs: `0x4e8d -> 0x4e75`, `0x4e8e -> 0x4e76`, and `0x4e90 -> 0x4e78`. No Lion 11x11/484-byte SArtFile candidate matches Snow `0x4e8f` or `0x4e91`. This closes the all-deleted hypothesis but does not yet justify a shared-art ID mapping.
 
-Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-live-payload-fingerprint-audit.md` next. Run the static fingerprint analyzer on Snow and Lion and return the two reports. It hashes the five exact Snow-live-active 11x11 provider payloads and inventories structurally compatible Lion SArtFile candidates to determine whether the legacy frame pixels survive under different IDs. No PPC rerun, record/resource rewrite, hit-test/CGContext change, CGS expansion, or XNU modification is authorized yet.
+Follow `docs/ppc-carbon-gui-coreui-windowframe-lion-legacy-payload-provenance-audit.md` next. On Lion only, run the static analyzer that verifies the three SArtFile relocations against every 484-byte provider slot and scans structurally valid 484-byte ArtFile10/ArtFile20 cell bodies for the two unmatched Snow fingerprints. No PPC rerun, resource rewrite/substitution, hit-test/CGContext change, CGS expansion, or XNU modification is authorized yet.
 
