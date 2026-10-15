@@ -2,7 +2,13 @@
 
 ## Status
 
-NEXT CONTROLLED LIVE STEP after the completed mapped slot-0 pixel-format audit.
+COMPLETED RENDERING PASS / KNOWN NOTIFICATION-ORACLE FAIL.
+
+The Snow control passes exactly. On Lion, the v2 adapter executes the proven five shared-art replacements with zero fallback/null results, keeps the three byte-identical mappings at `bitmapInfo=0x2`, and uses `0x2002` only for legacy `0x4e8f` and `0x4e91`. Manual review confirms the titlebar background and both top corners are now fully restored with the Snow Leopard color scheme, and the traffic-light controls remain sharp.
+
+The generic runner's exit 1 is the already-known exact-21 notification-oracle mismatch, not a v2 image-adapter failure: only six registrations are accepted, the prior ColorSync registration 7 is absent, and the old requests 8..21 reappear as requests 7..20. The subject exits zero, the WindowServer observer passes, and protected hashes remain unchanged. This notification deletion remains held as a separate side effect; the broker policy is unchanged.
+
+The rendering defect is therefore closed at the exact-five/exact-two CoreUI boundary. Titlebar dragging still fails and is now the only titlebar defect under investigation. The next controlled step is `docs/ppc-carbon-gui-hitoolbox-titlebar-drag-routing-audit.md`.
 
 The Lion static report passed on the exact 10.7.5 / 11G63 SArtFile and resolves
 the remaining corner-format ambiguity narrowly:
@@ -361,6 +367,6 @@ exact-five resource mapping                       unchanged
 notification broker                               unchanged
 known notification sequence deletion              observed / not accepted as policy
 interaction defect                                held separately
-next step                                         Snow control + one Lion v2 rendering integration
+next step                                         static HIToolbox titlebar drag-routing audit
 XNU                                               no source change indicated
 ```
