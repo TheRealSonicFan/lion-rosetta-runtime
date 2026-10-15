@@ -30,8 +30,8 @@ EXPECTED_IMAGE_COMPAT_SOURCE_BLOB="9d44128acbe49de49621104c9ffc2b0c0cd74589"
 FRAME_TRACE="${ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_PATH:-}"
 FRAME_TRACE_SHA_FILE="${ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_SHA256_FILE:-${FRAME_TRACE:+$FRAME_TRACE.sha256}}"
 FRAME_TRACE_INFO_FILE="${ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_INFO_FILE:-${FRAME_TRACE:+$FRAME_TRACE.info.txt}}"
-EXPECTED_FRAME_TRACE_BUILD_ID="hitoolbox-windowframe-cuidraw-trace-v1"
-EXPECTED_FRAME_TRACE_SOURCE_BLOB="66b3849aeb9f0514223bea07ca19f95d76b8e62c"
+EXPECTED_FRAME_TRACE_BUILD_ID="hitoolbox-windowframe-cuidraw-trace-v2"
+EXPECTED_FRAME_TRACE_SOURCE_BLOB="d9419ec4ac62ba651a45eaa2bb515a8bb38c9793"
 
 fail() {
     echo "error: $*" | /usr/bin/tee -a "$SUBJECT_LOG" >&2
@@ -197,7 +197,7 @@ ROSETTA_CGS_SHOWWINDOW_COLOR_PROFILE_RESOLVE_COMPAT_MODE=passthrough \
 ROSETTA_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_MODE=passthrough \
 ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_MODE=passthrough \
 ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_MODE=snow-passthrough-v1 \
-ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_MODE=snow-passive-v1 \
+ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_MODE=snow-passive-v2 \
 "$EXE" >> "$SUBJECT_LOG" 2>&1 &
 APP_PID=$!
 echo "subject_pid=$APP_PID" | /usr/bin/tee -a "$SUBJECT_LOG"
@@ -235,7 +235,167 @@ IMAGE_COMPAT_REJECT_COUNT="$(/usr/bin/grep -c '^PM_COREUI_IMAGE_BITMAPINFO_COMPA
 IMAGE_COMPAT_PASSTHROUGH_COUNT="$(/usr/bin/grep -c '^PM_COREUI_IMAGE_BITMAPINFO_COMPAT_RESULT:PASSTHROUGH$' "$SUBJECT_LOG" 2>/dev/null || true)"
 IMAGE_COMPAT_ADAPTED_COUNT="$(/usr/bin/grep -c '^PM_COREUI_IMAGE_BITMAPINFO_COMPAT_ADAPTED:from=0x00000002 to=0x00002002$' "$SUBJECT_LOG" 2>/dev/null || true)"
 IMAGE_COMPAT_PASS_COUNT="$(/usr/bin/grep -c '^PM_COREUI_IMAGE_BITMAPINFO_COMPAT_RESULT:ADAPTER_PASS$' "$SUBJECT_LOG" 2>/dev/null || true)"
-IMAGE_COMPAT_NULL_COUNT="$(/usr/bin/grep -c '^PM_COREUI_IMAGE_BITMAPINFO_COMPAT_RESULT:ADAPTER_NULL$' "$SUBJECT_LOG" 2>/dev/null || true)"
+IMAGE_COMPAT_NULL_COUNT="$(/usr/bin/grep -c '^PM_COREUI_IMAGE_BITMAPINFO_COMPAT_RESULT:ADAPTER_NULL
+echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "shape_passthrough_result_count=$SHAPE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "shape_adapter_pass_count=$SHAPE_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "backing_sync_exact_count=$SYNC_EXACT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "backing_sync_passthrough_count=$SYNC_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "backing_sync_adapter_pass_count=$SYNC_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "backing_sync_predicate_reject_count=$SYNC_REJECT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "shape_legacy_trace_count=$LEGACY_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "observer_geometry_400x222_count=$GEOMETRY_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "observer_summary=$SUMMARY_LINE" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "titlebar_passthrough_count=$TITLEBAR_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "image_bitmapinfo_exact_passthrough_call_count=$IMAGE_COMPAT_EXACT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "image_bitmapinfo_passthrough_result_count=$IMAGE_COMPAT_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "image_bitmapinfo_predicate_reject_count=$IMAGE_COMPAT_REJECT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "image_bitmapinfo_adapted_count=$IMAGE_COMPAT_ADAPTED_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "image_bitmapinfo_adapter_pass_count=$IMAGE_COMPAT_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "image_bitmapinfo_adapter_null_count=$IMAGE_COMPAT_NULL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+
+echo "windowframe_cuidraw_trace_build_count=$FRAME_TRACE_BUILD_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "windowframe_cuidraw_trace_call_count=$FRAME_TRACE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "windowframe_cuidraw_trace_hitoolbox_count=$FRAME_TRACE_HITOOLBOX_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "windowframe_cuidraw_trace_target_slot_count=$FRAME_TRACE_TARGET_SLOT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "windowframe_cuidraw_trace_passthrough_count=$FRAME_TRACE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+
+if [ "$APP_RC" -eq 0 ] &&
+   [ "$OBSERVER_RC" -eq 0 ] &&
+   [ "$SHAPE_CALL_COUNT" -eq 1 ] &&
+   [ "$SHAPE_PASS_COUNT" -eq 1 ] &&
+   [ "$SHAPE_ADAPTER_COUNT" -eq 0 ] &&
+   [ "$SYNC_EXACT_COUNT" -eq 0 ] &&
+   [ "$SYNC_PASSTHROUGH_COUNT" -eq 0 ] &&
+   [ "$SYNC_ADAPTER_COUNT" -eq 0 ] &&
+   [ "$SYNC_REJECT_COUNT" -eq 0 ] &&
+   [ "$LEGACY_TRACE_COUNT" -eq 1 ] &&
+   [ "$WINDOW_MARKER_COUNT" -eq 1 ] &&
+   [ "$SMOKE_MARKER_COUNT" -eq 1 ] &&
+   [ "$OBSERVER_PASS_COUNT" -eq 1 ] &&
+   [ "$GEOMETRY_COUNT" -ge 1 ] &&
+   [ "$TITLEBAR_PASSTHROUGH_COUNT" -eq 6 ] &&
+   [ "$IMAGE_COMPAT_EXACT_COUNT" -eq 6 ] &&
+   [ "$IMAGE_COMPAT_PASSTHROUGH_COUNT" -eq 6 ] &&
+   [ "$IMAGE_COMPAT_REJECT_COUNT" -eq 0 ] &&
+   [ "$IMAGE_COMPAT_ADAPTED_COUNT" -eq 0 ] &&
+   [ "$IMAGE_COMPAT_PASS_COUNT" -eq 0 ] &&
+   [ "$IMAGE_COMPAT_NULL_COUNT" -eq 0 ] &&
+   { [ -z "$FRAME_TRACE" ] || { [ "$FRAME_TRACE_BUILD_COUNT" -eq 1 ] && [ "$FRAME_TRACE_PASS_COUNT" -eq "$FRAME_TRACE_CALL_COUNT" ]; }; }; then
+    echo "RESULT: PPC_CARBON_GUI_COREUI_IMAGE_BITMAPINFO_COMPAT_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
+    echo "manual_window_observation=REQUIRED" | /usr/bin/tee -a "$SUBJECT_LOG"
+    echo "RESULT: PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
+    exit 0
+fi
+
+echo "RESULT: PPC_CARBON_GUI_COREUI_IMAGE_BITMAPINFO_COMPAT_SNOW_CONTROL_FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "RESULT: FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
+exit 1
+ "$SUBJECT_LOG" 2>/dev/null || true)"
+
+FRAME_TRACE_BUILD_COUNT="$(/usr/bin/grep -c '^PM_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_BUILD_ID:hitoolbox-windowframe-cuidraw-trace-v2
+echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "shape_passthrough_result_count=$SHAPE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "shape_adapter_pass_count=$SHAPE_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "backing_sync_exact_count=$SYNC_EXACT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "backing_sync_passthrough_count=$SYNC_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "backing_sync_adapter_pass_count=$SYNC_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "backing_sync_predicate_reject_count=$SYNC_REJECT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "shape_legacy_trace_count=$LEGACY_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "observer_geometry_400x222_count=$GEOMETRY_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "observer_summary=$SUMMARY_LINE" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "titlebar_passthrough_count=$TITLEBAR_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "image_bitmapinfo_exact_passthrough_call_count=$IMAGE_COMPAT_EXACT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "image_bitmapinfo_passthrough_result_count=$IMAGE_COMPAT_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "image_bitmapinfo_predicate_reject_count=$IMAGE_COMPAT_REJECT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "image_bitmapinfo_adapted_count=$IMAGE_COMPAT_ADAPTED_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "image_bitmapinfo_adapter_pass_count=$IMAGE_COMPAT_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "image_bitmapinfo_adapter_null_count=$IMAGE_COMPAT_NULL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+
+if [ "$APP_RC" -eq 0 ] &&
+   [ "$OBSERVER_RC" -eq 0 ] &&
+   [ "$SHAPE_CALL_COUNT" -eq 1 ] &&
+   [ "$SHAPE_PASS_COUNT" -eq 1 ] &&
+   [ "$SHAPE_ADAPTER_COUNT" -eq 0 ] &&
+   [ "$SYNC_EXACT_COUNT" -eq 0 ] &&
+   [ "$SYNC_PASSTHROUGH_COUNT" -eq 0 ] &&
+   [ "$SYNC_ADAPTER_COUNT" -eq 0 ] &&
+   [ "$SYNC_REJECT_COUNT" -eq 0 ] &&
+   [ "$LEGACY_TRACE_COUNT" -eq 1 ] &&
+   [ "$WINDOW_MARKER_COUNT" -eq 1 ] &&
+   [ "$SMOKE_MARKER_COUNT" -eq 1 ] &&
+   [ "$OBSERVER_PASS_COUNT" -eq 1 ] &&
+   [ "$GEOMETRY_COUNT" -ge 1 ] &&
+   [ "$TITLEBAR_PASSTHROUGH_COUNT" -eq 6 ] &&
+   [ "$IMAGE_COMPAT_EXACT_COUNT" -eq 6 ] &&
+   [ "$IMAGE_COMPAT_PASSTHROUGH_COUNT" -eq 6 ] &&
+   [ "$IMAGE_COMPAT_REJECT_COUNT" -eq 0 ] &&
+   [ "$IMAGE_COMPAT_ADAPTED_COUNT" -eq 0 ] &&
+   [ "$IMAGE_COMPAT_PASS_COUNT" -eq 0 ] &&
+   [ "$IMAGE_COMPAT_NULL_COUNT" -eq 0 ]; then
+    echo "RESULT: PPC_CARBON_GUI_COREUI_IMAGE_BITMAPINFO_COMPAT_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
+    echo "manual_window_observation=REQUIRED" | /usr/bin/tee -a "$SUBJECT_LOG"
+    echo "RESULT: PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
+    exit 0
+fi
+
+echo "RESULT: PPC_CARBON_GUI_COREUI_IMAGE_BITMAPINFO_COMPAT_SNOW_CONTROL_FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "RESULT: FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
+exit 1
+ "$SUBJECT_LOG" 2>/dev/null || true)"
+FRAME_TRACE_CALL_COUNT="$(/usr/bin/grep -c '^PM_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_CALL:' "$SUBJECT_LOG" 2>/dev/null || true)"
+FRAME_TRACE_HITOOLBOX_COUNT="$(/usr/bin/grep -c '^PM_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_CALL:.* hitoolbox=YES ' "$SUBJECT_LOG" 2>/dev/null || true)"
+FRAME_TRACE_TARGET_SLOT_COUNT="$(/usr/bin/grep -Ec '^PM_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_CALL:.* hitoolbox=YES slot=[1-6] ' "$SUBJECT_LOG" 2>/dev/null || true)"
+FRAME_TRACE_PASS_COUNT="$(/usr/bin/grep -c '^PM_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_RESULT:PASSTHROUGH
+echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "shape_passthrough_result_count=$SHAPE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "shape_adapter_pass_count=$SHAPE_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "backing_sync_exact_count=$SYNC_EXACT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "backing_sync_passthrough_count=$SYNC_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "backing_sync_adapter_pass_count=$SYNC_ADAPTER_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "backing_sync_predicate_reject_count=$SYNC_REJECT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "shape_legacy_trace_count=$LEGACY_TRACE_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "observer_geometry_400x222_count=$GEOMETRY_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "observer_summary=$SUMMARY_LINE" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "titlebar_passthrough_count=$TITLEBAR_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "image_bitmapinfo_exact_passthrough_call_count=$IMAGE_COMPAT_EXACT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "image_bitmapinfo_passthrough_result_count=$IMAGE_COMPAT_PASSTHROUGH_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "image_bitmapinfo_predicate_reject_count=$IMAGE_COMPAT_REJECT_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "image_bitmapinfo_adapted_count=$IMAGE_COMPAT_ADAPTED_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "image_bitmapinfo_adapter_pass_count=$IMAGE_COMPAT_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "image_bitmapinfo_adapter_null_count=$IMAGE_COMPAT_NULL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
+
+if [ "$APP_RC" -eq 0 ] &&
+   [ "$OBSERVER_RC" -eq 0 ] &&
+   [ "$SHAPE_CALL_COUNT" -eq 1 ] &&
+   [ "$SHAPE_PASS_COUNT" -eq 1 ] &&
+   [ "$SHAPE_ADAPTER_COUNT" -eq 0 ] &&
+   [ "$SYNC_EXACT_COUNT" -eq 0 ] &&
+   [ "$SYNC_PASSTHROUGH_COUNT" -eq 0 ] &&
+   [ "$SYNC_ADAPTER_COUNT" -eq 0 ] &&
+   [ "$SYNC_REJECT_COUNT" -eq 0 ] &&
+   [ "$LEGACY_TRACE_COUNT" -eq 1 ] &&
+   [ "$WINDOW_MARKER_COUNT" -eq 1 ] &&
+   [ "$SMOKE_MARKER_COUNT" -eq 1 ] &&
+   [ "$OBSERVER_PASS_COUNT" -eq 1 ] &&
+   [ "$GEOMETRY_COUNT" -ge 1 ] &&
+   [ "$TITLEBAR_PASSTHROUGH_COUNT" -eq 6 ] &&
+   [ "$IMAGE_COMPAT_EXACT_COUNT" -eq 6 ] &&
+   [ "$IMAGE_COMPAT_PASSTHROUGH_COUNT" -eq 6 ] &&
+   [ "$IMAGE_COMPAT_REJECT_COUNT" -eq 0 ] &&
+   [ "$IMAGE_COMPAT_ADAPTED_COUNT" -eq 0 ] &&
+   [ "$IMAGE_COMPAT_PASS_COUNT" -eq 0 ] &&
+   [ "$IMAGE_COMPAT_NULL_COUNT" -eq 0 ]; then
+    echo "RESULT: PPC_CARBON_GUI_COREUI_IMAGE_BITMAPINFO_COMPAT_SNOW_CONTROL_PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
+    echo "manual_window_observation=REQUIRED" | /usr/bin/tee -a "$SUBJECT_LOG"
+    echo "RESULT: PASS" | /usr/bin/tee -a "$SUBJECT_LOG"
+    exit 0
+fi
+
+echo "RESULT: PPC_CARBON_GUI_COREUI_IMAGE_BITMAPINFO_COMPAT_SNOW_CONTROL_FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "RESULT: FAIL" | /usr/bin/tee -a "$SUBJECT_LOG"
+exit 1
+ "$SUBJECT_LOG" 2>/dev/null || true)"
 
 echo "shape_exact_passthrough_call_count=$SHAPE_CALL_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
 echo "shape_passthrough_result_count=$SHAPE_PASS_COUNT" | /usr/bin/tee -a "$SUBJECT_LOG"
