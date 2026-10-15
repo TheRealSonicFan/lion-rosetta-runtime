@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED STATIC STEP after the corrected v2 CUIDraw ingress trace proved that the historical subject does execute HIToolbox-to-CoreUI CUIDraw calls, but not from the six caller offsets assumed by the v1 trace.
+COMPLETED STATIC PASS. The live frame caller resolves to `HIWindowFrameView::DrawDark` on Snow and the same native Lion symbol is present and reaches CUIDraw. The live button caller resolves to `HIThemeDrawTitleBarWidgetInRect` on both, while the Snow-only extra resolves to `HIThemeCUIDraw` for a menu-title request. HIToolbox request construction is closed; the next controlled step is `docs/ppc-carbon-gui-coreui-windowframe-renderer-contract-audit.md`.
 
 ## Reviewed live result
 
@@ -242,6 +242,27 @@ Treat it as confirmation of the already accepted six-button path; do not broaden
 
 Keep it out of the window-frame defect unless later evidence directly connects it.
 
+## Observed result
+
+Both returned reports pass with exact pinned HIToolbox slices.
+
+Snow resolves the live window-frame call at `0x000bc5e8` to:
+
+```text
+HIWindowFrameView::DrawDark(CGRect const&, unsigned long, CGContext*)
+symbol_start=0x000bc224
+caller_delta=0x3c4
+body_contains_CUIDraw=YES
+```
+
+Lion native HIToolbox contains the same symbol at `0x00109bf8`, and its body also contains a CUIDraw call.
+
+The six live titlebar-control calls at Snow offset `0x00022374` resolve to `HIThemeDrawTitleBarWidgetInRect`; Lion native contains the same symbol and CUIDraw path. The Snow-only call at `0x0001f340` resolves to `HIThemeCUIDraw`; Lion also has that symbol, but the live v2 evidence shows this ninth Snow request is `kCUIWidgetMenuTitle`, so it remains outside the document-window frame defect.
+
+The important discriminator is now closed: the healthy Snow and faulty Lion runs send equivalent live `kCUIWidgetWindowFrame` requests from the same semantic HIToolbox frame function, and the corresponding native Lion function still uses the same CUIDraw boundary. No frame rectangle, CUIDraw dictionary, or hit-part adaptation is supported.
+
+Proceed to `docs/ppc-carbon-gui-coreui-windowframe-renderer-contract-audit.md`. That audit stays static and moves exactly one layer below CUIDraw to identify which Snow-PPC CoreUI renderer/resource subpath actually produces the window-frame/titlebar background.
+
 ## Return evidence
 
 Return exactly:
@@ -256,17 +277,16 @@ No live logs or binaries are required.
 ## Current boundary
 
 ```text
-v2 trace constructor marker                      1 on Snow / 1 on Lion
-v2 total CUIDraw calls                           9 on Snow / 8 on Lion
-v2 HIToolbox CUIDraw calls                       9 on Snow / 8 on Lion
-v2 original six target slots                     0 on both
-first eight request stream                       EQUIVALENT
-window-frame caller                              0x000bc5e8, 2 calls on both
-window-frame CUIDraw request                     EQUIVALENT
-titlebar-control caller                          0x00022374, 6 calls on both
-Snow-only extra                                  0x0001f340 / kCUIWidgetMenuTitle
+caller-resolution audit                         PASS on Snow and Lion
+window-frame caller                              HIWindowFrameView::DrawDark
+Snow live frame caller offset                    0x000bc5e8
+Lion native same frame symbol                    PRESENT / contains CUIDraw
+titlebar-control caller                          HIThemeDrawTitleBarWidgetInRect
+Snow-only extra                                  HIThemeCUIDraw / kCUIWidgetMenuTitle
+live window-frame request                        EQUIVALENT
+HIToolbox request construction                   CLOSED
 CUIDraw argument rewrite                         NOT AUTHORIZED
 bitmapInfo 0x2 -> 0x2002                         RETAIN
-next step                                        static HIToolbox CUIDraw caller resolution
+next step                                        docs/ppc-carbon-gui-coreui-windowframe-renderer-contract-audit.md
 XNU                                              no source change indicated
 ```
