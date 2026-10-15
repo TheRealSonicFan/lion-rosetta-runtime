@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED LIVE DISCRIMINATOR after the completed HIToolbox frame/hit static differential.
+COMPLETED DIAGNOSTICALLY INCONCLUSIVE. The v1 artifact was loaded and both accepted Snow/Lion stacks remained PASS, but the returned logs contain zero v1 CUIDraw trace calls or build markers. Because v1 logged its build marker only after a caller passed the six-offset filter, this cannot distinguish “no CUIDraw executed” from “CUIDraw executed but caller classification failed.” The next controlled step is `docs/ppc-carbon-gui-hitoolbox-cuidraw-ingress-live-trace.md`.
 
 ## Static result entering this step
 
@@ -262,6 +262,35 @@ Stop. Treat the trace as intrusive and do not broaden it.
 
 This procedure does not resolve dragging. The static audit found no justified part-code translation. After the visual frame path is resolved or clearly separated, use a dedicated read-only hit-result discriminator; do not conflate it with the CUIDraw trace.
 
+## Observed result — v1 caller-filtered trace produced zero target evidence
+
+The returned artifact matches the pinned v1 source/build identity and is present in both DYLD load lists:
+
+```text
+interposer_source_git_blob=66b3849aeb9f0514223bea07ca19f95d76b8e62c
+trace_build_id=hitoolbox-windowframe-cuidraw-trace-v1
+artifact_sha256=efe599b992beabe52b6fa077c5b45acb2a78cbdc946162da4b0af4c3994e0e45
+```
+
+Both underlying accepted runs remain healthy. Snow still passes the exact bitmap-info/full-stack control and is manually visually normal. Lion still passes the exact restored stack, retains the sharp traffic lights from the bitmap-info adapter, reaches the exact 400x222 titled window, and remains visually partial.
+
+However, across the complete Snow subject log and Lion raw log there are **zero** lines matching any runtime v1 marker:
+
+```text
+PM_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_BUILD_ID:
+PM_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_CALL:
+PM_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_RESULT:PASSTHROUGH
+```
+
+This means the procedure's additional `CALLS > 0` gate was not satisfied, even though the underlying runners themselves returned their existing bitmap-info PASS result. The v1 trace therefore does not establish request-stream equivalence and does not authorize moving below CUIDraw yet.
+
+The ambiguity is in the diagnostic design: v1 calls `dladdr`, requires a HIToolbox image name, and requires one of six exact caller offsets **before** emitting either the build marker or a call record. A zero-hit run can therefore mean either:
+
+1. no `CUIDraw` call executed at all, which would put the live frame on the Snow PPC non-CoreUI/DataEngine branch; or
+2. `CUIDraw` did execute but the caller image/offset predicate did not classify it as expected under the historical runtime.
+
+Follow `docs/ppc-carbon-gui-hitoolbox-cuidraw-ingress-live-trace.md` next. Version 2 logs a constructor marker as soon as the dylib loads and passively records **every** intercepted `CUIDraw` call before applying any caller classification. This closes the diagnostic ambiguity without changing a CUIDraw argument or return value.
+
 ## Return evidence
 
 Return:
@@ -297,7 +326,11 @@ hit mask producer                               DataEngine::GetWindowRegionHitMa
 hit mask -> classic part mapping                structurally aligned
 static part-code rewrite                        NOT AUTHORIZED
 bitmapInfo 0x2 -> 0x2002                        RETAIN / causal partial fix
-next step                                       passive Snow/Lion window-frame CUIDraw trace
+v1 trace artifact                              LOADED on Snow and Lion
+v1 runtime trace markers                        0 on Snow / 0 on Lion
+v1 CALLS>0 diagnostic gate                      NOT SATISFIED
+request-stream equivalence                      NOT PROVEN
+next step                                       docs/ppc-carbon-gui-hitoolbox-cuidraw-ingress-live-trace.md
 manual drag during trace                        NO
 XNU                                             no source change indicated
 ```
