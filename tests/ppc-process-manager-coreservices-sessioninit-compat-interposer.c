@@ -15,7 +15,13 @@ extern kern_return_t bootstrap_look_up2(mach_port_t,
                                          uint64_t);
 extern mach_port_t mig_get_reply_port(void);
 
-#if defined(PM_CGS_SYNCHRONIZE_WINDOW_BACKING_STORE_COMPAT_INTEGRATION) && \
+#if defined(PM_CGS_GET_PORT_STREAM_INLINE_COMPAT_INTEGRATION) && \
+    defined(PM_CGS_SYNCHRONIZE_WINDOW_BACKING_STORE_COMPAT_INTEGRATION) && \
+    defined(PM_CGS_SHAPEWINDOW_INLINE_COMPAT_INTEGRATION) && \
+    defined(PM_CPS_REGISTRATION_CARBON_SMOKETEST_COMPAT) && \
+    defined(PM_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_INTEGRATION)
+#define COMPAT_BUILD_ID "dual-bootstrap-servercheckin-sessioninit-v5-cgs-server-version-compat-cps-registration-carbon-smoketest-compat-setfront-compat-distnotify-ingress-newwindow-compat-releasebacking-compat-opacity-alpha-create-compat-shapewindow-inline-backing-sync-next-event-inline-showwindow-addtrackingarea-orderfront-setfrontwindow-colorprofileclient-selectwindow-orderfront-compat-v7"
+#elif defined(PM_CGS_SYNCHRONIZE_WINDOW_BACKING_STORE_COMPAT_INTEGRATION) && \
     defined(PM_CGS_SHAPEWINDOW_INLINE_COMPAT_INTEGRATION) && \
     defined(PM_CPS_REGISTRATION_CARBON_SMOKETEST_COMPAT) && \
     defined(PM_CGS_SHOWWINDOW_WINDOW_BACKING_INFO_COMPAT_INTEGRATION)
@@ -385,6 +391,22 @@ static const char kDistributedNotificationsName[] =
 #define CGS_SHAPEWINDOW_INLINE_PRIVATE_BUFFER_SIZE 0x00000080U
 #endif
 
+#ifdef PM_CGS_GET_PORT_STREAM_INLINE_COMPAT_INTEGRATION
+#define CGS_NEXT_EVENT_INLINE_COMPAT_ENV "ROSETTA_CGS_GET_PORT_STREAM_INLINE_COMPAT_MODE"
+#define CGS_NEXT_EVENT_INLINE_COMPAT_PASSTHROUGH "passthrough"
+#define CGS_NEXT_EVENT_INLINE_COMPAT_LION_V1 "lion-inline-id-v1"
+#define CGS_NEXT_EVENT_INLINE_LEGACY_REQUEST_ID 0x00007292U
+#define CGS_NEXT_EVENT_INLINE_LEGACY_REPLY_ID 0x000072f6U
+#define CGS_NEXT_EVENT_INLINE_LION_REQUEST_ID 0x00007295U
+#define CGS_NEXT_EVENT_INLINE_LION_REPLY_ID 0x000072f9U
+#define CGS_NEXT_EVENT_INLINE_BITS 0x00001513U
+#define CGS_NEXT_EVENT_INLINE_MSG_OPTIONS 0x00000003U
+#define CGS_NEXT_EVENT_INLINE_SEND_SIZE 0x00000018U
+#define CGS_NEXT_EVENT_INLINE_RECV_SIZE 0x00004030U
+#define CGS_NEXT_EVENT_INLINE_MIN_REPLY_SIZE 0x00000024U
+#define CGS_NEXT_EVENT_INLINE_MAX_REPLY_SIZE 0x00004030U
+#endif
+
 #ifdef PM_CGS_SYNCHRONIZE_WINDOW_BACKING_STORE_COMPAT_INTEGRATION
 #define CGS_BACKING_SYNC_COMPAT_ENV "ROSETTA_CGS_SYNCHRONIZE_WINDOW_BACKING_STORE_COMPAT_MODE"
 #define CGS_BACKING_SYNC_COMPAT_PASSTHROUGH "passthrough"
@@ -682,6 +704,10 @@ static unsigned int gCGSOpacityAlphaCreateCompatCallCount = 0;
 #endif
 #ifdef PM_CGS_SHAPEWINDOW_INLINE_COMPAT_INTEGRATION
 static unsigned int gCGSShapeWindowInlineCompatCallCount = 0;
+#endif
+#ifdef PM_CGS_GET_PORT_STREAM_INLINE_COMPAT_INTEGRATION
+static unsigned int gCGSNextEventInlineCompatCallCount = 0;
+static unsigned int gCGSNextEventInlineAdaptedCallCount = 0;
 #endif
 #ifdef PM_CGS_SYNCHRONIZE_WINDOW_BACKING_STORE_COMPAT_INTEGRATION
 static unsigned int gCGSBackingSyncCompatCallCount = 0;
@@ -2765,6 +2791,254 @@ handle_cgs_shapewindow_inline_compat(
     fprintf(stderr,
             "PM_CGS_SHAPEWINDOW_INLINE_COMPAT_RESULT:ADAPTER_PASS\n");
     fflush(stderr);
+    return mr;
+}
+#endif
+
+#ifdef PM_CGS_GET_PORT_STREAM_INLINE_COMPAT_INTEGRATION
+static int
+is_exact_legacy_cgs_next_event_inline_request(
+    mach_msg_header_t *msg,
+    mach_msg_option_t option,
+    mach_msg_size_t send_size,
+    mach_msg_size_t rcv_size,
+    mach_port_name_t rcv_name,
+    mach_msg_timeout_t timeout,
+    mach_port_name_t notify)
+{
+    unsigned char *m = (unsigned char *)msg;
+
+    if (msg == NULL)
+        return 0;
+
+    return get_u32(m + 0x00U) == CGS_NEXT_EVENT_INLINE_BITS &&
+           get_u32(m + 0x08U) != 0U &&
+           get_u32(m + 0x0cU) == (uint32_t)rcv_name &&
+           rcv_name != MACH_PORT_NULL &&
+           get_u32(m + 0x14U) == CGS_NEXT_EVENT_INLINE_LEGACY_REQUEST_ID &&
+           option == (mach_msg_option_t)CGS_NEXT_EVENT_INLINE_MSG_OPTIONS &&
+           send_size == (mach_msg_size_t)CGS_NEXT_EVENT_INLINE_SEND_SIZE &&
+           rcv_size == (mach_msg_size_t)CGS_NEXT_EVENT_INLINE_RECV_SIZE &&
+           timeout == MACH_MSG_TIMEOUT_NONE &&
+           notify == MACH_PORT_NULL;
+}
+
+static mach_msg_return_t
+handle_cgs_next_event_inline_compat(
+    mach_msg_header_t *msg,
+    mach_msg_option_t option,
+    mach_msg_size_t send_size,
+    mach_msg_size_t rcv_size,
+    mach_port_name_t rcv_name,
+    mach_msg_timeout_t timeout,
+    mach_port_name_t notify)
+{
+    const char *mode;
+    unsigned char *m = (unsigned char *)msg;
+    unsigned char *adapted;
+    unsigned char source_before[CGS_NEXT_EVENT_INLINE_SEND_SIZE];
+    unsigned char *native_reply_before = NULL;
+    mach_msg_return_t mr;
+    uint32_t native_reply_bits;
+    uint32_t native_reply_size;
+    uint32_t native_reply_id;
+    unsigned int request_changed = 0U;
+    unsigned int request_body_changed = 0U;
+    unsigned int source_changed = 0U;
+    unsigned int reply_changed = 0U;
+    unsigned int reply_body_changed = 0U;
+    unsigned int off;
+    int exact;
+    const char *reply_class = "UNEXPECTED";
+
+    ++gCGSNextEventInlineCompatCallCount;
+    mode = getenv(CGS_NEXT_EVENT_INLINE_COMPAT_ENV);
+    exact = is_exact_legacy_cgs_next_event_inline_request(
+        msg, option, send_size, rcv_size, rcv_name, timeout, notify);
+
+    fprintf(stderr,
+            "PM_CGS_NEXT_EVENT_INLINE_COMPAT_CALL:index=%u adaptedIndex=%u mode=%s exact=%s bits=0x%08lx id=0x%08lx send=0x%08lx recv=0x%08lx remotePort=0x%08lx replyPort=0x%08lx\n",
+            gCGSNextEventInlineCompatCallCount,
+            gCGSNextEventInlineAdaptedCallCount + (exact ? 1U : 0U),
+            mode ? mode : "(unset)",
+            exact ? "YES" : "NO",
+            (unsigned long)get_u32(m + 0x00U),
+            (unsigned long)get_u32(m + 0x14U),
+            (unsigned long)send_size,
+            (unsigned long)rcv_size,
+            (unsigned long)get_u32(m + 0x08U),
+            (unsigned long)rcv_name);
+    fflush(stderr);
+
+    if (mode != NULL &&
+        strcmp(mode, CGS_NEXT_EVENT_INLINE_COMPAT_PASSTHROUGH) == 0) {
+        fprintf(stderr,
+                "PM_CGS_NEXT_EVENT_INLINE_COMPAT_RESULT:PASSTHROUGH\n");
+        fflush(stderr);
+        return call_original_mach_msg(msg, option, send_size,
+                                      rcv_size, rcv_name,
+                                      timeout, notify);
+    }
+
+    if (mode == NULL ||
+        strcmp(mode, CGS_NEXT_EVENT_INLINE_COMPAT_LION_V1) != 0 ||
+        !exact) {
+        fprintf(stderr,
+                "PM_CGS_NEXT_EVENT_INLINE_COMPAT_RESULT:PREDICATE_REJECTED_PASSTHROUGH\n");
+        fflush(stderr);
+        return call_original_mach_msg(msg, option, send_size,
+                                      rcv_size, rcv_name,
+                                      timeout, notify);
+    }
+
+    adapted = (unsigned char *)malloc(CGS_NEXT_EVENT_INLINE_RECV_SIZE);
+    if (adapted == NULL) {
+        fprintf(stderr,
+                "PM_CGS_NEXT_EVENT_INLINE_COMPAT_RESULT:ALLOC_FAILED_PASSTHROUGH\n");
+        fflush(stderr);
+        return call_original_mach_msg(msg, option, send_size,
+                                      rcv_size, rcv_name,
+                                      timeout, notify);
+    }
+
+    ++gCGSNextEventInlineAdaptedCallCount;
+    memset(adapted, 0, CGS_NEXT_EVENT_INLINE_RECV_SIZE);
+    memcpy(source_before, m, CGS_NEXT_EVENT_INLINE_SEND_SIZE);
+    memcpy(adapted, m, CGS_NEXT_EVENT_INLINE_SEND_SIZE);
+    put_u32(adapted + 0x14U, CGS_NEXT_EVENT_INLINE_LION_REQUEST_ID);
+
+    for (off = 0U; off < CGS_NEXT_EVENT_INLINE_SEND_SIZE; ++off) {
+        if (adapted[off] != source_before[off]) {
+            ++request_changed;
+            if (off < 0x14U || off >= 0x18U)
+                ++request_body_changed;
+        }
+        if (m[off] != source_before[off])
+            ++source_changed;
+    }
+
+    fprintf(stderr,
+            "PM_CGS_NEXT_EVENT_INLINE_COMPAT_ADAPTED_REQUEST:index=%u legacyId=0x%08lx lionId=0x%08lx send=0x%08lx recv=0x%08lx changedBytes=%u bodyChangedBytes=%u sourceChangedBytes=%u\n",
+            gCGSNextEventInlineAdaptedCallCount,
+            (unsigned long)get_u32(source_before + 0x14U),
+            (unsigned long)get_u32(adapted + 0x14U),
+            (unsigned long)send_size,
+            (unsigned long)rcv_size,
+            request_changed,
+            request_body_changed,
+            source_changed);
+    fflush(stderr);
+
+    if (request_changed != 1U ||
+        request_body_changed != 0U ||
+        source_changed != 0U ||
+        get_u32(adapted + 0x14U) != CGS_NEXT_EVENT_INLINE_LION_REQUEST_ID) {
+        free(adapted);
+        fprintf(stderr,
+                "PM_CGS_NEXT_EVENT_INLINE_COMPAT_RESULT:REQUEST_POSTCHECK_FAILED_PASSTHROUGH\n");
+        fflush(stderr);
+        return call_original_mach_msg(msg, option, send_size,
+                                      rcv_size, rcv_name,
+                                      timeout, notify);
+    }
+
+    mr = call_original_mach_msg((mach_msg_header_t *)adapted,
+                                option, send_size, rcv_size,
+                                rcv_name, timeout, notify);
+
+    fprintf(stderr,
+            "PM_CGS_NEXT_EVENT_INLINE_COMPAT_NATIVE_MACH_RETURN:index=%u kr=%ld hex=0x%08lx\n",
+            gCGSNextEventInlineAdaptedCallCount,
+            (long)mr,
+            (unsigned long)(uint32_t)mr);
+    fflush(stderr);
+
+    if (mr != MACH_MSG_SUCCESS) {
+        free(adapted);
+        return mr;
+    }
+
+    native_reply_bits = get_u32(adapted + 0x00U);
+    native_reply_size = get_u32(adapted + 0x04U);
+    native_reply_id = get_u32(adapted + 0x14U);
+
+    if (native_reply_size >= 0x28U &&
+        native_reply_size <= CGS_NEXT_EVENT_INLINE_MAX_REPLY_SIZE)
+        reply_class = "STREAM";
+    else if (native_reply_size == CGS_NEXT_EVENT_INLINE_MIN_REPLY_SIZE)
+        reply_class = "SIMPLE";
+    
+    fprintf(stderr,
+            "PM_CGS_NEXT_EVENT_INLINE_COMPAT_NATIVE_REPLY:index=%u bits=0x%08lx size=0x%08lx id=0x%08lx replyClass=%s\n",
+            gCGSNextEventInlineAdaptedCallCount,
+            (unsigned long)native_reply_bits,
+            (unsigned long)native_reply_size,
+            (unsigned long)native_reply_id,
+            reply_class);
+    fflush(stderr);
+
+    if (native_reply_id != CGS_NEXT_EVENT_INLINE_LION_REPLY_ID ||
+        native_reply_size < CGS_NEXT_EVENT_INLINE_MIN_REPLY_SIZE ||
+        native_reply_size > CGS_NEXT_EVENT_INLINE_MAX_REPLY_SIZE) {
+        if (native_reply_size > 0U &&
+            native_reply_size <= CGS_NEXT_EVENT_INLINE_RECV_SIZE)
+            memcpy(m, adapted, native_reply_size);
+        free(adapted);
+        fprintf(stderr,
+                "PM_CGS_NEXT_EVENT_INLINE_COMPAT_RESULT:NATIVE_REPLY_REJECTED\n");
+        fflush(stderr);
+        return mr;
+    }
+
+    native_reply_before = (unsigned char *)malloc(native_reply_size);
+    if (native_reply_before == NULL) {
+        memcpy(m, adapted, native_reply_size);
+        free(adapted);
+        fprintf(stderr,
+                "PM_CGS_NEXT_EVENT_INLINE_COMPAT_RESULT:REPLY_ALLOC_FAILED_NATIVE_COPIED\n");
+        fflush(stderr);
+        return mr;
+    }
+
+    memcpy(native_reply_before, adapted, native_reply_size);
+    put_u32(adapted + 0x14U, CGS_NEXT_EVENT_INLINE_LEGACY_REPLY_ID);
+
+    for (off = 0U; off < native_reply_size; ++off) {
+        if (adapted[off] != native_reply_before[off]) {
+            ++reply_changed;
+            if (off < 0x14U || off >= 0x18U)
+                ++reply_body_changed;
+        }
+    }
+
+    if (reply_changed != 1U ||
+        reply_body_changed != 0U ||
+        get_u32(adapted + 0x14U) != CGS_NEXT_EVENT_INLINE_LEGACY_REPLY_ID) {
+        memcpy(m, native_reply_before, native_reply_size);
+        free(native_reply_before);
+        free(adapted);
+        fprintf(stderr,
+                "PM_CGS_NEXT_EVENT_INLINE_COMPAT_RESULT:REPLY_POSTCHECK_FAILED_NATIVE_COPIED\n");
+        fflush(stderr);
+        return mr;
+    }
+
+    memcpy(m, adapted, native_reply_size);
+    fprintf(stderr,
+            "PM_CGS_NEXT_EVENT_INLINE_COMPAT_ADAPTED_REPLY:index=%u nativeId=0x%08lx legacyId=0x%08lx size=0x%08lx changedBytes=%u bodyChangedBytes=%u replyClass=%s\n",
+            gCGSNextEventInlineAdaptedCallCount,
+            (unsigned long)CGS_NEXT_EVENT_INLINE_LION_REPLY_ID,
+            (unsigned long)get_u32(m + 0x14U),
+            (unsigned long)native_reply_size,
+            reply_changed,
+            reply_body_changed,
+            reply_class);
+    fprintf(stderr,
+            "PM_CGS_NEXT_EVENT_INLINE_COMPAT_RESULT:ADAPTER_PASS\n");
+    fflush(stderr);
+
+    free(native_reply_before);
+    free(adapted);
     return mr;
 }
 #endif
@@ -4869,6 +5143,12 @@ cgs_trace_kind(uint32_t request_id)
     if (request_id == CGS_SHAPEWINDOW_INLINE_LION_REQUEST_ID)
         return "CGS_SHAPEWINDOW_INLINE_LION";
 #endif
+#ifdef PM_CGS_GET_PORT_STREAM_INLINE_COMPAT_INTEGRATION
+    if (request_id == CGS_NEXT_EVENT_INLINE_LEGACY_REQUEST_ID)
+        return "CGS_NEXT_EVENT_INLINE_LEGACY";
+    if (request_id == CGS_NEXT_EVENT_INLINE_LION_REQUEST_ID)
+        return "CGS_NEXT_EVENT_INLINE_LION";
+#endif
 #ifdef PM_CGS_SYNCHRONIZE_WINDOW_BACKING_STORE_COMPAT_INTEGRATION
     if (request_id == CGS_BACKING_SYNC_LEGACY_REQUEST_ID)
         return "CGS_BACKING_SYNC_LEGACY";
@@ -4963,6 +5243,12 @@ cgs_trace_expected_reply(uint32_t request_id)
     if (request_id == CGS_SHAPEWINDOW_INLINE_LION_REQUEST_ID)
         return CGS_SHAPEWINDOW_INLINE_LION_REPLY_ID;
 #endif
+#ifdef PM_CGS_GET_PORT_STREAM_INLINE_COMPAT_INTEGRATION
+    if (request_id == CGS_NEXT_EVENT_INLINE_LEGACY_REQUEST_ID)
+        return CGS_NEXT_EVENT_INLINE_LEGACY_REPLY_ID;
+    if (request_id == CGS_NEXT_EVENT_INLINE_LION_REQUEST_ID)
+        return CGS_NEXT_EVENT_INLINE_LION_REPLY_ID;
+#endif
 #ifdef PM_CGS_SYNCHRONIZE_WINDOW_BACKING_STORE_COMPAT_INTEGRATION
     if (request_id == CGS_BACKING_SYNC_LEGACY_REQUEST_ID)
         return CGS_BACKING_SYNC_LEGACY_REPLY_ID;
@@ -5054,6 +5340,11 @@ is_cgs_trace_candidate(mach_msg_header_t *msg)
 #ifdef PM_CGS_SHAPEWINDOW_INLINE_COMPAT_INTEGRATION
     if (request_id == CGS_SHAPEWINDOW_INLINE_LEGACY_REQUEST_ID ||
         request_id == CGS_SHAPEWINDOW_INLINE_LION_REQUEST_ID)
+        return 1;
+#endif
+#ifdef PM_CGS_GET_PORT_STREAM_INLINE_COMPAT_INTEGRATION
+    if (request_id == CGS_NEXT_EVENT_INLINE_LEGACY_REQUEST_ID ||
+        request_id == CGS_NEXT_EVENT_INLINE_LION_REQUEST_ID)
         return 1;
 #endif
 #ifdef PM_CGS_SYNCHRONIZE_WINDOW_BACKING_STORE_COMPAT_INTEGRATION
@@ -5397,6 +5688,13 @@ trace_cgs_message(mach_msg_header_t *msg,
 #ifdef PM_CGS_SHAPEWINDOW_INLINE_COMPAT_INTEGRATION
     if (request_id == CGS_SHAPEWINDOW_INLINE_LEGACY_REQUEST_ID) {
         mr = handle_cgs_shapewindow_inline_compat(
+            msg, option, send_size, rcv_size, rcv_name,
+            timeout, notify);
+    } else
+#endif
+#ifdef PM_CGS_GET_PORT_STREAM_INLINE_COMPAT_INTEGRATION
+    if (request_id == CGS_NEXT_EVENT_INLINE_LEGACY_REQUEST_ID) {
+        mr = handle_cgs_next_event_inline_compat(
             msg, option, send_size, rcv_size, rcv_name,
             timeout, notify);
     } else
