@@ -132,7 +132,7 @@ SOURCE_SHA="$(/usr/bin/shasum -a 256 "$SRC" | /usr/bin/awk '{print $1}')"
     /usr/bin/nm -m "$OUT" | /usr/bin/grep -E '(_InstallEventLoopTimer|_InstallEventHandler|_GetEventDispatcherTarget|_GetEventParameter|_FindWindow)' || true
     echo
     echo "== markers =="
-    /usr/bin/strings "$OUT" | /usr/bin/grep -E 'PM_HITOOLBOX_TITLEBAR_(DRAG|FINDWINDOW)' || true
+    /usr/bin/strings "$OUT" | /usr/bin/grep -E 'PM_HITOOLBOX_TITLEBAR_(DRAG_TRACE_BUILD_ID|INPUT_)' || true
     echo
     echo "== SHA-256 =="
     /usr/bin/shasum -a 256 "$OUT"
@@ -155,7 +155,11 @@ for sym in _InstallEventLoopTimer _InstallEventHandler _GetEventDispatcherTarget
     }
 done
 
-for marker in     "PM_HITOOLBOX_TITLEBAR_DRAG_TRACE_BUILD_ID:$EXPECTED_BUILD_ID"     "PM_HITOOLBOX_TITLEBAR_DRAG_TRACE_CALL:index="     "PM_HITOOLBOX_TITLEBAR_DRAG_TRACE_RESULT:index="     "PM_HITOOLBOX_TITLEBAR_FINDWINDOW_TRACE:index="
+for marker in \
+    "PM_HITOOLBOX_TITLEBAR_DRAG_TRACE_BUILD_ID:$EXPECTED_BUILD_ID" \
+    "PM_HITOOLBOX_TITLEBAR_INPUT_HANDLER_INSTALL:target=dispatcher status=" \
+    "PM_HITOOLBOX_TITLEBAR_INPUT_TIMER:mode=" \
+    "PM_HITOOLBOX_TITLEBAR_INPUT_EVENT:index="
 do
     /usr/bin/strings "$OUT" | /usr/bin/grep -Fq "$marker" || {
         echo "error: missing marker: $marker" >&2
