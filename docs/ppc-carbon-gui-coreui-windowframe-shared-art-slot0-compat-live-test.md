@@ -8,7 +8,7 @@ The Snow passthrough control passed exactly. On Lion, all five slot-0 substituti
 
 The full-stack runner failed for a separate, precisely localized reason: the exact-21 notification broker accepted registrations 1..6, then the previously accepted registration 7 (`com.apple.ColorSync.DisplayProfileNotification`, payload 276) was absent. Current requests 7..20 match the prior accepted requests 8..21 sequence by payload geometry, so the broker rejected the shifted tail as state mismatches. Do not broaden the notification policy yet.
 
-The next controlled step is `docs/ppc-carbon-gui-coreui-windowframe-mapped-slot0-pixel-format-audit.md`.
+The mapped slot-0 pixel-format audit has since passed. This v1 procedure is historical; the current controlled step is `docs/ppc-carbon-gui-coreui-windowframe-shared-art-slot0-format-compat-live-test.md`, using the v2 exact-two corner-format correction.
 
 The Snow/Lion external-boundary summaries both pass. The raw branch preserves
 exact legacy IDs, the ImageIO branch recovers exactly `0x4e90`, `0x4e8f`,
@@ -82,7 +82,9 @@ gate; do not proceed if it fails.
 
 ## Prepared implementation
 
-Current runtime `main` provides:
+The pins in this section record the completed v1 experiment and are intentionally historical. Do not use them to build current `main`; follow the v2 procedure linked above.
+
+The completed v1 experiment used:
 
 ```text
 tests/ppc-coreui-windowframe-shared-art-slot0-compat-interposer.c
@@ -341,6 +343,6 @@ slot0 compatibility adapter                      LIVE-PROVEN PARTIAL VISUAL EFFE
 Lion top corners                                 MISSING
 exact-21 notification sequence                   one known registration deleted / runner FAIL
 interaction behavior                             STILL FAILS / separate defect
-next step                                        static mapped-slot0 pixel-format audit
+next step                                        exact-two corner-format v2 live test
 XNU                                              no source change indicated
 ```
