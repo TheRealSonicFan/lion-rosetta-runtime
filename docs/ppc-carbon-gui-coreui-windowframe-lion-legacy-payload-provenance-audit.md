@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED STATIC STEP after the live-active SArtFile payload fingerprint audit.
+COMPLETED STATIC PASS. The Lion provenance audit confirms exactly three byte-for-byte SArtFile relocations and finds no exact Snow `0x4e8f` or `0x4e91` payload in SArtFile, ArtFile10, or ArtFile20. The next controlled step is `docs/ppc-carbon-gui-coreui-windowframe-frame-id-relocation-audit.md`.
 
 The returned Snow report identifies five exact 484-byte frame payload fingerprints. Comparing those hashes with Lion's complete 11x11/484-byte SArtFile candidate inventory produces three exact byte-for-byte relocations:
 
@@ -182,19 +182,31 @@ Return exactly:
 ppc-carbon-gui-coreui-windowframe-lion-legacy-payload-provenance.txt
 ```
 
+## Observed result
+
+The report passes with all three Lion archives pinned exactly. The only exact-byte matches are:
+
+```text
+Snow 0x4e8d -> Lion SArtFile 0x4e75
+Snow 0x4e8e -> Lion SArtFile 0x4e76
+Snow 0x4e90 -> Lion SArtFile 0x4e78
+```
+
+ArtFile10 contains 23 structurally valid 484-byte old-loader cells and ArtFile20 contains none, but neither archive contains any of the five Snow target fingerprints. Snow `0x4e8f` and `0x4e91` therefore have no exact raw-byte match under the audited SArtFile/provider and ArtFile cell contracts.
+
+This does not imply those two semantic assets disappeared: the pinned native Lion renderer report uses the contiguous shared-art ID set `0x4e75..0x4e79` in the same renderer-role order as Snow's active `0x4e8d..0x4e91` set, with the three exact-byte matches acting as independent anchors. Follow `docs/ppc-carbon-gui-coreui-windowframe-frame-id-relocation-audit.md` next to reproduce that mapping and inspect both Lion record slots before any live remap is built.
+
 ## Current boundary
 
 ```text
-live-active payload fingerprint audit            PASS
-Snow active frame payloads                       5
-exact Lion SArtFile byte relocations              3
-Snow 0x4e8d -> Lion                              0x4e75
-Snow 0x4e8e -> Lion                              0x4e76
-Snow 0x4e90 -> Lion                              0x4e78
-Snow 0x4e8f exact raw payload in SArtFile        NOT FOUND
-Snow 0x4e91 exact raw payload in SArtFile        NOT FOUND
-Lion ArtFile10/20 exact-byte provenance          NOT YET CHECKED
-new image-ID mapping                             NOT AUTHORIZED
-next step                                        Lion static legacy-payload provenance audit
+Lion legacy-payload provenance                   PASS
+exact SArtFile byte relocations                  3
+4e8d -> 4e75                                     PROVEN
+4e8e -> 4e76                                     PROVEN
+4e90 -> 4e78                                     PROVEN
+4e8f / 4e91 exact bytes in all Lion archives    NOT FOUND
+candidate semantic continuation                  4e8f->4e77;4e91->4e79
+ID-only remap                                    NOT AUTHORIZED
+next step                                        frame-ID relocation/slot audit
 XNU                                              no source change indicated
 ```
