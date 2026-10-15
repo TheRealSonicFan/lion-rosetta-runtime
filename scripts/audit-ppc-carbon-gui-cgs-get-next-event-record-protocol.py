@@ -8,8 +8,8 @@ import subprocess
 import sys
 import tempfile
 
-ANALYZER_VERSION = "1"
-AUDIT_CONTRACT = "carbon-gui-cgs-get-next-event-record-protocol-v1"
+ANALYZER_VERSION = "2"
+AUDIT_CONTRACT = "carbon-gui-cgs-get-next-event-record-protocol-v2"
 
 COREGRAPHICS = "/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/CoreGraphics.framework/Versions/A/CoreGraphics"
 ROSETTA_CACHE = "/private/var/db/dyld/dyld_shared_cache_rosetta"
@@ -33,7 +33,7 @@ LIVE_LION_ERROR_SIGNED = -304
 
 TARGET_RE = re.compile(r"CGS.*GetNextEventRecord|GetNextEventRecord", re.I)
 FOCUS_RE = re.compile(
-    r"(CGS.*GetNextEventRecord|GetNextEventRecord|EventRecord|mach_msg|"
+    r"(CGS.*GetNextEventRecord|GetNextEventRecord|snarfEvents|EventRecord|mach_msg|"
     r"mig_get_reply_port|mig_put_reply_port|mig_dealloc_reply_port|MIG_|NDR|"
     r"WindowServer|windowserver)", re.I)
 STRING_RE = re.compile(
@@ -43,7 +43,7 @@ HEX_RE = re.compile(r"0x([0-9a-fA-F]+)")
 
 REQUEST_RANGE = (0x00007270, 0x000072c0)
 REPLY_RANGE = (0x000072d0, 0x00007320)
-SIZE_VALUES = set([0x18, 0x24, 0x38, 0x3c, 0x40, 0x50, 0x1e4, 0x2a8, 0x4030])
+SIZE_VALUES = set([0x18, 0x24, 0x38, 0x3c, 0x40, 0x50, 0xc30, 0x1e4, 0x2a8, 0x4030])
 
 
 def run(cmd):
@@ -148,6 +148,110 @@ def values_in_line(line):
         except ValueError:
             pass
     return values
+
+
+def group_rows_by_symbol(rows, symbols):
+    groups = {}
+    if not symbols:
+        return groups
+    si = 0
+    for addr, line in rows:
+        while si + 1 < len(symbols) and symbols[si + 1][0] <= addr:
+            si += 1
+        if symbols[si][0] <= addr:
+            groups.setdefault(si, []).append((addr, line))
+    return groups
+
+
+def values_in_selected(selected):
+    values = set()
+    for addr, line in selected:
+        for value in values_in_line(line):
+            values.add(value)
+    return values
+
+
+def selected_has_mig_transport(selected):
+    for addr, line in selected:
+        lower = line.lower()
+        if ("mach_msg" in lower or "mig_get_reply_port" in lower or
+                "mig_put_reply_port" in lower or
+                "mig_dealloc_reply_port" in lower):
+            return True
+    return False
+
+
+def emit_resolved_symbol(fp, label, rows, symbols, index):
+    start, name, raw_symbol = symbols[index]
+    selected = symbol_rows(rows, symbols, index)
+    write_line(fp)
+    write_line(fp, "== %s: %s ==" % (label, name))
+    write_line(fp, "symbol_address=0x%x" % start)
+    write_line(fp, "symbol_record=%s" % raw_symbol)
+    write_line(fp, "instruction_lines=%d" % len(selected))
+    write_line(fp, "-- full symbol window --")
+    for addr, line in selected:
+        write_line(fp, line)
+
+    write_line(fp, "-- direct calls/branches --")
+    calls = []
+    for addr, line in selected:
+        lower = line.lower()
+        if ("\tcall" in lower or "\tbl\t" in lower or "\tb\t" in lower or
+                "\tjmp" in lower):
+            calls.append(line)
+    if calls:
+        for line in calls:
+            write_line(fp, line)
+    else:
+        write_line(fp, "NONE")
+
+    write_line(fp, "-- MIG transport lines --")
+    mig = []
+    for addr, line in selected:
+        lower = line.lower()
+        if ("mach_msg" in lower or "mig_get_reply_port" in lower or
+                "mig_put_reply_port" in lower or
+                "mig_dealloc_reply_port" in lower or "ndr" in lower):
+            mig.append(line)
+    if mig:
+        for line in mig:
+            write_line(fp, line)
+    else:
+        write_line(fp, "NONE")
+
+    write_line(fp, "-- protocol-bearing immediates --")
+    found = []
+    for addr, line in selected:
+        for value in values_in_line(line):
+            if interesting_value(value) or value == LIVE_REQUEST_BITS:
+                found.append((value, line))
+    if found:
+        for value, line in found:
+            write_line(fp, "value=0x%08x line=%s" % (value, line))
+    else:
+        write_line(fp, "NONE")
+
+
+def emit_symbol_callers(fp, groups, symbols, target_index):
+    target_addr, target_name, raw_symbol = symbols[target_index]
+    forms = ["0x%x" % target_addr, "0x%08x" % target_addr]
+    lower_name = target_name.lower()
+    hits = []
+    for i, selected in groups.items():
+        if i == target_index:
+            continue
+        for addr, line in selected:
+            lower = line.lower()
+            if lower_name in lower or any(form in lower for form in forms):
+                hits.append((i, line))
+    write_line(fp, "caller_reference_count=%d" % len(hits))
+    for i, line in hits[:128]:
+        write_line(fp, "caller=%s@0x%x line=%s" %
+                   (symbols[i][1], symbols[i][0], line))
+    if len(hits) > 128:
+        write_line(fp, "additional_caller_references_omitted=%d" %
+                   (len(hits) - 128))
 
 
 def interesting_value(value):
@@ -360,6 +464,7 @@ def main():
                         issues.append("otool disassembly failed")
                     else:
                         rows = parse_rows(dis_out)
+                        groups = group_rows_by_symbol(rows, symbols)
                         write_line(fp, "parsed_instruction_lines=%d" % len(rows))
 
                         target_indexes = []
@@ -389,6 +494,75 @@ def main():
 
                         for i in target_indexes:
                             emit_target_symbol(fp, rows, symbols, i)
+
+
+                        write_line(fp)
+                        write_line(fp, "== Resolved _snarfEvents and generated-MIG transport ==")
+                        snarf_indexes = [i for i, item in enumerate(symbols)
+                                         if item[1] == "_snarfEvents"]
+                        write_line(fp, "snarf_events_symbol_count=%d" % len(snarf_indexes))
+                        for i in snarf_indexes:
+                            write_line(fp, "snarf_events_symbol=%s address=0x%x" %
+                                       (symbols[i][1], symbols[i][0]))
+                            emit_resolved_symbol(
+                                fp, "snarf-events symbol", rows, symbols, i)
+
+                        transport_indexes = []
+                        for i, selected in groups.items():
+                            values = values_in_selected(selected)
+                            if (LIVE_LEGACY_REQUEST_ID in values and
+                                    LIVE_LEGACY_REPLY_ID in values and
+                                    selected_has_mig_transport(selected)):
+                                transport_indexes.append(i)
+
+                        write_line(fp, "legacy_transport_candidate_count=%d" %
+                                   len(transport_indexes))
+                        for i in transport_indexes:
+                            write_line(fp, "legacy_transport_candidate=%s address=0x%x" %
+                                       (symbols[i][1], symbols[i][0]))
+
+                        expected_send = LIVE_SEND_SIZE if mode == "snow" else 0x24
+                        expected_recv = LIVE_RECV_SIZE if mode == "snow" else 0x0c30
+                        write_line(fp, "native_expected_request_id=0x%08x" %
+                                   LIVE_LEGACY_REQUEST_ID)
+                        write_line(fp, "native_expected_reply_id=0x%08x" %
+                                   LIVE_LEGACY_REPLY_ID)
+                        write_line(fp, "native_expected_request_bits=0x%08x" %
+                                   LIVE_REQUEST_BITS)
+                        write_line(fp, "native_expected_send_size=0x%x" %
+                                   expected_send)
+                        write_line(fp, "native_expected_recv_size=0x%x" %
+                                   expected_recv)
+
+                        if len(snarf_indexes) != 1:
+                            issues.append("expected exactly one _snarfEvents symbol")
+                        if len(transport_indexes) != 1:
+                            issues.append("expected exactly one generated-MIG transport candidate")
+                        else:
+                            ti = transport_indexes[0]
+                            transport_values = values_in_selected(groups.get(ti, []))
+                            checks = [
+                                ("request_id", LIVE_LEGACY_REQUEST_ID),
+                                ("reply_id", LIVE_LEGACY_REPLY_ID),
+                                ("request_bits", LIVE_REQUEST_BITS),
+                                ("send_size", expected_send),
+                                ("recv_size", expected_recv),
+                            ]
+                            geometry_ok = True
+                            for label, value in checks:
+                                present = value in transport_values
+                                write_line(fp, "native_%s_present=%s value=0x%x" %
+                                           (label, "YES" if present else "NO", value))
+                                if not present:
+                                    geometry_ok = False
+                                    issues.append("native transport missing %s 0x%x" %
+                                                  (label, value))
+                            write_line(fp, "native_event_transport_candidate_exact_geometry=%s" %
+                                       ("YES" if geometry_ok else "NO"))
+                            emit_resolved_symbol(
+                                fp, "generated-MIG transport candidate",
+                                rows, symbols, ti)
+                            emit_symbol_callers(fp, groups, symbols, ti)
 
             write_line(fp)
             write_line(fp, "== Audit validation ==")
