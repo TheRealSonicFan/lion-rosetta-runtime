@@ -6,12 +6,12 @@
 #include <string.h>
 #include <unistd.h>
 
-#define BUILD_ID "hitoolbox-windowframe-cuidraw-trace-v1"
+#define BUILD_ID "hitoolbox-windowframe-cuidraw-trace-v2"
 #define BUILD_MARKER "PM_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_BUILD_ID:" BUILD_ID "\n"
 
 #define MODE_ENV "ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_MODE"
-#define MODE_SNOW "snow-passive-v1"
-#define MODE_LION "lion-passive-v1"
+#define MODE_SNOW "snow-passive-v2"
+#define MODE_LION "lion-passive-v2"
 
 #define HITOOLBOX_TOKEN "/HIToolbox.framework/"
 #define TARGET_COUNT 6
@@ -29,7 +29,6 @@ struct interpose_tuple {
 static struct interpose_tuple sCUIDrawInterpose;
 static cuidraw_fn gOriginal = NULL;
 static unsigned int gCallIndex = 0;
-static int gBuildLogged = 0;
 
 static const uint32_t gReturnOffsets[TARGET_COUNT] = {
     0x000217acU,
@@ -104,48 +103,18 @@ static uint32_t float_bits(CGFloat value)
     return v.u;
 }
 
-static void log_build_once(void)
+__attribute__((constructor))
+static void trace_loaded(void)
 {
-    if (!gBuildLogged) {
-        write_literal(BUILD_MARKER);
-        gBuildLogged = 1;
-    }
+    write_literal(BUILD_MARKER);
 }
 
-static int target_caller(const void *caller, uint32_t *offset_out, unsigned int *slot_out)
+static unsigned int slot_for_offset(uint32_t offset)
 {
-    Dl_info info;
-    uintptr_t caller_addr;
-    uintptr_t base_addr;
-    uint32_t offset;
     unsigned int i;
-
-    if (offset_out != NULL)
-        *offset_out = 0;
-    if (slot_out != NULL)
-        *slot_out = 0;
-
-    memset(&info, 0, sizeof(info));
-    if (caller == NULL || dladdr(caller, &info) == 0 ||
-        info.dli_fname == NULL || info.dli_fbase == NULL)
-        return 0;
-    if (strstr(info.dli_fname, HITOOLBOX_TOKEN) == NULL)
-        return 0;
-
-    caller_addr = (uintptr_t)caller;
-    base_addr = (uintptr_t)info.dli_fbase;
-    if (caller_addr < base_addr)
-        return 0;
-
-    offset = (uint32_t)(caller_addr - base_addr);
     for (i = 0; i < TARGET_COUNT; ++i) {
-        if (offset == gReturnOffsets[i]) {
-            if (offset_out != NULL)
-                *offset_out = offset;
-            if (slot_out != NULL)
-                *slot_out = i + 1U;
-            return 1;
-        }
+        if (offset == gReturnOffsets[i])
+            return i + 1U;
     }
     return 0;
 }
@@ -227,7 +196,13 @@ static void log_options(unsigned int call_index, CFDictionaryRef options)
     CFIndex i;
 
     if (options == NULL) {
-        write_literal("PM_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_OPTIONS:dictionary=NULL\n");
+        char line[160];
+        size_t pos = 0;
+        append_text(line, sizeof(line), &pos, "PM_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_OPTIONS:call=");
+        append_uint(line, sizeof(line), &pos, call_index);
+        append_text(line, sizeof(line), &pos, " dictionary=NULL\n");
+        line[pos] = '\0';
+        write_literal(line);
         return;
     }
 
@@ -280,33 +255,63 @@ static void rosetta_CUIDraw(CUIRendererRef renderer,
     cuidraw_fn fn = original_function();
     const char *mode = getenv(MODE_ENV);
     const void *caller = __builtin_return_address(0);
+    Dl_info info;
+    uintptr_t caller_addr = (uintptr_t)caller;
+    uintptr_t base_addr = 0;
     uint32_t caller_offset = 0;
+    int dladdr_ok = 0;
+    int hitoolbox = 0;
     unsigned int slot = 0;
     unsigned int index;
-    char line[512];
+    char line[1024];
     size_t pos = 0;
 
     if (fn == NULL || fn == (cuidraw_fn)&rosetta_CUIDraw)
         return;
 
     if (mode == NULL ||
-        (strcmp(mode, MODE_SNOW) != 0 && strcmp(mode, MODE_LION) != 0) ||
-        !target_caller(caller, &caller_offset, &slot)) {
+        (strcmp(mode, MODE_SNOW) != 0 && strcmp(mode, MODE_LION) != 0)) {
         fn(renderer, rect, context, options, result);
         return;
     }
 
+    memset(&info, 0, sizeof(info));
+    if (caller != NULL && dladdr(caller, &info) != 0) {
+        dladdr_ok = 1;
+        if (info.dli_fbase != NULL) {
+            base_addr = (uintptr_t)info.dli_fbase;
+            if (caller_addr >= base_addr)
+                caller_offset = (uint32_t)(caller_addr - base_addr);
+        }
+        if (info.dli_fname != NULL &&
+            strstr(info.dli_fname, HITOOLBOX_TOKEN) != NULL)
+            hitoolbox = 1;
+    }
+
+    if (hitoolbox)
+        slot = slot_for_offset(caller_offset);
+
     index = ++gCallIndex;
-    log_build_once();
 
     append_text(line, sizeof(line), &pos, "PM_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_CALL:index=");
     append_uint(line, sizeof(line), &pos, index);
-    append_text(line, sizeof(line), &pos, " slot=");
-    append_uint(line, sizeof(line), &pos, slot);
     append_text(line, sizeof(line), &pos, " mode=");
     append_text(line, sizeof(line), &pos, mode);
+    append_text(line, sizeof(line), &pos, " dladdr=");
+    append_text(line, sizeof(line), &pos, dladdr_ok ? "YES" : "NO");
+    append_text(line, sizeof(line), &pos, " hitoolbox=");
+    append_text(line, sizeof(line), &pos, hitoolbox ? "YES" : "NO");
+    append_text(line, sizeof(line), &pos, " slot=");
+    append_uint(line, sizeof(line), &pos, slot);
+    append_text(line, sizeof(line), &pos, " caller=");
+    append_hex32(line, sizeof(line), &pos, (uint32_t)caller_addr);
+    append_text(line, sizeof(line), &pos, " base=");
+    append_hex32(line, sizeof(line), &pos, (uint32_t)base_addr);
     append_text(line, sizeof(line), &pos, " caller_offset=");
     append_hex32(line, sizeof(line), &pos, caller_offset);
+    append_text(line, sizeof(line), &pos, " image=");
+    append_text(line, sizeof(line), &pos,
+                (dladdr_ok && info.dli_fname != NULL) ? info.dli_fname : "<unknown>");
     append_text(line, sizeof(line), &pos, " x_bits=");
     append_hex32(line, sizeof(line), &pos, float_bits(rect.origin.x));
     append_text(line, sizeof(line), &pos, " y_bits=");
@@ -323,7 +328,9 @@ static void rosetta_CUIDraw(CUIRendererRef renderer,
     line[pos] = '\0';
     write_literal(line);
 
-    log_options(index, options);
+    if (hitoolbox)
+        log_options(index, options);
+
     fn(renderer, rect, context, options, result);
     write_literal("PM_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_RESULT:PASSTHROUGH\n");
 }
