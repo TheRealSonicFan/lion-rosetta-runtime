@@ -959,7 +959,7 @@ Follow `docs/ppc-carbon-gui-coreui-windowframe-shared-art-source-audit.md` next.
 
 ## Shared-art source resolved; current step — SArtFile frame records
 
-The shared-art source reports pass on both systems. Snow's unique raw-bytes caller is `CUISharedArtReader::CreateImage(float)`, and `GetImageHeader(long)` translates image IDs through `image_id - 0x4e20` before indexing a byte-swapped shared-art offset table. The seven legacy frame IDs map to indices 105, 106, 109, 110, 111, 112, and 113. The release-local `SArtFile.bin` resources both identify as version 2 but differ materially: Snow count 237 / 811436 bytes, Lion count 348 / 9370228 bytes.
+The shared-art source reports pass on both systems. Snow's unique raw-bytes caller is `CUISharedArtReader::CreateImage(long,float)`, and `GetImageHeader(long)` translates image IDs through `image_id - 0x4e20` before indexing a byte-swapped shared-art offset table. The seven legacy frame IDs map to indices 105, 106, 109, 110, 111, 112, and 113. The release-local `SArtFile.bin` resources both identify as version 2 but differ materially: Snow count 237 / 811436 bytes, Lion count 348 / 9370228 bytes.
 
 Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md` next. Run `scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py` statically on Snow and Lion and return the two text reports. Do not launch the PPC subject, alter records/resources/geometry, broaden bitmap-info or CGS rules, change hit handling, or modify XNU before the exact seven record geometries and raw-byte slots are compared.
 
