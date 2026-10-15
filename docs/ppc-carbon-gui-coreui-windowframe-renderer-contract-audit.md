@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED STATIC STEP after the live CUIDraw caller-resolution audit closed HIToolbox request construction for the current historical subject.
+COMPLETED STATIC PASS. The Snow-PPC and Lion-native frame renderers are materially refactored below CUIDraw: Snow directly uses seven `CreateImage` calls plus two gray-gradient images, while Lion native uses no direct `CreateImage` calls and instead adds titlebar/background image-copy helpers and a tiled-image path. Because the historical Lion PPC process executes the Snow-PPC CoreUI image, the next controlled discriminator is `docs/ppc-carbon-gui-coreui-windowframe-image-constructor-live-trace.md`.
 
 ## Reviewed result that advances this step
 
@@ -235,6 +235,38 @@ Reconcile that against the already completed all-ArtFile bsearch trace before an
 
 If the old PPC window-frame subpath is entirely deterministic from the already-proven identical CUIDraw inputs and does not consume a release-local resource, the next discriminator should shift to the backing CGContext/window-surface state rather than adding renderer compatibility.
 
+## Observed result
+
+Both returned renderer-contract reports pass with exact pinned CoreUI slices.
+
+Snow PPC `CUIRenderer::DrawWindowFrameDark` reports:
+
+```text
+CreateImage_count=7
+CreateGrayCubicGradientImage_count=2
+CopyWindowTitlebarImage_count=0
+CopyWindowBackgroundImage_count=0
+CGContextFillRect_count=4
+CGContextDrawTiledImage_count=0
+```
+
+Lion native `DrawWindowFrameDark` reports:
+
+```text
+CreateImage_count=0
+CreateGrayCubicGradientImage_count=1
+CopyWindowTitlebarImage_count=1
+CopyWindowBackgroundImage_count=1
+CGContextFillRect_count=4
+CGContextDrawTiledImage_count=1
+```
+
+Snow's seven direct frame-image requests are the legacy IDs `0x4e8e`, `0x4e90`, `0x4e89`, `0x4e8a`, `0x4e8d`, `0x4e8f`, and `0x4e91`. Its gray-gradient helper directly constructs an 8-bit grayscale CGImage at CoreUI return offset `0x0001bdb0`. The earlier exact bitmap-info tracer intentionally covered only the ArtFile-loader return offset `0x000299e0` and exact titlebar-button geometry, so it did not observe these frame-specific/non-button constructors.
+
+This is a release-specific renderer refactor, but it is not authorization to invoke Lion's native copy helpers from the PPC process. The historical subject on Lion still runs Snow-era PPC CoreUI; the compatibility question is whether that old renderer constructs the same non-button images on healthy Snow and faulty Lion.
+
+Follow `docs/ppc-carbon-gui-coreui-windowframe-image-constructor-live-trace.md` next. It preserves the exact accepted six-call bitmap-info adapter while logging every CoreUI-originating `CGImageCreate` call and result. No new bitmap-info expansion or resource substitution is authorized before that live differential is reviewed.
+
 ## Return evidence
 
 Return exactly:
@@ -249,15 +281,16 @@ No binary or live trace is required.
 ## Current boundary
 
 ```text
-HIToolbox live frame caller                      HIWindowFrameView::DrawDark
-Snow live caller offset                          0x000bc5e8
-Lion native same symbol                          PRESENT / contains CUIDraw
-live kCUIWidgetWindowFrame requests              EQUIVALENT
-titlebar-control caller                          HIThemeDrawTitleBarWidgetInRect
-Snow-only extra caller                           HIThemeCUIDraw / menu title
-HIToolbox CUIDraw argument mismatch              CLOSED
-CUIDraw argument rewrite                         NOT AUTHORIZED
-bitmapInfo 0x2 -> 0x2002                         RETAIN
-next step                                        static CoreUI window-frame renderer contract
+renderer-contract audit                         PASS on Snow and Lion
+Snow PPC direct CreateImage calls                7
+Snow PPC gray-gradient constructors              2
+Lion native direct CreateImage calls             0
+Lion native CopyWindowTitlebarImage               1
+Lion native CopyWindowBackgroundImage             1
+Lion native CGContextDrawTiledImage               1
+historical Lion runtime renderer                  accepted Snow-PPC CoreUI cache
+native Lion helper substitution                   NOT AUTHORIZED
+bitmapInfo 0x2 -> 0x2002                         RETAIN exact-six only
+next step                                        docs/ppc-carbon-gui-coreui-windowframe-image-constructor-live-trace.md
 XNU                                              no source change indicated
 ```
