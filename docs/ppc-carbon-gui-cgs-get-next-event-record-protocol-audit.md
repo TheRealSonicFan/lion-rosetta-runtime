@@ -115,7 +115,7 @@ Current runtime `main` provides:
 
 ```text
 scripts/audit-ppc-carbon-gui-cgs-get-next-event-record-protocol.py
-Git blob b4188581cb71bec8f4062e413c6b9d73aa26a468
+Git blob 90412347f0cc187627a05912897b953b18541812
 ```
 
 Contract:
@@ -135,6 +135,9 @@ groups disassembly by containing text symbol, requires exactly one
 generated-MIG transport candidate containing both legacy IDs plus Mach
 transport, emits that entire candidate and its caller references, and verifies
 the native Snow `0x18/0x4030` versus Lion `0x24/0x0c30` geometry.
+The request-bits immediate is reported but is not a hard static gate because
+Snow may load the header bits through a release-local template rather than an
+inline `0x1513` immediate in the transport symbol.
 
 Phase A performs an explicit syntax compile on each host before the audit.
 
@@ -162,7 +165,7 @@ git fetch origin || exit 1
 git pull --ff-only origin main || exit 1
 
 test "$(git hash-object ./scripts/audit-ppc-carbon-gui-cgs-get-next-event-record-protocol.py)" = \
-  "b4188581cb71bec8f4062e413c6b9d73aa26a468" || exit 1
+  "90412347f0cc187627a05912897b953b18541812" || exit 1
 
 /usr/bin/grep -q '^ANALYZER_VERSION = "2" \
   ./scripts/audit-ppc-carbon-gui-cgs-get-next-event-record-protocol.py || exit 1
