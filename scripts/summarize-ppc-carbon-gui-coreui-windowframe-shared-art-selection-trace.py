@@ -5,8 +5,8 @@ import os
 import re
 import sys
 
-ANALYZER_VERSION = "1"
-AUDIT_CONTRACT = "carbon-gui-coreui-windowframe-shared-art-selection-live-v1"
+ANALYZER_VERSION = "2"
+AUDIT_CONTRACT = "carbon-gui-coreui-windowframe-shared-art-selection-live-v2"
 BUILD_ID = "coreui-windowframe-shared-art-selection-trace-compat-v1"
 
 RAW_RE = re.compile(
@@ -134,15 +134,22 @@ def main():
     if len(imageio_calls) != len(imageio_results):
         issues.append("ImageIO shared-art CALL/RESULT count mismatch")
 
-    for item in raw_calls + raw_results + imageio_calls + imageio_results:
+    for item in raw_calls + raw_results:
         if item["stack_ok"] != "YES":
-            issues.append("stack recovery failed for shared-art trace")
+            issues.append("raw shared-art stack recovery failed")
         if item["frame_target"] != "YES":
-            issues.append("recovered shared-art ID is outside exact-seven frame set")
+            issues.append("raw shared-art ID is outside exact-seven frame set")
         if item["image_id"] not in FRAME_IDS:
-            issues.append("recovered shared-art ID is not an exact-seven frame ID")
+            issues.append("raw shared-art ID is not an exact-seven frame ID")
         if item.get("result") == "NULL":
-            issues.append("shared-art image result is NULL")
+            issues.append("raw shared-art image result is NULL")
+
+    # At 0x0002afe8 CreateImage(long,float) has already reused r30, so the
+    # v1 trace's saved-r30 field is not an image ID. Preserve the count/result
+    # evidence but do not validate that field as an exact-seven frame ID.
+    for item in imageio_calls + imageio_results:
+        if item.get("result") == "NULL":
+            issues.append("ImageIO shared-art image result is NULL")
 
     if mode == "snow":
         if len(raw_calls) != 5:
@@ -175,6 +182,7 @@ def main():
 
         emit(fp)
         emit(fp, "== Raw CreateImageFromBytes selections ==")
+        emit(fp, "raw_id_recovery=VALIDATED_BY_SNOW_CONTROL")
         emit(fp, "raw_call_count=%d" % len(raw_calls))
         for i, item in enumerate(raw_calls):
             emit(fp,
@@ -190,16 +198,17 @@ def main():
 
         emit(fp)
         emit(fp, "== ImageIO CreateImageSource selections ==")
+        emit(fp, "imageio_frame_id_recovery=UNAVAILABLE_AT_0x0002afe8_AFTER_R30_REUSE")
         emit(fp, "imageio_call_count=%d" % len(imageio_calls))
         for i, item in enumerate(imageio_calls):
             emit(fp,
-                 "imageio_call=%d frame_id=0x%04x image_index=%d stack_ok=%s frame_target=%s" %
+                 "imageio_call=%d recorded_saved_r30=0x%04x image_index=%d stack_walk=%s" %
                  (i + 1, item["image_id"], item["image_index"],
-                  item["stack_ok"], item["frame_target"]))
+                  item["stack_ok"]))
         emit(fp, "imageio_result_count=%d" % len(imageio_results))
         for i, item in enumerate(imageio_results):
             emit(fp,
-                 "imageio_result=%d frame_id=0x%04x image_index=%d result=%s" %
+                 "imageio_result=%d recorded_saved_r30=0x%04x image_index=%d result=%s" %
                  (i + 1, item["image_id"], item["image_index"],
                   item["result"] or "MISSING"))
 
