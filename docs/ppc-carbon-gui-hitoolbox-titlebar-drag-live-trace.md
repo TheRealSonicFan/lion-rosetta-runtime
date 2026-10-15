@@ -398,5 +398,5 @@ private HIToolbox patch                         NOT AUTHORIZED
 notification policy                             unchanged
 CGS policy                                      unchanged
 XNU                                             no source change indicated
-next step                                       rebuild v2 and rerun Snow Phase C only
+next step                                       if Snow v2 PASS is already established, rerun corrected Lion Phase E; otherwise rerun Snow Phase C
 ```
