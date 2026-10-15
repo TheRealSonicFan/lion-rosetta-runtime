@@ -39,6 +39,12 @@ FRAME_TRACE_INFO_FILE="${ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_INFO_FILE:-
 EXPECTED_FRAME_TRACE_BUILD_ID="hitoolbox-windowframe-cuidraw-trace-v2"
 EXPECTED_FRAME_TRACE_SOURCE_BLOB="d9419ec4ac62ba651a45eaa2bb515a8bb38c9793"
 
+DRAG_TRACE="${ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_PATH:-}"
+DRAG_TRACE_SHA_FILE="${ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_SHA256_FILE:-${DRAG_TRACE:+$DRAG_TRACE.sha256}}"
+DRAG_TRACE_INFO_FILE="${ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_INFO_FILE:-${DRAG_TRACE:+$DRAG_TRACE.info.txt}}"
+EXPECTED_DRAG_TRACE_BUILD_ID="hitoolbox-titlebar-drag-trace-v1"
+EXPECTED_DRAG_TRACE_SOURCE_BLOB="c5e952d1bb8f62aa32209a862ae3c78d124839ae"
+
 TRANSLATOR="/usr/libexec/oah/translate"
 PRIVATE_DYLD="/usr/oah/dyld"
 SYSTEM_DYLD="/usr/lib/dyld"
@@ -215,6 +221,19 @@ if [ -n "$FRAME_TRACE" ]; then
     log "windowframe_cuidraw_trace_sha256=$FRAME_TRACE_SHA"
 fi
 
+if [ -n "$DRAG_TRACE" ]; then
+    [ -f "$DRAG_TRACE" ] || die 66 "missing titlebar drag trace: $DRAG_TRACE"
+    [ -f "$DRAG_TRACE_SHA_FILE" ] || die 66 "missing titlebar drag trace SHA sidecar"
+    [ -f "$DRAG_TRACE_INFO_FILE" ] || die 66 "missing titlebar drag trace info"
+    DRAG_TRACE_SHA="$(sha256 "$DRAG_TRACE")"
+    [ "$(sidecar_sha "$DRAG_TRACE_SHA_FILE")" = "$DRAG_TRACE_SHA" ] || die 68 "titlebar drag trace sidecar mismatch"
+    /usr/bin/grep -Fq "trace_build_id=$EXPECTED_DRAG_TRACE_BUILD_ID" "$DRAG_TRACE_INFO_FILE" || die 68 "titlebar drag trace info build ID mismatch"
+    /usr/bin/grep -Fq "interposer_source_git_blob=$EXPECTED_DRAG_TRACE_SOURCE_BLOB" "$DRAG_TRACE_INFO_FILE" || die 68 "titlebar drag trace source blob mismatch"
+    /usr/bin/strings "$DRAG_TRACE" | /usr/bin/grep -Fq "PM_HITOOLBOX_TITLEBAR_DRAG_TRACE_BUILD_ID:$EXPECTED_DRAG_TRACE_BUILD_ID" || die 68 "titlebar drag trace build marker missing"
+    has_ppc32_arch "$DRAG_TRACE" || die 68 "titlebar drag trace is not 32-bit PPC"
+    log "titlebar_drag_trace_sha256=$DRAG_TRACE_SHA"
+fi
+
 [ -f "$HITOOLBOX_EXTRAS_RESOURCE" ] || die 66 "missing Snow HIToolbox Extras resource"
 HITOOLBOX_RESOURCE_SHA="$(sha256 "$HITOOLBOX_EXTRAS_RESOURCE")"
 log "hitoolbox_extras_resource_sha256=$HITOOLBOX_RESOURCE_SHA"
@@ -312,6 +331,9 @@ INSERT_LIBS="$CORE_COMPAT:$SEC_INTERPOSER:$CGS_INTERPOSER:$HITOOLBOX_EXTRAS_COMP
 if [ -n "$FRAME_TRACE" ]; then
     INSERT_LIBS="$INSERT_LIBS:$FRAME_TRACE"
 fi
+if [ -n "$DRAG_TRACE" ]; then
+    INSERT_LIBS="$INSERT_LIBS:$DRAG_TRACE"
+fi
 log ""
 log "== SINGLE ORIGINAL PPC CARBON GUI BACKING-SYNC INTEGRATION RUN =="
 log "subject_sha256=$EXPECTED_EXE_SHA"
@@ -354,6 +376,7 @@ ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_SHA256_FILE="$TITLEBAR_SHA_FILE" \
 ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_MODE=lion-exact-six-v1 \
 ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_MODE=lion-bitmapinfo-0x2002-v1 \
 ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_MODE=lion-passive-v2 \
+ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_MODE=lion-passive-v1 \
 DYLD_INSERT_LIBRARIES="$INSERT_LIBS" \
 DYLD_SHARED_CACHE_DONT_VALIDATE=1 \
 DYLD_PRINT_LIBRARIES=1 \
