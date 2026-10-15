@@ -963,9 +963,9 @@ The shared-art source reports pass on both systems. Snow's unique raw-bytes call
 
 Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md` next. Run `scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py` statically on Snow and Lion and return the two text reports. Do not launch the PPC subject, alter records/resources/geometry, broaden bitmap-info or CGS rules, change hit handling, or modify XNU before the exact seven record geometries and raw-byte slots are compared.
 
-## SArtFile records resolved; current step — live shared-art selection
+## Shared-art live run complete; current step — corrected SArtFile v2 audit
 
-The static record audit passes on Snow and Lion. Snow's exact-seven frame records are all type 2 / count 1; six raw slot-0 entries are 11x11 and `0x4e89` is 1x23. Lion's corresponding records change type/count and geometry; `0x4e8f` slot 1 is uniquely 256x256, while `0x4e8e` and `0x4e8d` slot 1 are the two 2x62 candidates. This exactly predicts the prior Lion raw geometry but does not yet identify every live frame ID or which remaining IDs route through ImageIO.
+The Snow/Lion live diagnostic ran successfully under the accepted compatibility stack. Snow recovered five exact 11x11 raw IDs. Lion recovered raw `0x4e8e -> 256x256` and `0x4e8d -> 2x62`, both non-NULL, plus three non-NULL ImageIO calls. The Lion v1 summary failed only because the final ImageIO call-site saved-r30 field was incorrectly treated as a legacy image ID; the static v1 SArtFile report was also one table entry early because it used file offset `0x04` instead of the `+0x08` table pointer proven by Snow-PPC `CUISharedArtReader::Setup()`.
 
-Follow `docs/ppc-carbon-gui-coreui-windowframe-shared-art-selection-live-trace.md` next. Build the pinned diagnostic on Snow, run the accepted Snow/Lion compatibility controls, summarize the two logs with the prepared script, and return only the two shared-art selection summary reports. No SArtFile, hit-test, CGContext, CGS, or XNU modification is authorized yet.
+Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md` next. Run the corrected static v2 analyzer on Snow and Lion and re-summarize the already preserved Lion live log with the v2 summarizer. Do not rerun the PPC subject. No record/resource rewrite, hit-test change, CGContext change, CGS expansion, or XNU modification is authorized yet.
 
