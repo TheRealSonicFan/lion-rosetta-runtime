@@ -61,10 +61,10 @@ Current runtime `main` provides:
 
 ```text
 tests/ppc-coreui-windowframe-shared-art-selection-trace-compat-interposer.c
-Git blob e0a95f5bc1ec1aa8113e906b9efbef32576e04f0
+Git blob f0b727ff023a0ddb02de97149df3cfa88518462e
 
 scripts/build-ppc-coreui-windowframe-shared-art-selection-trace-compat-on-snowleopard.sh
-Git blob 29e0f5a10d0f3aaf92133641dcec83a747b4651d
+Git blob cf4cb4ae037a63379d5181f34ce53acc4cdb24f9
 
 scripts/summarize-ppc-carbon-gui-coreui-windowframe-shared-art-selection-trace.py
 Git blob dfedc046526e555b1b541997989e71ebc572d571
@@ -74,7 +74,7 @@ Build contract:
 
 ```text
 compat_build_id=coreui-windowframe-shared-art-selection-trace-compat-v1
-interposer_source_git_blob=e0a95f5bc1ec1aa8113e906b9efbef32576e04f0
+interposer_source_git_blob=f0b727ff023a0ddb02de97149df3cfa88518462e
 ```
 
 The existing accepted runners are unchanged:
@@ -86,6 +86,12 @@ Git blob ccf1494011a9e3306a32c2f094e0c3437f2fa03c
 scripts/run-lion-ppc-carbon-gui-coreui-image-bitmapinfo-compat.sh
 Git blob 61879224e7a2136c6d26ee8710d3f96e0eb6d1a7
 ```
+
+## Phase-B build correction
+
+The first Phase-B attempt exposed a Snow Leopard SDK portability issue in the diagnostic source: the tool included `<ImageIO/ImageIO.h>`, but the installed 10.6/Xcode 3.2.6 SDK does not expose that header at that framework include path. No runtime evidence was collected and no compatibility boundary changed.
+
+Current `main` removes that header dependency, declares only the one external ImageIO function signature needed by the passive interposer, and continues linking through the existing `ApplicationServices` umbrella. The diagnostic semantics are unchanged: the same two external constructors are interposed, all arguments/results remain passthrough, and the accepted exact-six bitmap-info adaptation is retained.
 
 ## Safety constraints
 
@@ -109,10 +115,10 @@ git fetch origin || exit 1
 git pull --ff-only origin main || exit 1
 
 test "$(git hash-object ./tests/ppc-coreui-windowframe-shared-art-selection-trace-compat-interposer.c)" = \
-  "e0a95f5bc1ec1aa8113e906b9efbef32576e04f0" || exit 1
+  "f0b727ff023a0ddb02de97149df3cfa88518462e" || exit 1
 
 test "$(git hash-object ./scripts/build-ppc-coreui-windowframe-shared-art-selection-trace-compat-on-snowleopard.sh)" = \
-  "29e0f5a10d0f3aaf92133641dcec83a747b4651d" || exit 1
+  "cf4cb4ae037a63379d5181f34ce53acc4cdb24f9" || exit 1
 
 test "$(git hash-object ./scripts/summarize-ppc-carbon-gui-coreui-windowframe-shared-art-selection-trace.py)" = \
   "dfedc046526e555b1b541997989e71ebc572d571" || exit 1
@@ -137,7 +143,7 @@ Require the info file to report:
 
 ```text
 compat_build_id=coreui-windowframe-shared-art-selection-trace-compat-v1
-interposer_source_git_blob=e0a95f5bc1ec1aa8113e906b9efbef32576e04f0
+interposer_source_git_blob=f0b727ff023a0ddb02de97149df3cfa88518462e
 ```
 
 Require a PPC `__DATA,__interpose` section of `0x10` bytes: exactly two PPC tuples, replacing only `CGImageCreate` and `CGImageSourceCreateImageAtIndex`.
@@ -153,7 +159,7 @@ export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_PATH="$PWD/pm-coreui-windowframe-s
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_SHA256_FILE="$PWD/pm-coreui-windowframe-shared-art-selection-trace-compat.dylib.sha256"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_INFO_FILE="$PWD/pm-coreui-windowframe-shared-art-selection-trace-compat.dylib.info.txt"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_BUILD_ID="coreui-windowframe-shared-art-selection-trace-compat-v1"
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB="e0a95f5bc1ec1aa8113e906b9efbef32576e04f0"
+export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB="f0b727ff023a0ddb02de97149df3cfa88518462e"
 
 ../scripts/run-snowleopard-ppc-carbon-gui-coreui-image-bitmapinfo-compat-control.sh \
   ./ppc-carbon-gui-smoketest-private-dyld \
@@ -206,7 +212,7 @@ export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_PATH="$PWD/payload/pm-coreui-windo
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_SHA256_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-selection-trace-compat.dylib.sha256"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_INFO_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-selection-trace-compat.dylib.info.txt"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_BUILD_ID="coreui-windowframe-shared-art-selection-trace-compat-v1"
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB="e0a95f5bc1ec1aa8113e906b9efbef32576e04f0"
+export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB="f0b727ff023a0ddb02de97149df3cfa88518462e"
 
 ./scripts/run-lion-ppc-carbon-gui-coreui-image-bitmapinfo-compat.sh \
   "$PWD/payload/ppc-carbon-gui-smoketest-private-dyld" \
