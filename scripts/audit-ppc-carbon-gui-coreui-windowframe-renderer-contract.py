@@ -318,7 +318,7 @@ def main():
 
             frame_start, frame_body = body_for(symbols, rows, DRAW_WINDOW_FRAME_DARK)
             if frame_body:
-                frame_text = "\n".join(raw for addr, raw in frame_body)
+                frame_calls = call_inventory(frame_body, by_addr)
                 line(fp)
                 line(fp, "== Window-frame focused summary ==")
                 for needle in [
@@ -330,8 +330,11 @@ def main():
                     "CGContextDrawTiledImage",
                     "CGImageCreate",
                 ]:
-                    line(fp, "%s_count=%d" % (needle,
-                         sum(1 for raw in frame_text.splitlines() if needle in raw)))
+                    count = 0
+                    for addr, raw, target_addr, resolved in frame_calls:
+                        if needle in raw or (resolved is not None and needle in resolved):
+                            count += 1
+                    line(fp, "%s_count=%d" % (needle, count))
 
             line(fp)
             line(fp, "== Audit validation ==")
