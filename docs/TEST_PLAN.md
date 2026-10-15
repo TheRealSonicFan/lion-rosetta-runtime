@@ -962,3 +962,10 @@ Follow `docs/ppc-carbon-gui-coreui-windowframe-shared-art-source-audit.md` next.
 The shared-art source reports pass on both systems. Snow's unique raw-bytes caller is `CUISharedArtReader::CreateImage(float)`, and `GetImageHeader(long)` translates image IDs through `image_id - 0x4e20` before indexing a byte-swapped shared-art offset table. The seven legacy frame IDs map to indices 105, 106, 109, 110, 111, 112, and 113. The release-local `SArtFile.bin` resources both identify as version 2 but differ materially: Snow count 237 / 811436 bytes, Lion count 348 / 9370228 bytes.
 
 Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md` next. Run `scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py` statically on Snow and Lion and return the two text reports. Do not launch the PPC subject, alter records/resources/geometry, broaden bitmap-info or CGS rules, change hit handling, or modify XNU before the exact seven record geometries and raw-byte slots are compared.
+
+## SArtFile records resolved; current step — live shared-art selection
+
+The static record audit passes on Snow and Lion. Snow's exact-seven frame records are all type 2 / count 1; six raw slot-0 entries are 11x11 and `0x4e89` is 1x23. Lion's corresponding records change type/count and geometry; `0x4e8f` slot 1 is uniquely 256x256, while `0x4e8e` and `0x4e8d` slot 1 are the two 2x62 candidates. This exactly predicts the prior Lion raw geometry but does not yet identify every live frame ID or which remaining IDs route through ImageIO.
+
+Follow `docs/ppc-carbon-gui-coreui-windowframe-shared-art-selection-live-trace.md` next. Build the pinned diagnostic on Snow, run the accepted Snow/Lion compatibility controls, summarize the two logs with the prepared script, and return only the two shared-art selection summary reports. No SArtFile, hit-test, CGContext, CGS, or XNU modification is authorized yet.
+
