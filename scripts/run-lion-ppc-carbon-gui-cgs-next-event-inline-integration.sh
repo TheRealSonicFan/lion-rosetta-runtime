@@ -14,10 +14,10 @@ CGS_INTERPOSER="${7:-$ROOT/payload/ppc-process-manager-cgs-session-dockserver-fo
 CGS_SHA_FILE="${8:-$CGS_INTERPOSER.sha256}"
 BROKER="${9:-$ROOT/dn-carbon-gui-registration-broker}"
 BROKER_SHA_FILE="${10:-$BROKER.sha256}"
-REPORT="${11:-$ROOT/payload/lion-ppc-carbon-gui-coreui-image-bitmapinfo-compat.log}"
+REPORT="${11:-$ROOT/payload/lion-ppc-carbon-gui-cgs-next-event-inline.log}"
 OBSERVER="${12:-$ROOT/payload/cgwindowlist-pid-observer}"
 OBSERVER_SHA_FILE="${13:-$OBSERVER.sha256}"
-OBSERVER_REPORT="${14:-$ROOT/payload/lion-ppc-carbon-gui-coreui-image-bitmapinfo-compat-observer.log}"
+OBSERVER_REPORT="${14:-$ROOT/payload/lion-ppc-carbon-gui-cgs-next-event-inline-observer.log}"
 REPORT_DIR="$(/usr/bin/dirname "$REPORT")"
 RAW_LOG="${REPORT%.log}.raw.log"
 
@@ -347,10 +347,10 @@ case "$OBSERVER_DURATION_MS" in
     ''|*[!0-9]*) die 68 "invalid titlebar drag observer duration: $OBSERVER_DURATION_MS" ;;
 esac
 log ""
-log "== SINGLE ORIGINAL PPC CARBON GUI BACKING-SYNC INTEGRATION RUN =="
+log "== SINGLE ORIGINAL PPC CARBON GUI NEXT-EVENT INLINE INTEGRATION RUN =="
 log "subject_sha256=$EXPECTED_EXE_SHA"
 log "distributed_notifications_policy=exact-21"
-log "compatibility_policy=accepted-restored-stack-plus-exact-carbon-smoke-cps-registration-plus-shapewindow-inline-plus-exact-backing-sync-id-adapter"
+log "compatibility_policy=accepted-restored-stack-plus-exact-next-event-inline-id-adapter"
 log "notification_policy=exact-21-carbon-gui-client-v1"
 
 ROSETTA_CORESERVICES_COMPAT_MODE=lion-dual-sessioninit-adapter \
