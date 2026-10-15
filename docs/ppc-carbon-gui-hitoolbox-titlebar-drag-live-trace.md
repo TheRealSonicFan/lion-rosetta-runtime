@@ -1,61 +1,74 @@
-# PPC Carbon GUI HIToolbox titlebar drag live trace
+# PPC Carbon GUI HIToolbox titlebar input-route live trace
 
 ## Status
 
-NEXT CONTROLLED LIVE DISCRIMINATOR after the completed Snow PPC drag-routing
-audit.
+PHASE C v1 DIAGNOSTIC INVALIDATED / v2 PREPARED.
 
-The static audit passes on the exact Snow 10.6.8 / 10K549 PPC HIToolbox and
-therefore also describes the accepted PPC HIToolbox image executed under
-Rosetta on Lion. It resolves a narrow public boundary:
+The first Snow live attempt did not fail the restored rendering stack. The
+shared-art rendering summary remained an exact Snow PASS, the v1 trace artifact
+loaded, and the native observer saw the 400x222 window throughout the active
+interval, but the v1 interposer recorded zero `DragWindow` and zero
+`FindWindow` calls and the window did not move.
 
-```text
-HIWindowFrameView::TrackSelf(EventRef,...)
-    -> DragWindow                         call site 0x000b85cc
+The static routing report explains why the v1 trace boundary was unsound:
+`HIWindowFrameView::TrackSelf` and `HandleWindowEvent` branch directly to
+`DragWindow` inside the same HIToolbox Mach-O image, and `DragWindow` itself
+branches directly to `TWindowTracker::TrackWindow`. A dyld
+`__interpose` tuple does not rewrite those already-linked intra-image branch
+instructions. Therefore zero v1 wrapper calls cannot be interpreted as
+"Snow never dispatched DragWindow".
 
-HandleWindowEvent(EventRef)
-    -> DragWindow                         call site 0x0015c094
+The historical smoke subject also quits after only two seconds. That window is
+too short for a reliable manual interaction gate.
 
-DragWindow
-    -> TDragTracker
-    -> TWindowTracker::TrackWindow
-```
+Current `main` replaces the v1 boundary with a v2 passive public Carbon-event
+monitor:
 
-The same report preserves the already-proven hit chain:
+- installs an `eventNotHandledErr` handler on
+  `GetEventDispatcherTarget()` for mouse-down / mouse-dragged / mouse-up,
+- reads the event's public global mouse location,
+- calls public `FindWindow` only as an observation and records the returned
+  classic part code without modifying it,
+- interposes only the smoke subject's direct
+  `InstallEventLoopTimer(2.0, 0.0, ...)` call and extends that one diagnostic
+  quit timer to eight seconds,
+- automatically extends the existing native observer window to nine seconds
+  whenever the v2 trace is loaded.
 
-```text
-ThemeWindowDef::HitSelf
-    -> GetThemeWindowRegionHit
-    -> HIThemeGetWindowRegionHit
-```
+The v2 monitor does not interpose or patch `HIWindowFrameView::TrackSelf`,
+`ThemeWindowDef::HitSelf`, `DragWindow`, `TWindowTracker`, or any private
+C++ HIToolbox method.
 
-No classic part-code rewrite or private HIToolbox patch is authorized.
+The public APIs and signatures used by this implementation were checked against
+the Mac OS X 10.6 SDK Carbon/HIToolbox headers before the v2 source and builder
+were pinned.
 
 ## Objective
 
-Perform one controlled manual drag gesture on the empty titlebar under Snow and
-one under Lion while tracing only the public `DragWindow` and `FindWindow`
-boundaries. The trace does not alter their arguments, return values, hit masks,
-part codes, event routing, tracking, or window bounds.
-
-The existing native CGWindow observer independently determines whether the
-400x222 target window actually moved.
-
-This distinguishes:
+First re-establish the Snow positive control with a reliable manual gesture.
+The decisive Snow evidence is now:
 
 ```text
-manual gesture -> no DragWindow call
-    upstream event/frame-view dispatch boundary
-
-manual gesture -> DragWindow entered -> no movement
-    DragWindow / TWindowTracker / lower movement boundary
-
-manual gesture -> DragWindow entered -> movement
-    current non-draggable observation did not reproduce
+dispatcher sees mouse-down
+public FindWindow(mouse-down point) == inDrag (4)
+native observer records 400x222 window movement
 ```
 
-`FindWindow` activity is recorded as supporting evidence only. It is not
-rewritten and is not required to be on the HIWindowFrameView path.
+Only after that Snow control passes may the same monitor be transferred to Lion.
+The Lion result then distinguishes:
+
+```text
+public hit != inDrag
+    live public hit classification differs
+
+public hit == inDrag, observer does not move
+    failure is after public titlebar hit classification
+
+public hit == inDrag, observer moves
+    non-draggable symptom did not reproduce
+```
+
+No part-code translation follows automatically from any result.
 
 ## Prepared files
 
@@ -63,112 +76,97 @@ Current runtime `main` provides:
 
 ```text
 tests/ppc-hitoolbox-titlebar-drag-trace-interposer.c
-Git blob a364995f4bf9e5456158de2b78ec75aa6ed8c95a
+Git blob 2c91ae875f0497b7aed96eb8b47a8ca7cbb06768
 
 scripts/build-ppc-hitoolbox-titlebar-drag-trace-on-snowleopard.sh
-Git blob a2e804f38695faa5031ea1f8d36e0c9d71f02b82
+Git blob 2f65457b15e242783358414968d8c9baf974c937
 
 scripts/summarize-ppc-carbon-gui-hitoolbox-titlebar-drag-trace.py
-Git blob 5852a250ac0d86dcbc0aa420253967e055c0cdb7
+Git blob 62152c4ec1bccd2837f2603cbfd9f85a1a12683a
 
 scripts/run-snowleopard-ppc-carbon-gui-coreui-image-bitmapinfo-compat-control.sh
-Git blob b0f3084639b549c8372b871a4691dc39110cc9cd
+Git blob dcf8acaa9ccd9eae6a01099e7dcffb5bfe366fe8
 
 scripts/run-lion-ppc-carbon-gui-coreui-image-bitmapinfo-compat.sh
-Git blob 9150a8733a58c93aabe557415f53ca4751214cbe
+Git blob 185e319f0c9fa1abeb485c5b19ccd2a69c67728e
 ```
 
-Trace contract:
+Contract:
 
 ```text
-trace_build_id=hitoolbox-titlebar-drag-trace-v1
-audit_contract=carbon-gui-hitoolbox-titlebar-drag-live-v1
+trace_build_id=hitoolbox-titlebar-drag-trace-v2
+analyzer_version=2
+audit_contract=carbon-gui-hitoolbox-titlebar-input-route-live-v2
 ```
-
-The two existing CoreUI runners gained only an optional
-`ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_PATH` hook. When unset, their prior
-behavior is unchanged.
 
 ## Safety constraints
 
 - Perform exactly one click-drag-release gesture in an empty titlebar area.
 - Do not click the close/minimize/zoom controls.
-- Do not alter hit masks, classic part codes, event routing, actions, or
-  `DragWindow` arguments/results.
-- Do not interpose any private C++ HIToolbox method.
-- Keep the completed exact-five shared-art mapping, exact-two corner
+- The v2 monitor must return `eventNotHandledErr`; it must not consume or
+  synthesize input.
+- Public `FindWindow` is observation-only; preserve its returned part code.
+- Do not alter hit masks, part codes, event routing, actions, or drag tracking.
+- Do not interpose private HIToolbox C++ methods.
+- Retain the completed exact-five slot-0 mapping, exact-two corner
   `bitmapInfo=0x2002` rule, and exact-six traffic-light rule unchanged.
 - Keep the distributed-notification broker unchanged.
 - Do not add or broaden a CGS rule.
 - Do not modify CoreUI/HIToolbox resources, Rosetta caches, or XNU.
-- No kernel rebuild or reboot is required.
 
 ## Phase A — update and pin
 
-On Snow Leopard and Lion:
+On Snow Leopard 10.6.8 / 10K549:
 
 ```sh
 cd /path/to/lion-rosetta-runtime || exit 1
 git fetch origin || exit 1
 git pull --ff-only origin main || exit 1
-```
 
-On Snow Leopard require:
-
-```sh
 test "$(git hash-object ./tests/ppc-hitoolbox-titlebar-drag-trace-interposer.c)" = \
-  "a364995f4bf9e5456158de2b78ec75aa6ed8c95a" || exit 1
+  "2c91ae875f0497b7aed96eb8b47a8ca7cbb06768" || exit 1
 test "$(git hash-object ./scripts/build-ppc-hitoolbox-titlebar-drag-trace-on-snowleopard.sh)" = \
-  "a2e804f38695faa5031ea1f8d36e0c9d71f02b82" || exit 1
+  "2f65457b15e242783358414968d8c9baf974c937" || exit 1
 test "$(git hash-object ./scripts/summarize-ppc-carbon-gui-hitoolbox-titlebar-drag-trace.py)" = \
-  "5852a250ac0d86dcbc0aa420253967e055c0cdb7" || exit 1
+  "62152c4ec1bccd2837f2603cbfd9f85a1a12683a" || exit 1
 test "$(git hash-object ./scripts/run-snowleopard-ppc-carbon-gui-coreui-image-bitmapinfo-compat-control.sh)" = \
-  "b0f3084639b549c8372b871a4691dc39110cc9cd" || exit 1
+  "dcf8acaa9ccd9eae6a01099e7dcffb5bfe366fe8" || exit 1
+
 /bin/bash -n ./scripts/build-ppc-hitoolbox-titlebar-drag-trace-on-snowleopard.sh || exit 1
 /bin/bash -n ./scripts/run-snowleopard-ppc-carbon-gui-coreui-image-bitmapinfo-compat-control.sh || exit 1
 /usr/bin/python -c 'compile(open("./scripts/summarize-ppc-carbon-gui-hitoolbox-titlebar-drag-trace.py","rb").read(),"drag-summary.py","exec")' || exit 1
 ```
 
-On Lion require:
+Do not reuse the v1 `pm-hitoolbox-titlebar-drag-trace.dylib`; rebuild it.
+
+## Phase B — rebuild v2 on Snow
 
 ```sh
-test "$(git hash-object ./scripts/run-lion-ppc-carbon-gui-coreui-image-bitmapinfo-compat.sh)" = \
-  "9150a8733a58c93aabe557415f53ca4751214cbe" || exit 1
-test "$(git hash-object ./scripts/summarize-ppc-carbon-gui-hitoolbox-titlebar-drag-trace.py)" = \
-  "5852a250ac0d86dcbc0aa420253967e055c0cdb7" || exit 1
-/bin/bash -n ./scripts/run-lion-ppc-carbon-gui-coreui-image-bitmapinfo-compat.sh || exit 1
-/usr/bin/python -c 'compile(open("./scripts/summarize-ppc-carbon-gui-hitoolbox-titlebar-drag-trace.py","rb").read(),"drag-summary.py","exec")' || exit 1
-```
-
-## Phase B — build the passive PPC trace on Snow
-
-```sh
-cd /path/to/lion-rosetta-runtime || exit 1
-
 CC=/Developer-3.2.6/usr/bin/gcc-4.2 \
   ./scripts/build-ppc-hitoolbox-titlebar-drag-trace-on-snowleopard.sh \
   ./payload/pm-hitoolbox-titlebar-drag-trace.dylib || exit 1
 ```
 
-Require the info report to contain:
+Require:
 
 ```text
-interposer_source_git_blob=a364995f4bf9e5456158de2b78ec75aa6ed8c95a
-trace_build_id=hitoolbox-titlebar-drag-trace-v1
+interposer_source_git_blob=2c91ae875f0497b7aed96eb8b47a8ca7cbb06768
+trace_build_id=hitoolbox-titlebar-drag-trace-v2
+Mach-O ... ppc / ppc7400
+__interpose size 0x00000008
 ```
 
-and require a 32-bit PPC artifact with exactly two interpose tuples for
-`DragWindow` and `FindWindow`.
+The single interpose tuple is only `InstallEventLoopTimer`. The event handler
+uses supported Carbon Event Manager registration rather than dyld interposition.
 
-## Phase C — Snow positive drag control
+## Phase C — rerun Snow positive input control
 
-Reuse the already-built v2 shared-art format compatibility artifact.
+Reuse the already accepted v2 CoreUI slot-0 artifact.
 
-Before invoking the command, place the mouse pointer near the middle of the
-empty titlebar area. As soon as the window is fully visible, wait briefly so
-the observer records the initial position, then perform exactly one clear
-click-drag-release gesture to move it at least 40 pixels horizontally. Do not
-touch a traffic-light control.
+Start the command first. When the target window appears, click and drag once
+from the empty middle titlebar area by at least 40 pixels, then release. The
+v2 diagnostic leaves the subject open for eight seconds, so do not rush the
+gesture.
 
 ```sh
 cd /path/to/lion-rosetta-runtime/payload || exit 1
@@ -203,31 +201,43 @@ export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_INFO_FILE="$PWD/pm-hitoolbox-titleb
   snow YES || exit 1
 ```
 
-Require the rendering summary to remain PASS and the drag summary to contain:
+Require the rendering summary to remain PASS and the input-route summary to
+contain:
 
 ```text
+analyzer_version=2
+audit_contract=carbon-gui-hitoolbox-titlebar-input-route-live-v2
 mode=snow
 manual_drag_attempted=YES
 build_marker_count=1
+handler_install_count=1
+handler_install_statuses=0
+timer_marker_count=1
+timer_mode=snow-passive-v2
+timer_from_ms=2000
+timer_to_ms=8000
+timer_exact=YES
+timer_status=0
 observer_pass_count=1
 observer_moved=YES
-drag_call_count >= 1
-drag_call_count == drag_result_count
-hitoolbox_drag_call_count == drag_call_count
-drag_moved_result_count >= 1
-routing_state=SNOW_DRAGWINDOW_MOVED
+mouse_down_count >= 1
+mouse_down_valid_findwindow_count >= 1
+mouse_down_in_drag_count >= 1
+routing_state=SNOW_PUBLIC_HIT_IN_DRAG_MOVED
+public_FindWindow_observation_only=YES
 part_code_rewrite_authorized=NO
 private_HIToolbox_patch_authorized=NO
-titlebar_drag_live_trace_exact=YES
+titlebar_input_route_live_trace_exact=YES
 RESULT: PASS
 ```
 
-If Snow does not move, stop. Do not run Lion; repeat only if the two-second
-manual gesture window was clearly missed.
+If this Snow control fails, stop and return the regenerated input-route summary,
+rendering summary, raw subject log, observer log, and v2 build info. Do not run
+Lion.
 
-## Phase D — transfer only the passive trace artifact
+## Phase D — transfer after Snow PASS only
 
-Transfer these three files from Snow to Lion's `payload/`:
+After the Snow v2 control passes, transfer exactly:
 
 ```text
 pm-hitoolbox-titlebar-drag-trace.dylib
@@ -235,126 +245,91 @@ pm-hitoolbox-titlebar-drag-trace.dylib.info.txt
 pm-hitoolbox-titlebar-drag-trace.dylib.sha256
 ```
 
-Do not replace the existing v2 shared-art compatibility artifact.
+to Lion's `payload/`.
 
-## Phase E — one Lion drag discriminator
+## Phase E — Lion discriminator after Snow PASS
 
-Before invoking the command, place the mouse pointer near the middle of the
-empty restored titlebar. Once the window is fully visible, wait briefly for the
-initial observer sample, then perform exactly one clear click-drag-release
-gesture at least 40 pixels horizontally. This is the only interaction in the
-run.
-
-The generic runner may still exit 1 solely because of the already-proven
-missing ColorSync registration. Do not classify the run until the existing
-format summarizer has accepted that exact oracle.
+On Lion first pin:
 
 ```sh
-cd /path/to/lion-rosetta-runtime || exit 1
+test "$(git hash-object ./scripts/run-lion-ppc-carbon-gui-coreui-image-bitmapinfo-compat.sh)" = \
+  "185e319f0c9fa1abeb485c5b19ccd2a69c67728e" || exit 1
+test "$(git hash-object ./scripts/summarize-ppc-carbon-gui-hitoolbox-titlebar-drag-trace.py)" = \
+  "62152c4ec1bccd2837f2603cbfd9f85a1a12683a" || exit 1
+```
 
-export ROSETTA_EXPECTED_KERNEL_SHA256=fe68467b60b3bd7edfab61b2d6c8af7f988de5206c4b7b624151dc9f1a1061d3
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_PATH="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib"
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_SHA256_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib.sha256"
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_INFO_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib.info.txt"
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_BUILD_ID="coreui-windowframe-shared-art-slot0-compat-v2"
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB="4f4792987fded0609efda2a8b4c524bc7069c7fd"
+Then repeat the completed v2 rendering integration with the three
+`ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_*` variables pointing at the
+transferred v2 trace artifact. Perform one empty-titlebar drag during the
+eight-second window and summarize with:
 
-export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_PATH="$PWD/payload/pm-hitoolbox-titlebar-drag-trace.dylib"
-export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_SHA256_FILE="$PWD/payload/pm-hitoolbox-titlebar-drag-trace.dylib.sha256"
-export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_INFO_FILE="$PWD/payload/pm-hitoolbox-titlebar-drag-trace.dylib.info.txt"
-
-./scripts/run-lion-ppc-carbon-gui-coreui-image-bitmapinfo-compat.sh \
-  "$PWD/payload/ppc-carbon-gui-smoketest-private-dyld" \
-  "$PWD/payload/ppc-carbon-gui-smoketest-private-dyld.sha256" \
-  "$PWD/payload/pm-carbon-gui-backing-sync-compat.dylib" \
-  "$PWD/payload/pm-carbon-gui-backing-sync-compat.dylib.sha256" \
-  "$PWD/payload/ppc-process-manager-security-session-auditinfo-api.dylib" \
-  "$PWD/payload/ppc-process-manager-security-session-auditinfo-api.dylib.sha256" \
-  "$PWD/payload/ppc-process-manager-cgs-session-dockserver-fontserver-rendezvous-compat.dylib" \
-  "$PWD/payload/ppc-process-manager-cgs-session-dockserver-fontserver-rendezvous-compat.dylib.sha256" \
-  "$PWD/dn-carbon-gui-registration-broker" \
-  "$PWD/dn-carbon-gui-registration-broker.sha256" \
-  "$PWD/payload/lion-ppc-carbon-gui-titlebar-drag-live.log" \
-  "$PWD/payload/cgwindowlist-pid-observer" \
-  "$PWD/payload/cgwindowlist-pid-observer.sha256" \
-  "$PWD/payload/lion-ppc-carbon-gui-titlebar-drag-live-observer.log"
-RUN_RC=$?
-
-if [ "$RUN_RC" -ne 0 ] && [ "$RUN_RC" -ne 1 ]; then
-  echo "unexpected Lion runner exit: $RUN_RC" >&2
-  exit "$RUN_RC"
-fi
-
-/usr/bin/python ./scripts/summarize-ppc-carbon-gui-coreui-windowframe-shared-art-slot0-format-compat.py \
-  ./payload/lion-ppc-carbon-gui-titlebar-drag-live.log \
-  ./ppc-carbon-gui-titlebar-drag-live-rendering-lion.txt || exit 1
-
+```sh
 /usr/bin/python ./scripts/summarize-ppc-carbon-gui-hitoolbox-titlebar-drag-trace.py \
   ./payload/lion-ppc-carbon-gui-titlebar-drag-live.log \
   ./ppc-carbon-gui-hitoolbox-titlebar-drag-live-lion.txt \
   lion YES || exit 1
 ```
 
-The existing rendering summary must still report the exact five slot-0
-adaptations and either full runner PASS or the exact known notification shift.
-
-The drag summary must report `RESULT: PASS` and exactly one of these routing
-states:
+The Lion routing state must be exactly one of:
 
 ```text
-NO_DRAGWINDOW_DISPATCH
-DRAGWINDOW_ENTERED_NO_MOVE
-DRAGWINDOW_MOVED
+PUBLIC_HIT_NOT_IN_DRAG
+PUBLIC_HIT_IN_DRAG_NO_MOVE
+PUBLIC_HIT_IN_DRAG_MOVED
 ```
 
-`OBSERVER_MOVED_WITHOUT_DRAGWINDOW` is a hard stop because it contradicts the
-public drag boundary being traced.
+`NO_VALID_PUBLIC_HIT` or a summary FAIL is a hard stop.
 
 ## Review gate
 
-### Lion: NO_DRAGWINDOW_DISPATCH
+### Lion: PUBLIC_HIT_NOT_IN_DRAG
 
-The failing gesture never crosses the public `DragWindow` boundary although
-Snow does. The defect is upstream of drag tracking. Review the same-run
-`FindWindow` evidence, then trace the public Carbon event delivery /
-HIWindowFrameView dispatch boundary without changing the returned part code.
+Stop before any translation. Compare the exact live `FindWindow` part and
+mouse point against Snow and the prior frame/hit contract. A new compatibility
+rule is not authorized by one divergent part result alone.
 
-### Lion: DRAGWINDOW_ENTERED_NO_MOVE
+### Lion: PUBLIC_HIT_IN_DRAG_NO_MOVE
 
-The titlebar gesture reaches the same public drag primitive as Snow, but the
-window does not move. The next discriminator moves below `DragWindow` toward
-the existing `TWindowTracker::TrackWindow` path and its lower WindowServer/CGS
-movement requests. Do not patch the private tracker.
+The public hit classification agrees with healthy Snow but the window still
+does not move. The next discriminator belongs after hit classification, around
+the standard frame-view / tracker transition or the lower movement request
+path. Do not patch `TWindowTracker`.
 
-### Lion: DRAGWINDOW_MOVED
+### Lion: PUBLIC_HIT_IN_DRAG_MOVED
 
-Stop. The current non-draggable symptom did not reproduce under the exact
-controlled stack. Preserve both logs and observer reports and do not add an
-interaction adapter.
+Stop. The non-draggable symptom did not reproduce under the controlled v2
+interaction window; preserve the evidence and do not add an interaction
+adapter.
 
 ## Return evidence
 
-If both summaries pass, return exactly:
+For the immediate rerun, return:
 
 ```text
 ppc-carbon-gui-hitoolbox-titlebar-drag-live-snow.txt
-ppc-carbon-gui-hitoolbox-titlebar-drag-live-lion.txt
+ppc-carbon-gui-titlebar-drag-live-rendering-snow.txt
 ```
 
-If either rendering summary fails, return that rendering summary plus the
-corresponding raw log instead and stop.
+If Snow passes and Lion is then run, also return:
+
+```text
+ppc-carbon-gui-hitoolbox-titlebar-drag-live-lion.txt
+```
 
 ## Current boundary
 
 ```text
-window-frame rendering                            RESTORED
-Snow static drag routing                         PASS
-HIWindowFrameView::TrackSelf -> DragWindow       DIRECT / PROVEN
-DragWindow -> TWindowTracker::TrackWindow        DIRECT / PROVEN
-hit-mask -> classic part mapping                 unchanged / no rewrite
-interaction compatibility                        NONE
-next step                                        Snow/Lion passive DragWindow reachability
-notification policy                              unchanged
-CGS policy                                       unchanged
-XNU                                              no source change indicated
+window-frame rendering                           RESTORED
+Snow static routing                             PASS
+v1 DragWindow/FindWindow dyld interpose         INVALID / same-image direct branches
+historical subject manual window                2 s / insufficient
+v2 dispatcher event monitor                     PREPARED
+v2 diagnostic subject window                    8 s
+public FindWindow                               observation only
+part-code rewrite                               NOT AUTHORIZED
+private HIToolbox patch                         NOT AUTHORIZED
+notification policy                             unchanged
+CGS policy                                      unchanged
+XNU                                             no source change indicated
+next step                                       rebuild v2 and rerun Snow Phase C only
 ```
