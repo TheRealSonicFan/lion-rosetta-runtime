@@ -2,7 +2,7 @@
 
 ## Status
 
-COMPLETED STATIC PASS. Snow resolves the unique raw-bytes caller to `CUISharedArtReader::CreateImage(float)`, and `GetImageHeader(long)` proves the legacy lookup is an image-ID-biased offset-table lookup (`image ID - 0x4e20`). The release-local `SArtFile.bin` headers match that shared-reader contract but differ materially between Snow and Lion. The next controlled step is `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md`.
+COMPLETED STATIC PASS. Snow resolves the unique raw-bytes caller to `CUISharedArtReader::CreateImage(long,float)`, and `GetImageHeader(long)` proves the legacy lookup is an image-ID-biased offset-table lookup (`image ID - 0x4e20`). The release-local `SArtFile.bin` headers match that shared-reader contract but differ materially between Snow and Lion. The next controlled step is `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md`.
 
 ## Reviewed caller-resolution result
 
@@ -208,7 +208,7 @@ Keep the interaction defect separate until the shared data is proven to feed bot
 
 Both reports pass with exact pinned CoreUI slices and untouched resources.
 
-Snow's unique `CreateImageFromBytes` reference is inside `CUISharedArtReader::CreateImage(float)`. That caller first uses `GetImageType` / `GetEntryCount`; its raw-bytes branches call `CreateImageFromBytes`, while another branch goes through `CreateImageSource` and `CGImageSourceCreateImageAtIndex`.
+Snow's unique `CreateImageFromBytes` reference is inside `CUISharedArtReader::CreateImage(long,float)`. That caller first uses `GetImageType` / `GetEntryCount`; its raw-bytes branches call `CreateImageFromBytes`, while another branch goes through `CreateImageSource` and `CGImageSourceCreateImageAtIndex`.
 
 `GetImageHeader(long)` exposes the legacy image-ID translation directly: `addi r30,r3,0xb1e0` is a signed subtraction of `0x4e20`. It range-checks the resulting index against the shared-art count, reads a 32-bit offset-table entry at `index * 4`, byte-swaps it, and adds it to the mapped base. The seven known frame IDs therefore map to indices 105, 106, and 109-113.
 
