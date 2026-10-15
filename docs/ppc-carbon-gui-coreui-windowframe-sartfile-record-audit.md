@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED STATIC STEP after the shared-art source audit tied the divergent non-button image path to Snow-PPC `CUISharedArtReader` and exposed the exact legacy image-ID-to-header lookup contract.
+COMPLETED STATIC PASS. The exact seven frame records prove a release-specific SArtFile metadata/geometry divergence that predicts Lion's observed 256x256 raw image exactly and narrows its 2x62 image to two IDs. The next controlled step is `docs/ppc-carbon-gui-coreui-windowframe-shared-art-selection-live-trace.md`.
 
 ## Reviewed shared-art source result
 
@@ -234,6 +234,14 @@ Close the archive record hypothesis. The next discriminator becomes reader setup
 
 Do not infer a part-code fix from shared storage alone. First prove the exact live hit-region consumer and output.
 
+## Observed result
+
+Both reports pass with exact CoreUI and `SArtFile.bin` identities. Snow's seven target records are all type 2 / count 1, so the old PPC reader selects raw slot 0; six decode as 11x11 and `0x4e89` decodes as 1x23. Because the prior healthy Snow live trace contained five 11x11 raw calls and no 1x23 call, `0x4e89` was not one of the five active raw selections.
+
+At the same indices, Lion changes five records to type 1 / count 2 and two to type 3 / count 3. The Lion slot-1 record for `0x4e8f` is exactly 256x256, uniquely matching one previously observed live raw call. The live 2x62 raw call matches slot 1 of either `0x4e8e` or `0x4e8d`. This proves a concrete resource-record contract mismatch, but the exact live ID/path correlation is still missing.
+
+Follow `docs/ppc-carbon-gui-coreui-windowframe-shared-art-selection-live-trace.md` next. It preserves the accepted compatibility stack and passively recovers the exact frame ID at the raw and ImageIO construction boundaries before any metadata adaptation is considered.
+
 ## Return evidence
 
 Return exactly:
@@ -257,6 +265,6 @@ Lion SArtFile                                    v2 / 348 entries / 9370228 byte
 live Snow divergent stream                       5 x 11x11
 live Lion divergent stream                       256x256 + 2x62
 resource/record rewrite                          NOT AUTHORIZED
-next step                                        static SArtFile frame-record audit
+next step                                        guarded shared-art selection live trace
 XNU                                              no source change indicated
 ```
