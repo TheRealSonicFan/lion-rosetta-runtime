@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED DIAGNOSTIC REPAIR after the caller-filtered window-frame CUIDraw v1 trace produced zero runtime markers on both Snow Leopard and Lion.
+COMPLETED LIVE-PROVEN PASS. Version 2 proves CUIDraw executes from HIToolbox on both systems, but from different live offsets than the original six-slot hypothesis. The first eight Snow/Lion requests are equivalent; Snow has one additional menu-title call. The next controlled step is `docs/ppc-carbon-gui-hitoolbox-cuidraw-caller-resolution-audit.md`.
 
 ## Phase A repair note
 
@@ -265,6 +265,48 @@ LayoutEngine draw/hit helpers
 
 That path is especially relevant because it can account for both the missing titlebar/frame background and the non-draggable titlebar without inventing a part-code translation.
 
+## Observed result — live CUIDraw ingress is now resolved
+
+The returned v2 artifact matches the pinned identity:
+
+```text
+interposer_source_git_blob=d9419ec4ac62ba651a45eaa2bb515a8bb38c9793
+trace_build_id=hitoolbox-windowframe-cuidraw-trace-v2
+artifact_sha256=0feb833c50e40c92593b2922a94b6c8e7302849f8a8dd6bcd1326c8c8b6288db
+```
+
+Snow:
+
+```text
+windowframe_cuidraw_trace_build_count=1
+windowframe_cuidraw_trace_call_count=9
+windowframe_cuidraw_trace_hitoolbox_count=9
+windowframe_cuidraw_trace_target_slot_count=0
+windowframe_cuidraw_trace_passthrough_count=9
+RESULT: PPC_CARBON_GUI_COREUI_IMAGE_BITMAPINFO_COMPAT_SNOW_CONTROL_PASS
+RESULT: PASS
+```
+
+Lion:
+
+```text
+windowframe_cuidraw_trace_build_count=1
+windowframe_cuidraw_trace_call_count=8
+windowframe_cuidraw_trace_hitoolbox_count=8
+windowframe_cuidraw_trace_target_slot_count=0
+windowframe_cuidraw_trace_passthrough_count=8
+RESULT: PPC_CARBON_GUI_COREUI_IMAGE_BITMAPINFO_COMPAT_PASS
+RESULT: PASS
+```
+
+The first eight call records match exactly after ignoring only the trace mode label. In particular, both systems issue two identical `kCUIWidgetWindowFrame` draws from caller offset `0x000bc5e8`: one inactive and one normal, each for the 400x222 frame with `regularwin`, unified titlebar height 22, title separator enabled, and flipped coordinates. Both also issue the same six titlebar-control requests from `0x00022374`.
+
+Snow's ninth call is from `0x0001f340` and requests `kCUIWidgetMenuTitle`; it is unrelated to the missing document-window titlebar/frame background.
+
+This closes CUIDraw request construction as the immediate mismatch: no rectangle or option-dictionary adaptation is authorized. The v1 six caller offsets were simply not the actual live callers for this subject.
+
+Follow `docs/ppc-carbon-gui-hitoolbox-cuidraw-caller-resolution-audit.md` next. It statically maps the three observed Snow-PPC offsets to their containing HIToolbox functions and compares those same symbol names with Lion native HIToolbox before the investigation moves below CUIDraw into the CoreUI window-frame renderer/resource contract.
+
 ## Return evidence
 
 Return:
@@ -289,15 +331,17 @@ Lion titlebar visually normal: YES/NO/PARTIAL
 ## Current boundary
 
 ```text
-v1 trace artifact                               loaded on Snow and Lion
-v1 target-filtered runtime markers              0 / 0
-v1 diagnostic conclusion                        INCONCLUSIVE
-v2 load marker                                  constructor / unconditional
-v2 CUIDraw caller filtering                     none before call logging
-v2 argument mutation                            NONE
-bitmapInfo 0x2 -> 0x2002                        RETAIN
-part-code translation                           NOT AUTHORIZED
-frame adaptation                                NOT AUTHORIZED
-next step                                       one Snow + one Lion CUIDraw ingress v2 trace
+v2 trace constructor marker                      1 / 1
+v2 CUIDraw calls                                 9 Snow / 8 Lion
+v2 HIToolbox calls                               9 Snow / 8 Lion
+v2 original target slots                         0 / 0
+first eight request stream                       EQUIVALENT
+window-frame caller                              0x000bc5e8 on both
+window-frame request                             EQUIVALENT
+Snow-only ninth call                             0x0001f340 / kCUIWidgetMenuTitle
+CUIDraw argument mutation                        NONE / NOT AUTHORIZED
+bitmapInfo 0x2 -> 0x2002                         RETAIN
+part-code translation                            NOT AUTHORIZED
+next step                                       docs/ppc-carbon-gui-hitoolbox-cuidraw-caller-resolution-audit.md
 XNU                                             no source change indicated
 ```
