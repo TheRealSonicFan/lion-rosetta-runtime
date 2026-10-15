@@ -2,11 +2,9 @@
 
 ## Status
 
-COMPLETED LIVE RUN; SUMMARY CORRECTION ONLY. The Snow and Lion compatibility runners both passed, the Snow raw-ID control is internally consistent, and Lion produced the expected two divergent raw geometries with non-NULL results. The original v1 summary failed only because it treated the final ImageIO call site's saved-r30 value as an image ID even though `CUISharedArtReader::CreateImage(long,float)` has already reused `r30` by that point.
+COMPLETED LIVE CORRELATION. The corrected v2 static reports now align exactly with the completed Snow/Lion live run: Snow's active raw set is `0x4e8e`, `0x4e90`, `0x4e8d`, `0x4e8f`, and `0x4e91`; Lion's raw subset is exactly `0x4e8e -> 256x256` and `0x4e8d -> 2x62`, while the remaining three active IDs are type-3/count-3 and account exactly for the three non-NULL ImageIO calls. The branch-selection mismatch is therefore closed.
 
-The same live run also exposed a separate static-audit bug: the v1 SArtFile analyzer used offset-table base `0x04`, while Snow-PPC `CUISharedArtReader::Setup()` installs the table pointer at mapped-base `+0x08`.
-
-Do not rerun the PPC subject for either correction.
+Do not rerun the PPC subject. The next question is whether the five Snow 11x11 payloads survive elsewhere in Lion's SArtFile.
 
 ## Live result that remains valid
 
@@ -84,16 +82,15 @@ The raw trace therefore validates the corrected table interpretation rather than
 
 ## Next step
 
-Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md`.
+Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-live-payload-fingerprint-audit.md`.
 
-Run only the corrected static v2 SArtFile analyzer on Snow and Lion, then re-run the v2 summarizer against the already preserved Lion subject log. Do not rebuild or rerun the live diagnostic artifact.
+Run the new static fingerprint analyzer once on Snow and once on Lion. It hashes only the exact five Snow-live-active provider payloads and inventories Lion SArtFile slots with matching 11x11/484-byte structure; it does not launch PPC code or copy Snow image bytes to Lion.
 
 Return:
 
 ```text
-ppc-carbon-gui-coreui-windowframe-sartfile-records-v2-snow.txt
-ppc-carbon-gui-coreui-windowframe-sartfile-records-v2-lion.txt
-ppc-carbon-gui-coreui-windowframe-shared-art-selection-lion-v2.txt
+ppc-carbon-gui-coreui-windowframe-sartfile-live-payload-fingerprints-snow.txt
+ppc-carbon-gui-coreui-windowframe-sartfile-live-payload-fingerprints-lion.txt
 ```
 
 ## Safety constraints
@@ -114,7 +111,7 @@ Lion ImageIO                                     3 calls / 3 NONNULL
 v1 ImageIO frame-ID interpretation               INVALID / superseded
 v1 SArtFile table base                           0x04 / WRONG / superseded
 Snow Setup table base                            +0x08 / PROVEN
-next step                                        corrected static SArtFile v2 audit
+next step                                        static live-active payload fingerprint audit
 PPC rerun                                        NOT REQUIRED
 XNU                                              no source change indicated
 ```
