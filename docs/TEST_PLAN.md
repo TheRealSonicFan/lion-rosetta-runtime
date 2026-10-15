@@ -963,9 +963,9 @@ The shared-art source reports pass on both systems. Snow's unique raw-bytes call
 
 Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md` next. Run `scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py` statically on Snow and Lion and return the two text reports. Do not launch the PPC subject, alter records/resources/geometry, broaden bitmap-info or CGS rules, change hit handling, or modify XNU before the exact seven record geometries and raw-byte slots are compared.
 
-## Payload fingerprints complete; current step — Lion provenance across CoreUI archives
+## Lion payload provenance complete; current step — frame-ID relocation/slot audit
 
-The Snow/Lion payload fingerprint reports pass. Three exact Snow frame payloads survive byte-for-byte in Lion SArtFile under different IDs: `0x4e8d -> 0x4e75`, `0x4e8e -> 0x4e76`, and `0x4e90 -> 0x4e78`. No Lion 11x11/484-byte SArtFile candidate matches Snow `0x4e8f` or `0x4e91`. This closes the all-deleted hypothesis but does not yet justify a shared-art ID mapping.
+The Lion provenance report passes with exact identities for SArtFile, ArtFile10, and ArtFile20. Only three exact target payloads survive: `0x4e8d -> 0x4e75`, `0x4e8e -> 0x4e76`, and `0x4e90 -> 0x4e78`, all in SArtFile. ArtFile10 has 23 structurally valid 484-byte cells and ArtFile20 has none, but neither contains a target hash; Snow `0x4e8f` and `0x4e91` therefore have no exact raw-byte match under the audited Lion archive contracts.
 
-Follow `docs/ppc-carbon-gui-coreui-windowframe-lion-legacy-payload-provenance-audit.md` next. On Lion only, run the static analyzer that verifies the three SArtFile relocations against every 484-byte provider slot and scans structurally valid 484-byte ArtFile10/ArtFile20 cell bodies for the two unmatched Snow fingerprints. No PPC rerun, resource rewrite/substitution, hit-test/CGContext change, CGS expansion, or XNU modification is authorized yet.
+Follow `docs/ppc-carbon-gui-coreui-windowframe-frame-id-relocation-audit.md` next. Run the static analyzer on Snow and Lion. It verifies that Snow's active ID order `4e8e,4e90,4e8d,4e8f,4e91` corresponds exactly to native Lion's `4e76,4e78,4e75,4e77,4e79` and emits both slots of every record. No PPC rerun, ID remap, slot forcing, resource rewrite, hit/CGContext change, CGS expansion, or XNU modification is authorized yet.
 
