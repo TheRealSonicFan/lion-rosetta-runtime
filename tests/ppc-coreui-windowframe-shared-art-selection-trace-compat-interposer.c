@@ -1,5 +1,4 @@
 #include <ApplicationServices/ApplicationServices.h>
-#include <ImageIO/ImageIO.h>
 #include <dlfcn.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -62,7 +61,9 @@ typedef CGImageRef (*cgimagecreate_fn)(size_t, size_t, size_t, size_t, size_t,
                                       CGColorSpaceRef, CGBitmapInfo,
                                       CGDataProviderRef, const CGFloat *,
                                       bool, CGColorRenderingIntent);
-typedef CGImageRef (*cgimagesourcecreate_fn)(CGImageSourceRef, size_t,
+extern CGImageRef CGImageSourceCreateImageAtIndex(const void *, size_t,
+                                                    CFDictionaryRef);
+typedef CGImageRef (*cgimagesourcecreate_fn)(const void *, size_t,
                                             CFDictionaryRef);
 
 struct interpose_tuple {
@@ -539,7 +540,7 @@ image_source_original_function(void)
 }
 
 static CGImageRef
-rosetta_CGImageSourceCreateImageAtIndex(CGImageSourceRef source,
+rosetta_CGImageSourceCreateImageAtIndex(const void *source,
                                         size_t index,
                                         CFDictionaryRef options)
 {
