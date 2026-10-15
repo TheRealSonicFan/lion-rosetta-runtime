@@ -2,7 +2,7 @@
 
 ## Status
 
-PHASE C v1 DIAGNOSTIC INVALIDATED / v2 PREPARED.
+PHASE C v1 DIAGNOSTIC INVALIDATED / v2 PREPARED. PHASE E PROCEDURE CORRECTED: the earlier revision named `lion-ppc-carbon-gui-titlebar-drag-live.log` only at the summarizer step and omitted the Lion runner invocation that creates it. That failed attempt produced no Lion interaction evidence and must not be interpreted as a runtime result.
 
 The first Snow live attempt did not fail the restored rendering stack. The
 shared-art rendering summary remained an exact Snow PASS, the v1 trace artifact
@@ -82,7 +82,7 @@ scripts/build-ppc-hitoolbox-titlebar-drag-trace-on-snowleopard.sh
 Git blob 2f65457b15e242783358414968d8c9baf974c937
 
 scripts/summarize-ppc-carbon-gui-hitoolbox-titlebar-drag-trace.py
-Git blob 62152c4ec1bccd2837f2603cbfd9f85a1a12683a
+Git blob 4b193f02f704d9b98050e18558665c8a0aa6b6a9
 
 scripts/run-snowleopard-ppc-carbon-gui-coreui-image-bitmapinfo-compat-control.sh
 Git blob dcf8acaa9ccd9eae6a01099e7dcffb5bfe366fe8
@@ -128,7 +128,7 @@ test "$(git hash-object ./tests/ppc-hitoolbox-titlebar-drag-trace-interposer.c)"
 test "$(git hash-object ./scripts/build-ppc-hitoolbox-titlebar-drag-trace-on-snowleopard.sh)" = \
   "2f65457b15e242783358414968d8c9baf974c937" || exit 1
 test "$(git hash-object ./scripts/summarize-ppc-carbon-gui-hitoolbox-titlebar-drag-trace.py)" = \
-  "62152c4ec1bccd2837f2603cbfd9f85a1a12683a" || exit 1
+  "4b193f02f704d9b98050e18558665c8a0aa6b6a9" || exit 1
 test "$(git hash-object ./scripts/run-snowleopard-ppc-carbon-gui-coreui-image-bitmapinfo-compat-control.sh)" = \
   "dcf8acaa9ccd9eae6a01099e7dcffb5bfe366fe8" || exit 1
 
@@ -249,28 +249,95 @@ to Lion's `payload/`.
 
 ## Phase E — Lion discriminator after Snow PASS
 
-On Lion first pin:
+The previous revision of this procedure was incomplete here: it told the
+operator to summarize `./payload/lion-ppc-carbon-gui-titlebar-drag-live.log`
+without first invoking the Lion runner that creates that report. The resulting
+`IOError: [Errno 2]` is therefore a documentation/workflow failure, not Lion
+runtime evidence.
+
+On Lion first update and pin:
 
 ```sh
+cd /path/to/lion-rosetta-runtime || exit 1
+git fetch origin || exit 1
+git pull --ff-only origin main || exit 1
+
 test "$(git hash-object ./scripts/run-lion-ppc-carbon-gui-coreui-image-bitmapinfo-compat.sh)" = \
   "185e319f0c9fa1abeb485c5b19ccd2a69c67728e" || exit 1
 test "$(git hash-object ./scripts/summarize-ppc-carbon-gui-hitoolbox-titlebar-drag-trace.py)" = \
-  "62152c4ec1bccd2837f2603cbfd9f85a1a12683a" || exit 1
+  "4b193f02f704d9b98050e18558665c8a0aa6b6a9" || exit 1
+/usr/bin/python -c 'compile(open("./scripts/summarize-ppc-carbon-gui-hitoolbox-titlebar-drag-trace.py","rb").read(),"drag-summary.py","exec")' || exit 1
 ```
 
-Then repeat the completed v2 rendering integration with the three
-`ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_*` variables pointing at the
-transferred v2 trace artifact. Perform one empty-titlebar drag during the
-eight-second window and summarize with:
+Require the transferred v2 trace artifact and the already accepted v2 CoreUI
+slot-0 compatibility artifact to be present with their existing sidecars.
+
+Perform one empty-titlebar click-drag-release gesture during the eight-second
+window. The generic Lion runner may exit 1 solely because of the already-known
+missing ColorSync registration; do not classify the interaction until the
+dedicated rendering and input-route summaries have accepted the run.
 
 ```sh
+export ROSETTA_EXPECTED_KERNEL_SHA256=fe68467b60b3bd7edfab61b2d6c8af7f988de5206c4b7b624151dc9f1a1061d3
+export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_PATH="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib"
+export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_SHA256_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib.sha256"
+export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_INFO_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib.info.txt"
+export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_BUILD_ID="coreui-windowframe-shared-art-slot0-compat-v2"
+export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB="4f4792987fded0609efda2a8b4c524bc7069c7fd"
+
+export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_PATH="$PWD/payload/pm-hitoolbox-titlebar-drag-trace.dylib"
+export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_SHA256_FILE="$PWD/payload/pm-hitoolbox-titlebar-drag-trace.dylib.sha256"
+export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_INFO_FILE="$PWD/payload/pm-hitoolbox-titlebar-drag-trace.dylib.info.txt"
+
+REPORT="$PWD/payload/lion-ppc-carbon-gui-titlebar-drag-live.log"
+OBSERVER_REPORT="$PWD/payload/lion-ppc-carbon-gui-titlebar-drag-live-observer.log"
+
+/bin/rm -f "$REPORT" "$OBSERVER_REPORT"
+
+./scripts/run-lion-ppc-carbon-gui-coreui-image-bitmapinfo-compat.sh \
+  "$PWD/payload/ppc-carbon-gui-smoketest-private-dyld" \
+  "$PWD/payload/ppc-carbon-gui-smoketest-private-dyld.sha256" \
+  "$PWD/payload/pm-carbon-gui-backing-sync-compat.dylib" \
+  "$PWD/payload/pm-carbon-gui-backing-sync-compat.dylib.sha256" \
+  "$PWD/payload/ppc-process-manager-security-session-auditinfo-api.dylib" \
+  "$PWD/payload/ppc-process-manager-security-session-auditinfo-api.dylib.sha256" \
+  "$PWD/payload/ppc-process-manager-cgs-session-dockserver-fontserver-rendezvous-compat.dylib" \
+  "$PWD/payload/ppc-process-manager-cgs-session-dockserver-fontserver-rendezvous-compat.dylib.sha256" \
+  "$PWD/dn-carbon-gui-registration-broker" \
+  "$PWD/dn-carbon-gui-registration-broker.sha256" \
+  "$REPORT" \
+  "$PWD/payload/cgwindowlist-pid-observer" \
+  "$PWD/payload/cgwindowlist-pid-observer.sha256" \
+  "$OBSERVER_REPORT"
+RUN_RC=$?
+
+if [ "$RUN_RC" -ne 0 ] && [ "$RUN_RC" -ne 1 ]; then
+  echo "unexpected Lion runner exit: $RUN_RC" >&2
+  exit "$RUN_RC"
+fi
+
+test -s "$REPORT" || {
+  echo "error: Lion runner did not create report: $REPORT" >&2
+  exit 66
+}
+test -s "$OBSERVER_REPORT" || {
+  echo "error: Lion runner did not create observer report: $OBSERVER_REPORT" >&2
+  exit 66
+}
+
+/usr/bin/python ./scripts/summarize-ppc-carbon-gui-coreui-windowframe-shared-art-slot0-format-compat.py \
+  "$REPORT" \
+  ./ppc-carbon-gui-titlebar-drag-live-rendering-lion.txt || exit 1
+
 /usr/bin/python ./scripts/summarize-ppc-carbon-gui-hitoolbox-titlebar-drag-trace.py \
-  ./payload/lion-ppc-carbon-gui-titlebar-drag-live.log \
+  "$REPORT" \
   ./ppc-carbon-gui-hitoolbox-titlebar-drag-live-lion.txt \
   lion YES || exit 1
 ```
 
-The Lion routing state must be exactly one of:
+The rendering summary must remain PASS and preserve the completed exact-five
+slot-0 / exact-two corner-format contract. The input-route summary must report
+`RESULT: PASS` and one of:
 
 ```text
 PUBLIC_HIT_NOT_IN_DRAG
@@ -278,7 +345,7 @@ PUBLIC_HIT_IN_DRAG_NO_MOVE
 PUBLIC_HIT_IN_DRAG_MOVED
 ```
 
-`NO_VALID_PUBLIC_HIT` or a summary FAIL is a hard stop.
+`NO_VALID_PUBLIC_HIT`, a missing report, or any summary FAIL is a hard stop.
 
 ## Review gate
 
