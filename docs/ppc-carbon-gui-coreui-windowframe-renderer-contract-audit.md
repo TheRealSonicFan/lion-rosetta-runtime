@@ -2,7 +2,7 @@
 
 ## Status
 
-COMPLETED STATIC PASS. The Snow-PPC and Lion-native frame renderers are materially refactored below CUIDraw: Snow directly uses seven `CreateImage` calls plus two gray-gradient images, while Lion native uses no direct `CreateImage` calls and instead adds titlebar/background image-copy helpers and a tiled-image path. Because the historical Lion PPC process executes the Snow-PPC CoreUI image, the next controlled discriminator is `docs/ppc-carbon-gui-coreui-windowframe-image-constructor-live-trace.md`.
+COMPLETED STATIC PASS. The Snow-PPC and Lion-native frame renderers are materially refactored below CUIDraw: Snow directly uses seven `CreateImage` calls plus two gray-gradient images, while Lion native uses no direct `CreateImage` calls and instead adds titlebar/background image-copy helpers and a tiled-image path. The follow-on all-CoreUI `CGImageCreate` trace is now complete and isolates a new live non-button differential at Snow-PPC return site `0x0002ad34`; the current next step is `docs/ppc-carbon-gui-coreui-windowframe-image-caller-resolution-audit.md`.
 
 ## Reviewed result that advances this step
 
