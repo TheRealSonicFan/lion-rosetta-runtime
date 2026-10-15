@@ -11,7 +11,7 @@ Both returned shared-art source reports pass with exact pinned CoreUI slices and
 On Snow Leopard, `CUISharedArtReader::CreateImageFromBytes(long,long)` has exactly one direct caller:
 
 ```text
-CUISharedArtReader::CreateImage(float)
+CUISharedArtReader::CreateImage(long,float)
   0x0002af48 -> CUISharedArtReader::CreateImageFromBytes(long,long)
 ```
 
@@ -257,7 +257,7 @@ No binary, resource archive, or live trace is required.
 
 ```text
 shared-art source audit                          PASS
-Snow CreateImageFromBytes direct caller          CUISharedArtReader::CreateImage(float)
+Snow CreateImageFromBytes direct caller          CUISharedArtReader::CreateImage(long,float)
 Snow shared-art ID bias                          image ID - 0x4e20
 target frame-image indices                       105,106,109,110,111,112,113
 Snow SArtFile                                    v2 / 237 entries / 811436 bytes
