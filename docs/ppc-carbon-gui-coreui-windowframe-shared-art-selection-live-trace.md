@@ -225,7 +225,7 @@ export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB="e0a95f5bc1ec
   "$PWD/payload/lion-ppc-carbon-gui-shared-art-selection-observer.log" || exit 1
 
 /usr/bin/python ./scripts/summarize-ppc-carbon-gui-coreui-windowframe-shared-art-selection-trace.py \
-  ./payload/lion-ppc-carbon-gui-shared-art-selection.raw.log \
+  ./payload/lion-ppc-carbon-gui-shared-art-selection.log \
   ./ppc-carbon-gui-coreui-windowframe-shared-art-selection-lion.txt || exit 1
 ```
 
