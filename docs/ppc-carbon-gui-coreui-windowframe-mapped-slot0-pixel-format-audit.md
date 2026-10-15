@@ -2,7 +2,11 @@
 
 ## Status
 
-NEXT CONTROLLED STATIC STEP after the first guarded slot-0 live integration.
+COMPLETED STATIC PASS.
+
+The returned Lion report pins the exact 10.7.5 / 11G63 SArtFile and passes the audit contract. The three byte-identical Snow anchors (legacy `0x4e8d`, `0x4e8e`, `0x4e90`) are alpha-layout ambiguous because byte 0 and byte 3 produce identical masks and zero violations; this does not justify changing their healthy Snow `bitmapInfo=0x2` contract. The two changed Lion payloads (legacy `0x4e8f` and `0x4e91`) are decisive: byte-0 interpretation yields zero nonzero-alpha pixels with 120 violations, while byte-3 yields 120 nonzero-alpha pixels with zero violations. Their byte-3 masks are mirrored upper-left/upper-right corner shapes.
+
+The downstream Snow renderer already loads `0x4e8f` and `0x4e91` as the paired final frame images before the frame draw. Combined with the first live test's exact symptom—background restored but both top corners absent—the format evidence is sufficient for one exact-two construction correction. Current `main` advances to `docs/ppc-carbon-gui-coreui-windowframe-shared-art-slot0-format-compat-live-test.md`; do not broaden the change to the other three mapped images or to notification policy.
 
 The Snow passthrough control passed exactly. The Lion run did not satisfy the
 full-stack runner because the dedicated exact-21 distributed-notification
@@ -191,6 +195,6 @@ Lion exact-21 runner                             FAIL
 notification delta                               exact registration 7 absent; prior 8..21 shifted
 global notification-policy change                NOT AUTHORIZED
 current all-five slot0 bitmapInfo                 0x00000002
-next step                                        Lion static mapped-slot0 pixel-format audit
+next step                                        exact-two slot0 format compatibility live test
 XNU                                              no source change indicated
 ```
