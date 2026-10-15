@@ -136,7 +136,7 @@ generated-MIG transport candidate containing both legacy IDs plus Mach
 transport, emits that entire candidate and its caller references, and verifies
 the native Snow `0x18/0x4030` versus Lion `0x24/0x0c30` geometry.
 
-The analyzer source was syntax-checked before commit.
+Phase A performs an explicit syntax compile on each host before the audit.
 
 ## Safety constraints
 
