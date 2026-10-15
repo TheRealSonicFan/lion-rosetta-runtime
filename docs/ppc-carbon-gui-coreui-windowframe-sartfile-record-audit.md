@@ -2,9 +2,9 @@
 
 ## Status
 
-CORRECTED STATIC STEP REQUIRED. The original v1 audit is superseded: it decoded the SArtFile offset table from file offset `0x04`, but Snow-PPC `CUISharedArtReader::Setup()` explicitly installs the offset-table pointer at mapped-base `+0x08`. The completed live shared-art trace exposed the one-entry shift because Lion's raw `0x4e8e` call produced 256x256 and raw `0x4e8d` produced 2x62, exactly matching the v1 records one table entry later.
+COMPLETED CORRECTED STATIC PASS. The v2 Snow and Lion reports pass with the `+0x08` table base proven by Snow-PPC `CUISharedArtReader::Setup()`, and the corrected records now align exactly with the completed live trace. The five healthy Snow-live-active IDs are `0x4e8e`, `0x4e90`, `0x4e8d`, `0x4e8f`, and `0x4e91`; all five are Snow type-2/count-1 raw 11x11 records. On Lion, `0x4e8e` and `0x4e8d` are type-1/count-2 and were observed live as slot-1 256x256 and 2x62 respectively, while the remaining three active IDs are type-3/count-3 and account exactly for the three non-NULL ImageIO calls.
 
-Do not use the v1 per-image record assignments for compatibility design.
+The next controlled step is `docs/ppc-carbon-gui-coreui-windowframe-sartfile-live-payload-fingerprint-audit.md`. Do not use the superseded v1 per-image assignments for compatibility design.
 
 ## Corrected reader contract
 
@@ -208,19 +208,23 @@ ppc-carbon-gui-coreui-windowframe-shared-art-selection-lion-v2.txt
 
 If convenient, also return the Snow v2 live summary, but do not rerun the PPC subject merely to create it.
 
+## Observed v2 result
+
+Both corrected static reports pass. Snow proves the table base at `+0x08` and shows all seven corrected target records as 11x11 slot-0 type-2/count-1 records; the live control identifies the active five as `0x4e8e`, `0x4e90`, `0x4e8d`, `0x4e8f`, and `0x4e91`. Lion's corrected records resolve `0x4e8e` slot 1 to 256x256 and `0x4e8d` slot 1 to 2x62, exactly matching the two live raw calls. The other three Snow-active IDs are Lion type-3/count-3 records, and the Lion live trace contains exactly three non-NULL ImageIO calls, so the branch partition is now fully correlated without another PPC run.
+
+The remaining question is whether the five Snow 11x11 provider payloads survive elsewhere in Lion's SArtFile. Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-live-payload-fingerprint-audit.md` next.
+
 ## Current boundary
 
 ```text
-v1 SArtFile table base                          0x04 / WRONG / superseded
-Snow PPC Setup table base                       mapped base + 0x08 / PROVEN
-v2 SArtFile analyzer                            prepared
-Snow live raw-ID control                        PASS
-Lion accepted compatibility runner              PASS
-Lion raw 0x4e8e                                 256x256 / NONNULL
-Lion raw 0x4e8d                                 2x62 / NONNULL
-Lion ImageIO calls                              3 / NONNULL
-ImageIO final-call frame-ID recovery            INVALID BY CALLSITE / not a failure
-PPC rerun                                       NOT REQUIRED
-resource rewrite                                NOT AUTHORIZED
-XNU                                             no source change indicated
+corrected SArtFile v2 audit                      PASS
+Snow Setup offset-table base                     +0x08 / PROVEN
+Snow live-active raw IDs                         4e8e,4e90,4e8d,4e8f,4e91
+Lion raw slot-1 IDs                              4e8e=256x256;4e8d=2x62
+Lion ImageIO active remainder                    4e90,4e8f,4e91
+live/static branch correlation                   COMPLETE
+legacy 11x11 payload survival in Lion SArtFile   UNKNOWN
+resource/record rewrite                          NOT AUTHORIZED
+next step                                        static payload fingerprint audit
+XNU                                              no source change indicated
 ```
