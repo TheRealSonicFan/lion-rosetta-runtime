@@ -2,7 +2,13 @@
 
 ## Status
 
-NEXT CONTROLLED COMPATIBILITY STEP.
+COMPLETED PARTIAL VISUAL RESULT / FULL-STACK RUNNER FAIL.
+
+The Snow passthrough control passed exactly. On Lion, all five slot-0 substitutions returned `ADAPTER_PASS`, all three ImageIO source bindings were established, all six accepted titlebar bitmap-info adaptations passed, and the 400x222 window reached the screen. The titlebar background became opaque/restored with the Snow-era appearance, but the top-left and top-right corners remained absent; dragging also remained nonfunctional.
+
+The full-stack runner failed for a separate, precisely localized reason: the exact-21 notification broker accepted registrations 1..6, then the previously accepted registration 7 (`com.apple.ColorSync.DisplayProfileNotification`, payload 276) was absent. Current requests 7..20 match the prior accepted requests 8..21 sequence by payload geometry, so the broker rejected the shifted tail as state mismatches. Do not broaden the notification policy yet.
+
+The next controlled step is `docs/ppc-carbon-gui-coreui-windowframe-mapped-slot0-pixel-format-audit.md`.
 
 The Snow/Lion external-boundary summaries both pass. The raw branch preserves
 exact legacy IDs, the ImageIO branch recovers exactly `0x4e90`, `0x4e8f`,
@@ -331,8 +337,10 @@ exact-five legacy-ID/source correlation          PROVEN
 private CoreUI patch                             NOT REQUIRED
 resource rewrite                                 NOT REQUIRED
 Lion slot0 resources                             existing Lion bytes only
-slot0 compatibility adapter                      PREPARED
-interaction behavior                             OUT OF SCOPE FOR THIS RUN
-next step                                        Snow passthrough + one Lion visual integration
+slot0 compatibility adapter                      LIVE-PROVEN PARTIAL VISUAL EFFECT
+Lion top corners                                 MISSING
+exact-21 notification sequence                   one known registration deleted / runner FAIL
+interaction behavior                             STILL FAILS / separate defect
+next step                                        static mapped-slot0 pixel-format audit
 XNU                                              no source change indicated
 ```
