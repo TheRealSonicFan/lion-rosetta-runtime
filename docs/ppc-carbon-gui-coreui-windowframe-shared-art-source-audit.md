@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED STATIC STEP after the caller-resolution audit proved that the new non-button `CGImageCreate` differential is produced by Snow-PPC `CUISharedArtReader::CreateImageFromBytes(long,long)`.
+COMPLETED STATIC PASS. Snow resolves the unique raw-bytes caller to `CUISharedArtReader::CreateImage(float)`, and `GetImageHeader(long)` proves the legacy lookup is an image-ID-biased offset-table lookup (`image ID - 0x4e20`). The release-local `SArtFile.bin` headers match that shared-reader contract but differ materially between Snow and Lion. The next controlled step is `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md`.
 
 ## Reviewed caller-resolution result
 
@@ -204,6 +204,18 @@ Close `0x0002ad34` as incidental and return to the held `DrawWindowFrameDark` CG
 
 Keep the interaction defect separate until the shared data is proven to feed both rendering and hit output. Do not patch classic part codes from this static evidence alone.
 
+## Observed result
+
+Both reports pass with exact pinned CoreUI slices and untouched resources.
+
+Snow's unique `CreateImageFromBytes` reference is inside `CUISharedArtReader::CreateImage(float)`. That caller first uses `GetImageType` / `GetEntryCount`; its raw-bytes branches call `CreateImageFromBytes`, while another branch goes through `CreateImageSource` and `CGImageSourceCreateImageAtIndex`.
+
+`GetImageHeader(long)` exposes the legacy image-ID translation directly: `addi r30,r3,0xb1e0` is a signed subtraction of `0x4e20`. It range-checks the resulting index against the shared-art count, reads a 32-bit offset-table entry at `index * 4`, byte-swaps it, and adds it to the mapped base. The seven known frame IDs therefore map to indices 105, 106, and 109-113.
+
+The resource prefixes are consistent with that table contract: Snow `SArtFile.bin` begins with version 2 / count 237 and Lion with version 2 / count 348. The exact files also differ sharply in size and SHA-256 (Snow 811436 bytes; Lion 9370228 bytes). Native Lion's shared-reader symbols are refactored, but that remains release-reference evidence only because the translated PPC process still executes Snow-era CoreUI.
+
+This is now specific enough for a static record comparison. Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md`; do not launch the PPC subject or rewrite any record, image geometry, resource, hit data, CGS rule, or XNU state yet.
+
 ## Return evidence
 
 Return exactly:
@@ -230,6 +242,6 @@ Lion divergent stream                            256x256 + 2x62
 CoreGraphics construction                        NONNULL / not the failure
 Lion native same reader symbol                   ABSENT / release refactor
 resource/header rewrite                          NOT AUTHORIZED
-next step                                        static shared-art source audit
+next step                                        static SArtFile frame-record audit
 XNU                                              no source change indicated
 ```
