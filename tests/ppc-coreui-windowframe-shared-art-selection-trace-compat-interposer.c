@@ -61,9 +61,7 @@ typedef CGImageRef (*cgimagecreate_fn)(size_t, size_t, size_t, size_t, size_t,
                                       CGColorSpaceRef, CGBitmapInfo,
                                       CGDataProviderRef, const CGFloat *,
                                       bool, CGColorRenderingIntent);
-extern CGImageRef CGImageSourceCreateImageAtIndex(const void *, size_t,
-                                                    CFDictionaryRef);
-typedef CGImageRef (*cgimagesourcecreate_fn)(const void *, size_t,
+typedef CGImageRef (*cgimagesourcecreate_fn)(CGImageSourceRef, size_t,
                                             CFDictionaryRef);
 
 struct interpose_tuple {
@@ -540,7 +538,7 @@ image_source_original_function(void)
 }
 
 static CGImageRef
-rosetta_CGImageSourceCreateImageAtIndex(const void *source,
+rosetta_CGImageSourceCreateImageAtIndex(CGImageSourceRef source,
                                         size_t index,
                                         CFDictionaryRef options)
 {
