@@ -2,76 +2,70 @@
 
 ## Status
 
-COMPLETED STATIC PASS. The exact seven frame records prove a release-specific SArtFile metadata/geometry divergence that predicts Lion's observed 256x256 raw image exactly and narrows its 2x62 image to two IDs. The next controlled step is `docs/ppc-carbon-gui-coreui-windowframe-shared-art-selection-live-trace.md`.
+CORRECTED STATIC STEP REQUIRED. The original v1 audit is superseded: it decoded the SArtFile offset table from file offset `0x04`, but Snow-PPC `CUISharedArtReader::Setup()` explicitly installs the offset-table pointer at mapped-base `+0x08`. The completed live shared-art trace exposed the one-entry shift because Lion's raw `0x4e8e` call produced 256x256 and raw `0x4e8d` produced 2x62, exactly matching the v1 records one table entry later.
 
-## Reviewed shared-art source result
+Do not use the v1 per-image record assignments for compatibility design.
 
-Both returned shared-art source reports pass with exact pinned CoreUI slices and unchanged resource files.
+## Corrected reader contract
 
-On Snow Leopard, `CUISharedArtReader::CreateImageFromBytes(long,long)` has exactly one direct caller:
-
-```text
-CUISharedArtReader::CreateImage(long,float)
-  0x0002af48 -> CUISharedArtReader::CreateImageFromBytes(long,long)
-```
-
-The same caller first dispatches through `GetImageType` / `GetEntryCount`; the scale-1 raw-bytes path calls `CreateImageFromBytes`, while another branch uses `CreateImageSource` and ImageIO. This means the next discriminator must identify which of the seven window-frame image IDs are raw shared-art records and what geometry their release-local records contain.
-
-The Snow `GetImageHeader(long)` implementation provides the exact lookup formula:
+Snow-PPC `CUISharedArtReader::Setup()` contains:
 
 ```text
-addi r30,r3,0xb1e0
+0002ab34  lwz   r11,0x34f0(r30)
+0002ab48  addi  r7,r11,0x8
+...
+0002ab74  stw   r7,0x34f8(r2)
 ```
 
-The signed immediate is `-0x4e20`, so:
+Therefore the runtime offset table begins at:
+
+```text
+mapped SArtFile base + 0x08
+```
+
+`GetImageHeader(long)` still computes:
 
 ```text
 shared-art index = image ID - 0x4e20
 ```
 
-It then range-checks that index against the shared-art entry count, loads a 32-bit offset-table entry at `index * 4`, byte-swaps the offset, and adds it to the mapped shared-art base.
+and indexes the installed table pointer with `index * 4`.
 
-The seven legacy frame-image IDs already proven in Snow-PPC `DrawWindowFrameDark` therefore map to:
-
-```text
-0x4e89 -> index 105
-0x4e8a -> index 106
-0x4e8d -> index 109
-0x4e8e -> index 110
-0x4e8f -> index 111
-0x4e90 -> index 112
-0x4e91 -> index 113
-```
-
-The release-local `SArtFile.bin` headers match this reader contract:
+The v1 analyzer instead used:
 
 ```text
-Snow: version 2, entry count 237, size 811436
-Lion: version 2, entry count 348, size 9370228
+file offset 0x04 + index * 4
 ```
 
-The files differ radically in size and SHA-256, while Lion also has an `ArtFile200.bin`. No resource replacement or mapping is authorized from that fact alone.
+which is one 32-bit table entry early. Its decoded record labeled index `N` was therefore the record the runtime reaches at index `N-1`.
 
-## Objective
+## Live evidence that verifies the correction
 
-Perform a read-only decode of the seven exact `SArtFile.bin` entries used by the Snow-PPC window-frame renderer, on both Snow Leopard and Lion.
+The completed Snow control recovered five exact raw IDs, all 11x11:
 
-The analyzer:
+```text
+0x4e8e
+0x4e90
+0x4e8d
+0x4e8f
+0x4e91
+```
 
-- verifies the pinned CoreUI slice and exact release-local `SArtFile.bin`;
-- parses the little-endian shared-art version/count and offset table;
-- maps each legacy frame-image ID through `image_id - 0x4e20`;
-- records the release-local header offset and a short header prefix;
-- decodes the two `CreateImageFromBytes` constructor slots that the Snow reader can select at scale 1:
-  - width;
-  - height;
-  - provider length;
-  - provider data offset;
-- emits Snow's `CUISharedArtReader::Setup`, `GetImageHeader`, `GetImageType`, `GetEntryCount`, and `CreateImage` bodies so the record fields can be correlated with the actual branch semantics.
+The completed Lion run recovered:
 
-The purpose is to determine which exact frame-image IDs account for Snow's five 11x11 raw-image calls and which release-local Lion records instead produce the observed 256x256 / 2x62 geometry.
+```text
+0x4e8e -> 256x256
+0x4e8d -> 2x62
+```
 
-This stage is static only.
+Applying the corrected `+0x08` table base to the already returned v1 Lion report shifts each lookup to the next v1 table entry:
+
+```text
+runtime 0x4e8e / index 110 -> v1-decoded index 111 -> 256x256 slot
+runtime 0x4e8d / index 109 -> v1-decoded index 110 -> 2x62 slot
+```
+
+Both live geometries therefore agree exactly with the corrected table base. This is a correction to the static analyzer, not a new compatibility rule.
 
 ## Prepared analyzer
 
@@ -79,49 +73,29 @@ Current runtime `main` provides:
 
 ```text
 scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py
-Git blob 35f893dac52ad8e5bfdc5b28504b8e6b63ea685a
+Git blob b6414a4da9906d5250b6445a40d22f90281bc2d5
 ```
 
 Contract:
 
 ```text
-analyzer_version=1
-audit_contract=carbon-gui-coreui-windowframe-sartfile-records-v1
+analyzer_version=2
+audit_contract=carbon-gui-coreui-windowframe-sartfile-records-v2
+sartfile_offset_table_base=0x08
 ```
 
-Pinned CoreUI slices:
+On Snow, v2 also requires the static `Setup()` evidence for mapped-base `+0x08` before reporting PASS.
 
-```text
-Snow Leopard 10.6.8 / 10K549 / ppc7400
-5ee01965d2702b9c05109d17404798509a10ef3d2019b35aefd5bc14199e0839
-
-Lion 10.7.5 / 11G63 / i386
-5218230aa2920f3aaf4983de76da758b5fb5168ed8a74636312cd1a57a9ab30b
-```
-
-Pinned `SArtFile.bin` identities:
-
-```text
-Snow Leopard
-size 811436
-62eb745beaafa0a24111c0ac3b3452cebfda4aeec5e56e51b054ae2d62f778b2
-
-Lion
-size 9370228
-29f9fdb1b8ed8f7f2d25fd331002e0cb362709f74d1c689a9d776b231f1d492b
-```
+Pinned CoreUI and SArtFile identities are unchanged.
 
 ## Safety constraints
 
-- Do not launch the PPC subject.
-- Do not rebuild or load a compatibility dylib.
-- Do not modify `SArtFile.bin`, `ArtFile.bin`, `ArtFile200.bin`, CoreUI, HIToolbox, or the Rosetta cache.
-- Do not copy Snow shared-art records or image bytes to Lion.
-- Do not change a shared-art index, record offset, width, height, provider length, provider offset, image type, or entry count.
-- Retain the accepted exact-six titlebar key translation and exact-six bitmap-info adapter unchanged.
-- Do not change CGContext state, hit masks, classic part codes, mouse routing, or control actions.
-- Do not broaden CGS compatibility.
-- Do not modify XNU, rebuild the kernel, or reboot.
+- Static only: do not launch the PPC subject.
+- Do not rebuild or load a compatibility dylib for this correction.
+- Do not modify SArtFile.bin, ArtFile.bin, ArtFile200.bin, CoreUI, HIToolbox, or the Rosetta cache.
+- Do not copy Snow records or image bytes to Lion.
+- Retain the exact-six titlebar semantic-key translation and exact-six bitmap-info adapter unchanged.
+- Do not change CGContext state, hit masks, classic part codes, mouse routing, CGS compatibility, or XNU.
 
 ## Phase A — update and pin
 
@@ -133,25 +107,23 @@ git fetch origin || exit 1
 git pull --ff-only origin main || exit 1
 
 test "$(git hash-object ./scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py)" = \
-  "35f893dac52ad8e5bfdc5b28504b8e6b63ea685a" || exit 1
+  "b6414a4da9906d5250b6445a40d22f90281bc2d5" || exit 1
 
-/usr/bin/grep -q '^ANALYZER_VERSION = "1"$' \
+/usr/bin/grep -q '^ANALYZER_VERSION = "2"$' \
   ./scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py || exit 1
-/usr/bin/grep -q '^AUDIT_CONTRACT = "carbon-gui-coreui-windowframe-sartfile-records-v1"$' \
+/usr/bin/grep -q '^AUDIT_CONTRACT = "carbon-gui-coreui-windowframe-sartfile-records-v2"$' \
   ./scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py || exit 1
 
-/usr/bin/python -c 'compile(open("./scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py","rb").read(),"audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py","exec")' || exit 1
+/usr/bin/python -c 'compile(open("./scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py","rb").read(),"audit-sartfile-records-v2.py","exec")' || exit 1
 ```
 
-## Phase B — Snow SArtFile frame-record report
+## Phase B — corrected Snow report
 
 On Snow Leopard:
 
 ```sh
-cd /path/to/lion-rosetta-runtime || exit 1
-
 /usr/bin/python ./scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py \
-  ./ppc-carbon-gui-coreui-windowframe-sartfile-records-snow.txt || exit 1
+  ./ppc-carbon-gui-coreui-windowframe-sartfile-records-v2-snow.txt || exit 1
 ```
 
 Require:
@@ -159,40 +131,24 @@ Require:
 ```text
 product_version=10.6.8
 build_version=10K549
-required_arch=ppc7400
 coreui_slice_exact=YES
 sartfile_exact=YES
 sartfile_version=2
 sartfile_entry_count=237
-runtime_ppc_coreui_contract=local_snow_ppc_reference
+sartfile_offset_table_base=0x08
+snow_setup_offset_table_base_verified=YES
 target_frame_image_count=7
 sartfile_frame_record_audit_exact=YES
 RESULT: PASS
 ```
 
-Require all seven image IDs to report `record_valid=YES`:
-
-```text
-0x4e8e
-0x4e90
-0x4e89
-0x4e8a
-0x4e8d
-0x4e8f
-0x4e91
-```
-
-Do not launch the PPC subject afterward.
-
-## Phase C — Lion SArtFile frame-record report
+## Phase C — corrected Lion report
 
 On Lion:
 
 ```sh
-cd /path/to/lion-rosetta-runtime || exit 1
-
 /usr/bin/python ./scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py \
-  ./ppc-carbon-gui-coreui-windowframe-sartfile-records-lion.txt || exit 1
+  ./ppc-carbon-gui-coreui-windowframe-sartfile-records-v2-lion.txt || exit 1
 ```
 
 Require:
@@ -200,71 +156,71 @@ Require:
 ```text
 product_version=10.7.5
 build_version=11G63
-required_arch=i386
 coreui_slice_exact=YES
 sartfile_exact=YES
 sartfile_version=2
 sartfile_entry_count=348
-runtime_ppc_coreui_contract=accepted_snow_ppc_cache
-native_lion_coreui_role=release_reference_only
+sartfile_offset_table_base=0x08
+snow_setup_offset_table_base_verified=accepted_snow_ppc_contract
 target_frame_image_count=7
 sartfile_frame_record_audit_exact=YES
 RESULT: PASS
 ```
 
-Do not launch the PPC subject afterward.
+## Phase D — re-summarize the already captured live logs
 
-## Review gate
+Do not rerun the PPC subject.
 
-Review the two reports together.
+The v1 live artifact itself ran successfully; only the summary's treatment of the final ImageIO call-site saved-r30 field was wrong. Current `main` provides:
 
-### Five exact frame IDs decode as 11x11 on Snow and map to the Lion 256x256 / 2x62 records
+```text
+scripts/summarize-ppc-carbon-gui-coreui-windowframe-shared-art-selection-trace.py
+Git blob eaa0b391a858c9cfb4121dd9e1cbaac85a710cb6
+analyzer_version=2
+audit_contract=carbon-gui-coreui-windowframe-shared-art-selection-live-v2
+```
 
-This would identify the first concrete resource-record mismatch in the missing titlebar/frame background path. The next step should be a passive, ID-gated live trace of `CUISharedArtReader::CreateImage` / `GetImageHeader` inputs and selected slot on Snow and Lion before any record adaptation is considered.
+Re-run the summarizer against the existing logs:
 
-### The seven record geometries differ statically but do not explain the live call counts
+```sh
+/usr/bin/python ./scripts/summarize-ppc-carbon-gui-coreui-windowframe-shared-art-selection-trace.py \
+  ./payload/lion-ppc-carbon-gui-shared-art-selection.log \
+  ./ppc-carbon-gui-coreui-windowframe-shared-art-selection-lion-v2.txt || exit 1
+```
 
-Use Snow's emitted `GetImageType` / `GetEntryCount` / `CreateImage` branch contract to identify which records enter the raw-bytes versus ImageIO path, then trace only that selection state.
+On Snow, the existing v1 summary already passed, but the same v2 summarizer may be used against the preserved Snow subject log to produce:
 
-### The SArtFile records are geometrically equivalent
+```text
+ppc-carbon-gui-coreui-windowframe-shared-art-selection-snow-v2.txt
+```
 
-Close the archive record hypothesis. The next discriminator becomes reader setup/mapped-base/cache state or the held CGContext/backing-state path rather than record rewriting.
-
-### Any record also supplies hit-region data
-
-Do not infer a part-code fix from shared storage alone. First prove the exact live hit-region consumer and output.
-
-## Observed result
-
-Both reports pass with exact CoreUI and `SArtFile.bin` identities. Snow's seven target records are all type 2 / count 1, so the old PPC reader selects raw slot 0; six decode as 11x11 and `0x4e89` decodes as 1x23. Because the prior healthy Snow live trace contained five 11x11 raw calls and no 1x23 call, `0x4e89` was not one of the five active raw selections.
-
-At the same indices, Lion changes five records to type 1 / count 2 and two to type 3 / count 3. The Lion slot-1 record for `0x4e8f` is exactly 256x256, uniquely matching one previously observed live raw call. The live 2x62 raw call matches slot 1 of either `0x4e8e` or `0x4e8d`. This proves a concrete resource-record contract mismatch, but the exact live ID/path correlation is still missing.
-
-Follow `docs/ppc-carbon-gui-coreui-windowframe-shared-art-selection-live-trace.md` next. It preserves the accepted compatibility stack and passively recovers the exact frame ID at the raw and ImageIO construction boundaries before any metadata adaptation is considered.
+The v2 summarizer validates exact IDs only for the raw `CreateImageFromBytes` calls. At `0x0002afe8`, `CreateImage(long,float)` has already reused `r30`; the old `frame_id=0` ImageIO field is therefore not an image-ID measurement and is retained only as saved-register/count/result evidence.
 
 ## Return evidence
 
 Return exactly:
 
 ```text
-ppc-carbon-gui-coreui-windowframe-sartfile-records-snow.txt
-ppc-carbon-gui-coreui-windowframe-sartfile-records-lion.txt
+ppc-carbon-gui-coreui-windowframe-sartfile-records-v2-snow.txt
+ppc-carbon-gui-coreui-windowframe-sartfile-records-v2-lion.txt
+ppc-carbon-gui-coreui-windowframe-shared-art-selection-lion-v2.txt
 ```
 
-No binary, resource archive, or live trace is required.
+If convenient, also return the Snow v2 live summary, but do not rerun the PPC subject merely to create it.
 
 ## Current boundary
 
 ```text
-shared-art source audit                          PASS
-Snow CreateImageFromBytes direct caller          CUISharedArtReader::CreateImage(long,float)
-Snow shared-art ID bias                          image ID - 0x4e20
-target frame-image indices                       105,106,109,110,111,112,113
-Snow SArtFile                                    v2 / 237 entries / 811436 bytes
-Lion SArtFile                                    v2 / 348 entries / 9370228 bytes
-live Snow divergent stream                       5 x 11x11
-live Lion divergent stream                       256x256 + 2x62
-resource/record rewrite                          NOT AUTHORIZED
-next step                                        guarded shared-art selection live trace
-XNU                                              no source change indicated
+v1 SArtFile table base                          0x04 / WRONG / superseded
+Snow PPC Setup table base                       mapped base + 0x08 / PROVEN
+v2 SArtFile analyzer                            prepared
+Snow live raw-ID control                        PASS
+Lion accepted compatibility runner              PASS
+Lion raw 0x4e8e                                 256x256 / NONNULL
+Lion raw 0x4e8d                                 2x62 / NONNULL
+Lion ImageIO calls                              3 / NONNULL
+ImageIO final-call frame-ID recovery            INVALID BY CALLSITE / not a failure
+PPC rerun                                       NOT REQUIRED
+resource rewrite                                NOT AUTHORIZED
+XNU                                             no source change indicated
 ```
