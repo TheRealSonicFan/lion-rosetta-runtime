@@ -5,42 +5,43 @@
 #include <string.h>
 #include <unistd.h>
 
-#define BUILD_ID "hitoolbox-titlebar-drag-trace-v1"
+#define BUILD_ID "hitoolbox-titlebar-drag-trace-v2"
 #define BUILD_MARKER "PM_HITOOLBOX_TITLEBAR_DRAG_TRACE_BUILD_ID:" BUILD_ID
 #define MODE_ENV "ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_MODE"
-#define MODE_SNOW "snow-passive-v1"
-#define MODE_LION "lion-passive-v1"
-#define HITOOLBOX_TOKEN "/HIToolbox.framework/"
+#define MODE_SNOW "snow-passive-v2"
+#define MODE_LION "lion-passive-v2"
+#define SUBJECT_TOKEN "ppc-carbon-gui-smoketest-private-dyld"
 
 struct interpose_tuple {
     const void *replacement;
     const void *replacee;
 };
 
-typedef void (*drag_window_fn)(WindowRef, Point, const Rect *);
-typedef WindowPartCode (*find_window_fn)(Point, WindowRef *);
+typedef OSStatus (*install_timer_fn)(EventLoopRef,
+                                     EventTimerInterval,
+                                     EventTimerInterval,
+                                     EventLoopTimerUPP,
+                                     void *,
+                                     EventLoopTimerRef *);
 
-static drag_window_fn gDragOriginal;
-static find_window_fn gFindOriginal;
-static volatile unsigned int gDragIndex;
-static volatile unsigned int gFindIndex;
+static install_timer_fn gInstallTimerOriginal;
+static EventHandlerUPP gMouseHandlerUPP;
+static EventHandlerRef gMouseHandlerRef;
+static volatile unsigned int gEventIndex;
 static int gBuildLogged;
 
-static void rosetta_DragWindow(WindowRef window, Point startPt, const Rect *boundsRect);
-static WindowPartCode rosetta_FindWindow(Point where, WindowRef *window);
+static OSStatus rosetta_InstallEventLoopTimer(EventLoopRef inEventLoop,
+                                               EventTimerInterval inFireDelay,
+                                               EventTimerInterval inInterval,
+                                               EventLoopTimerUPP inTimerProc,
+                                               void *inTimerData,
+                                               EventLoopTimerRef *outTimer);
 
 __attribute__((used))
-static struct interpose_tuple sDragInterpose
+static struct interpose_tuple sTimerInterpose
 __attribute__((section("__DATA,__interpose"))) = {
-    (const void *)(uintptr_t)&rosetta_DragWindow,
-    (const void *)(uintptr_t)&DragWindow
-};
-
-__attribute__((used))
-static struct interpose_tuple sFindInterpose
-__attribute__((section("__DATA,__interpose"))) = {
-    (const void *)(uintptr_t)&rosetta_FindWindow,
-    (const void *)(uintptr_t)&FindWindow
+    (const void *)(uintptr_t)&rosetta_InstallEventLoopTimer,
+    (const void *)(uintptr_t)&InstallEventLoopTimer
 };
 
 static void write_literal(const char *s)
@@ -124,87 +125,31 @@ static void log_build_once(void)
     }
 }
 
-__attribute__((constructor))
-static void drag_trace_init(void)
-{
-    if (mode_value())
-        log_build_once();
-}
-
-static int caller_info(const void *caller, uint32_t *offset)
+static int caller_is_subject(const void *caller)
 {
     Dl_info info;
-    uintptr_t addr = (uintptr_t)caller;
-    uintptr_t base;
-    if (offset)
-        *offset = 0;
     memset(&info, 0, sizeof(info));
-    if (!caller || dladdr(caller, &info) == 0 || !info.dli_fname || !info.dli_fbase)
+    if (!caller || dladdr(caller, &info) == 0 || !info.dli_fname)
         return 0;
-    if (!strstr(info.dli_fname, HITOOLBOX_TOKEN))
-        return 0;
-    base = (uintptr_t)info.dli_fbase;
-    if (addr < base)
-        return 0;
-    if (offset)
-        *offset = (uint32_t)(addr - base);
-    return 1;
+    return strstr(info.dli_fname, SUBJECT_TOKEN) != NULL;
 }
 
-static drag_window_fn drag_original(void)
+static install_timer_fn timer_original(void)
 {
-    if (!gDragOriginal)
-        gDragOriginal = (drag_window_fn)(uintptr_t)sDragInterpose.replacee;
-    return gDragOriginal;
+    if (!gInstallTimerOriginal)
+        gInstallTimerOriginal =
+            (install_timer_fn)(uintptr_t)sTimerInterpose.replacee;
+    return gInstallTimerOriginal;
 }
 
-static find_window_fn find_original(void)
+static void log_install(OSStatus status)
 {
-    if (!gFindOriginal)
-        gFindOriginal = (find_window_fn)(uintptr_t)sFindInterpose.replacee;
-    return gFindOriginal;
-}
-
-static void append_rect(char *b, size_t c, size_t *p, const char *prefix, const Rect *r)
-{
-    append_text(b, c, p, prefix);
-    if (!r) {
-        append_text(b, c, p, "NULL");
-        return;
-    }
-    append_text(b, c, p, "left=");
-    append_int(b, c, p, r->left);
-    append_text(b, c, p, ",top=");
-    append_int(b, c, p, r->top);
-    append_text(b, c, p, ",right=");
-    append_int(b, c, p, r->right);
-    append_text(b, c, p, ",bottom=");
-    append_int(b, c, p, r->bottom);
-}
-
-static void log_drag_call(unsigned int index, const char *mode, uint32_t callerOffset,
-                          int hitoolbox, Point startPt, OSStatus boundsStatus,
-                          const Rect *before)
-{
-    char b[640];
+    char b[192];
     size_t p = 0;
     log_build_once();
-    append_text(b, sizeof(b), &p, "PM_HITOOLBOX_TITLEBAR_DRAG_TRACE_CALL:index=");
-    append_uint(b, sizeof(b), &p, index);
-    append_text(b, sizeof(b), &p, " mode=");
-    append_text(b, sizeof(b), &p, mode);
-    append_text(b, sizeof(b), &p, " caller_offset=");
-    append_hex32(b, sizeof(b), &p, callerOffset);
-    append_text(b, sizeof(b), &p, " hitoolbox=");
-    append_text(b, sizeof(b), &p, hitoolbox ? "YES" : "NO");
-    append_text(b, sizeof(b), &p, " start_h=");
-    append_int(b, sizeof(b), &p, startPt.h);
-    append_text(b, sizeof(b), &p, " start_v=");
-    append_int(b, sizeof(b), &p, startPt.v);
-    append_text(b, sizeof(b), &p, " bounds_status=");
-    append_int(b, sizeof(b), &p, boundsStatus);
-    append_text(b, sizeof(b), &p, " ");
-    append_rect(b, sizeof(b), &p, "before_", boundsStatus == noErr ? before : NULL);
+    append_text(b, sizeof(b), &p,
+                "PM_HITOOLBOX_TITLEBAR_INPUT_HANDLER_INSTALL:target=dispatcher status=");
+    append_int(b, sizeof(b), &p, status);
     append_text(b, sizeof(b), &p, "\n");
     if (p < sizeof(b)) {
         b[p] = '\0';
@@ -212,55 +157,55 @@ static void log_drag_call(unsigned int index, const char *mode, uint32_t callerO
     }
 }
 
-static void log_drag_result(unsigned int index, uint32_t callerOffset,
-                            OSStatus beforeStatus, const Rect *before,
-                            OSStatus afterStatus, const Rect *after)
-{
-    char b[640];
-    size_t p = 0;
-    int moved = 0;
-    if (beforeStatus == noErr && afterStatus == noErr && before && after)
-        moved = memcmp(before, after, sizeof(Rect)) != 0;
-    log_build_once();
-    append_text(b, sizeof(b), &p, "PM_HITOOLBOX_TITLEBAR_DRAG_TRACE_RESULT:index=");
-    append_uint(b, sizeof(b), &p, index);
-    append_text(b, sizeof(b), &p, " caller_offset=");
-    append_hex32(b, sizeof(b), &p, callerOffset);
-    append_text(b, sizeof(b), &p, " moved=");
-    append_text(b, sizeof(b), &p, moved ? "YES" : "NO");
-    append_text(b, sizeof(b), &p, " before_status=");
-    append_int(b, sizeof(b), &p, beforeStatus);
-    append_text(b, sizeof(b), &p, " after_status=");
-    append_int(b, sizeof(b), &p, afterStatus);
-    append_text(b, sizeof(b), &p, " ");
-    append_rect(b, sizeof(b), &p, "after_", afterStatus == noErr ? after : NULL);
-    append_text(b, sizeof(b), &p, "\n");
-    if (p < sizeof(b)) {
-        b[p] = '\0';
-        write_literal(b);
-    }
-}
-
-static void log_find(unsigned int index, uint32_t callerOffset, int hitoolbox,
-                     Point where, WindowPartCode part, WindowRef window)
+static void log_event(EventRef event)
 {
     char b[512];
     size_t p = 0;
+    Point where;
+    WindowRef hitWindow = NULL;
+    WindowPartCode part = inDesk;
+    OSStatus locationStatus;
+    UInt32 kind;
+    unsigned int index;
+    const char *mode = mode_value();
+
+    if (!mode || !event)
+        return;
+
+    kind = GetEventKind(event);
+    locationStatus = GetEventParameter(event,
+                                       kEventParamMouseLocation,
+                                       typeQDPoint,
+                                       NULL,
+                                       sizeof(where),
+                                       NULL,
+                                       &where);
+    if (locationStatus == noErr)
+        part = FindWindow(where, &hitWindow);
+
+    index = ++gEventIndex;
     log_build_once();
-    append_text(b, sizeof(b), &p, "PM_HITOOLBOX_TITLEBAR_FINDWINDOW_TRACE:index=");
+    append_text(b, sizeof(b), &p,
+                "PM_HITOOLBOX_TITLEBAR_INPUT_EVENT:index=");
     append_uint(b, sizeof(b), &p, index);
-    append_text(b, sizeof(b), &p, " caller_offset=");
-    append_hex32(b, sizeof(b), &p, callerOffset);
-    append_text(b, sizeof(b), &p, " hitoolbox=");
-    append_text(b, sizeof(b), &p, hitoolbox ? "YES" : "NO");
-    append_text(b, sizeof(b), &p, " point_h=");
-    append_int(b, sizeof(b), &p, where.h);
-    append_text(b, sizeof(b), &p, " point_v=");
-    append_int(b, sizeof(b), &p, where.v);
-    append_text(b, sizeof(b), &p, " part=");
-    append_int(b, sizeof(b), &p, part);
-    append_text(b, sizeof(b), &p, " window=");
-    append_hex32(b, sizeof(b), &p, (uint32_t)(uintptr_t)window);
+    append_text(b, sizeof(b), &p, " mode=");
+    append_text(b, sizeof(b), &p, mode);
+    append_text(b, sizeof(b), &p, " kind=");
+    append_uint(b, sizeof(b), &p, kind);
+    append_text(b, sizeof(b), &p, " location_status=");
+    append_int(b, sizeof(b), &p, locationStatus);
+    append_text(b, sizeof(b), &p, " h=");
+    append_int(b, sizeof(b), &p,
+               locationStatus == noErr ? where.h : 0);
+    append_text(b, sizeof(b), &p, " v=");
+    append_int(b, sizeof(b), &p,
+               locationStatus == noErr ? where.v : 0);
+    append_text(b, sizeof(b), &p, " find_part=");
+    append_int(b, sizeof(b), &p,
+               locationStatus == noErr ? part : -1);
+    append_text(b, sizeof(b), &p, " find_window=");
+    append_hex32(b, sizeof(b), &p,
+                 (uint32_t)(uintptr_t)hitWindow);
     append_text(b, sizeof(b), &p, "\n");
     if (p < sizeof(b)) {
         b[p] = '\0';
@@ -268,60 +213,104 @@ static void log_find(unsigned int index, uint32_t callerOffset, int hitoolbox,
     }
 }
 
-static void rosetta_DragWindow(WindowRef window, Point startPt, const Rect *boundsRect)
+static OSStatus mouse_handler(EventHandlerCallRef nextHandler,
+                              EventRef event,
+                              void *userData)
 {
-    drag_window_fn fn = drag_original();
-    const char *mode = mode_value();
-    const void *caller = __builtin_return_address(0);
-    uint32_t callerOffset = 0;
-    int hitoolbox = caller_info(caller, &callerOffset);
-    Rect before;
-    Rect after;
-    OSStatus beforeStatus = paramErr;
-    OSStatus afterStatus = paramErr;
-    unsigned int index;
-
-    if (!fn || fn == (drag_window_fn)&rosetta_DragWindow)
-        return;
-
-    if (!mode) {
-        fn(window, startPt, boundsRect);
-        return;
-    }
-
-    index = ++gDragIndex;
-    if (window)
-        beforeStatus = GetWindowBounds(window, kWindowStructureRgn, &before);
-    log_drag_call(index, mode, callerOffset, hitoolbox, startPt,
-                  beforeStatus, beforeStatus == noErr ? &before : NULL);
-
-    fn(window, startPt, boundsRect);
-
-    if (window)
-        afterStatus = GetWindowBounds(window, kWindowStructureRgn, &after);
-    log_drag_result(index, callerOffset, beforeStatus,
-                    beforeStatus == noErr ? &before : NULL,
-                    afterStatus, afterStatus == noErr ? &after : NULL);
+    (void)nextHandler;
+    (void)userData;
+    log_event(event);
+    return eventNotHandledErr;
 }
 
-static WindowPartCode rosetta_FindWindow(Point where, WindowRef *window)
+static void install_dispatcher_handler(void)
 {
-    find_window_fn fn = find_original();
+    static const EventTypeSpec types[] = {
+        { kEventClassMouse, kEventMouseDown },
+        { kEventClassMouse, kEventMouseDragged },
+        { kEventClassMouse, kEventMouseUp }
+    };
+    OSStatus status;
+
+    if (!mode_value())
+        return;
+
+    log_build_once();
+    gMouseHandlerUPP = NewEventHandlerUPP(mouse_handler);
+    if (!gMouseHandlerUPP) {
+        log_install(memFullErr);
+        return;
+    }
+
+    status = InstallEventHandler(GetEventDispatcherTarget(),
+                                 gMouseHandlerUPP,
+                                 (ItemCount)(sizeof(types) / sizeof(types[0])),
+                                 types,
+                                 NULL,
+                                 &gMouseHandlerRef);
+    log_install(status);
+}
+
+__attribute__((constructor))
+static void drag_trace_init(void)
+{
+    install_dispatcher_handler();
+}
+
+static OSStatus rosetta_InstallEventLoopTimer(EventLoopRef inEventLoop,
+                                               EventTimerInterval inFireDelay,
+                                               EventTimerInterval inInterval,
+                                               EventLoopTimerUPP inTimerProc,
+                                               void *inTimerData,
+                                               EventLoopTimerRef *outTimer)
+{
+    install_timer_fn fn = timer_original();
     const char *mode = mode_value();
     const void *caller = __builtin_return_address(0);
-    uint32_t callerOffset = 0;
-    int hitoolbox = caller_info(caller, &callerOffset);
-    WindowPartCode part;
-    unsigned int index;
+    EventTimerInterval effective = inFireDelay;
+    int exact = 0;
+    OSStatus status;
+    char b[320];
+    size_t p = 0;
 
-    if (!fn || fn == (find_window_fn)&rosetta_FindWindow)
-        return inDesk;
+    if (!fn || fn == (install_timer_fn)&rosetta_InstallEventLoopTimer)
+        return paramErr;
 
-    part = fn(where, window);
-    if (mode) {
-        index = ++gFindIndex;
-        log_find(index, callerOffset, hitoolbox, where, part,
-                 window ? *window : NULL);
+    if (mode && caller_is_subject(caller) &&
+        inFireDelay > 1.99 && inFireDelay < 2.01 &&
+        inInterval == 0.0) {
+        effective = 8.0;
+        exact = 1;
     }
-    return part;
+
+    status = fn(inEventLoop,
+                effective,
+                inInterval,
+                inTimerProc,
+                inTimerData,
+                outTimer);
+
+    if (mode && caller_is_subject(caller)) {
+        log_build_once();
+        append_text(b, sizeof(b), &p,
+                    "PM_HITOOLBOX_TITLEBAR_INPUT_TIMER:mode=");
+        append_text(b, sizeof(b), &p, mode);
+        append_text(b, sizeof(b), &p, " from_ms=");
+        append_uint(b, sizeof(b), &p,
+                    (unsigned long)(inFireDelay * 1000.0 + 0.5));
+        append_text(b, sizeof(b), &p, " to_ms=");
+        append_uint(b, sizeof(b), &p,
+                    (unsigned long)(effective * 1000.0 + 0.5));
+        append_text(b, sizeof(b), &p, " exact=");
+        append_text(b, sizeof(b), &p, exact ? "YES" : "NO");
+        append_text(b, sizeof(b), &p, " status=");
+        append_int(b, sizeof(b), &p, status);
+        append_text(b, sizeof(b), &p, "\n");
+        if (p < sizeof(b)) {
+            b[p] = '\0';
+            write_literal(b);
+        }
+    }
+
+    return status;
 }
