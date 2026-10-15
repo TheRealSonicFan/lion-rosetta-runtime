@@ -124,6 +124,13 @@ static void log_build_once(void)
     }
 }
 
+__attribute__((constructor))
+static void drag_trace_init(void)
+{
+    if (mode_value())
+        log_build_once();
+}
+
 static int caller_info(const void *caller, uint32_t *offset)
 {
     Dl_info info;
