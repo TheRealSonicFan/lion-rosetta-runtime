@@ -7,8 +7,8 @@ CORE_COMPAT="${3:-./pm-carbon-gui-cgs-next-event-inline-compat.dylib}"
 CORE_COMPAT_SHA_FILE="${4:-$CORE_COMPAT.sha256}"
 OBSERVER="${5:-./cgwindowlist-pid-observer}"
 OBSERVER_SHA_FILE="${6:-$OBSERVER.sha256}"
-SUBJECT_LOG="${7:-./ppc-carbon-gui-coreui-image-bitmapinfo-compat-snow.log}"
-OBSERVER_LOG="${8:-./ppc-carbon-gui-coreui-image-bitmapinfo-compat-snow-observer.log}"
+SUBJECT_LOG="${7:-./ppc-carbon-gui-cgs-next-event-inline-snow.log}"
+OBSERVER_LOG="${8:-./ppc-carbon-gui-cgs-next-event-inline-snow-observer.log}"
 
 PRIVATE_DYLD="/usr/oah/dyld"
 EXPECTED_EXE_SHA="fe2ddc8e76e996c242facd60e56aa2203ffc762dec941fc6b1bbf0fe25613067"
@@ -192,7 +192,7 @@ has_ppc32_arch "$TITLEBAR_COMPAT" || fail "titlebar compatibility dylib is not 3
 has_ppc32_arch "$IMAGE_COMPAT" || fail "image compatibility dylib is not 32-bit PPC"
 has_i386_arch "$OBSERVER" || fail "observer is not i386"
 
-echo "== one exact Snow CoreUI bitmap-info passthrough compatibility control ==" | /usr/bin/tee -a "$SUBJECT_LOG"
+echo "== Snow CGS next-event inline passthrough + input control ==" | /usr/bin/tee -a "$SUBJECT_LOG"
 INSERT_LIBS="$CORE_COMPAT:$TITLEBAR_COMPAT:$IMAGE_COMPAT"
 if [ -n "$FRAME_TRACE" ]; then
     INSERT_LIBS="$INSERT_LIBS:$FRAME_TRACE"
