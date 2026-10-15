@@ -5,8 +5,8 @@ OUT="${1:-./pm-hitoolbox-titlebar-drag-trace.dylib}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SRC="$ROOT/tests/ppc-hitoolbox-titlebar-drag-trace-interposer.c"
-EXPECTED_BUILD_ID="hitoolbox-titlebar-drag-trace-v1"
-EXPECTED_SOURCE_BLOB="a364995f4bf9e5456158de2b78ec75aa6ed8c95a"
+EXPECTED_BUILD_ID="hitoolbox-titlebar-drag-trace-v2"
+EXPECTED_SOURCE_BLOB="2c91ae875f0497b7aed96eb8b47a8ca7cbb06768"
 INFO="$OUT.info.txt"
 SHA="$OUT.sha256"
 TMP_DYLIB="$(/usr/bin/mktemp /tmp/pm-hitoolbox-titlebar-drag-trace.XXXXXX.dylib)"
@@ -129,7 +129,7 @@ SOURCE_SHA="$(/usr/bin/shasum -a 256 "$SRC" | /usr/bin/awk '{print $1}')"
     /usr/bin/otool -l "$OUT" | /usr/bin/grep -A10 -B2 '__interpose' || true
     echo
     echo "== symbols =="
-    /usr/bin/nm -m "$OUT" | /usr/bin/grep -E '(_DragWindow|_FindWindow|_GetWindowBounds)' || true
+    /usr/bin/nm -m "$OUT" | /usr/bin/grep -E '(_InstallEventLoopTimer|_InstallEventHandler|_GetEventDispatcherTarget|_GetEventParameter|_FindWindow)' || true
     echo
     echo "== markers =="
     /usr/bin/strings "$OUT" | /usr/bin/grep -E 'PM_HITOOLBOX_TITLEBAR_(DRAG|FINDWINDOW)' || true
@@ -143,12 +143,12 @@ echo "$INTERPOSE_SECTION" | /usr/bin/grep -q '__interpose' || {
     echo "error: missing __interpose" >&2
     exit 71
 }
-echo "$INTERPOSE_SECTION" | /usr/bin/grep -Fq 'size 0x00000010' || {
-    echo "error: interpose is not two PPC tuples" >&2
+echo "$INTERPOSE_SECTION" | /usr/bin/grep -Fq 'size 0x00000008' || {
+    echo "error: interpose is not one PPC tuple" >&2
     exit 71
 }
 
-for sym in _DragWindow _FindWindow _GetWindowBounds; do
+for sym in _InstallEventLoopTimer _InstallEventHandler _GetEventDispatcherTarget _GetEventParameter _FindWindow; do
     /usr/bin/nm -m "$OUT" | /usr/bin/grep -Fq "$sym" || {
         echo "error: missing symbol: $sym" >&2
         exit 72
