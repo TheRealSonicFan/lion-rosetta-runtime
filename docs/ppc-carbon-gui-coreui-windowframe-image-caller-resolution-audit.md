@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED STATIC STEP after the all-CoreUI `CGImageCreate` live trace found one new non-button constructor stream that differs sharply between healthy Snow Leopard and faulty Lion.
+COMPLETED STATIC PASS. The divergent Snow-PPC `CGImageCreate` return site `0x0002ad34` resolves to `CUISharedArtReader::CreateImageFromBytes(long,long)`, which obtains a serialized image header through `CUISharedArtReader::GetImageHeader(long)` before creating the provider/image. The next controlled step is `docs/ppc-carbon-gui-coreui-windowframe-shared-art-source-audit.md`.
 
 ## Reviewed live result
 
@@ -236,6 +236,33 @@ Close it as incidental initialization. The next visual discriminator becomes the
 
 This would connect the new manual interaction failure to the visual defect. In that case, do not patch part codes; first trace the shared source data and the live hit-region output.
 
+## Observed result
+
+Both returned reports pass with the exact pinned CoreUI slices.
+
+Snow resolves the new divergent site as:
+
+```text
+0x0002ad34 -> __ZN18CUISharedArtReader20CreateImageFromBytesEll
+direct_symbol_reference_count=1
+0002af48 bl __ZN18CUISharedArtReader20CreateImageFromBytesEll
+```
+
+Inside that function, `GetImageHeader(long)` is called first. The returned header drives the constructor directly: the old PPC code reads and byte-swaps halfwords at `+0x0c` / `+0x0e` for width/height, a word at `+0x10` for provider length, and a word at `+0x14` for the provider data offset; `bytesPerRow` is then derived as width times four before `CGImageCreate`. This converts the live 11x11 versus 256x256 / 2x62 difference from a generic constructor symptom into a serialized shared-art header/source boundary.
+
+The two controls resolve as expected:
+
+```text
+0x0001bdb0 -> CUIRenderer::CreateGrayCubicGradientImage(int,int,int)
+0x000299e0 -> CUIElement::LoadFromArtFile(unsigned char const*)
+```
+
+Lion native CoreUI has the `LoadFromArtFile` control symbol but not the same `CUISharedArtReader::CreateImageFromBytes` or gray-gradient symbol names, consistent with a release refactor. This does not alter the accepted runtime model: translated PPC code on Lion still executes the Snow-era CoreUI image.
+
+The existing renderer audit already places seven legacy `CUIRenderer::CreateImage` requests in Snow-PPC `DrawWindowFrameDark`; the next step is therefore to resolve the unique `CreateImageFromBytes` caller and the `GetImageHeader` source/resource table, not to alter `CGImageCreate`, add another bitmap-info rule, or replace CoreUI resources.
+
+Follow `docs/ppc-carbon-gui-coreui-windowframe-shared-art-source-audit.md`.
+
 ## Return evidence
 
 Return exactly:
@@ -260,6 +287,6 @@ all 0x0002ad34 results                            NONNULL
 new bitmapInfo adaptation                         NOT AUTHORIZED
 Lion traffic-light clicks                         NON-FUNCTIONAL (manual)
 Lion titlebar drag                                NON-FUNCTIONAL (manual)
-next step                                         static CoreUI image caller resolution
+next step                                         static shared-art source audit
 XNU                                               no source change indicated
 ```
