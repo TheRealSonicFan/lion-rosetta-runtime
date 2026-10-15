@@ -143,9 +143,11 @@ RESULT: PASS
 
 ### A standard/window-event handler directly reaches DragWindow
 
-The next live test should trace only public event delivery plus `DragWindow`
-entry/exit and window bounds, with one manual titlebar drag on Snow and one on
-Lion. Do not interpose `HitSelf` or rewrite part codes.
+This branch is the observed static result, but the direct same-image branch
+cannot be diagnosed with dyld interposition on `DragWindow`. Use the v2
+dispatcher-target input monitor in
+`docs/ppc-carbon-gui-hitoolbox-titlebar-drag-live-trace.md` instead. Preserve
+the public `FindWindow` result exactly and do not interpose `HitSelf`.
 
 ### The event handler bypasses DragWindow and reaches TWindowTracker directly
 
@@ -193,10 +195,13 @@ DragWindow
 
 The established hit path is also intact:
 `ThemeWindowDef::HitSelf -> GetThemeWindowRegionHit ->
-HIThemeGetWindowRegionHit`. This is enough to avoid private C++ interposition
-for the first live discriminator. The narrow next boundary is exported
-`DragWindow`, with `FindWindow` recorded only as passive supporting
-evidence and the existing native observer proving actual movement.
+HIThemeGetWindowRegionHit`. The later Snow live attempt established an
+important tooling constraint: the decisive `TrackSelf -> DragWindow` and
+`DragWindow -> TrackWindow` transfers are direct branches inside the same
+HIToolbox Mach-O image, so dyld `__interpose` cannot observe them. The first
+live discriminator therefore moves one level outward to the public Carbon
+event-dispatcher target, with public `FindWindow` used only as an
+observation-only hit classifier.
 
 ## Return evidence
 
