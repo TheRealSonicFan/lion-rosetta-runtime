@@ -4,6 +4,10 @@
 
 NEXT CONTROLLED DIAGNOSTIC REPAIR after the caller-filtered window-frame CUIDraw v1 trace produced zero runtime markers on both Snow Leopard and Lion.
 
+## Phase A repair note
+
+An earlier current-main runner edit accidentally duplicated a tail block through shell-text replacement expansion, leaving the Snow runner with an unterminated single quote and an unexpected EOF. The Snow and Lion runners have now both been rebuilt from their last known-good optional-trace versions, then re-applied with only the v2 build/source/mode pins and trace counters. Their current blobs are the Phase A pins below. Do not use the superseded runner blobs from an older checkout.
+
 ## Why this rerun is required
 
 The v1 trace artifact was valid and loaded, and both accepted runtime stacks remained healthy, but neither complete subject log contained any v1 runtime trace marker. The v1 interposer emitted its build marker only after all of these checks succeeded:
@@ -29,10 +33,10 @@ scripts/build-ppc-hitoolbox-windowframe-cuidraw-trace-on-snowleopard.sh
 Git blob 887ed8dc2ab9fa2f2e2e0f0135d2da22394b80cf
 
 scripts/run-snowleopard-ppc-carbon-gui-coreui-image-bitmapinfo-compat-control.sh
-Git blob a642dc41205f8d3c9ee17a980322e1b3e2b2df0f
+Git blob f6ca0508679663cd65ba96b5be30620f05f1a5b8
 
 scripts/run-lion-ppc-carbon-gui-coreui-image-bitmapinfo-compat.sh
-Git blob 4cbe7f13a163246983f9747bd15c1305c7236a57
+Git blob 6f6f93a288674fdabe99cb6e7c18d6ade6216136
 ```
 
 Trace build contract:
@@ -83,10 +87,10 @@ test "$(git hash-object ./scripts/build-ppc-hitoolbox-windowframe-cuidraw-trace-
   "887ed8dc2ab9fa2f2e2e0f0135d2da22394b80cf" || exit 1
 
 test "$(git hash-object ./scripts/run-snowleopard-ppc-carbon-gui-coreui-image-bitmapinfo-compat-control.sh)" = \
-  "a642dc41205f8d3c9ee17a980322e1b3e2b2df0f" || exit 1
+  "f6ca0508679663cd65ba96b5be30620f05f1a5b8" || exit 1
 
 test "$(git hash-object ./scripts/run-lion-ppc-carbon-gui-coreui-image-bitmapinfo-compat.sh)" = \
-  "4cbe7f13a163246983f9747bd15c1305c7236a57" || exit 1
+  "6f6f93a288674fdabe99cb6e7c18d6ade6216136" || exit 1
 
 /bin/bash -n ./scripts/build-ppc-hitoolbox-windowframe-cuidraw-trace-on-snowleopard.sh || exit 1
 /bin/bash -n ./scripts/run-snowleopard-ppc-carbon-gui-coreui-image-bitmapinfo-compat-control.sh || exit 1
