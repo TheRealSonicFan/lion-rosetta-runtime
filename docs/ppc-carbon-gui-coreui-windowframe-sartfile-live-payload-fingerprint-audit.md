@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED STATIC STEP. The corrected v2 SArtFile reports and v2 Lion live summary now close the branch-selection question for the five frame IDs that are actually active in the healthy Snow control.
+COMPLETED STATIC PASS. All five Snow live-active provider ranges are valid and the Lion SArtFile inventory passes. Three Snow payloads survive byte-for-byte under different Lion shared-art IDs, while two have no exact match among Lion's 11x11/484-byte SArtFile candidates. The next step is `docs/ppc-carbon-gui-coreui-windowframe-lion-legacy-payload-provenance-audit.md`.
 
 Snow's exact live-active set is:
 
@@ -174,18 +174,30 @@ ppc-carbon-gui-coreui-windowframe-sartfile-live-payload-fingerprints-snow.txt
 ppc-carbon-gui-coreui-windowframe-sartfile-live-payload-fingerprints-lion.txt
 ```
 
+## Observed result
+
+Both reports pass. Snow supplies five exact 484-byte provider SHA-256 fingerprints. Lion contains exact byte-for-byte SArtFile matches for three of them:
+
+```text
+Snow 0x4e8d -> Lion 0x4e75
+Snow 0x4e8e -> Lion 0x4e76
+Snow 0x4e90 -> Lion 0x4e78
+```
+
+The Snow `0x4e8f` and `0x4e91` hashes do not appear among Lion's 44 exact 11x11/484-byte SArtFile candidates. This is a partial relocation result: do not add a mapping yet. Follow `docs/ppc-carbon-gui-coreui-windowframe-lion-legacy-payload-provenance-audit.md` to verify the three relocations across all 484-byte SArtFile slots and search Lion ArtFile10/ArtFile20 old-loader cells for the two unmatched fingerprints.
+
 ## Current boundary
 
 ```text
-corrected SArtFile v2 audit                      PASS
-Snow Setup offset-table base                     +0x08 / PROVEN
-Snow live-active IDs                             4e8e,4e90,4e8d,4e8f,4e91
-Snow active representation                       five type2/count1 raw 11x11
-Lion live raw partition                          4e8e=256x256;4e8d=2x62
-Lion live ImageIO partition                      4e90,4e8f,4e91 / deduced exactly
-branch-selection mismatch                        CLOSED / CORRELATED
-legacy payload survival in Lion SArtFile         UNKNOWN
-record/resource adaptation                       NOT AUTHORIZED
-next step                                        static live-active payload fingerprint audit
+live-active payload fingerprint audit            PASS
+Snow exact payload fingerprints                  5
+Lion SArtFile exact-byte relocations              3
+Snow 4e8d -> Lion                                4e75
+Snow 4e8e -> Lion                                4e76
+Snow 4e90 -> Lion                                4e78
+Snow 4e8f / 4e91 SArtFile exact match            NOT FOUND
+ArtFile10/ArtFile20 provenance                   UNKNOWN
+new mapping                                      NOT AUTHORIZED
+next step                                        Lion legacy-payload provenance audit
 XNU                                              no source change indicated
 ```
