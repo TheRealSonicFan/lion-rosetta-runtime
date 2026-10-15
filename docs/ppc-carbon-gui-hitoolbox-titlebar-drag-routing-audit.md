@@ -2,8 +2,11 @@
 
 ## Status
 
-NEXT CONTROLLED STATIC STEP after the CoreUI window-frame rendering contract is
-closed.
+COMPLETED STATIC PASS. The exact Snow PPC HIToolbox resolves a direct titlebar
+frame-view dispatch to the public `DragWindow` boundary, and `DragWindow`
+directly constructs `TDragTracker` then calls `TWindowTracker::TrackWindow`.
+The next controlled step is
+`docs/ppc-carbon-gui-hitoolbox-titlebar-drag-live-trace.md`.
 
 The exact-two slot-0 format correction is now visually successful on Lion:
 the titlebar background and both top corners are restored while the accepted
@@ -160,6 +163,41 @@ part code exactly; no translation is authorized.
 Do not guess from symbol names. Use the emitted candidate inventory to prepare
 one further static vtable/call-slot audit before any live interposition.
 
+
+## Observed result
+
+The returned report passes with exact provenance:
+
+```text
+product_version=10.6.8
+build_version=10K549
+required_arch=ppc7400
+hitoolbox_slice_exact=YES
+titlebar_drag_routing_audit_exact=YES
+RESULT: PASS
+```
+
+The decisive direct callers are:
+
+```text
+HIWindowFrameView::TrackSelf(EventRef,...)
+  call site 0x000b85cc -> DragWindow
+
+HandleWindowEvent(EventRef)
+  call site 0x0015c094 -> DragWindow
+
+DragWindow
+  0x002db864 -> TDragTracker::TDragTracker(...)
+  0x002db86c -> TWindowTracker::TrackWindow()
+```
+
+The established hit path is also intact:
+`ThemeWindowDef::HitSelf -> GetThemeWindowRegionHit ->
+HIThemeGetWindowRegionHit`. This is enough to avoid private C++ interposition
+for the first live discriminator. The narrow next boundary is exported
+`DragWindow`, with `FindWindow` recorded only as passive supporting
+evidence and the existing native observer proving actual movement.
+
 ## Return evidence
 
 Return exactly:
@@ -180,6 +218,6 @@ Lion titlebar dragging                           FAIL
 known ColorSync notification deletion            persists / held separately
 hit part-code rewrite                            NOT AUTHORIZED
 interaction compatibility                        NONE YET
-next step                                        Snow static titlebar drag-routing audit
+next step                                        docs/ppc-carbon-gui-hitoolbox-titlebar-drag-live-trace.md
 XNU                                              no source change indicated
 ```
