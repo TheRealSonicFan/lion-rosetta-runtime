@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from __future__ import print_function
 
+import os
 import re
 import sys
 
@@ -56,6 +57,11 @@ def main():
     output = sys.argv[2]
     mode = sys.argv[3].lower()
     manual = sys.argv[4].upper()
+
+    if not os.path.isfile(subject_log):
+        print("error: subject log does not exist: %s" % subject_log,
+              file=sys.stderr)
+        return 66
 
     if mode not in ("snow", "lion"):
         print("error: MODE must be snow or lion", file=sys.stderr)
