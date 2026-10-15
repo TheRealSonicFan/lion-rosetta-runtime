@@ -963,9 +963,8 @@ The shared-art source reports pass on both systems. Snow's unique raw-bytes call
 
 Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md` next. Run `scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py` statically on Snow and Lion and return the two text reports. Do not launch the PPC subject, alter records/resources/geometry, broaden bitmap-info or CGS rules, change hit handling, or modify XNU before the exact seven record geometries and raw-byte slots are compared.
 
-## Frame-ID relocation complete; current step — slot-0 compatibility boundary
+## Slot-0 boundary complete; current step — external-boundary live correlation
 
-Both relocation reports now pass. The active semantic mapping is proven as `0x4e8d..0x4e91 -> 0x4e75..0x4e79`; Lion preserves an 11x11/484-byte slot 0 for every target and adds a 22x22/1936-byte slot 1. The old Snow-PPC type-1/count-2 selection logic can choose slot 1, so translating only the ID would not preserve the healthy Snow renderer contract.
+The Snow static boundary audit passes and identifies a viable external-only implementation path. The private shared-art selector is a direct internal call, but the raw branch reaches `CGDataProviderCreateWithData`/ `CGImageCreate`, and the ImageIO branch reaches `CGDataProviderCreateWithData` / `CGImageSourceCreateWithDataProvider` while `CreateImageSource(long)` still has the original legacy image ID preserved in its saved incoming `r30` slot at `+0x58`.
 
-Follow `docs/ppc-carbon-gui-coreui-windowframe-slot0-compat-boundary-audit.md` next. Run the Snow-only static analyzer and return its single report. It emits the exact PPC bodies/call inventories for `_CUICreateImage`, `CUISharedArtReader::CreateImage(long,float)`, the raw-byte constructor, and ImageIO source/provider paths so the next adapter can be placed at the narrowest external boundary. No PPC rerun, ID remap, slot forcing, resource rewrite, hit/CGContext change, CGS expansion, or XNU modification is authorized yet.
-
+Follow `docs/ppc-carbon-gui-coreui-windowframe-shared-art-external-boundary-live-trace.md` next. Run one Snow control and one Lion integration with the new trace+accepted-bitmap artifact, summarize both logs, and return the two summary reports. The live gate must prove exact ImageIO IDs `0x4e90,0x4e8f,0x4e91` and one-to-one source-pointer correlation to final image creation before any exact-five adapter is implemented.
