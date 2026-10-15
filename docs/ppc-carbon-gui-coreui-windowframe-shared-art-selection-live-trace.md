@@ -61,10 +61,10 @@ Current runtime `main` provides:
 
 ```text
 tests/ppc-coreui-windowframe-shared-art-selection-trace-compat-interposer.c
-Git blob c5e642302ba53daae2afae57391a2c209e8bd0b6
+Git blob f00dac20f8d3fcfd006475d128504e84d0f2c4bf
 
 scripts/build-ppc-coreui-windowframe-shared-art-selection-trace-compat-on-snowleopard.sh
-Git blob 6a9ab1ea870cd61287059f9ee9d8f626520b47d4
+Git blob f9f9d44b465de680a1340d863ca7f3215036d031
 
 scripts/summarize-ppc-carbon-gui-coreui-windowframe-shared-art-selection-trace.py
 Git blob dfedc046526e555b1b541997989e71ebc572d571
@@ -74,7 +74,7 @@ Build contract:
 
 ```text
 compat_build_id=coreui-windowframe-shared-art-selection-trace-compat-v1
-interposer_source_git_blob=c5e642302ba53daae2afae57391a2c209e8bd0b6
+interposer_source_git_blob=f00dac20f8d3fcfd006475d128504e84d0f2c4bf
 ```
 
 The existing accepted runners are unchanged:
@@ -99,6 +99,12 @@ The second Phase-B attempt proved that the ApplicationServices umbrella on Snow 
 
 Current `main` now uses the SDK-provided `CGImageSourceRef` type and `CGImageSourceCreateImageAtIndex` declaration exposed through `<ApplicationServices/ApplicationServices.h>`; no manual function declaration and no direct `<ImageIO/ImageIO.h>` include remain. Diagnostic behavior is unchanged.
 
+## Phase-B assembler correction
+
+The third Phase-B attempt reached C compilation but failed in the Snow Leopard PPC assembler at both invocations of the diagnostic's inline `mr %0,1` stack-pointer read. This was diagnostic-only code; no PPC subject was launched and no runtime evidence changed.
+
+Before committing the correction, the replacement stack-frame primitive was verified independently: the exact `__builtin_frame_address(0)` backchain logic was compiled as GNU89 C on the host and cross-compiled to 32-bit PowerPC objects at both `-O0` and `-O2`. The generated PPC code uses the normal stack frame/backchain and reads the requested `caller_sp+0x68` / `caller_sp+0x60` offsets without any inline assembler. Current `main` therefore removes the hand-written PPC `mr` instruction entirely and uses the compiler frame builtin; no diagnostic selection rule or compatibility behavior changes.
+
 ## Safety constraints
 
 - Run only the exact historical PPC Carbon GUI subject already used by the accepted compatibility runners.
@@ -121,10 +127,10 @@ git fetch origin || exit 1
 git pull --ff-only origin main || exit 1
 
 test "$(git hash-object ./tests/ppc-coreui-windowframe-shared-art-selection-trace-compat-interposer.c)" = \
-  "c5e642302ba53daae2afae57391a2c209e8bd0b6" || exit 1
+  "f00dac20f8d3fcfd006475d128504e84d0f2c4bf" || exit 1
 
 test "$(git hash-object ./scripts/build-ppc-coreui-windowframe-shared-art-selection-trace-compat-on-snowleopard.sh)" = \
-  "6a9ab1ea870cd61287059f9ee9d8f626520b47d4" || exit 1
+  "f9f9d44b465de680a1340d863ca7f3215036d031" || exit 1
 
 test "$(git hash-object ./scripts/summarize-ppc-carbon-gui-coreui-windowframe-shared-art-selection-trace.py)" = \
   "dfedc046526e555b1b541997989e71ebc572d571" || exit 1
@@ -149,7 +155,7 @@ Require the info file to report:
 
 ```text
 compat_build_id=coreui-windowframe-shared-art-selection-trace-compat-v1
-interposer_source_git_blob=c5e642302ba53daae2afae57391a2c209e8bd0b6
+interposer_source_git_blob=f00dac20f8d3fcfd006475d128504e84d0f2c4bf
 ```
 
 Require a PPC `__DATA,__interpose` section of `0x10` bytes: exactly two PPC tuples, replacing only `CGImageCreate` and `CGImageSourceCreateImageAtIndex`.
@@ -165,7 +171,7 @@ export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_PATH="$PWD/pm-coreui-windowframe-s
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_SHA256_FILE="$PWD/pm-coreui-windowframe-shared-art-selection-trace-compat.dylib.sha256"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_INFO_FILE="$PWD/pm-coreui-windowframe-shared-art-selection-trace-compat.dylib.info.txt"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_BUILD_ID="coreui-windowframe-shared-art-selection-trace-compat-v1"
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB="c5e642302ba53daae2afae57391a2c209e8bd0b6"
+export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB="f00dac20f8d3fcfd006475d128504e84d0f2c4bf"
 
 ../scripts/run-snowleopard-ppc-carbon-gui-coreui-image-bitmapinfo-compat-control.sh \
   ./ppc-carbon-gui-smoketest-private-dyld \
@@ -218,7 +224,7 @@ export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_PATH="$PWD/payload/pm-coreui-windo
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_SHA256_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-selection-trace-compat.dylib.sha256"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_INFO_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-selection-trace-compat.dylib.info.txt"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_BUILD_ID="coreui-windowframe-shared-art-selection-trace-compat-v1"
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB="c5e642302ba53daae2afae57391a2c209e8bd0b6"
+export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB="f00dac20f8d3fcfd006475d128504e84d0f2c4bf"
 
 ./scripts/run-lion-ppc-carbon-gui-coreui-image-bitmapinfo-compat.sh \
   "$PWD/payload/ppc-carbon-gui-smoketest-private-dyld" \
