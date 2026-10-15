@@ -2,7 +2,9 @@
 
 ## Status
 
-NEXT CONTROLLED LIVE STEP.
+COMPLETED LIVE PASS. Both Snow and Lion summaries pass. Snow recovers the healthy five raw targets and no ImageIO target sources. Lion recovers exactly the two known raw targets plus ImageIO source IDs `0x4e90`, `0x4e8f`, and `0x4e91`; all three returned source pointers correlate one-to-one with final non-NULL image creation. The external-only implementation boundary is therefore proven.
+
+The next controlled step is `docs/ppc-carbon-gui-coreui-windowframe-shared-art-slot0-compat-live-test.md`.
 
 The completed static slot-0 boundary audit proves that the five-ID semantic
 relocation is necessary but that an ID-only remap is insufficient. It also
@@ -297,6 +299,6 @@ private CUISharedArtReader interposition          NOT AUTHORIZED
 raw external boundary                            exact-ID recovery already proven
 ImageIO source external boundary                 statically viable / live proof required
 new compatibility behavior                       NONE in this trace
-next step                                        Snow/Lion external-boundary correlation trace
+next step                                        guarded exact-five slot0 compatibility live test
 XNU                                              no source change indicated
 ```
