@@ -2,7 +2,7 @@
 
 ## Status
 
-NEXT CONTROLLED LIVE DISCRIMINATOR after the static CoreUI window-frame renderer audit proved that the historical Snow-PPC renderer and Lion native renderer use materially different frame-image subpaths.
+COMPLETED LIVE-PROVEN PASS. The all-CoreUI `CGImageCreate` trace found one new non-button differential at Snow-PPC return site `0x0002ad34`: Snow makes five 11x11 calls, while Lion makes only two calls at 256x256 and 2x62. The gray-gradient stream is equivalent, the exact-six titlebar stream remains the accepted compatibility path, and every result is non-NULL. Follow `docs/ppc-carbon-gui-coreui-windowframe-image-caller-resolution-audit.md` next.
 
 ## Static result entering this step
 
@@ -325,6 +325,40 @@ Close image construction as the immediate frame defect. The next discriminator b
 
 Stop. Treat the diagnostic artifact as intrusive and keep the previously accepted bitmap-info artifact as authoritative.
 
+## Observed result
+
+The returned artifact matches the pinned trace+compat identity and both Snow/Lion compatibility runs remain PASS.
+
+The complete live constructor differential is:
+
+```text
+caller 0x0001bdb0
+  Snow: 2 x 1x22, 8 bpc / 8 bpp / bpr 1, bitmapInfo 0x0
+  Lion: 2 x 1x22, 8 bpc / 8 bpp / bpr 1, bitmapInfo 0x0
+  all results NONNULL
+  conclusion: equivalent gray-gradient stream
+
+caller 0x000299e0
+  Snow: 6 x 14x16 / bpr 56 / raw 0x2 / effective 0x2
+  Lion: 6 x 16x16 / bpr 64 / raw 0x2 / effective 0x2002
+  all results NONNULL
+  conclusion: known exact-six compatibility path; retain unchanged
+
+caller 0x0002ad34
+  Snow: 5 x 11x11 / bpr 44 / raw 0x2
+  Lion: 1 x 256x256 / bpr 1024 / raw 0x2
+        1 x 2x62 / bpr 8 / raw 0x2
+  provider NONNULL / decode NULL / interpolate YES / intent 0 throughout
+  all results NONNULL
+  conclusion: first new non-button live differential
+```
+
+The new evidence does not support another bitmap-info rule: `0x0002ad34` differs first in call count and geometry, not constructor success. Resolve that return site to its containing Snow-PPC CoreUI function and identify the source of those dimensions before tracing or changing anything else.
+
+Manual functional observation now also records that Snow's traffic-light buttons work, whereas Lion's sharp traffic-light images are cosmetic only and clicking them has no effect; Lion titlebar dragging remains non-functional. The current trace contains no mouse/hit-test data, so this interaction defect remains a separate held branch unless the `0x0002ad34` provenance directly connects to frame regions or masks.
+
+Follow `docs/ppc-carbon-gui-coreui-windowframe-image-caller-resolution-audit.md` next.
+
 ## Return evidence
 
 Return:
@@ -351,13 +385,17 @@ Do not return the dylib binary unless specifically requested.
 ## Current boundary
 
 ```text
-HIToolbox frame request                          EQUIVALENT
-Snow PPC DrawWindowFrameDark CreateImage calls   7
-Snow PPC gray-gradient constructors              2
-Lion native direct CreateImage calls             0
-Lion native titlebar/background copy helpers      1 / 1
+all-CoreUI CGImageCreate trace                   PASS
+Snow total CoreUI CGImageCreate                   13
+Lion total CoreUI CGImageCreate                   10
+0x0001bdb0 gray-gradient stream                   EQUIVALENT: 2 x 1x22
+0x000299e0 exact-six stream                       KNOWN / RETAIN
+0x0002ad34 new non-button stream                  Snow 5x11x11; Lion 256x256 + 2x62
+all traced results                                NONNULL
 accepted exact-six bitmapInfo adapter             RETAIN
 new bitmapInfo broadening                         NOT AUTHORIZED
-next step                                         all-CoreUI CGImageCreate live trace
+Lion titlebar controls                            VISUAL ONLY; clicks non-functional
+Lion titlebar drag                                NON-FUNCTIONAL
+next step                                         docs/ppc-carbon-gui-coreui-windowframe-image-caller-resolution-audit.md
 XNU                                               no source change indicated
 ```
