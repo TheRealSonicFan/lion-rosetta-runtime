@@ -963,9 +963,9 @@ The shared-art source reports pass on both systems. Snow's unique raw-bytes call
 
 Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md` next. Run `scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py` statically on Snow and Lion and return the two text reports. Do not launch the PPC subject, alter records/resources/geometry, broaden bitmap-info or CGS rules, change hit handling, or modify XNU before the exact seven record geometries and raw-byte slots are compared.
 
-## Shared-art live run complete; current step — corrected SArtFile v2 audit
+## Corrected SArtFile/live correlation complete; current step — payload fingerprints
 
-The Snow/Lion live diagnostic ran successfully under the accepted compatibility stack. Snow recovered five exact 11x11 raw IDs. Lion recovered raw `0x4e8e -> 256x256` and `0x4e8d -> 2x62`, both non-NULL, plus three non-NULL ImageIO calls. The Lion v1 summary failed only because the final ImageIO call-site saved-r30 field was incorrectly treated as a legacy image ID; the static v1 SArtFile report was also one table entry early because it used file offset `0x04` instead of the `+0x08` table pointer proven by Snow-PPC `CUISharedArtReader::Setup()`.
+The corrected v2 SArtFile reports pass on Snow and Lion, and the corrected Lion live summary also passes. Snow's five live-active IDs are all type-2/count-1 11x11 raw records. Lion's exact raw subset is `0x4e8e -> 256x256` and `0x4e8d -> 2x62`; the remaining active IDs `0x4e90`, `0x4e8f`, and `0x4e91` are type-3/count-3 and account exactly for the three non-NULL ImageIO calls. Branch selection is therefore fully correlated without another PPC run.
 
-Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md` next. Run the corrected static v2 analyzer on Snow and Lion and re-summarize the already preserved Lion live log with the v2 summarizer. Do not rerun the PPC subject. No record/resource rewrite, hit-test change, CGContext change, CGS expansion, or XNU modification is authorized yet.
+Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-live-payload-fingerprint-audit.md` next. Run the static fingerprint analyzer on Snow and Lion and return the two reports. It hashes the five exact Snow-live-active 11x11 provider payloads and inventories structurally compatible Lion SArtFile candidates to determine whether the legacy frame pixels survive under different IDs. No PPC rerun, record/resource rewrite, hit-test/CGContext change, CGS expansion, or XNU modification is authorized yet.
 
