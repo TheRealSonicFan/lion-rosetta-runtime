@@ -57,9 +57,9 @@ It then calls the original `CUIDraw` unchanged.
 
 No CoreUI option, rectangle, context, dictionary, result pointer, image, metric, pixel, or return value is modified.
 
-## Prepared files
+## Historical v1 prepared files
 
-Current runtime `main` provides:
+The completed v1 run used:
 
 ```text
 tests/ppc-hitoolbox-windowframe-cuidraw-trace-interposer.c
@@ -95,7 +95,11 @@ When these variables are unset, the runners retain their prior behavior.
 - Do not modify XNU, rebuild the kernel, or reboot.
 - Do not manually drag the window during this trace; the drag defect remains a separate discriminator.
 
-## Phase A — update and syntax-check
+## Historical v1 procedure — do not rerun
+
+The commands below document the completed v1 procedure and intentionally pin the historical v1 blob. Current `main` has advanced to v2, so these v1 hash checks are expected to fail now. Follow `docs/ppc-carbon-gui-hitoolbox-cuidraw-ingress-live-trace.md` instead.
+
+### Phase A — update and syntax-check
 
 On Snow Leopard and Lion:
 
@@ -112,7 +116,7 @@ test "$(git hash-object ./tests/ppc-hitoolbox-windowframe-cuidraw-trace-interpos
 /bin/bash -n ./scripts/run-lion-ppc-carbon-gui-coreui-image-bitmapinfo-compat.sh || exit 1
 ```
 
-## Phase B — build the passive trace on Snow
+### Phase B — build the passive trace on Snow
 
 On Snow Leopard:
 
@@ -133,7 +137,7 @@ interposer_source_git_blob=66b3849aeb9f0514223bea07ca19f95d76b8e62c
 
 Require one PPC `__DATA,__interpose` tuple replacing only `CUIDraw`.
 
-## Phase C — Snow positive-control trace
+### Phase C — Snow positive-control trace
 
 Use the already accepted artifacts in Snow's `payload/` directory.
 
@@ -176,7 +180,7 @@ Snow titlebar visually normal: YES
 
 Do not drag the window during this run.
 
-## Phase D — transfer only the new trace artifact
+### Phase D — transfer only the new trace artifact
 
 Transfer exactly:
 
@@ -190,7 +194,7 @@ to Lion's runtime `payload/`.
 
 Do not replace any accepted compatibility artifact.
 
-## Phase E — Lion passive trace
+### Phase E — Lion passive trace
 
 On Lion:
 
