@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SRC="$ROOT/tests/ppc-coreui-windowframe-shared-art-selection-trace-compat-interposer.c"
 EXPECTED_BUILD_ID="coreui-windowframe-shared-art-selection-trace-compat-v1"
-EXPECTED_SOURCE_BLOB="e0a95f5bc1ec1aa8113e906b9efbef32576e04f0"
+EXPECTED_SOURCE_BLOB="f0b727ff023a0ddb02de97149df3cfa88518462e"
 INFO="$OUT.info.txt"
 SHA="$OUT.sha256"
 TMP_DYLIB="$(/usr/bin/mktemp /tmp/pm-coreui-windowframe-shared-art-selection-trace.XXXXXX.dylib)"
@@ -82,7 +82,7 @@ probe_compiler() {
 
     /bin/rm -f "$TMP_DYLIB"
     if "$compiler" -arch ppc -mmacosx-version-min=10.5 -dynamiclib \
-        "$SRC" -framework ApplicationServices -framework ImageIO \
+        "$SRC" -framework ApplicationServices \
         -install_name "@loader_path/$(/usr/bin/basename "$OUT")" \
         -o "$TMP_DYLIB" >"$TMP_LOG" 2>&1; then
         if [ -f "$TMP_DYLIB" ] && is_ppc32_macho "$TMP_DYLIB"; then
@@ -124,7 +124,7 @@ fi
 
 echo "Using PowerPC-capable compiler: $CC_SELECTED"
 "$CC_SELECTED" -arch ppc -mmacosx-version-min=10.5 -dynamiclib \
-    "$SRC" -framework ApplicationServices -framework ImageIO \
+    "$SRC" -framework ApplicationServices \
     -install_name "@loader_path/$(/usr/bin/basename "$OUT")" \
     -o "$OUT"
 /bin/chmod 755 "$OUT"
