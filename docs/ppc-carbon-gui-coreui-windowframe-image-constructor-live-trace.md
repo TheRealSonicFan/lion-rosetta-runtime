@@ -71,7 +71,7 @@ tests/ppc-coreui-windowframe-image-constructor-trace-compat-interposer.c
 Git blob 8f5d01d98de76d14becca553dbef806a54d40802
 
 scripts/build-ppc-coreui-windowframe-image-constructor-trace-compat-on-snowleopard.sh
-Git blob f4923137f269feede077fdb6041994acd1536529
+Git blob 7a44118e068b1a8f1bb6982215878d4cd6601c3d
 
 scripts/run-snowleopard-ppc-carbon-gui-coreui-image-bitmapinfo-compat-control.sh
 Git blob ccf1494011a9e3306a32c2f094e0c3437f2fa03c
@@ -122,7 +122,7 @@ test "$(git hash-object ./tests/ppc-coreui-windowframe-image-constructor-trace-c
   "8f5d01d98de76d14becca553dbef806a54d40802" || exit 1
 
 test "$(git hash-object ./scripts/build-ppc-coreui-windowframe-image-constructor-trace-compat-on-snowleopard.sh)" = \
-  "f4923137f269feede077fdb6041994acd1536529" || exit 1
+  "7a44118e068b1a8f1bb6982215878d4cd6601c3d" || exit 1
 
 test "$(git hash-object ./scripts/run-snowleopard-ppc-carbon-gui-coreui-image-bitmapinfo-compat-control.sh)" = \
   "ccf1494011a9e3306a32c2f094e0c3437f2fa03c" || exit 1
