@@ -129,7 +129,7 @@ test "$(git hash-object ./scripts/summarize-ppc-carbon-gui-coreui-windowframe-sh
 cd /path/to/lion-rosetta-runtime || exit 1
 mkdir -p ./payload || exit 1
 
-./scripts/build-ppc-coreui-windowframe-shared-art-external-boundary-trace-compat-on-snowleopard.sh \
+/bin/bash ./scripts/build-ppc-coreui-windowframe-shared-art-external-boundary-trace-compat-on-snowleopard.sh \
   ./payload/pm-coreui-windowframe-shared-art-external-boundary-trace-compat.dylib || exit 1
 ```
 
