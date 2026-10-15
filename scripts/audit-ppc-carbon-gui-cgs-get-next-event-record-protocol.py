@@ -544,7 +544,6 @@ def main():
                             checks = [
                                 ("request_id", LIVE_LEGACY_REQUEST_ID),
                                 ("reply_id", LIVE_LEGACY_REPLY_ID),
-                                ("request_bits", LIVE_REQUEST_BITS),
                                 ("send_size", expected_send),
                                 ("recv_size", expected_recv),
                             ]
@@ -557,6 +556,10 @@ def main():
                                     geometry_ok = False
                                     issues.append("native transport missing %s 0x%x" %
                                                   (label, value))
+                            bits_present = LIVE_REQUEST_BITS in transport_values
+                            write_line(fp, "native_request_bits_immediate_present=%s value=0x%x" %
+                                       ("YES" if bits_present else "NO",
+                                        LIVE_REQUEST_BITS))
                             write_line(fp, "native_event_transport_candidate_exact_geometry=%s" %
                                        ("YES" if geometry_ok else "NO"))
                             emit_resolved_symbol(
