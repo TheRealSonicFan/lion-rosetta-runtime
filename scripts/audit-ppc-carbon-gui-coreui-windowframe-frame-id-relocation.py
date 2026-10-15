@@ -9,8 +9,8 @@ import subprocess
 import sys
 import tempfile
 
-ANALYZER_VERSION = "1"
-AUDIT_CONTRACT = "carbon-gui-coreui-windowframe-frame-id-relocation-v1"
+ANALYZER_VERSION = "2"
+AUDIT_CONTRACT = "carbon-gui-coreui-windowframe-frame-id-relocation-v2"
 
 COREUI = "/System/Library/PrivateFrameworks/CoreUI.framework/Versions/A/CoreUI"
 SARTFILE = "/System/Library/PrivateFrameworks/CoreUI.framework/Versions/A/Resources/SArtFile.bin"
@@ -134,6 +134,7 @@ def thin(src, arch, dst):
 def parse_symbols(text):
     ordered = []
     by_name = {}
+    by_addr = {}
     for raw in text.splitlines():
         parts = raw.split()
         if len(parts) < 2 or "(__TEXT,__text)" not in raw:
@@ -145,8 +146,10 @@ def parse_symbols(text):
         ordered.append((addr, name))
         if name not in by_name:
             by_name[name] = addr
+        if addr not in by_addr:
+            by_addr[addr] = name
     ordered.sort()
-    return ordered, by_name
+    return ordered, by_name, by_addr
 
 
 def parse_rows(text):
@@ -175,7 +178,15 @@ def symbol_body(symbols, rows, name):
                    if addr >= start and (end is None or addr < end)]
 
 
-def target_hits(body, target_ids, expected_callee):
+def call_target(raw):
+    if "\tbl\t" not in raw and "\tcalll\t" not in raw:
+        return None
+    tail = raw.split("\t")[-1].strip()
+    token = tail.split()[0] if tail else ""
+    return parse_hex(token)
+
+
+def target_hits(body, target_ids, expected_callee, by_addr):
     hits = []
     for i, (addr, raw) in enumerate(body):
         low = raw.lower()
@@ -190,13 +201,20 @@ def target_hits(body, target_ids, expected_callee):
             continue
         call_addr = None
         call_raw = None
+        resolved_callee = None
         callee_ok = False
         for j in range(i + 1, min(len(body), i + 12)):
             candidate = body[j][1]
             if "\tbl\t" in candidate or "\tcalll\t" in candidate:
                 call_addr = body[j][0]
                 call_raw = candidate
-                callee_ok = expected_callee in candidate
+                target_addr = call_target(candidate)
+                if target_addr is not None:
+                    resolved_callee = by_addr.get(target_addr)
+                callee_ok = (
+                    expected_callee in candidate or
+                    (resolved_callee is not None and
+                     expected_callee in resolved_callee))
                 break
         hits.append(dict(
             image_id=matched,
@@ -204,6 +222,7 @@ def target_hits(body, target_ids, expected_callee):
             const_raw=raw,
             call_addr=call_addr,
             call_raw=call_raw,
+            resolved_callee=resolved_callee,
             callee_ok=callee_ok,
         ))
     unique = []
@@ -268,6 +287,7 @@ def main():
         coreui_digest = "MISSING"
         body = []
         frame_addr = None
+        by_addr = {}
         if not os.path.isfile(COREUI):
             issues.append("CoreUI missing")
         elif not thin(COREUI, expected["arch"], thin_path):
@@ -281,7 +301,7 @@ def main():
             if rc1 != 0 or rc2 != 0:
                 issues.append("CoreUI static tools failed")
             else:
-                symbols, by_name = parse_symbols(nm)
+                symbols, by_name, by_addr = parse_symbols(nm)
                 rows = parse_rows(dis)
                 frame_addr, body = symbol_body(symbols, rows, DRAW_FRAME)
                 if frame_addr is None:
@@ -313,7 +333,7 @@ def main():
                 if count != expected["count"]:
                     issues.append("SArtFile count mismatch")
 
-        hits = target_hits(body, expected["target_ids"], expected["expected_callee"])
+        hits = target_hits(body, expected["target_ids"], expected["expected_callee"], by_addr)
         observed_order = [x["image_id"] for x in hits]
         if observed_order != expected["target_ids"]:
             issues.append("frame target constant order mismatch")
@@ -374,10 +394,11 @@ def main():
                  ",".join("0x%04x" % x for x in observed_order))
             line(fp, "expected_image_constructor_fragment=%s" % expected["expected_callee"])
             for item in hits:
-                line(fp, "target image_id=0x%04x constant_address=0x%x call_address=%s callee_match=%s" %
+                line(fp, "target image_id=0x%04x constant_address=0x%x call_address=%s callee_match=%s resolved_callee=%s" %
                      (item["image_id"], item["const_addr"],
                       "0x%x" % item["call_addr"] if item["call_addr"] is not None else "MISSING",
-                      "YES" if item["callee_ok"] else "NO"))
+                      "YES" if item["callee_ok"] else "NO",
+                      item["resolved_callee"] or "INLINE_OR_UNRESOLVED"))
                 line(fp, "constant_raw=%s" % item["const_raw"])
                 line(fp, "call_raw=%s" % (item["call_raw"] or "MISSING"))
 
