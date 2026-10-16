@@ -2,64 +2,35 @@
 
 ## Status
 
-**GETWINDOWSHAPE TARGET PROVEN / GETSHAREDWINDOW REPLY-SHAPE BRIDGE NEXT.**
+**GETSHAREDWINDOW TARGET PROVEN / DRAG DELTA SOURCE NEXT.**
 
-The returned v8 experiment proves the GetWindowShape adapter itself. On Lion,
-all 21 exact legacy `0x724e` requests were converted to native `0x724f`,
-all 21 native `0x72b3` replies were accepted and returned as legacy
-`0x72b2`, there were zero adapter rejects, and the former
-`CGSGetWindowBounds` type-check diagnostic fell to zero. The final v8 runner
-still failed because the application remained downstream-stalled: the Carbon
-dispatcher received zero mouse events, WindowServer movement remained zero,
-the exact-21 notification sequence did not complete, and
-`_CGSFindSharedWindow` emitted 31 client type-check failures.
+The returned v9 Snow control is a clean PASS and retains the accepted public
+titlebar drag. The Lion run proves the GetSharedWindow bridge at scale: 847
+exact legacy calls were adapted, 847 native success replies were projected
+back to the Snow contract, zero adapter rejects occurred, and the former
+`_CGSFindSharedWindow` client type-check count fell to zero. The previously
+observed out-of-line next-event type-check also did not recur.
 
-The first repeated post-GetWindowShape failure is now exact. The Snow client
-sends `__CGSGetSharedWindow` as:
+Most importantly, Carbon input is no longer stalled. Lion records a public
+mouse-down at `h=317 v=111` with `FindWindow` part `4` (`inDrag`),
+the beach ball is gone, and WindowServer records movement. The remaining
+failure is now movement geometry: the window starts at `(120,98)`, then
+jumps off-screen. The live move requests show the client itself sending
+`(-317,-98)` and then vertical delta `17118 = 0x42de`; `0x42de` is
+the high halfword of float `111.0`, matching the mouse-down vertical
+coordinate. This localizes the next question to the old PPC
+`DragWindow/TDragTracker/TWindowTracker` point-to-delta path, before
+WindowServer applies the move.
 
-```text
-request/reply      0x7258 / 0x72bc
-bits               0x1513
-mach option        0x3
-send / receive     0x24 / 0x38
-success reply      simple 0x30
-error reply        simple 0x24
-success outputs    offsets 0x24, 0x28, 0x2c
-```
+The bridge remains accepted for the next experiment. Do not change its
+reply projection merely because later `Invalid window 0x8` diagnostics
+remain; the targeted MIG client-shape failure is eliminated and the new
+off-screen symptom has a more direct, payload-level discriminator.
 
-Lion's native helper is:
-
-```text
-request/reply      0x7259 / 0x72bd
-bits               0x1513
-mach option        0x3
-send / receive     0x24 / 0x3c
-success reply      simple 0x34
-error reply        simple 0x24
-success outputs    offsets 0x24, 0x28, 0x2c, 0x30
-```
-
-The old Snow IDs are not GetSharedWindow on Lion: `0x7258/0x72bc` are
-owned by `__CGSGetSharedWindowState`. That explains the live Lion reply:
-a simple `0x28` state reply is returned to the Snow
-`__CGSGetSharedWindow` client, which rejects it and then reports WID 8.
-
-The cross-release `__CGSFindSharedWindow` callers resolve the reply-layout
-difference rather than leaving it as a guess. Snow passes three output
-addresses to `__CGSGetSharedWindow`; Lion passes four. The first two have
-the same downstream uses on both releases, Lion's third native output is the
-new field, and Lion's fourth output has the same downstream role as Snow's
-third. Therefore the exact legacy projection is:
-
-```text
-native Lion 0x24 -> legacy Snow 0x24
-native Lion 0x28 -> legacy Snow 0x28
-native Lion 0x2c -> dropped (Lion-only field)
-native Lion 0x30 -> legacy Snow 0x2c
-```
-
-No value is invented and no endian conversion is performed by the adapter;
-the raw NDR and scalar bytes remain for the PPC MIG client to interpret.
+The authoritative next procedure is
+`docs/ppc-carbon-gui-titlebar-drag-delta-source-audit.md`. It is static-only;
+do not rerun this v9 live experiment unless investigating its historical
+result.
 
 ## Prepared runtime
 
@@ -221,16 +192,21 @@ Do not return the dylib itself unless requested.
 ## Current boundary
 
 ```text
-Snow v8 GetWindowShape control                     PASS
-Lion GetWindowShape adapter                       PASS 21/21
-old CGSGetWindowBounds type-check                 eliminated
-Lion _CGSFindSharedWindow failures                31
-Lion old 0x7258/0x72bc owner                      GetSharedWindowState
-Snow native GetSharedWindow                       7258/72bc, recv38, simple success30
-Lion native GetSharedWindow                       7259/72bd, recv3c, simple success34
-new compatibility under test                      exact reply-shape projection
-out-of-line next-event                            deferred
-private HIToolbox patch                           not authorized
+Snow GetSharedWindow control                       PASS
+Lion GetSharedWindow exact calls                   847
+Lion GetSharedWindow adapter passes                847
+Lion GetSharedWindow rejects                       0
+Lion _CGSFindSharedWindow type-check               0
+Lion out-of-line next-event type-check             0
+Lion public titlebar mouse-down                    YES / inDrag (4)
+Lion WindowServer movement                         YES
+initial window origin                              (120,98)
+first move delta                                   (-317,-98)
+second vertical move delta                         17118 / 0x42de
+remaining symptom                                  off-screen drag geometry
+next action                                        static drag-delta source audit
+0x7218 payload rewrite                             not authorized
+private HIToolbox patch                            not authorized
 notification policy                               exact-21 unchanged
 XNU                                               unchanged
 ```
