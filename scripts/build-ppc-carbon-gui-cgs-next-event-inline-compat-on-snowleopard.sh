@@ -43,11 +43,11 @@ for file in "$CORE_SRC" "$INGRESS_SRC"; do
 done
 
 /usr/bin/grep -Fq "$EXPECTED_BUILD_ID" "$CORE_SRC" || {
-    echo "error: stale CoreServices source; pull current runtime main" >&2
+    echo "error: stale CoreServices source; transfer the current verified runtime tree from the staging system" >&2
     exit 66
 }
 /usr/bin/grep -Fq "$EXPECTED_INGRESS_BUILD_ID" "$INGRESS_SRC" || {
-    echo "error: stale distributed-notifications ingress source; pull current runtime main" >&2
+    echo "error: stale distributed-notifications ingress source; transfer the current verified runtime tree from the staging system" >&2
     exit 66
 }
 
