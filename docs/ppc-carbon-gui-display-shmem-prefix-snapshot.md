@@ -2,28 +2,39 @@
 
 ## Status
 
-**V1 SNOW CONTROL FAILURE DIAGNOSED / V2 SOURCE-SLOT SNAPSHOT READY.**
+**V2 SNOW FAILURE DIAGNOSED / V3 GUARDED-DIRECT SNAPSHOT READY.**
 
-The first Snow control did not expose corrupted display state. It exposed a
-bug in the diagnostic: v1 decoded the mode-2 shared-memory mapping at
-`0x70046c` as though it were the display-record source. The pointer was
-readable and stable, but its first four bytes are not a display count.
-
-The returned Snow control proves the surrounding run was healthy:
+The second Snow control reached the corrected source-slot probe but stopped at a
+different diagnostic assumption:
 
 ~~~text
 CGSMainDisplayID_dlsym=PASS
 main_display_id_zero=NO
-mapping_after_nonnull=YES
-mapped_prefix_readable=YES
-record_count_valid=NO
-new_diagnostics=none
-protected_hashes_unchanged=YES
+selector_pointer_after=0x41a20028
+selector_pointer_readable=NO
+RESULT: FAIL
 ~~~
 
-The invalid count is therefore local to the probe's object selection.
+This does not show that the selector pointer is invalid. The audited Snow
+`_lookupMainDisplay` path loads the selector pointer from the same global and
+dereferences byte zero before it can return a nonzero main display. The live
+probe then called that exported path successfully and immediately observed a
+nonzero main display. Therefore the subsequent `vm_region` rejection is not a
+valid accessibility test for this translated PPC pointer.
 
-The v1 static reports already show the corrected route:
+The v2 wrapper also contained a separate shell-generation defect: the
+`SOURCE_COUNT` grep line had an unterminated single quote and duplicated stale
+tail content. That explains the reported `unexpected EOF while looking for
+matching '\''` / `unexpected end of file` messages after the probe had
+already run. The Snow and Lion runners have now both been replaced with clean
+files.
+
+## V3 diagnostic rule
+
+The v3 probe keeps the corrected selector/source-array addressing from v2 but
+changes how translated pointers are validated.
+
+It still reads these CoreGraphics globals:
 
 ~~~text
 Snow PPC
@@ -39,43 +50,40 @@ Lion native i386
   mode-2 mapping            0x949848
 ~~~
 
-The display-record object is selected by the current selector byte and the
-two-entry source-pointer array. `_initCGDisplayMappings` /
-`_initDisplayMappings` consume the same source array, independently
-confirming the route.
+For the selector target and selected source object, v3 records the `vm_region`
+answer only as diagnostic metadata. It performs the actual read with a guarded
+direct byte copy using normal process load semantics, with temporary
+`SIGSEGV` / `SIGBUS` recovery. This matches how translated CoreGraphics
+itself consumes those pointers and avoids treating Mach VM introspection as an
+authority on Rosetta guest-pointer accessibility.
 
-## Prepared v2 probe
+No write is performed.
+
+## Prepared files
 
 Current runtime `main` provides:
 
 ~~~text
 tests/ppc-carbon-gui-display-shmem-prefix-snapshot.c
-Git blob d8b0e74af87c0cb0ce1455401c12a27166a5c2d5
+Git blob 5d9c5b7664b1fe1a05353608ebbef11316083614
 
 scripts/build-ppc-carbon-gui-display-shmem-prefix-snapshot-on-snowleopard.sh
 Git blob ff79b07192a129f4515739fb861908fefd9ac18a
 
 scripts/run-snowleopard-ppc-carbon-gui-display-shmem-prefix-snapshot-control.sh
-Git blob fa64ec6e7d6c0185a815ae1e2510b121b39ee55a
+Git blob d5e05d957b1dd23db326817e9bfcacfaabdf3628
 
 scripts/run-lion-ppc-carbon-gui-display-shmem-prefix-snapshot.sh
-Git blob 71625bc01eaf72b04b3905762dd68fb5874f488c
+Git blob 275d24868c12abf3a89928ee61c006000d4ae1d3
 ~~~
 
 The embedded snapshot contract is now:
 
 ~~~text
-snapshot_contract=carbon-gui-display-shmem-prefix-snapshot-v2
+snapshot_contract=carbon-gui-display-shmem-prefix-snapshot-v3
 v1_mode2_pointer_misclassification=CORRECTED
+translated_guest_pointer_validation=GUARDED_DIRECT_READ
 ~~~
-
-The v2 probe calls exported `CGSMainDisplayID` once, reads the release-local
-selector pointer, requires selector index 0 or 1, reads the corresponding
-source-array slot, and only then decodes the display count and first-record
-prefix. It logs the mode-2 pointer separately and does not decode it as a
-display record.
-
-No shared-memory or CoreGraphics global write is performed.
 
 ## Safety constraints
 
@@ -92,9 +100,10 @@ No shared-memory or CoreGraphics global write is performed.
 - Do not add or broaden a display-shmem adapter.
 - Do not modify CoreGraphics, WindowServer, Rosetta caches, dyld, or XNU.
 
-## Step 1 — rebuild v2 on Snow Leopard
+## Step 1 — rebuild v3 on Snow Leopard
 
-The v1 binaries and SHA sidecars are obsolete because the probe source changed.
+The v2 PPC/i386 probes and SHA sidecars are obsolete because the probe source
+changed again.
 
 From current runtime `main` on Snow Leopard 10.6.8 / 10K549:
 
@@ -102,16 +111,7 @@ From current runtime `main` on Snow Leopard 10.6.8 / 10K549:
 /bin/bash ./scripts/build-ppc-carbon-gui-display-shmem-prefix-snapshot-on-snowleopard.sh
 ~~~
 
-This recreates:
-
-~~~text
-ppc-carbon-gui-display-shmem-prefix-snapshot-private-dyld
-ppc-carbon-gui-display-shmem-prefix-snapshot-private-dyld.sha256
-lion-i386-display-shmem-prefix-snapshot
-lion-i386-display-shmem-prefix-snapshot.sha256
-~~~
-
-Do not reuse the old v1 binaries.
+Do not reuse the prior v2 binaries.
 
 ## Step 2 — rerun Snow PPC control
 
@@ -124,8 +124,8 @@ Run:
 Require the embedded probe to report:
 
 ~~~text
-snapshot_contract=carbon-gui-display-shmem-prefix-snapshot-v2
-v1_mode2_pointer_misclassification=CORRECTED
+snapshot_contract=carbon-gui-display-shmem-prefix-snapshot-v3
+translated_guest_pointer_validation=GUARDED_DIRECT_READ
 snapshot_mode=snow-ppc-control
 selector_global_from_image_header=0x006ff26c
 source_array_from_image_header=0x00700460
@@ -134,15 +134,19 @@ mode2_mapping_from_image_header=0x0070046c
 coregraphics_slots_readable=YES
 CGSMainDisplayID_dlsym=PASS
 main_display_id_zero=NO
-selector_pointer_readable=YES
+selector_direct_read=PASS
 selector_index_valid=YES
 source_after_nonnull=YES
-source_prefix_readable=YES
+source_direct_read=PASS
 record_count_valid=YES
 snapshot_complete=YES
 write_attempts=0
 RESULT: PASS
 ~~~
+
+The `selector_pointer_vm_region_readable` and
+`source_pointer_vm_region_readable` values are observational only and may be
+`NO` under Rosetta.
 
 The wrapper must finish:
 
@@ -151,18 +155,12 @@ RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_SNOW_PASS
 RESULT: PASS
 ~~~
 
-If Step 2 fails again, stop and return both:
-
-~~~text
-ppc-carbon-gui-display-shmem-prefix-snapshot-snow.txt
-ppc-carbon-gui-display-shmem-prefix-snapshot-snow.txt.raw.log
-~~~
-
-Do not proceed to Lion on a failed Snow control.
+If Step 2 fails, stop and return both the Snow wrapper report and raw log
+unchanged. Do not proceed to Lion.
 
 ## Step 3 — transfer exact rebuilt probes to Lion
 
-Only after Snow v2 passes, copy the rebuilt PPC/i386 binaries and their new SHA
+Only after Snow v3 passes, copy the rebuilt PPC/i386 binaries and their new SHA
 sidecars to Lion without rebuilding them.
 
 ## Step 4 — Lion native + translated-PPC differential
@@ -173,22 +171,12 @@ Run:
 /bin/bash ./scripts/run-lion-ppc-carbon-gui-display-shmem-prefix-snapshot.sh
 ~~~
 
-The runner has also been replaced with a clean v2 gate. It first runs the i386
-reference without interposers, then the PPC probe with only the established
-connection prerequisites.
+The runner requires v3 from both the native i386 and translated PPC probe and
+gates on guarded direct selector/source reads rather than `vm_region`
+acceptance.
 
-Require the final wrapper result:
-
-~~~text
-RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS
-RESULT: PASS
-~~~
-
-The native i386 section must report a valid Lion source slot and nonzero main
-display. The translated PPC section must report a valid Snow-client source
-slot and complete both legacy/Snow and Lion semantic views of the same mapped
-prefix. Either zero or nonzero `CGSMainDisplayID` is accepted for the minimal
-translated probe; record the actual result.
+Either zero or nonzero `CGSMainDisplayID` remains accepted for the minimal
+translated PPC probe. Record the actual result.
 
 ## Return evidence after a full pass
 
@@ -198,12 +186,6 @@ Return only:
 ppc-carbon-gui-display-shmem-prefix-snapshot-snow.txt
 ppc-carbon-gui-display-shmem-prefix-snapshot-lion.txt
 ~~~
-
-## Interpretation gate
-
-The desired discriminator remains unchanged: compare the Snow legacy view,
-Lion native view, and Lion translated-PPC legacy/Lion views of the actual
-display-source object.
 
 No shared-record rewrite or compatibility adapter is authorized by this
 procedure alone.
