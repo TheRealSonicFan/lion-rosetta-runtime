@@ -1,0 +1,193 @@
+# PPC Carbon GUI display-shmem consumer-topology audit
+
+## Status
+
+**NEXT STEP — STATIC OWNERSHIP/LIFECYCLE AUDIT BEFORE ANY PROJECTION DESIGN.**
+
+The V4 passive snapshots close the causal question that motivated the
+display-shmem investigation.
+
+Snow Leopard PPC reads a Snow-layout record and returns a nonzero main display.
+Lion native and translated PPC both read the same Lion display-source object,
+but native Lion returns the nonzero main display while the translated Snow PPC
+reader returns zero.
+
+The decisive status byte is release-shifted exactly as the prior static audits
+predicted:
+
+~~~text
+Snow reader main-candidate byte     record +0x10e
+Lion native main-candidate byte     record +0x12a
+delta                               +0x1c
+~~~
+
+On the Snow control, record bytes `+0x10c..+0x113` are:
+
+~~~text
+01 01 01 01 00 00 00 00
+~~~
+
+so Snow `+0x10e` is nonzero.
+
+On Lion, the translated PPC legacy view at `+0x10c..+0x113` is:
+
+~~~text
+37 03 00 00 00 00 00 00
+~~~
+
+so the Snow reader sees `+0x10e == 0` and rejects the record as the main
+candidate. The Lion-native shifted view at `+0x128..+0x12f` is:
+
+~~~text
+01 01 01 01 00 00 00 00
+~~~
+
+so Lion `+0x12a` is nonzero and the native lookup succeeds.
+
+The remaining coherent fields also match the proven `+0x1c` correspondence.
+This is now live causal evidence of a record-layout compatibility boundary, not
+only a static layout difference.
+
+## Why implementation does not start yet
+
+The server-owned Lion shared-memory record must remain untouched. A direct
+rewrite, truncation, or in-place Snow-layout overlay would affect native
+consumers and would couple the compatibility layer to WindowServer-owned
+lifetime/state.
+
+A future process-local Snow-layout projection may be viable, but the correct
+ownership seam is not yet established. Before writing compatibility code we
+must know:
+
+1. every Snow CoreGraphics consumer of the selector/source/local globals;
+2. where the two mode-1 source mappings are first installed;
+3. how `_initCGDisplayMappings` builds its local mapping entries from those
+   source slots;
+4. which display-change/mapping-change seed paths invalidate or rebuild state;
+5. whether one source-array substitution point can safely feed the existing
+   Snow local-mapping builder;
+6. what event must refresh a projection after display reconfiguration.
+
+## Prepared analyzer
+
+Run:
+
+~~~text
+scripts/audit-ppc-carbon-gui-display-shmem-consumer-topology.py
+~~~
+
+The analyzer is static-only. It thins the pinned release-local CoreGraphics
+slice, disassembles it, reconstructs PIC references to the exact standalone
+selector/source/local/mode-2 globals, and emits all resolved function-level
+cross-references plus the focused initializer/lookup/update/seed bodies.
+
+It validates at minimum that the already-proven core users are present:
+
+~~~text
+Snow
+  selector       _lookupMainDisplay
+  source array   _lookupMainDisplay, _initCGDisplayMappings
+  local array    _lookupMainDisplay, _initCGDisplayMappings
+
+Lion
+  selector       _lookupMainDisplay
+  source array   _lookupMainDisplay, _initDisplayMappings
+  local array    _lookupMainDisplay, _initDisplayMappings
+~~~
+
+The analyzer also emits direct-reference topology for:
+
+~~~text
+release-local display-state initializer
+release-local display-mapping initializer
+_updateAllDisplayInfoAsNeeded
+_CGSDisplayChangedSeed
+_CGSDisplayMappingChangedSeed
+_CGSDisplayNotifyProc
+~~~
+
+## Phase A — Snow Leopard static audit
+
+On Snow Leopard 10.6.8 / 10K549 from current runtime `main`:
+
+~~~sh
+/usr/bin/python ./scripts/audit-ppc-carbon-gui-display-shmem-consumer-topology.py \
+  ./ppc-carbon-gui-display-shmem-consumer-topology-snow.txt
+~~~
+
+Require:
+
+~~~text
+mode=snow
+slice_exact=YES
+selector_required_caller__lookupMainDisplay=YES
+source_array_required_caller__lookupMainDisplay=YES
+source_array_required_caller__initCGDisplayMappings=YES
+local_array_required_caller__lookupMainDisplay=YES
+local_array_required_caller__initCGDisplayMappings=YES
+display_shmem_consumer_topology_audit_exact=YES
+RESULT: PASS
+~~~
+
+If it fails, stop and return the Snow report only.
+
+## Phase B — Lion static audit
+
+Only after Snow passes, run on Lion 10.7.5 / 11G63:
+
+~~~sh
+/usr/bin/python ./scripts/audit-ppc-carbon-gui-display-shmem-consumer-topology.py \
+  ./ppc-carbon-gui-display-shmem-consumer-topology-lion.txt
+~~~
+
+Require:
+
+~~~text
+mode=lion
+slice_exact=YES
+selector_required_caller__lookupMainDisplay=YES
+source_array_required_caller__lookupMainDisplay=YES
+source_array_required_caller__initDisplayMappings=YES
+local_array_required_caller__lookupMainDisplay=YES
+local_array_required_caller__initDisplayMappings=YES
+display_shmem_consumer_topology_audit_exact=YES
+RESULT: PASS
+~~~
+
+## Return evidence
+
+After both reports pass, return only:
+
+~~~text
+ppc-carbon-gui-display-shmem-consumer-topology-snow.txt
+ppc-carbon-gui-display-shmem-consumer-topology-lion.txt
+~~~
+
+## Decision gate after the audit
+
+Do not implement a projection merely because the live layout mismatch is now
+causal.
+
+The next engineering decision will be made from the exact topology:
+
+- if the Snow source array has one controllable process-local ownership seam
+  and the existing mapping builder can consume a projected Snow record without
+  further private state substitution, design a narrow proof-only
+  process-local projection experiment;
+- if source pointers are installed or consumed through multiple independent
+  paths, audit those paths first rather than broadening an adapter;
+- if display-change lifecycle can invalidate the projected record without an
+  exact refresh hook, resolve that lifecycle before any live projection.
+
+## Safety boundary
+
+- Do not write the server-owned Lion display shared memory.
+- Do not substitute or normalize display IDs.
+- Do not patch `_CGSMainDisplayID`.
+- Do not patch private HIToolbox.
+- Do not add a `__CGSGetDisplayShmem` wire adapter; that transport is already
+  release-stable.
+- Do not create a process-local projection yet.
+- Do not rewrite event, hit-test, or movement payloads.
+- Keep the accepted compatibility stack unchanged.
+- Do not modify CoreGraphics, WindowServer, Rosetta caches, dyld, or XNU.
