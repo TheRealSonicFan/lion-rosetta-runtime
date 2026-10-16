@@ -2,96 +2,104 @@
 
 ## Status
 
-**DISPLAY-MAPPING INITIALIZER BOUNDARY RESOLVED / DISPLAY-SHMEM TRANSPORT NEXT.**
+**COMPLETE — GENERATED DISPLAY-SHMEM WIRE CONTRACT IS RELEASE-STABLE.**
 
-The returned display-mapping initialization audits pass on Snow Leopard PPC and
-Lion i386. They close the local initializer question far enough to identify one
-shared lower boundary without rewriting any display ID.
+The returned analyzer-v1 reports pass on Snow Leopard PPC and Lion i386 with
+the pinned CoreGraphics slices.
 
-On Snow, `_initCGDisplayMappings` calls `_initCGDisplayState`. The latter
-acquires the CGS server port, calls `__CGSGetDisplayShmem`, and then resolves
-the returned references through `_CGSResolveShmemReference` before
-`_initCGDisplayMappings` builds its per-display mapping entries.
+The generated `__CGSGetDisplayShmem` client contract is identical on the two
+reference releases:
 
-On Lion, `_initDisplayMappings` calls `_initDisplayState`. The returned
-Lion report shows the same lower call shape through numeric targets. Correlation
-with the preserved same-binary CoreGraphics symbol inventory resolves
-`0x00074836` as `__CGSGetDisplayShmem` and `0x000741cd` as
-`_CGSResolveShmemReference`. The representation above that boundary changed,
-but the first shared-memory acquisition primitive did not disappear.
+~~~text
+request ID       0x748b
+reply ID         0x74ef
+Mach bits        0x1513
+mach_msg option  0x00000003
+send size        0x18
+receive size     0x44
+success size     0x3c
+error size       0x24
+~~~
 
-The old Snow generated `__CGSGetNumberOfDisplays` stub remains off the
-examined main-display repair path. It is not the next compatibility target.
+Both clients use the same MIG reply-port lifecycle, the same reply-ID and size
+checks, and the same NDR-aware 32-bit conversion before copying three
+shared-memory reference pairs to the caller. There is no request-ID shift,
+reply-ID shift, or immediate request/reply geometry mismatch at this boundary.
 
-## Objective
+The release-local display-state initializers also consume those results in the
+same broad way: the first returned reference pair is resolved through
+`_CGSResolveShmemReference` with mode `2`, and the remaining two pairs
+are resolved with mode `1`.
 
-Resolve the exact generated-MIG contract used by
-`__CGSGetDisplayShmem` on the two reference systems before any new live
-adapter or display-state manipulation is considered.
+Therefore a `__CGSGetDisplayShmem` adapter is not supported by the static
+evidence.
 
-The comparison must determine:
+## Resolved transport contract
 
-1. the Snow PPC and Lion i386 request/reply message IDs;
-2. Mach message bits/options and request/receive sizes;
-3. NDR and reply-ID/error validation behavior;
-4. whether the release delta is identical, ID-only, or structurally different;
-5. which returned shared-memory references are consumed by
-   `_CGSResolveShmemReference`;
-6. the single narrow live observation boundary that can prove where translated
-   Snow display-state initialization fails on Lion without substituting or
-   normalizing a display ID.
+### Snow Leopard PPC
 
-A `RESULT: PASS` from this audit means the required static evidence was
-collected with pinned binary provenance. It does not by itself authorize an
-adapter.
+`__CGSGetDisplayShmem`:
 
-## Prepared analyzer
+~~~text
+bits     0x1513
+request  0x748b
+option   0x3
+send     0x18
+receive  0x44
+reply    0x74ef
+sizes    0x3c success / 0x24 error
+~~~
 
-Current runtime `main` provides:
+### Lion i386
+
+`__CGSGetDisplayShmem`:
+
+~~~text
+bits     0x1513
+request  0x748b
+option   0x3
+send     0x18
+receive  0x44
+reply    0x74ef
+sizes    0x3c success / 0x24 error
+~~~
+
+The wire relation is therefore:
+
+~~~text
+display_shmem_wire_relation=IDENTICAL
+display_shmem_id_adapter_authorized=NO
+display_shmem_schema_adapter_authorized=NO
+~~~
+
+## Post-transport differential
+
+The first concrete release differential is in the mapped state consumed after
+the transport succeeds.
+
+Snow `_initCGDisplayMappings` walks the mapped per-display source records from
+`+0x20` with a `0x150` source stride and builds `0x58`-byte local
+mapping entries.
+
+Lion `_initDisplayMappings` also starts at `+0x20`, but walks source
+records with a `0x17c` stride, builds `0x68`-byte local mapping entries,
+and directly reads mapped source fields at `+0x138` and `+0x170`.
+
+This difference is downstream of the now-proven identical MIG contract and is
+the next engineering boundary.
+
+## Analyzer provenance
+
+The completed reports were produced by:
 
 ~~~text
 scripts/audit-ppc-carbon-gui-display-shmem-transport-contract.py
-~~~
-
-Contract:
-
-~~~text
 analyzer_version=1
 audit_contract=carbon-gui-display-shmem-transport-contract-v1
+Git blob 564b9aa76a1e4631eabbe3d1e27ecb177661b820
 ~~~
 
-Current analyzer Git blob:
-
-~~~text
-564b9aa76a1e4631eabbe3d1e27ecb177661b820
-~~~
-
-The analyzer emits complete symbol-bounded disassembly, resolved direct-call
-edges, Mach/MIG lines, protocol-bearing immediates, and caller inventories for:
-
-~~~text
-__CGSGetDisplayShmem
-_CGSResolveShmemReference
-_CGSServerPort
-_CGSScoreboard
-_CGSGetDenyWindowServerConnections
-_lookupMainDisplay
-
-Snow:
-_initCGDisplayState
-_initCGDisplayMappings
-
-Lion:
-_initDisplayState
-_initDisplayMappings
-~~~
-
-It also verifies that the release-specific display-state initializer reaches
-`_CGSServerPort`, `__CGSGetDisplayShmem`, and
-`_CGSResolveShmemReference`, and that the generated display-shmem helper
-contains visible Mach/MIG transport.
-
-Pinned CoreGraphics slices remain:
+Pinned CoreGraphics slices:
 
 ~~~text
 Snow 10.6.8 / 10K549, ppc7400
@@ -101,108 +109,55 @@ Lion 10.7.5 / 11G63, i386
 4859edced4b9488d887f1243a9809d325e14dd12f7051815ba9f1f7875bbab7d
 ~~~
 
+## Next controlled step
+
+Follow:
+
+~~~text
+docs/ppc-carbon-gui-display-shmem-state-layout-audit.md
+~~~
+
+That procedure is static-only. It resolves the mapped display shared-state
+record geometry, field offsets, lookup consumers, and server-side
+`__XGetDisplayShmem` / `__CGXGetDisplayShmem` handlers before any live
+observation or shared-record compatibility rule is considered.
+
+Do not rerun the PPC subject for this step.
+
 ## Safety constraints
 
-- Do not launch the PPC Carbon subject for this step.
-- Do not repeat a titlebar drag.
 - Do not normalize display ID 0.
-- Do not substitute Lion's native main-display ID into PPC state.
-- Do not patch either display-state or display-mapping initializer.
-- Do not add a `__CGSGetDisplayShmem` adapter until both reports are compared.
+- Do not substitute Lion's native display ID into PPC state.
+- Do not add a `__CGSGetDisplayShmem` adapter.
+- Do not rewrite or clone display shared-memory records.
+- Do not patch either mapping/state initializer or mapping globals.
 - Do not add an adapter for `__CGSGetNumberOfDisplays`.
 - Do not rewrite event fields, hit parts, or `0x7218` movement payloads.
 - Do not add the deferred out-of-line event adapter.
-- Keep the accepted v9 SharedWindow bridge, exact-six bitmap-info rule, and
-  exact-21 notification policy unchanged.
+- Keep the accepted v9 SharedWindow bridge and all accepted titlebar,
+  notification, and CoreUI compatibility rules unchanged.
 - Do not modify CoreGraphics, HIToolbox, WindowServer, Rosetta caches, dyld,
   or XNU.
-- Verify current repository contents on a modern TLS-capable staging system,
-  transfer the tree offline, and use SHA-256 on Snow/Lion.
-
-## Snow static report
-
-On Snow Leopard 10.6.8 / 10K549:
-
-~~~sh
-/usr/bin/python ./scripts/audit-ppc-carbon-gui-display-shmem-transport-contract.py \
-  ./ppc-carbon-gui-display-shmem-transport-contract-snow.txt
-~~~
-
-Require:
-
-~~~text
-analyzer_version=1
-audit_contract=carbon-gui-display-shmem-transport-contract-v1
-mode=snow
-product_version=10.6.8
-build_version=10K549
-required_arch=ppc7400
-slice_exact=YES
-init_calls_get_display_shmem=YES
-init_calls_resolve_shmem_reference=YES
-init_calls_cgs_server_port=YES
-get_display_shmem_has_mach_mig_transport=YES
-display_shmem_transport_contract_audit_exact=YES
-RESULT: PASS
-~~~
-
-## Lion native-reference static report
-
-On Lion 10.7.5 / 11G63:
-
-~~~sh
-/usr/bin/python ./scripts/audit-ppc-carbon-gui-display-shmem-transport-contract.py \
-  ./ppc-carbon-gui-display-shmem-transport-contract-lion.txt
-~~~
-
-Require:
-
-~~~text
-analyzer_version=1
-audit_contract=carbon-gui-display-shmem-transport-contract-v1
-mode=lion
-product_version=10.7.5
-build_version=11G63
-required_arch=i386
-slice_exact=YES
-init_calls_get_display_shmem=YES
-init_calls_resolve_shmem_reference=YES
-init_calls_cgs_server_port=YES
-get_display_shmem_has_mach_mig_transport=YES
-display_shmem_transport_contract_audit_exact=YES
-RESULT: PASS
-~~~
-
-If either report fails, return it unchanged. Do not compensate with a live
-probe or a broader static search.
-
-## Return evidence
-
-Return only:
-
-~~~text
-ppc-carbon-gui-display-shmem-transport-contract-snow.txt
-ppc-carbon-gui-display-shmem-transport-contract-lion.txt
-~~~
 
 ## Current boundary
 
 ~~~text
 v9 GetSharedWindow bridge                         target-proven
 Lion public mouse-down                            sane / inDrag (4)
-Snow main-display failure result                  0
-Snow mapping initializer                          _initCGDisplayMappings
-Snow display-state initializer                    _initCGDisplayState
-Snow first shared-state acquisition               __CGSGetDisplayShmem
-Lion mapping initializer                          _initDisplayMappings
-Lion display-state initializer                    _initDisplayState
-Lion first shared-state acquisition               __CGSGetDisplayShmem
-shared-reference resolver                         _CGSResolveShmemReference on both
-display-shmem wire relation                       UNKNOWN pending focused audit
-legacy __CGSGetNumberOfDisplays                   not on examined repair path
+Snow display-shmem request/reply                  0x748b / 0x74ef
+Lion display-shmem request/reply                  0x748b / 0x74ef
+Snow/Lion send/receive                            0x18 / 0x44
+display-shmem wire relation                       IDENTICAL
+display-shmem adapter                             NOT AUTHORIZED
+Snow mapped display-record stride                 0x150
+Lion mapped display-record stride                 0x17c
+Snow local mapping stride                         0x58
+Lion local mapping stride                         0x68
+Lion mapped fields +0x138/+0x170                  referenced
 display-ID substitution                           NOT AUTHORIZED
 display-0 normalization                           NOT AUTHORIZED
+shared-record rewrite                             NOT AUTHORIZED
 event/move rewrite                                NOT AUTHORIZED
-next action                                       static display-shmem transport audit
+next action                                       static display shared-state layout audit
 XNU                                               unchanged
 ~~~
