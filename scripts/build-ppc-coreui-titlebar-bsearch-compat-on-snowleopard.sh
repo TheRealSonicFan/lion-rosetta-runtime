@@ -7,6 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SRC="$ROOT/tests/ppc-coreui-titlebar-bsearch-compat-interposer.c"
 EXPECTED_BUILD_ID="coreui-titlebar-bsearch-exact-six-v2"
+EXPECTED_SOURCE_SHA256="222aed0e34790c663547f36daee26adbd192c0e938a0d533b52158a2e10ef550"
 INFO="$OUT.info.txt"
 SHA="$OUT.sha256"
 TMP_DYLIB="$(/usr/bin/mktemp /tmp/pm-titlebar-bsearch.XXXXXX.dylib)"
@@ -16,6 +17,11 @@ trap 'rm -f "$TMP_DYLIB" "$TMP_LOG"' EXIT HUP INT TERM
 [ -f "$SRC" ] || { echo "error: missing source: $SRC" >&2; exit 66; }
 /usr/bin/grep -Fq "#define BUILD_ID \"$EXPECTED_BUILD_ID\"" "$SRC" || {
     echo "error: stale titlebar bsearch interposer source; transfer the current verified runtime tree from the staging system" >&2
+    exit 66
+}
+SOURCE_SHA="$(/usr/bin/shasum -a 256 "$SRC" | /usr/bin/awk '{print $1}')"
+[ "$SOURCE_SHA" = "$EXPECTED_SOURCE_SHA256" ] || {
+    echo "error: titlebar bsearch source SHA-256 mismatch: $SOURCE_SHA" >&2
     exit 66
 }
 
@@ -102,8 +108,6 @@ is_ppc32_macho "$OUT" || {
     echo "error: output is not a 32-bit PowerPC Mach-O image" >&2
     exit 70
 }
-
-SOURCE_SHA="$(/usr/bin/shasum -a 256 "$SRC" | /usr/bin/awk '{print $1}')"
 
 {
     echo "== PPC CoreUI titlebar bsearch compatibility build =="
