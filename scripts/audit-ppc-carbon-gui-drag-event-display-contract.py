@@ -36,6 +36,9 @@ EXPECTED = {
 
 CORE_EXACT = [
     "_CGSGetDisplayBounds",
+    "_CGDisplayBounds",
+    "_CGMainDisplayID",
+    "_CGGetActiveDisplayList",
     "_CGSGetUnflippedEventLocation",
     "_CGSGetUnflippedWindowEventLocation",
     "_CGSGetWindowMouseLocation",
@@ -51,7 +54,7 @@ CORE_EXACT = [
 ]
 
 CORE_PATTERNS = [
-    ("display_bounds", re.compile(r"CGSGetDisplayBounds$", re.I)),
+    ("display_bounds", re.compile(r"(CGSGetDisplayBounds|CGDisplayBounds|CGMainDisplayID|CGGetActiveDisplayList)$", re.I)),
     ("unflipped_event_location", re.compile(r"CGSGetUnflippedEventLocation$", re.I)),
     ("unflipped_window_event_location", re.compile(r"CGSGetUnflippedWindowEventLocation$", re.I)),
     ("window_mouse_location", re.compile(r"CGSGetWindowMouseLocation$", re.I)),
@@ -66,6 +69,7 @@ HIT_PATTERNS = [
     ("drag_tracker", re.compile(r"TDragTracker.*OnMouseMoved", re.I)),
     ("point_bridge", re.compile(r"HIPoint(To|From)QDPoint", re.I)),
     ("drag_window", re.compile(r"(^|_)DragWindow$", re.I)),
+    ("display_api_users", re.compile(r"(DisplayBounds|MainDisplay|ActiveDisplay|DisplayID)", re.I)),
 ]
 
 FOCUS_STRING_RE = re.compile(
