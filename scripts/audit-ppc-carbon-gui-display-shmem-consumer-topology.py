@@ -8,8 +8,8 @@ import subprocess
 import sys
 import tempfile
 
-ANALYZER_VERSION = "1"
-AUDIT_CONTRACT = "carbon-gui-display-shmem-consumer-topology-v1"
+ANALYZER_VERSION = "2"
+AUDIT_CONTRACT = "carbon-gui-display-shmem-consumer-topology-v2"
 
 COREGRAPHICS = "/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/CoreGraphics.framework/Versions/A/CoreGraphics"
 
@@ -41,6 +41,7 @@ CONFIG = {
             "_CGSDisplayMappingChangedSeed",
             "_CGSDisplayNotifyProc",
         ],
+        "display_notify_target": "_CGSDisplayNotifyProc",
     },
     "lion": {
         "product": "10.7.5",
@@ -67,8 +68,9 @@ CONFIG = {
             "_updateAllDisplayInfoAsNeeded",
             "_CGSDisplayChangedSeed",
             "_CGSDisplayMappingChangedSeed",
-            "_CGSDisplayNotifyProc",
+            "__CGSDisplayNotifyProc",
         ],
+        "display_notify_target": "__CGSDisplayNotifyProc",
     },
 }
 
@@ -200,6 +202,10 @@ def ppc_xrefs(selected, cfg):
     pending_lr = None
     hits = []
 
+    no_gpr_write_prefixes = (
+        "b", "cmp", "cmpl", "st", "mt", "sync", "isync", "eieio", "nop"
+    )
+
     for addr, op, operands, raw in selected:
         args = split_operands(operands)
 
@@ -211,9 +217,27 @@ def ppc_xrefs(selected, cfg):
 
         if op == "mfspr" and len(args) >= 2 and args[1] == "lr":
             rd = ppc_reg(args[0])
-            if rd is not None and pending_lr is not None:
-                regs[rd] = pending_lr
+            if rd is not None:
+                if pending_lr is not None:
+                    regs[rd] = pending_lr
+                else:
+                    regs.pop(rd, None)
             continue
+
+        # Record direct displacement references before applying destination
+        # register effects.  Only a register still carrying a proven PIC
+        # constant may contribute a global reference.
+        m = re.search(r"(-?0x[0-9a-fA-F]+|[0-9]+)\(r([0-9]+)\)", operands)
+        if m:
+            base_reg = int(m.group(2))
+            if base_reg in regs:
+                try:
+                    target = regs[base_reg] + parse_signed(m.group(1), 16)
+                    label, slot = classify_target(cfg, target)
+                    if label is not None:
+                        hits.append((label, slot, addr, raw))
+                except Exception:
+                    pass
 
         if op == "addis" and len(args) >= 3:
             rd = ppc_reg(args[0])
@@ -245,18 +269,6 @@ def ppc_xrefs(selected, cfg):
                     regs.pop(rd, None)
             continue
 
-        m = re.search(r"(-?0x[0-9a-fA-F]+|[0-9]+)\(r([0-9]+)\)", operands)
-        if m:
-            base_reg = int(m.group(2))
-            if base_reg in regs:
-                try:
-                    target = regs[base_reg] + parse_signed(m.group(1), 16)
-                    label, slot = classify_target(cfg, target)
-                    if label is not None:
-                        hits.append((label, slot, addr, raw))
-                except Exception:
-                    pass
-
         if op == "or" and len(args) >= 3:
             rd = ppc_reg(args[0])
             rs1 = ppc_reg(args[1])
@@ -266,6 +278,32 @@ def ppc_xrefs(selected, cfg):
                     regs[rd] = regs[rs1]
                 else:
                     regs.pop(rd, None)
+            continue
+
+        if op == "lmw" and args:
+            rd = ppc_reg(args[0])
+            if rd is not None:
+                for reg in list(regs.keys()):
+                    if reg >= rd:
+                        regs.pop(reg, None)
+            continue
+
+        if op in ("bl", "bla", "bctrl", "blrl"):
+            # Darwin PPC calls may clobber volatile GPRs.  Keep only
+            # callee-saved PIC bases so stale object values cannot masquerade
+            # as later shared-state globals.
+            for reg in list(regs.keys()):
+                if reg <= 12:
+                    regs.pop(reg, None)
+            continue
+
+        # Conservative invalidation: for ordinary PPC instructions the first
+        # GPR operand is the destination.  Stores, compares, branches, and
+        # special-register writes are excluded above/by prefix.
+        if args and not op.startswith(no_gpr_write_prefixes):
+            rd = ppc_reg(args[0])
+            if rd is not None:
+                regs.pop(rd, None)
 
     return hits
 
@@ -273,60 +311,101 @@ def i386_reg(token):
     m = I386_REG.match(token)
     return m.group(1) if m else None
 
+def i386_parent_reg(token):
+    token = token.strip()
+    groups = {
+        "%eax": "eax", "%ax": "eax", "%al": "eax", "%ah": "eax",
+        "%ebx": "ebx", "%bx": "ebx", "%bl": "ebx", "%bh": "ebx",
+        "%ecx": "ecx", "%cx": "ecx", "%cl": "ecx", "%ch": "ecx",
+        "%edx": "edx", "%dx": "edx", "%dl": "edx", "%dh": "edx",
+        "%esi": "esi", "%si": "esi",
+        "%edi": "edi", "%di": "edi",
+    }
+    return groups.get(token)
+
 def i386_disp(token):
     if token is None or token == "":
         return 0
     return parse_signed(token, 32)
 
+def i386_memory_parts(token):
+    m = re.match(
+        r"^(-?0x[0-9a-fA-F]+|[0-9]+)?\(%(e(?:ax|bx|cx|dx|si|di))"
+        r"(?:,%(e(?:ax|bx|cx|dx|si|di)),([1248]))?\)$",
+        token)
+    if not m:
+        return None
+    return (i386_disp(m.group(1)), m.group(2), m.group(3),
+            int(m.group(4)) if m.group(4) else None)
+
 def i386_xrefs(selected, cfg):
     regs = {}
     stack = {}
     hits = []
-    previous = None
+    pic_call_target = None
+
+    no_register_write_prefixes = (
+        "j", "call", "ret", "cmp", "test", "push", "nop"
+    )
 
     for addr, op, operands, raw in selected:
         args = split_operands(operands)
 
-        if op == "popl" and len(args) == 1:
-            rd = i386_reg(args[0])
-            if rd is not None and previous is not None:
-                paddr, pop, pops, praw = previous
-                vals = HEX_TOKEN.findall(pops)
-                if pop == "calll" and vals and int(vals[-1], 16) == addr:
-                    regs[rd] = addr
-                else:
-                    regs.pop(rd, None)
-            previous = (addr, op, operands, raw)
-            continue
-
-        for mem in re.finditer(
-                r"(-?0x[0-9a-fA-F]+|[0-9]+)?\(%(e(?:ax|bx|cx|dx|si|di))(?:,%e(?:ax|bx|cx|dx|si|di),[1248])?\)",
-                operands):
-            disp = i386_disp(mem.group(1))
-            base = mem.group(2)
+        # Record every memory operand whose base still carries a proven PIC
+        # constant.  Indexed references classify the array base, not a guessed
+        # runtime element.
+        for token in args:
+            parts = i386_memory_parts(token)
+            if parts is None:
+                continue
+            disp, base, index, scale = parts
             if base in regs:
                 target = regs[base] + disp
                 label, slot = classify_target(cfg, target)
                 if label is not None:
                     hits.append((label, slot, addr, raw))
 
+        if op == "calll":
+            values = HEX_TOKEN.findall(operands)
+            target = int(values[-1], 16) if values else None
+            pic_call_target = target
+            if target != addr + 5:
+                for reg in ("eax", "ecx", "edx"):
+                    regs.pop(reg, None)
+            continue
+
+        if op == "popl" and len(args) == 1:
+            rd = i386_parent_reg(args[0])
+            if rd is not None:
+                if pic_call_target == addr:
+                    regs[rd] = addr
+                else:
+                    regs.pop(rd, None)
+            pic_call_target = None
+            continue
+
+        pic_call_target = None
+
         if op in ("movl", "leal") and len(args) == 2:
             src, dst = args
-            rd = i386_reg(dst)
+            rd = i386_parent_reg(dst)
             dst_stack = I386_EBP_MEM.match(dst)
 
             if op == "leal" and rd is not None:
-                m = I386_MEM.match(src)
-                if m and m.group(2) in regs:
-                    target = regs[m.group(2)] + i386_disp(m.group(1))
-                    regs[rd] = target
-                    label, slot = classify_target(cfg, target)
-                    if label is not None:
-                        hits.append((label, slot, addr, raw))
+                parts = i386_memory_parts(src)
+                if parts is not None:
+                    disp, base, index, scale = parts
+                    if base in regs and index is None:
+                        regs[rd] = regs[base] + disp
+                        label, slot = classify_target(cfg, regs[rd])
+                        if label is not None:
+                            hits.append((label, slot, addr, raw))
+                    else:
+                        regs.pop(rd, None)
                 else:
                     regs.pop(rd, None)
             elif rd is not None:
-                rs = i386_reg(src)
+                rs = i386_parent_reg(src)
                 src_stack = I386_EBP_MEM.match(src)
                 if rs is not None and rs in regs:
                     regs[rd] = regs[rs]
@@ -341,21 +420,37 @@ def i386_xrefs(selected, cfg):
 
             if dst_stack:
                 key = i386_disp(dst_stack.group(1))
-                rs = i386_reg(src)
-                if rs is not None and rs in regs:
+                rs = i386_parent_reg(src)
+                if op == "movl" and rs is not None and rs in regs:
                     stack[key] = regs[rs]
                 else:
                     stack.pop(key, None)
+            continue
 
-        elif op == "addl" and len(args) == 2 and args[0].startswith("$"):
-            rd = i386_reg(args[1])
-            if rd is not None and rd in regs:
-                try:
-                    regs[rd] += parse_signed(args[0][1:], 32)
-                except Exception:
+        if op in ("addl", "subl") and len(args) == 2 and args[0].startswith("$"):
+            rd = i386_parent_reg(args[1])
+            if rd is not None:
+                if rd in regs:
+                    try:
+                        delta = parse_signed(args[0][1:], 32)
+                        regs[rd] = regs[rd] + delta if op == "addl" else regs[rd] - delta
+                    except Exception:
+                        regs.pop(rd, None)
+                else:
                     regs.pop(rd, None)
+            continue
 
-        previous = (addr, op, operands, raw)
+        if op == "leave":
+            stack.clear()
+            continue
+
+        # Conservative destination invalidation catches movzbl/xorl/imull/
+        # shifts/increments/etc. that previously left stale PIC constants in
+        # registers and created false shared-global xrefs.
+        if args and not op.startswith(no_register_write_prefixes):
+            rd = i386_parent_reg(args[-1])
+            if rd is not None:
+                regs.pop(rd, None)
 
     return hits
 
@@ -366,10 +461,13 @@ def direct_symbol_refs(symbols, groups, target_name):
     target_addr = symbols[idxs[0]][0]
     forms = ["0x%x" % target_addr, "0x%08x" % target_addr, target_name.lower()]
     refs = []
+    branch_ops = ("bl", "b", "calll", "jmp")
     for idx, selected in groups.items():
         if idx == idxs[0]:
             continue
         for addr, op, operands, raw in selected:
+            if op not in branch_ops:
+                continue
             low = raw.lower()
             if any(form.lower() in low for form in forms):
                 refs.append((symbols[idx][1], symbols[idx][0], addr, raw))
@@ -519,7 +617,7 @@ def main():
                             "_updateAllDisplayInfoAsNeeded",
                             "_CGSDisplayChangedSeed",
                             "_CGSDisplayMappingChangedSeed",
-                            "_CGSDisplayNotifyProc",
+                            cfg["display_notify_target"],
                         ]
                         for name in lifecycle:
                             refs = direct_symbol_refs(symbols, groups, name)
