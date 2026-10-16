@@ -344,7 +344,7 @@ main(void)
     void *mode2_after;
 #if defined(__ppc__)
     const unsigned char *lookup_main_runtime;
-    intptr_t lookup_pic_base;
+    int64_t lookup_pic_base;
     uint32_t lookup_prologue_word;
     uint32_t selector_addis_word;
     uint32_t selector_low_word;
@@ -360,7 +360,7 @@ main(void)
     char local_segment[17];
 #elif defined(__i386__)
     const unsigned char *lookup_main_runtime_i386;
-    intptr_t lookup_pic_base_i386;
+    int64_t lookup_pic_base_i386;
     int32_t selector_disp_i386;
     int32_t source_disp_i386;
     int32_t local_disp_i386;
@@ -475,9 +475,9 @@ main(void)
      * from the loaded _lookupMainDisplay PIC references instead.
      */
     lookup_main_runtime =
-        (const unsigned char *)((intptr_t)(uintptr_t)symbol - (intptr_t)0x5858L);
+        (const unsigned char *)((uintptr_t)symbol - (uintptr_t)0x00005858U);
     lookup_pic_base =
-        (intptr_t)(uintptr_t)(lookup_main_runtime + 0x08);
+        (int64_t)(uint32_t)(uintptr_t)(lookup_main_runtime + 0x08);
 
     lookup_prologue_word = read_native_u32(lookup_main_runtime);
     selector_addis_word = read_native_u32(lookup_main_runtime + 0x1c);
@@ -519,16 +519,16 @@ main(void)
 
     selector_runtime =
         (uintptr_t)(lookup_pic_base +
-                    (intptr_t)(int16_t)(selector_addis_word & 0xffffU) * 65536L +
-                    (intptr_t)(int16_t)(selector_low_word & 0xffffU));
+                    (int64_t)(int16_t)(selector_addis_word & 0xffffU) * 65536LL +
+                    (int64_t)(int16_t)(selector_low_word & 0xffffU));
     source_array_runtime =
         (uintptr_t)(lookup_pic_base +
-                    (intptr_t)(int16_t)(source_addis_word & 0xffffU) * 65536L +
-                    (intptr_t)(int16_t)(source_low_word & 0xffffU));
+                    (int64_t)(int16_t)(source_addis_word & 0xffffU) * 65536LL +
+                    (int64_t)(int16_t)(source_low_word & 0xffffU));
     local_array_runtime =
         (uintptr_t)(lookup_pic_base +
-                    (intptr_t)(int16_t)(local_addis_word & 0xffffU) * 65536L +
-                    (intptr_t)(int16_t)(local_low_word & 0xffffU));
+                    (int64_t)(int16_t)(local_addis_word & 0xffffU) * 65536LL +
+                    (int64_t)(int16_t)(local_low_word & 0xffffU));
 
     selector_segment[0] = '\0';
     source_segment[0] = '\0';
@@ -567,7 +567,7 @@ main(void)
     lookup_main_runtime_i386 =
         (const unsigned char *)((uintptr_t)symbol + (uintptr_t)0x000000f2U);
     lookup_pic_base_i386 =
-        (intptr_t)(uintptr_t)(lookup_main_runtime_i386 + 0x0e);
+        (int64_t)(uint32_t)(uintptr_t)(lookup_main_runtime_i386 + 0x0e);
 
     if (lookup_main_runtime_i386[0x00] != 0x55U ||
         lookup_main_runtime_i386[0x01] != 0x89U ||
@@ -594,11 +594,11 @@ main(void)
         (int32_t)read_le32(lookup_main_runtime_i386 + 0x90);
 
     selector_runtime_i386 =
-        (uintptr_t)(lookup_pic_base_i386 + (intptr_t)selector_disp_i386);
+        (uintptr_t)(lookup_pic_base_i386 + (int64_t)selector_disp_i386);
     source_array_runtime_i386 =
-        (uintptr_t)(lookup_pic_base_i386 + (intptr_t)source_disp_i386);
+        (uintptr_t)(lookup_pic_base_i386 + (int64_t)source_disp_i386);
     local_array_runtime_i386 =
-        (uintptr_t)(lookup_pic_base_i386 + (intptr_t)local_disp_i386);
+        (uintptr_t)(lookup_pic_base_i386 + (int64_t)local_disp_i386);
 
     selector_segment_i386[0] = '\0';
     source_segment_i386[0] = '\0';
