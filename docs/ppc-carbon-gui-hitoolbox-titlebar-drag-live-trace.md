@@ -114,43 +114,31 @@ audit_contract=carbon-gui-hitoolbox-titlebar-input-route-live-v2
 - Do not add or broaden a CGS rule.
 - Do not modify CoreUI/HIToolbox resources, Rosetta caches, or XNU.
 
-## Phase A — update and pin
+## Phase A — stage current main on a modern system
 
-On Snow Leopard 10.6.8 / 10K549:
+Do not run Git on Snow Leopard or Lion. Obtain and verify current `main` on a
+modern TLS-capable staging system, then transfer the verified repository tree to
+Snow Leopard. On the legacy target, use SHA-256 and the builders' embedded
+semantic checks only.
 
-```sh
-cd /path/to/lion-rosetta-runtime || exit 1
-git fetch origin || exit 1
-git pull --ff-only origin main || exit 1
-
-test "$(git hash-object ./tests/ppc-hitoolbox-titlebar-drag-trace-interposer.c)" = \
-  "2c91ae875f0497b7aed96eb8b47a8ca7cbb06768" || exit 1
-test "$(git hash-object ./scripts/build-ppc-hitoolbox-titlebar-drag-trace-on-snowleopard.sh)" = \
-  "2f65457b15e242783358414968d8c9baf974c937" || exit 1
-test "$(git hash-object ./scripts/summarize-ppc-carbon-gui-hitoolbox-titlebar-drag-trace.py)" = \
-  "4b193f02f704d9b98050e18558665c8a0aa6b6a9" || exit 1
-test "$(git hash-object ./scripts/run-snowleopard-ppc-carbon-gui-coreui-image-bitmapinfo-compat-control.sh)" = \
-  "dcf8acaa9ccd9eae6a01099e7dcffb5bfe366fe8" || exit 1
-
-/bin/bash -n ./scripts/build-ppc-hitoolbox-titlebar-drag-trace-on-snowleopard.sh || exit 1
-/bin/bash -n ./scripts/run-snowleopard-ppc-carbon-gui-coreui-image-bitmapinfo-compat-control.sh || exit 1
-/usr/bin/python -c 'compile(open("./scripts/summarize-ppc-carbon-gui-hitoolbox-titlebar-drag-trace.py","rb").read(),"drag-summary.py","exec")' || exit 1
-```
-
-Do not reuse the v1 `pm-hitoolbox-titlebar-drag-trace.dylib`; rebuild it.
+The v2 trace source must have SHA-256
+`d9c8d722773776a624d39d9076f2a3a4ad2889230ca075170b311860851595a9`.
+Do not reuse the historical v1
+`pm-hitoolbox-titlebar-drag-trace.dylib` whose SHA-256 is
+`294ebfc3697bff7e06e21d00e781ca1d29d7a5d028ce6f857e8869877e89d70f`.
 
 ## Phase B — rebuild v2 on Snow
 
 ```sh
 CC=/Developer-3.2.6/usr/bin/gcc-4.2 \
   ./scripts/build-ppc-hitoolbox-titlebar-drag-trace-on-snowleopard.sh \
-  ./payload/pm-hitoolbox-titlebar-drag-trace.dylib || exit 1
+  ./payload/pm-hitoolbox-titlebar-drag-trace-v2.dylib || exit 1
 ```
 
 Require:
 
 ```text
-interposer_source_git_blob=2c91ae875f0497b7aed96eb8b47a8ca7cbb06768
+interposer_source_sha256=d9c8d722773776a624d39d9076f2a3a4ad2889230ca075170b311860851595a9
 trace_build_id=hitoolbox-titlebar-drag-trace-v2
 Mach-O ... ppc / ppc7400
 __interpose size 0x00000008
@@ -158,6 +146,10 @@ __interpose size 0x00000008
 
 The single interpose tuple is only `InstallEventLoopTimer`. The event handler
 uses supported Carbon Event Manager registration rather than dyld interposition.
+
+The accepted v2 build has SHA-256
+`c8bc82713e4342c651cd2e3784d9d963597700a35cdcd739bba3c7dab8381093`.
+Verify the generated sidecar before Phase C.
 
 ## Phase C — rerun Snow positive input control
 
@@ -173,13 +165,9 @@ cd /path/to/lion-rosetta-runtime/payload || exit 1
 
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_PATH="$PWD/pm-coreui-windowframe-shared-art-slot0-compat.dylib"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_SHA256_FILE="$PWD/pm-coreui-windowframe-shared-art-slot0-compat.dylib.sha256"
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_INFO_FILE="$PWD/pm-coreui-windowframe-shared-art-slot0-compat.dylib.info.txt"
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_BUILD_ID="coreui-windowframe-shared-art-slot0-compat-v2"
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB="4f4792987fded0609efda2a8b4c524bc7069c7fd"
 
-export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_PATH="$PWD/pm-hitoolbox-titlebar-drag-trace.dylib"
-export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_SHA256_FILE="$PWD/pm-hitoolbox-titlebar-drag-trace.dylib.sha256"
-export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_INFO_FILE="$PWD/pm-hitoolbox-titlebar-drag-trace.dylib.info.txt"
+export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_PATH="$PWD/pm-hitoolbox-titlebar-drag-trace-v2.dylib"
+export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_SHA256_FILE="$PWD/pm-hitoolbox-titlebar-drag-trace-v2.dylib.sha256"
 
 ../scripts/run-snowleopard-ppc-carbon-gui-coreui-image-bitmapinfo-compat-control.sh \
   ./ppc-carbon-gui-smoketest-private-dyld \
@@ -240,9 +228,9 @@ Lion.
 After the Snow v2 control passes, transfer exactly:
 
 ```text
-pm-hitoolbox-titlebar-drag-trace.dylib
-pm-hitoolbox-titlebar-drag-trace.dylib.info.txt
-pm-hitoolbox-titlebar-drag-trace.dylib.sha256
+pm-hitoolbox-titlebar-drag-trace-v2.dylib
+pm-hitoolbox-titlebar-drag-trace-v2.dylib.info.txt
+pm-hitoolbox-titlebar-drag-trace-v2.dylib.sha256
 ```
 
 to Lion's `payload/`.
@@ -255,19 +243,10 @@ without first invoking the Lion runner that creates that report. The resulting
 `IOError: [Errno 2]` is therefore a documentation/workflow failure, not Lion
 runtime evidence.
 
-On Lion first update and pin:
+On Lion, use the same repository tree already verified on the modern staging
+system and transferred to the legacy target. Do not run Git on Lion.
 
-```sh
-cd /path/to/lion-rosetta-runtime || exit 1
-git fetch origin || exit 1
-git pull --ff-only origin main || exit 1
 
-test "$(git hash-object ./scripts/run-lion-ppc-carbon-gui-coreui-image-bitmapinfo-compat.sh)" = \
-  "185e319f0c9fa1abeb485c5b19ccd2a69c67728e" || exit 1
-test "$(git hash-object ./scripts/summarize-ppc-carbon-gui-hitoolbox-titlebar-drag-trace.py)" = \
-  "4b193f02f704d9b98050e18558665c8a0aa6b6a9" || exit 1
-/usr/bin/python -c 'compile(open("./scripts/summarize-ppc-carbon-gui-hitoolbox-titlebar-drag-trace.py","rb").read(),"drag-summary.py","exec")' || exit 1
-```
 
 Require the transferred v2 trace artifact and the already accepted v2 CoreUI
 slot-0 compatibility artifact to be present with their existing sidecars.
@@ -282,12 +261,10 @@ export ROSETTA_EXPECTED_KERNEL_SHA256=fe68467b60b3bd7edfab61b2d6c8af7f988de5206c
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_PATH="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_SHA256_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib.sha256"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_INFO_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib.info.txt"
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_BUILD_ID="coreui-windowframe-shared-art-slot0-compat-v2"
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB="4f4792987fded0609efda2a8b4c524bc7069c7fd"
 
-export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_PATH="$PWD/payload/pm-hitoolbox-titlebar-drag-trace.dylib"
-export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_SHA256_FILE="$PWD/payload/pm-hitoolbox-titlebar-drag-trace.dylib.sha256"
-export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_INFO_FILE="$PWD/payload/pm-hitoolbox-titlebar-drag-trace.dylib.info.txt"
+export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_PATH="$PWD/payload/pm-hitoolbox-titlebar-drag-trace-v2.dylib"
+export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_SHA256_FILE="$PWD/payload/pm-hitoolbox-titlebar-drag-trace-v2.dylib.sha256"
+export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_INFO_FILE="$PWD/payload/pm-hitoolbox-titlebar-drag-trace-v2.dylib.info.txt"
 
 REPORT="$PWD/payload/lion-ppc-carbon-gui-titlebar-drag-live.log"
 OBSERVER_REPORT="$PWD/payload/lion-ppc-carbon-gui-titlebar-drag-live-observer.log"
