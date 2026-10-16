@@ -2,7 +2,7 @@
 
 ## Status
 
-**NEXT STEP — PIN THE PROCESS-LOCAL PROJECTION SEAM AND REFRESH LIFECYCLE.**
+**COMPLETE — RELEASE/REBUILD/NOTIFICATION SEAM PINNED; LOCKED LOOKUP AUDIT NEXT.**
 
 The corrected V2 consumer-topology reports both pass on the pinned Snow PPC
 and Lion i386 CoreGraphics slices. The causal display-record layout mismatch
@@ -142,3 +142,33 @@ No production projection is authorized by this audit alone.
 - Do not rewrite event, hit-test, or movement payloads.
 - Keep the accepted compatibility stack unchanged.
 - Do not modify CoreGraphics, WindowServer, Rosetta caches, dyld, or XNU.
+
+
+## Completion result
+
+Both returned projection-seam reports pass on the pinned Snow PPC and Lion
+i386 slices.
+
+Snow proves that `_CGSReleaseAllDisplays` operates on the existing
+process-local display mapping entries without freeing or nulling the top-level
+source/local arrays. If the mapping seed changes,
+`_updateAllDisplayInfoAsNeeded` calls `_CGSReleaseAllDisplays` and then
+rebinds the existing local entries with `_bindDisplayMapping`. In contrast,
+`_CGSDisplayServerShutdown` performs the terminal cleanup: it frees the two
+local mapping allocations and clears the local/source slots and mode-2 state.
+
+The display callback is registered during `__CGSDisplayInitialize`; its
+display-change path enters `_updateAllDisplayInfoAsNeeded` under the display
+lock, and another notification path can tail-call `_CGSReleaseAllDisplays`.
+Lion shows the same lifecycle shape.
+
+This means a proof projection must not be installed before the update/rebind
+phase and must not survive unlock. The next controlled step is therefore:
+
+~~~text
+docs/ppc-carbon-gui-display-shmem-projection-call-boundary-audit.md
+~~~
+
+Run that static analyzer on Snow and Lion and return its two reports. No live
+projection write or private helper invocation is authorized until the locked
+fast path and its exact record-field reads are reviewed.
