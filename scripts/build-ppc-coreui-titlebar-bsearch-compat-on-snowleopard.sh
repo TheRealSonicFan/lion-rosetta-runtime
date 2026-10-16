@@ -103,15 +103,12 @@ is_ppc32_macho "$OUT" || {
     exit 70
 }
 
-RUNTIME_GIT_HEAD="$(cd "$ROOT" 2>/dev/null && /usr/bin/git rev-parse HEAD 2>/dev/null || true)"
-[ -n "$RUNTIME_GIT_HEAD" ] || RUNTIME_GIT_HEAD="UNAVAILABLE_NON_GIT_CHECKOUT"
 SOURCE_SHA="$(/usr/bin/shasum -a 256 "$SRC" | /usr/bin/awk '{print $1}')"
 
 {
     echo "== PPC CoreUI titlebar bsearch compatibility build =="
     echo "compiler=$CC_SELECTED"
     echo "source=$SRC"
-    echo "runtime_git_head=$RUNTIME_GIT_HEAD"
     echo "interposer_source_sha256=$SOURCE_SHA"
     echo "compat_build_id=$EXPECTED_BUILD_ID"
     echo
