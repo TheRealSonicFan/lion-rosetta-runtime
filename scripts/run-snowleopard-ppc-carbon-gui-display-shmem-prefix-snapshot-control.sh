@@ -135,7 +135,239 @@ PROTECTED_HASHES_UNCHANGED=YES
 [ "$COREGRAPHICS_AFTER" = "$COREGRAPHICS_BEFORE" ] || PROTECTED_HASHES_UNCHANGED=NO
 log "protected_hashes_unchanged=$PROTECTED_HASHES_UNCHANGED"
 
-CONTRACT_COUNT="$(/usr/bin/grep -c '^snapshot_contract=carbon-gui-display-shmem-prefix-snapshot-v3$' "$RAW_LOG" 2>/dev/null || true)"
+CONTRACT_COUNT="$(/usr/bin/grep -c '^snapshot_contract=carbon-gui-display-shmem-prefix-snapshot-v4
+MODE_COUNT="$(/usr/bin/grep -c '^snapshot_mode=snow-ppc-control$' "$RAW_LOG" 2>/dev/null || true)"
+SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS$' "$RAW_LOG" 2>/dev/null || true)"
+SELECTOR_VALID="$(/usr/bin/grep -c '^selector_index_valid=YES$' "$RAW_LOG" 2>/dev/null || true)"
+SOURCE_COUNT="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$RAW_LOG" 2>/dev/null || true)"
+SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS$' "$RAW_LOG" 2>/dev/null || true)"
+COUNT_VALID="$(/usr/bin/grep -c '^record_count_valid=YES$' "$RAW_LOG" 2>/dev/null || true)"
+MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$RAW_LOG" 2>/dev/null || true)"
+SNAPSHOT_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$RAW_LOG" 2>/dev/null || true)"
+WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$RAW_LOG" 2>/dev/null || true)"
+PROBE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$RAW_LOG" 2>/dev/null || true)"
+
+log "contract_v4_count=$CONTRACT_COUNT"
+log "ppc_pic_model_count=$PIC_MODEL"
+log "ppc_pic_pattern_pass_count=$PIC_PATTERN"
+log "ppc_runtime_targets_in_segments_count=$PIC_SEGMENTS"
+log "selector_slot_read_pass_count=$SELECTOR_SLOT"
+log "mode_count=$MODE_COUNT"
+log "selector_direct_read_pass_count=$SELECTOR_DIRECT"
+log "selector_index_valid_count=$SELECTOR_VALID"
+log "source_nonnull_count=$SOURCE_COUNT"
+log "source_direct_read_pass_count=$SOURCE_DIRECT"
+log "record_count_valid_count=$COUNT_VALID"
+log "main_display_nonzero_count=$MAIN_NONZERO"
+log "snapshot_complete_count=$SNAPSHOT_COMPLETE"
+log "write_attempts_zero_count=$WRITE_ZERO"
+log "probe_pass_count=$PROBE_PASS"
+
+if [ "$RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$CONTRACT_COUNT" -eq 1 ] &&
+   [ "$PIC_MODEL" -eq 1 ] &&
+   [ "$PIC_PATTERN" -eq 1 ] &&
+   [ "$PIC_SEGMENTS" -eq 1 ] &&
+   [ "$SELECTOR_SLOT" -eq 1 ] &&
+   [ "$MODE_COUNT" -eq 1 ] &&
+   [ "$SELECTOR_DIRECT" -eq 1 ] &&
+   [ "$SELECTOR_VALID" -eq 1 ] &&
+   [ "$SOURCE_COUNT" -eq 1 ] &&
+   [ "$SOURCE_DIRECT" -eq 1 ] &&
+   [ "$COUNT_VALID" -eq 1 ] &&
+   [ "$MAIN_NONZERO" -eq 1 ] &&
+   [ "$SNAPSHOT_COMPLETE" -eq 1 ] &&
+   [ "$WRITE_ZERO" -ge 2 ] &&
+   [ "$PROBE_PASS" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_SNOW_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Snow read-only prefix snapshot did not satisfy the control gate"
+ "$RAW_LOG" 2>/dev/null || true)"
+PIC_MODEL="$(/usr/bin/grep -c '^runtime_address_model=LOADED_PPC_LOOKUPMAIN_PIC
+MODE_COUNT="$(/usr/bin/grep -c '^snapshot_mode=snow-ppc-control$' "$RAW_LOG" 2>/dev/null || true)"
+SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS$' "$RAW_LOG" 2>/dev/null || true)"
+SELECTOR_VALID="$(/usr/bin/grep -c '^selector_index_valid=YES$' "$RAW_LOG" 2>/dev/null || true)"
+SOURCE_COUNT="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$RAW_LOG" 2>/dev/null || true)"
+SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS$' "$RAW_LOG" 2>/dev/null || true)"
+COUNT_VALID="$(/usr/bin/grep -c '^record_count_valid=YES$' "$RAW_LOG" 2>/dev/null || true)"
+MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$RAW_LOG" 2>/dev/null || true)"
+SNAPSHOT_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$RAW_LOG" 2>/dev/null || true)"
+WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$RAW_LOG" 2>/dev/null || true)"
+PROBE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$RAW_LOG" 2>/dev/null || true)"
+
+log "contract_v3_count=$CONTRACT_COUNT"
+log "mode_count=$MODE_COUNT"
+log "selector_direct_read_pass_count=$SELECTOR_DIRECT"
+log "selector_index_valid_count=$SELECTOR_VALID"
+log "source_nonnull_count=$SOURCE_COUNT"
+log "source_direct_read_pass_count=$SOURCE_DIRECT"
+log "record_count_valid_count=$COUNT_VALID"
+log "main_display_nonzero_count=$MAIN_NONZERO"
+log "snapshot_complete_count=$SNAPSHOT_COMPLETE"
+log "write_attempts_zero_count=$WRITE_ZERO"
+log "probe_pass_count=$PROBE_PASS"
+
+if [ "$RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$CONTRACT_COUNT" -eq 1 ] &&
+   [ "$MODE_COUNT" -eq 1 ] &&
+   [ "$SELECTOR_DIRECT" -eq 1 ] &&
+   [ "$SELECTOR_VALID" -eq 1 ] &&
+   [ "$SOURCE_COUNT" -eq 1 ] &&
+   [ "$SOURCE_DIRECT" -eq 1 ] &&
+   [ "$COUNT_VALID" -eq 1 ] &&
+   [ "$MAIN_NONZERO" -eq 1 ] &&
+   [ "$SNAPSHOT_COMPLETE" -eq 1 ] &&
+   [ "$WRITE_ZERO" -ge 2 ] &&
+   [ "$PROBE_PASS" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_SNOW_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Snow read-only prefix snapshot did not satisfy the control gate"
+ "$RAW_LOG" 2>/dev/null || true)"
+PIC_PATTERN="$(/usr/bin/grep -c '^ppc_pic_pattern=PASS
+MODE_COUNT="$(/usr/bin/grep -c '^snapshot_mode=snow-ppc-control$' "$RAW_LOG" 2>/dev/null || true)"
+SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS$' "$RAW_LOG" 2>/dev/null || true)"
+SELECTOR_VALID="$(/usr/bin/grep -c '^selector_index_valid=YES$' "$RAW_LOG" 2>/dev/null || true)"
+SOURCE_COUNT="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$RAW_LOG" 2>/dev/null || true)"
+SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS$' "$RAW_LOG" 2>/dev/null || true)"
+COUNT_VALID="$(/usr/bin/grep -c '^record_count_valid=YES$' "$RAW_LOG" 2>/dev/null || true)"
+MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$RAW_LOG" 2>/dev/null || true)"
+SNAPSHOT_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$RAW_LOG" 2>/dev/null || true)"
+WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$RAW_LOG" 2>/dev/null || true)"
+PROBE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$RAW_LOG" 2>/dev/null || true)"
+
+log "contract_v3_count=$CONTRACT_COUNT"
+log "mode_count=$MODE_COUNT"
+log "selector_direct_read_pass_count=$SELECTOR_DIRECT"
+log "selector_index_valid_count=$SELECTOR_VALID"
+log "source_nonnull_count=$SOURCE_COUNT"
+log "source_direct_read_pass_count=$SOURCE_DIRECT"
+log "record_count_valid_count=$COUNT_VALID"
+log "main_display_nonzero_count=$MAIN_NONZERO"
+log "snapshot_complete_count=$SNAPSHOT_COMPLETE"
+log "write_attempts_zero_count=$WRITE_ZERO"
+log "probe_pass_count=$PROBE_PASS"
+
+if [ "$RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$CONTRACT_COUNT" -eq 1 ] &&
+   [ "$MODE_COUNT" -eq 1 ] &&
+   [ "$SELECTOR_DIRECT" -eq 1 ] &&
+   [ "$SELECTOR_VALID" -eq 1 ] &&
+   [ "$SOURCE_COUNT" -eq 1 ] &&
+   [ "$SOURCE_DIRECT" -eq 1 ] &&
+   [ "$COUNT_VALID" -eq 1 ] &&
+   [ "$MAIN_NONZERO" -eq 1 ] &&
+   [ "$SNAPSHOT_COMPLETE" -eq 1 ] &&
+   [ "$WRITE_ZERO" -ge 2 ] &&
+   [ "$PROBE_PASS" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_SNOW_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Snow read-only prefix snapshot did not satisfy the control gate"
+ "$RAW_LOG" 2>/dev/null || true)"
+PIC_SEGMENTS="$(/usr/bin/grep -c '^ppc_runtime_targets_in_segments=YES
+MODE_COUNT="$(/usr/bin/grep -c '^snapshot_mode=snow-ppc-control$' "$RAW_LOG" 2>/dev/null || true)"
+SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS$' "$RAW_LOG" 2>/dev/null || true)"
+SELECTOR_VALID="$(/usr/bin/grep -c '^selector_index_valid=YES$' "$RAW_LOG" 2>/dev/null || true)"
+SOURCE_COUNT="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$RAW_LOG" 2>/dev/null || true)"
+SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS$' "$RAW_LOG" 2>/dev/null || true)"
+COUNT_VALID="$(/usr/bin/grep -c '^record_count_valid=YES$' "$RAW_LOG" 2>/dev/null || true)"
+MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$RAW_LOG" 2>/dev/null || true)"
+SNAPSHOT_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$RAW_LOG" 2>/dev/null || true)"
+WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$RAW_LOG" 2>/dev/null || true)"
+PROBE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$RAW_LOG" 2>/dev/null || true)"
+
+log "contract_v3_count=$CONTRACT_COUNT"
+log "mode_count=$MODE_COUNT"
+log "selector_direct_read_pass_count=$SELECTOR_DIRECT"
+log "selector_index_valid_count=$SELECTOR_VALID"
+log "source_nonnull_count=$SOURCE_COUNT"
+log "source_direct_read_pass_count=$SOURCE_DIRECT"
+log "record_count_valid_count=$COUNT_VALID"
+log "main_display_nonzero_count=$MAIN_NONZERO"
+log "snapshot_complete_count=$SNAPSHOT_COMPLETE"
+log "write_attempts_zero_count=$WRITE_ZERO"
+log "probe_pass_count=$PROBE_PASS"
+
+if [ "$RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$CONTRACT_COUNT" -eq 1 ] &&
+   [ "$MODE_COUNT" -eq 1 ] &&
+   [ "$SELECTOR_DIRECT" -eq 1 ] &&
+   [ "$SELECTOR_VALID" -eq 1 ] &&
+   [ "$SOURCE_COUNT" -eq 1 ] &&
+   [ "$SOURCE_DIRECT" -eq 1 ] &&
+   [ "$COUNT_VALID" -eq 1 ] &&
+   [ "$MAIN_NONZERO" -eq 1 ] &&
+   [ "$SNAPSHOT_COMPLETE" -eq 1 ] &&
+   [ "$WRITE_ZERO" -ge 2 ] &&
+   [ "$PROBE_PASS" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_SNOW_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Snow read-only prefix snapshot did not satisfy the control gate"
+ "$RAW_LOG" 2>/dev/null || true)"
+SELECTOR_SLOT="$(/usr/bin/grep -c '^selector_slot_read=PASS
+MODE_COUNT="$(/usr/bin/grep -c '^snapshot_mode=snow-ppc-control$' "$RAW_LOG" 2>/dev/null || true)"
+SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS$' "$RAW_LOG" 2>/dev/null || true)"
+SELECTOR_VALID="$(/usr/bin/grep -c '^selector_index_valid=YES$' "$RAW_LOG" 2>/dev/null || true)"
+SOURCE_COUNT="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$RAW_LOG" 2>/dev/null || true)"
+SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS$' "$RAW_LOG" 2>/dev/null || true)"
+COUNT_VALID="$(/usr/bin/grep -c '^record_count_valid=YES$' "$RAW_LOG" 2>/dev/null || true)"
+MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$RAW_LOG" 2>/dev/null || true)"
+SNAPSHOT_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$RAW_LOG" 2>/dev/null || true)"
+WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$RAW_LOG" 2>/dev/null || true)"
+PROBE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$RAW_LOG" 2>/dev/null || true)"
+
+log "contract_v3_count=$CONTRACT_COUNT"
+log "mode_count=$MODE_COUNT"
+log "selector_direct_read_pass_count=$SELECTOR_DIRECT"
+log "selector_index_valid_count=$SELECTOR_VALID"
+log "source_nonnull_count=$SOURCE_COUNT"
+log "source_direct_read_pass_count=$SOURCE_DIRECT"
+log "record_count_valid_count=$COUNT_VALID"
+log "main_display_nonzero_count=$MAIN_NONZERO"
+log "snapshot_complete_count=$SNAPSHOT_COMPLETE"
+log "write_attempts_zero_count=$WRITE_ZERO"
+log "probe_pass_count=$PROBE_PASS"
+
+if [ "$RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$CONTRACT_COUNT" -eq 1 ] &&
+   [ "$MODE_COUNT" -eq 1 ] &&
+   [ "$SELECTOR_DIRECT" -eq 1 ] &&
+   [ "$SELECTOR_VALID" -eq 1 ] &&
+   [ "$SOURCE_COUNT" -eq 1 ] &&
+   [ "$SOURCE_DIRECT" -eq 1 ] &&
+   [ "$COUNT_VALID" -eq 1 ] &&
+   [ "$MAIN_NONZERO" -eq 1 ] &&
+   [ "$SNAPSHOT_COMPLETE" -eq 1 ] &&
+   [ "$WRITE_ZERO" -ge 2 ] &&
+   [ "$PROBE_PASS" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_SNOW_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Snow read-only prefix snapshot did not satisfy the control gate"
+ "$RAW_LOG" 2>/dev/null || true)"
 MODE_COUNT="$(/usr/bin/grep -c '^snapshot_mode=snow-ppc-control$' "$RAW_LOG" 2>/dev/null || true)"
 SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS$' "$RAW_LOG" 2>/dev/null || true)"
 SELECTOR_VALID="$(/usr/bin/grep -c '^selector_index_valid=YES$' "$RAW_LOG" 2>/dev/null || true)"
