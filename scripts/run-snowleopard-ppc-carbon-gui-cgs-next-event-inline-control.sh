@@ -23,22 +23,18 @@ EXPECTED_TITLEBAR_BUILD_ID="coreui-titlebar-bsearch-exact-six-v2"
 
 IMAGE_COMPAT="${ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_PATH:-./pm-coreui-windowframe-shared-art-slot0-compat.dylib}"
 IMAGE_COMPAT_SHA_FILE="${ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_SHA256_FILE:-$IMAGE_COMPAT.sha256}"
-IMAGE_COMPAT_INFO_FILE="${ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_INFO_FILE:-$IMAGE_COMPAT.info.txt}"
 EXPECTED_IMAGE_COMPAT_SHA="${ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SHA256:-e4031504390ca8fda8abaf1259feafc938f46ab8a5f4f7848ade1368fa7c5692}"
-EXPECTED_IMAGE_COMPAT_BUILD_ID="${ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_BUILD_ID:-coreui-windowframe-shared-art-slot0-compat-v2}"
-EXPECTED_IMAGE_COMPAT_SOURCE_BLOB="${ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB:-4f4792987fded0609efda2a8b4c524bc7069c7fd}"
+EXPECTED_IMAGE_COMPAT_BUILD_ID="coreui-windowframe-shared-art-slot0-compat-v2"
 
 FRAME_TRACE="${ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_PATH:-}"
 FRAME_TRACE_SHA_FILE="${ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_SHA256_FILE:-${FRAME_TRACE:+$FRAME_TRACE.sha256}}"
-FRAME_TRACE_INFO_FILE="${ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_INFO_FILE:-${FRAME_TRACE:+$FRAME_TRACE.info.txt}}"
+EXPECTED_FRAME_TRACE_SHA="${ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_EXPECTED_SHA256:-0feb833c50e40c92593b2922a94b6c8e7302849f8a8dd6bcd1326c8c8b6288db}"
 EXPECTED_FRAME_TRACE_BUILD_ID="hitoolbox-windowframe-cuidraw-trace-v2"
-EXPECTED_FRAME_TRACE_SOURCE_BLOB="d9419ec4ac62ba651a45eaa2bb515a8bb38c9793"
 
 DRAG_TRACE="${ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_PATH:-}"
 DRAG_TRACE_SHA_FILE="${ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_SHA256_FILE:-${DRAG_TRACE:+$DRAG_TRACE.sha256}}"
-DRAG_TRACE_INFO_FILE="${ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_INFO_FILE:-${DRAG_TRACE:+$DRAG_TRACE.info.txt}}"
+EXPECTED_DRAG_TRACE_SHA="${ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_EXPECTED_SHA256:-c8bc82713e4342c651cd2e3784d9d963597700a35cdcd739bba3c7dab8381093}"
 EXPECTED_DRAG_TRACE_BUILD_ID="hitoolbox-titlebar-drag-trace-v2"
-EXPECTED_DRAG_TRACE_SOURCE_BLOB="2c91ae875f0497b7aed96eb8b47a8ca7cbb06768"
 
 fail() {
     echo "error: $*" | /usr/bin/tee -a "$SUBJECT_LOG" >&2
@@ -108,7 +104,7 @@ echo "console_user=$CONSOLE_USER" | /usr/bin/tee -a "$SUBJECT_LOG"
 [ "$CURRENT_USER" = "$CONSOLE_USER" ] || fail "run from logged-in Aqua console user's Terminal"
 /bin/ps -ax | /usr/bin/grep -q '[W]indowServer' || fail "WindowServer is not running"
 
-for file in "$EXE" "$EXE_SHA_FILE" "$CORE_COMPAT" "$CORE_COMPAT_SHA_FILE" "$TITLEBAR_COMPAT" "$TITLEBAR_SHA_FILE" "$IMAGE_COMPAT" "$IMAGE_COMPAT_SHA_FILE" "$IMAGE_COMPAT_INFO_FILE" "$OBSERVER" "$OBSERVER_SHA_FILE" "$PRIVATE_DYLD"; do
+for file in "$EXE" "$EXE_SHA_FILE" "$CORE_COMPAT" "$CORE_COMPAT_SHA_FILE" "$TITLEBAR_COMPAT" "$TITLEBAR_SHA_FILE" "$IMAGE_COMPAT" "$IMAGE_COMPAT_SHA_FILE" "$OBSERVER" "$OBSERVER_SHA_FILE" "$PRIVATE_DYLD"; do
     [ -e "$file" ] || fail "missing $file"
 done
 [ -x "$EXE" ] || fail "historical subject is not executable"
@@ -136,31 +132,27 @@ echo "private_dyld_sha256=$DYLD_SHA" | /usr/bin/tee -a "$SUBJECT_LOG"
 [ "$TITLEBAR_SHA" = "$EXPECTED_TITLEBAR_SHA" ] || fail "titlebar compatibility hash mismatch"
 [ "$(sidecar_sha "$TITLEBAR_SHA_FILE")" = "$EXPECTED_TITLEBAR_SHA" ] || fail "titlebar compatibility sidecar mismatch"
 [ "$(sidecar_sha "$IMAGE_COMPAT_SHA_FILE")" = "$IMAGE_COMPAT_SHA" ] || fail "image compatibility sidecar mismatch"
-/usr/bin/grep -Fq "compat_build_id=$EXPECTED_IMAGE_COMPAT_BUILD_ID" "$IMAGE_COMPAT_INFO_FILE" || fail "image compatibility info build ID mismatch"
-/usr/bin/grep -Fq "interposer_source_git_blob=$EXPECTED_IMAGE_COMPAT_SOURCE_BLOB" "$IMAGE_COMPAT_INFO_FILE" || fail "image compatibility source blob mismatch"
 [ "$DYLD_SHA" = "$EXPECTED_DYLD_SHA" ] || fail "private dyld hash mismatch"
 
 if [ -n "$FRAME_TRACE" ]; then
-    for file in "$FRAME_TRACE" "$FRAME_TRACE_SHA_FILE" "$FRAME_TRACE_INFO_FILE"; do
+    for file in "$FRAME_TRACE" "$FRAME_TRACE_SHA_FILE"; do
         [ -e "$file" ] || fail "missing window-frame CUIDraw trace artifact: $file"
     done
     FRAME_TRACE_SHA="$(sha256 "$FRAME_TRACE")"
+    [ "$FRAME_TRACE_SHA" = "$EXPECTED_FRAME_TRACE_SHA" ] || fail "window-frame CUIDraw trace SHA-256 mismatch"
     [ "$(sidecar_sha "$FRAME_TRACE_SHA_FILE")" = "$FRAME_TRACE_SHA" ] || fail "window-frame CUIDraw trace sidecar mismatch"
-    /usr/bin/grep -Fq "trace_build_id=$EXPECTED_FRAME_TRACE_BUILD_ID" "$FRAME_TRACE_INFO_FILE" || fail "window-frame CUIDraw trace info build ID mismatch"
-    /usr/bin/grep -Fq "interposer_source_git_blob=$EXPECTED_FRAME_TRACE_SOURCE_BLOB" "$FRAME_TRACE_INFO_FILE" || fail "window-frame CUIDraw trace source blob mismatch"
     /usr/bin/strings "$FRAME_TRACE" | /usr/bin/grep -Fq "PM_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_BUILD_ID:$EXPECTED_FRAME_TRACE_BUILD_ID" || fail "window-frame CUIDraw trace build marker missing"
     has_ppc32_arch "$FRAME_TRACE" || fail "window-frame CUIDraw trace is not 32-bit PPC"
     echo "windowframe_cuidraw_trace_sha256=$FRAME_TRACE_SHA" | /usr/bin/tee -a "$SUBJECT_LOG"
 fi
 
 if [ -n "$DRAG_TRACE" ]; then
-    for file in "$DRAG_TRACE" "$DRAG_TRACE_SHA_FILE" "$DRAG_TRACE_INFO_FILE"; do
+    for file in "$DRAG_TRACE" "$DRAG_TRACE_SHA_FILE"; do
         [ -e "$file" ] || fail "missing titlebar drag trace artifact: $file"
     done
     DRAG_TRACE_SHA="$(sha256 "$DRAG_TRACE")"
+    [ "$DRAG_TRACE_SHA" = "$EXPECTED_DRAG_TRACE_SHA" ] || fail "titlebar drag trace SHA-256 mismatch"
     [ "$(sidecar_sha "$DRAG_TRACE_SHA_FILE")" = "$DRAG_TRACE_SHA" ] || fail "titlebar drag trace sidecar mismatch"
-    /usr/bin/grep -Fq "trace_build_id=$EXPECTED_DRAG_TRACE_BUILD_ID" "$DRAG_TRACE_INFO_FILE" || fail "titlebar drag trace info build ID mismatch"
-    /usr/bin/grep -Fq "interposer_source_git_blob=$EXPECTED_DRAG_TRACE_SOURCE_BLOB" "$DRAG_TRACE_INFO_FILE" || fail "titlebar drag trace source blob mismatch"
     /usr/bin/strings "$DRAG_TRACE" | /usr/bin/grep -Fq "PM_HITOOLBOX_TITLEBAR_DRAG_TRACE_BUILD_ID:$EXPECTED_DRAG_TRACE_BUILD_ID" || fail "titlebar drag trace build marker missing"
     has_ppc32_arch "$DRAG_TRACE" || fail "titlebar drag trace is not 32-bit PPC"
     echo "titlebar_drag_trace_sha256=$DRAG_TRACE_SHA" | /usr/bin/tee -a "$SUBJECT_LOG"
