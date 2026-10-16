@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SRC="$ROOT/tests/ppc-coreui-image-bitmapinfo-compat-interposer.c"
 EXPECTED_BUILD_ID="coreui-image-bitmapinfo-compat-v1"
-EXPECTED_SOURCE_BLOB="9d44128acbe49de49621104c9ffc2b0c0cd74589"
+EXPECTED_SOURCE_SHA256="fa8768f73b8469c5795c4801e2412ccd7a6094979fb2d01818f51a9876b11852"
 INFO="$OUT.info.txt"
 SHA="$OUT.sha256"
 TMP_DYLIB="$(/usr/bin/mktemp /tmp/pm-coreui-image-bitmapinfo.XXXXXX.dylib)"
@@ -20,40 +20,11 @@ trap 'rm -f "$TMP_DYLIB" "$TMP_LOG"' EXIT HUP INT TERM
     exit 66
 }
 
-resolve_git() {
-    candidate="$(command -v git 2>/dev/null || true)"
-    if [ -n "$candidate" ] && [ -x "$candidate" ]; then
-        echo "$candidate"
-        return 0
-    fi
-    for candidate in \
-        /Developer-3.2.6/usr/bin/git \
-        /Developer/usr/bin/git \
-        /usr/local/git/bin/git \
-        /usr/local/bin/git \
-        /opt/local/bin/git \
-        /sw/bin/git \
-        /usr/bin/git; do
-        if [ -x "$candidate" ]; then
-            echo "$candidate"
-            return 0
-        fi
-    done
-    return 1
-}
-
-GIT_BIN="$(resolve_git || true)"
-[ -n "$GIT_BIN" ] || {
-    echo "error: no usable git executable found" >&2
+SOURCE_SHA="$(/usr/bin/shasum -a 256 "$SRC" | /usr/bin/awk '{print $1}')"
+[ "$SOURCE_SHA" = "$EXPECTED_SOURCE_SHA256" ] || {
+    echo "error: CoreUI bitmap-info compatibility source SHA-256 mismatch: $SOURCE_SHA" >&2
     exit 66
-}
-SOURCE_BLOB="$("$GIT_BIN" hash-object "$SRC" 2>/dev/null || true)"
-[ "$SOURCE_BLOB" = "$EXPECTED_SOURCE_BLOB" ] || {
-    echo "error: CoreUI bitmap-info compatibility source blob mismatch: $SOURCE_BLOB" >&2
-    exit 66
-}
-
-resolve_compiler() {
+}resolve_compiler() {
     candidate="$1"
     [ -n "$candidate" ] || return 1
     if [ -x "$candidate" ]; then
@@ -134,16 +105,11 @@ is_ppc32_macho "$OUT" || {
     exit 70
 }
 
-RUNTIME_GIT_HEAD="$(cd "$ROOT" 2>/dev/null && "$GIT_BIN" rev-parse HEAD 2>/dev/null || true)"
-[ -n "$RUNTIME_GIT_HEAD" ] || RUNTIME_GIT_HEAD="UNAVAILABLE_NON_GIT_CHECKOUT"
-SOURCE_SHA="$(/usr/bin/shasum -a 256 "$SRC" | /usr/bin/awk '{print $1}')"
 
 {
     echo "== PPC CoreUI bitmap-info compatibility build =="
     echo "compiler=$CC_SELECTED"
     echo "source=$SRC"
-    echo "runtime_git_head=$RUNTIME_GIT_HEAD"
-    echo "interposer_source_git_blob=$SOURCE_BLOB"
     echo "interposer_source_sha256=$SOURCE_SHA"
     echo "compat_build_id=$EXPECTED_BUILD_ID"
     echo
