@@ -2,33 +2,32 @@
 
 ## Status
 
-**DRAG WIRE CONTRACT STABLE / PASSIVE CGSMOVEWINDOW ENTRY TRACE NEXT.**
+**COMPLETED / EXTERNAL CGSMOVEWINDOW INTERPOSE BOUNDARY BYPASSED.**
 
-The returned Snow and Lion drag-delta static reports both pass with exact
-provenance. They rule out the two broad explanations that remained after the
-v9 GetSharedWindow repair: Snow PPC and Lion native __CGSMoveWindow both use
-request/reply 0x7218/0x727c, bits 0x1513, and 0x2c/0x2c send/receive
-geometry; and both release-local public CGSMoveWindow paths derive integer
-move deltas from a two-float target point before issuing __CGSMoveWindow.
+The returned tracer is structurally correct and its SHA-256 is accepted on
+both systems, but the trace-specific control fails: Snow and Lion both load
+the v1 tracer and emit its build marker while neither emits any
+PM_CGS_MOVE_WINDOW_ENTRY or PM_CGS_MOVE_WINDOW_RESULT record. Snow still
+issues 66 successful 0x7218/0x727c move transactions and completes a normal
+public titlebar drag; Lion issues 14 such transactions and reproduces the bad
+movement. The executing Rosetta/shared-cache path therefore bypasses this
+external dyld interpose boundary. No CGSMoveWindow entry value is established
+by this experiment.
 
-The public DragWindow boundary is also structurally aligned. Snow PPC
-explicitly decomposes the classic 16-bit QuickDraw Point, while the native
-Lion reference preserves the same logical two-short input. During tracking,
-both implementations pass mouse-location data through a floating-point
-HI/CG point and explicitly call HIPointToQDPoint before the
-TDragTracker/TWindowTracker Point-based path.
+The same evidence exposes a stronger release differential. Snow records zero
+CGSGetDisplayBounds(display 0) diagnostics. Lion records eight. Lion's first
+public titlebar mouse-down is sane at (302,109) and inDrag (4); immediately
+before the first bad move, Lion reports CGSGetDisplayBounds(display 0), then
+performs the movementGroup query for window 849, then successfully sends
+0x7218 delta (-302,-98). The observer subsequently sees the window at
+(-182,17177). Snow shows the movementGroup -> 0x7218 sequence without the
+display-0 failure and with ordinary movement.
 
-The remaining static gap is the live value crossing from HIToolbox's
-window-bounds update path into CoreGraphics CGSMoveWindow. On Snow,
-TWindowTracker::RelocateWindowImage reaches UpdateWindowBounds; the native
-Lion reference reaches the corresponding WindowData::SetBounds path. The
-current reports do not prove which exact live target point reaches CoreGraphics
-on Lion.
-
-The next discriminator is therefore a one-function passive interposer at
-CGSMoveWindow. It records the raw two 32-bit float words at entry and caller
-image/offset, then calls the original function with the original connection,
-window ID, point pointer, bytes, and return value unchanged.
+Do not rebuild or rerun this tracer. The authoritative next procedure is the
+static-only docs/ppc-carbon-gui-drag-event-display-contract-audit.md. It
+compares the Snow PPC executing event/display contract with Lion's native
+reference contract before any event payload, display ID, move payload, or
+private HIToolbox change is considered.
 
 ## Prepared current-main files
 
@@ -190,16 +189,18 @@ Do not return the dylib itself unless requested.
 ## Current boundary
 
 ~~~text
-Snow/Lion drag-delta static audit                 PASS / PASS
-0x7218/0x727c move wire contract                  release-stable
-CGSMoveWindow target-point contract               float pair on both releases
-DragWindow initial QD Point contract              structurally aligned
-tracking float point -> QD Point conversion       explicit on both releases
-v9 GetSharedWindow bridge                         retained / target-proven
-Lion public titlebar input                        restored
-Lion drag geometry                                corrupt / off-screen
+v9 GetSharedWindow bridge                         target-proven
+Snow public titlebar drag                         PASS / normal movement
+Lion public mouse-down                            YES / inDrag (4)
+CGSMoveWindow entry tracer                        loaded but 0 calls on Snow/Lion
+external CGSMoveWindow interpose boundary         UNSOUND / bypassed
+Snow CGSGetDisplayBounds(display 0)               0
+Lion CGSGetDisplayBounds(display 0)               8
+first Lion bad move delta                         (-302,-98)
 move-payload rewrite                              NOT AUTHORIZED
+display-0 normalization                           NOT AUTHORIZED
+event-payload rewrite                             NOT AUTHORIZED
 private HIToolbox patch                           NOT AUTHORIZED
-next action                                       passive CGSMoveWindow entry trace
+next action                                       static drag event/display contract audit
 XNU                                               unchanged
 ~~~
