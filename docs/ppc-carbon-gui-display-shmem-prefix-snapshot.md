@@ -29,6 +29,17 @@ matching '\''` / `unexpected end of file` messages after the probe had
 already run. The Snow and Lion runners have now both been replaced with clean
 files.
 
+## V3 build correction
+
+The first v3 source revision accidentally embedded literal `\\n` tokens in
+the local declaration block, so GCC stopped before producing either probe.
+That was a source-generation defect only. The declaration block is now normal
+C source, and the snapshot-slot pointer types were also corrected to make the
+pointer slots themselves volatile rather than the pointed-to display objects.
+
+Rebuild from current `main`; no additional static audit or compatibility
+change is required for this compile failure.
+
 ## V3 diagnostic rule
 
 The v3 probe keeps the corrected selector/source-array addressing from v2 but
@@ -65,7 +76,7 @@ Current runtime `main` provides:
 
 ~~~text
 tests/ppc-carbon-gui-display-shmem-prefix-snapshot.c
-Git blob 5d9c5b7664b1fe1a05353608ebbef11316083614
+Git blob c96bf0850ff61905d6bdbc4f158a97b56e0f6224
 
 scripts/build-ppc-carbon-gui-display-shmem-prefix-snapshot-on-snowleopard.sh
 Git blob ff79b07192a129f4515739fb861908fefd9ac18a
