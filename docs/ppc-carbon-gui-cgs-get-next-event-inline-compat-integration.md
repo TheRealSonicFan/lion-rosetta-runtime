@@ -31,23 +31,16 @@ length, or event payload is changed.
 
 ## Prepared runtime
 
-Current `main` provides:
+Current `main` provides the following files; repository identity is verified on
+the modern staging system before transfer, not by Git commands on Snow Leopard
+or Lion:
 
 ```text
 tests/ppc-process-manager-coreservices-sessioninit-compat-interposer.c
-  Git blob e26a28d22837e125a8de920a326e14aac3602486
-
 scripts/build-ppc-carbon-gui-cgs-next-event-inline-compat-on-snowleopard.sh
-  Git blob a5451f72ef35aba3843b914ac783d9264d959a10
-
 scripts/run-snowleopard-ppc-carbon-gui-cgs-next-event-inline-control.sh
-  Git blob 20aa4fd2d20598ef0f194e89b86a92071e33d385
-
 scripts/run-lion-ppc-carbon-gui-cgs-next-event-inline-integration.sh
-  Git blob e4653baa20d2e7a9dd23fd22b5b71d2143b1aa7a
-
 scripts/summarize-ppc-carbon-gui-hitoolbox-titlebar-drag-trace.py
-  Git blob 4b193f02f704d9b98050e18558665c8a0aa6b6a9
 ```
 
 The new combined PPC build ID is:
