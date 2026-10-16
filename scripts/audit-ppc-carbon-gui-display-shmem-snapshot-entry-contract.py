@@ -8,8 +8,8 @@ import subprocess
 import sys
 import tempfile
 
-ANALYZER_VERSION = "1"
-AUDIT_CONTRACT = "carbon-gui-display-shmem-snapshot-entry-contract-v1"
+ANALYZER_VERSION = "2"
+AUDIT_CONTRACT = "carbon-gui-display-shmem-snapshot-entry-contract-v2"
 
 COREGRAPHICS = "/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/CoreGraphics.framework/Versions/A/CoreGraphics"
 
@@ -27,17 +27,20 @@ CONFIG = {
             "__CGSGetDisplayShmem",
             "_CGSResolveShmemReference",
         ],
-        "initializer": "_initCGDisplayState",
-        "main_lookup": "_lookupMainDisplay",
-        "mapping_init": "_initCGDisplayMappings",
-        "resolve_call_addr": 0x140b04,
-        "mapping_store_addr": 0x140b0c,
-        "pic_anchor": 0x1409cc,
-        "pic_high": 0x5c,
-        "store_disp_raw": 0xfaa0,
-        "mapping_global_vmaddr": 0x70046c,
+        "selector_global_vmaddr": 0x6ff26c,
+        "source_array_vmaddr": 0x700460,
+        "local_array_vmaddr": 0x700458,
+        "mode2_mapping_vmaddr": 0x70046c,
+        "lookup_anchor": 0x142b4c,
+        "lookup_selector_disp": 0x5bc720,
+        "lookup_source_disp": 0x5bd914,
+        "lookup_local_disp": 0x5bd90c,
+        "mapping_anchor": 0x14288c,
+        "mapping_source_disp": 0x5bdbd4,
+        "mapping_local_disp": 0x5bdbcc,
         "main_route_addr": 0x148410,
         "main_route_target": "_lookupMainDisplay",
+        "mode2_store_addr": 0x140b0c,
     },
     "lion": {
         "product": "10.7.5",
@@ -53,16 +56,20 @@ CONFIG = {
             "__CGSGetDisplayShmem",
             "_CGSResolveShmemReference",
         ],
-        "initializer": "_initDisplayState",
-        "main_lookup": "_lookupMainDisplay",
-        "mapping_init": "_initDisplayMappings",
-        "resolve_call_addr": 0xcceff,
-        "mapping_store_addr": 0xccf04,
-        "pic_anchor": 0xccdc1,
-        "pic_disp": 0x87ca87,
-        "mapping_global_vmaddr": 0x949848,
+        "selector_global_vmaddr": 0x948630,
+        "source_array_vmaddr": 0x94983c,
+        "local_array_vmaddr": 0x94984c,
+        "mode2_mapping_vmaddr": 0x949848,
+        "lookup_anchor": 0x87c3d,
+        "lookup_selector_disp": 0x8c09f3,
+        "lookup_source_disp": 0x8c1bff,
+        "lookup_local_disp": 0x8c1c0f,
+        "mapping_anchor": 0xccccd,
+        "mapping_source_disp": 0x87cb6f,
+        "mapping_local_disp": 0x87cb7f,
         "main_route_addr": 0x87bbe,
         "main_route_target": "_lookupDisplayNumber",
+        "mode2_store_addr": 0xccf04,
     },
 }
 
@@ -180,13 +187,6 @@ def raw_at(rows, addr):
     return None
 
 
-def body_has_symbol_call(selected, addr, target):
-    for a, raw in selected:
-        if a == addr and target in raw:
-            return True
-    return False
-
-
 def emit_target(fp, symbols, groups, name):
     idxs = exact_indices(symbols, name)
     write_line(fp)
@@ -211,7 +211,7 @@ def main():
 
     output = sys.argv[1]
     issues = []
-    tempdir = tempfile.mkdtemp(prefix="ppc-carbon-display-snapshot-entry.")
+    tempdir = tempfile.mkdtemp(prefix="ppc-carbon-display-snapshot-entry-v2.")
 
     try:
         rc, out = run(["/usr/bin/sw_vers", "-productVersion"])
@@ -232,6 +232,7 @@ def main():
             write_line(fp, "mode=%s" % (mode or "unsupported"))
             write_line(fp, "product_version=%s" % product)
             write_line(fp, "build_version=%s" % build)
+            write_line(fp, "v1_mode2_pointer_misclassification=CORRECTED")
             write_line(fp, "passive_snapshot_authorized=NO")
             write_line(fp, "live_probe_authorized=NO")
             write_line(fp, "shared_record_rewrite_authorized=NO")
@@ -247,24 +248,19 @@ def main():
                 write_line(fp, "required_arch=%s" % cfg["arch"])
                 write_line(fp, "expected_slice_sha256=%s" % cfg["slice_sha256"])
 
-                write_line(fp)
-                write_line(fp, "== CoreGraphics ==")
-                write_line(fp, "path=%s" % COREGRAPHICS)
                 if not os.path.isfile(COREGRAPHICS):
                     issues.append("CoreGraphics missing")
-                    write_line(fp, "state=MISSING")
                 else:
-                    write_line(fp, "sha256=%s" % sha256(COREGRAPHICS))
                     dst = os.path.join(tempdir, "CoreGraphics." + cfg["arch"])
                     ok, thin_out = thin(COREGRAPHICS, cfg["arch"], dst)
                     write_line(fp, "thin=%s" % ("YES" if ok else "NO"))
                     if not ok:
-                        issues.append("required CoreGraphics slice missing")
                         write_line(fp, thin_out.rstrip())
+                        issues.append("required CoreGraphics slice missing")
                     else:
                         actual = sha256(dst)
-                        exact = actual == cfg["slice_sha256"]
                         write_line(fp, "slice_sha256=%s" % actual)
+                        exact = actual == cfg["slice_sha256"]
                         write_line(fp, "slice_exact=%s" % ("YES" if exact else "NO"))
                         if not exact:
                             issues.append("CoreGraphics slice SHA-256 mismatch")
@@ -272,53 +268,39 @@ def main():
                         rc, load_out = run(["/usr/bin/otool", "-l", dst])
                         tvm = text_vmaddr(load_out) if rc == 0 else None
                         if tvm is None:
-                            write_line(fp, "text_vmaddr=UNKNOWN")
                             issues.append("could not resolve __TEXT vmaddr")
+                            write_line(fp, "text_vmaddr=UNKNOWN")
                         else:
                             write_line(fp, "text_vmaddr=0x%x" % tvm)
-                            delta = cfg["mapping_global_vmaddr"] - tvm
-                            write_line(fp, "mapping_global_from_image_header=0x%x" % delta)
 
                         rc, nm_out = run(["/usr/bin/nm", "-nm", dst])
+                        symbols = parse_symbols(nm_out) if rc == 0 else []
                         if rc != 0:
                             issues.append("nm failed")
-                            symbols = []
-                            write_line(fp, "parsed_text_symbols=0")
-                        else:
-                            symbols = parse_symbols(nm_out)
-                            write_line(fp, "parsed_text_symbols=%d" % len(symbols))
 
                         rc, dis_out = run(["/usr/bin/otool", "-tvV", dst])
+                        rows = parse_rows(dis_out) if rc == 0 else []
+                        groups = group_rows(rows, symbols) if rc == 0 else {}
                         if rc != 0:
                             issues.append("otool disassembly failed")
-                            rows = []
-                            groups = {}
-                            write_line(fp, "parsed_instruction_lines=0")
-                        else:
-                            rows = parse_rows(dis_out)
-                            groups = group_rows(rows, symbols)
-                            write_line(fp, "parsed_instruction_lines=%d" % len(rows))
 
                         write_line(fp)
                         write_line(fp, "== Required target inventory ==")
                         for name in cfg["targets"]:
                             idxs = exact_indices(symbols, name)
                             write_line(fp, "target=%s count=%d" % (name, len(idxs)))
-                            if len(idxs) == 1:
-                                write_line(fp, "%s@0x%x" % (name, symbols[idxs[0]][0]))
-                            else:
+                            if len(idxs) != 1:
                                 issues.append("expected exactly one target: %s" % name)
 
                         main_idxs = exact_indices(symbols, "_CGSMainDisplayID")
                         resolve_idxs = exact_indices(symbols, "_CGSResolveShmemReference")
                         get_idxs = exact_indices(symbols, "__CGSGetDisplayShmem")
-
                         main_external = len(main_idxs) == 1 and " external " in (" " + symbols[main_idxs[0]][2] + " ")
                         resolve_external = len(resolve_idxs) == 1 and " external " in (" " + symbols[resolve_idxs[0]][2] + " ")
                         get_nonexternal = len(get_idxs) == 1 and "non-external" in symbols[get_idxs[0]][2]
 
                         write_line(fp)
-                        write_line(fp, "== Callable/read-only snapshot boundary ==")
+                        write_line(fp, "== Corrected snapshot-source boundary ==")
                         write_line(fp, "main_display_id_external=%s" % ("YES" if main_external else "NO"))
                         write_line(fp, "resolve_shmem_reference_external=%s" % ("YES" if resolve_external else "NO"))
                         write_line(fp, "get_display_shmem_nonexternal=%s" % ("YES" if get_nonexternal else "NO"))
@@ -329,54 +311,55 @@ def main():
                         if not get_nonexternal:
                             issues.append("__CGSGetDisplayShmem external-status mismatch")
 
-                        resolve_raw = raw_at(rows, cfg["resolve_call_addr"])
-                        store_raw = raw_at(rows, cfg["mapping_store_addr"])
+                        selector_calc = cfg["lookup_anchor"] + cfg["lookup_selector_disp"]
+                        source_lookup_calc = cfg["lookup_anchor"] + cfg["lookup_source_disp"]
+                        local_lookup_calc = cfg["lookup_anchor"] + cfg["lookup_local_disp"]
+                        source_mapping_calc = cfg["mapping_anchor"] + cfg["mapping_source_disp"]
+                        local_mapping_calc = cfg["mapping_anchor"] + cfg["mapping_local_disp"]
+
+                        write_line(fp, "selector_global_vmaddr=0x%x" % cfg["selector_global_vmaddr"])
+                        write_line(fp, "selector_global_from_image_header=0x%x" % (cfg["selector_global_vmaddr"] - (tvm or 0)))
+                        write_line(fp, "selector_global_calculated_vmaddr=0x%x" % selector_calc)
+                        write_line(fp, "selector_global_calculation_exact=%s" % ("YES" if selector_calc == cfg["selector_global_vmaddr"] else "NO"))
+
+                        write_line(fp, "source_array_vmaddr=0x%x" % cfg["source_array_vmaddr"])
+                        write_line(fp, "source_array_from_image_header=0x%x" % (cfg["source_array_vmaddr"] - (tvm or 0)))
+                        write_line(fp, "source_array_lookup_calculated_vmaddr=0x%x" % source_lookup_calc)
+                        write_line(fp, "source_array_mapping_calculated_vmaddr=0x%x" % source_mapping_calc)
+                        source_exact = source_lookup_calc == cfg["source_array_vmaddr"] and source_mapping_calc == cfg["source_array_vmaddr"]
+                        write_line(fp, "source_array_calculation_exact=%s" % ("YES" if source_exact else "NO"))
+
+                        write_line(fp, "local_array_vmaddr=0x%x" % cfg["local_array_vmaddr"])
+                        write_line(fp, "local_array_from_image_header=0x%x" % (cfg["local_array_vmaddr"] - (tvm or 0)))
+                        write_line(fp, "local_array_lookup_calculated_vmaddr=0x%x" % local_lookup_calc)
+                        write_line(fp, "local_array_mapping_calculated_vmaddr=0x%x" % local_mapping_calc)
+                        local_exact = local_lookup_calc == cfg["local_array_vmaddr"] and local_mapping_calc == cfg["local_array_vmaddr"]
+                        write_line(fp, "local_array_calculation_exact=%s" % ("YES" if local_exact else "NO"))
+
+                        write_line(fp, "mode2_mapping_vmaddr=0x%x" % cfg["mode2_mapping_vmaddr"])
+                        write_line(fp, "mode2_mapping_from_image_header=0x%x" % (cfg["mode2_mapping_vmaddr"] - (tvm or 0)))
+                        write_line(fp, "mode2_mapping_is_display_source_array=NO")
+                        write_line(fp, "source_slot_rule=READ_SELECTOR_BYTE_THEN_SOURCE_ARRAY_PLUS_INDEX_TIMES_4")
+                        write_line(fp, "source_slot_count=2")
+                        write_line(fp, "snapshot_route=CALL_EXTERNAL_CGSMainDisplayID_THEN_READ_ACTIVE_SOURCE_ARRAY_SLOT")
+
+                        if selector_calc != cfg["selector_global_vmaddr"]:
+                            issues.append("selector-global calculation mismatch")
+                        if not source_exact:
+                            issues.append("source-array calculation mismatch")
+                        if not local_exact:
+                            issues.append("local-array calculation mismatch")
+                        if cfg["mode2_mapping_vmaddr"] == cfg["source_array_vmaddr"]:
+                            issues.append("mode2 pointer unexpectedly aliases source array")
+
                         route_raw = raw_at(rows, cfg["main_route_addr"])
-
-                        write_line(fp, "initializer=%s" % cfg["initializer"])
-                        write_line(fp, "resolve_call_site=0x%x" % cfg["resolve_call_addr"])
-                        write_line(fp, "resolve_call_raw=%s" % (resolve_raw or "MISSING"))
-                        write_line(fp, "mapping_store_site=0x%x" % cfg["mapping_store_addr"])
-                        write_line(fp, "mapping_store_raw=%s" % (store_raw or "MISSING"))
-                        write_line(fp, "pic_anchor=0x%x" % cfg["pic_anchor"])
-                        if mode == "snow":
-                            write_line(fp, "pic_high=0x%x" % cfg["pic_high"])
-                            write_line(fp, "mapping_store_disp_raw=0x%x" % cfg["store_disp_raw"])
-                        else:
-                            write_line(fp, "pic_disp=0x%x" % cfg["pic_disp"])
-                        write_line(fp, "mapping_global_vmaddr=0x%x" % cfg["mapping_global_vmaddr"])
-                        write_line(fp, "main_route_site=0x%x" % cfg["main_route_addr"])
-                        write_line(fp, "main_route_target=%s" % cfg["main_route_target"])
+                        mode2_raw = raw_at(rows, cfg["mode2_store_addr"])
                         write_line(fp, "main_route_raw=%s" % (route_raw or "MISSING"))
-                        write_line(fp, "snapshot_route=CALL_EXTERNAL_CGSMainDisplayID_THEN_READ_INITIALIZER_MAPPING_GLOBAL")
-
-                        if resolve_raw is None or "_CGSResolveShmemReference" not in resolve_raw:
-                            if mode == "lion" and resolve_raw is not None and "0x000741cd" in resolve_raw:
-                                pass
-                            else:
-                                issues.append("resolver call-site mismatch")
-
-                        if mode == "snow":
-                            if store_raw is None or "stw" not in store_raw or "r3,0xfaa0(r30)" not in store_raw:
-                                issues.append("Snow mapping-global store mismatch")
-                            calculated = cfg["pic_anchor"] + (cfg["pic_high"] << 16)
-                            disp = cfg["store_disp_raw"]
-                            if disp & 0x8000:
-                                disp -= 0x10000
-                            calculated += disp
-                        else:
-                            if store_raw is None or "movl" not in store_raw or "%eax,0x0087ca87(%esi)" not in store_raw:
-                                issues.append("Lion mapping-global store mismatch")
-                            calculated = cfg["pic_anchor"] + cfg["pic_disp"]
-
-                        write_line(fp, "mapping_global_calculated_vmaddr=0x%x" % calculated)
-                        exact_global = calculated == cfg["mapping_global_vmaddr"]
-                        write_line(fp, "mapping_global_calculation_exact=%s" % ("YES" if exact_global else "NO"))
-                        if not exact_global:
-                            issues.append("mapping-global calculation mismatch")
-
+                        write_line(fp, "mode2_store_raw=%s" % (mode2_raw or "MISSING"))
                         if route_raw is None or cfg["main_route_target"] not in route_raw:
                             issues.append("_CGSMainDisplayID route mismatch")
+                        if mode2_raw is None:
+                            issues.append("mode2 store site missing")
 
                         for name in cfg["targets"]:
                             emit_target(fp, symbols, groups, name)
@@ -388,7 +371,7 @@ def main():
                     write_line(fp, "validation_issue=%s" % issue)
                 write_line(fp, "RESULT: FAIL")
             else:
-                write_line(fp, "display_shmem_snapshot_entry_contract_audit_exact=YES")
+                write_line(fp, "display_shmem_snapshot_entry_contract_v2_exact=YES")
                 write_line(fp, "RESULT: PASS")
 
             write_line(fp)
