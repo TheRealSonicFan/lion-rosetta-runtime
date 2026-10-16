@@ -2,7 +2,17 @@
 
 ## Status
 
-**NEXT CONTROLLED LIVE STEP.**
+**SNOW CONTROL PASSED / LION INTEGRATION NEXT.**
+
+The returned Snow 10.6.8 interactive control is accepted despite the stale
+runner's final FAIL marker. It captured the v2 dispatcher monitor, public
+`FindWindow=inDrag (4)`, repeated real window movement, and 507/507 exact
+next-event passthroughs with zero adapter passes/rejects. The only reasons the
+old harness emitted FAIL were interaction-triggered non-target backing-sync
+traffic (one passthrough, zero exact matches) and three additional exact
+bitmap-info redraws (nine passthrough calls rather than the non-interactive
+baseline of six). Current runners use relational interactive invariants instead
+of those obsolete fixed counts, so this Snow control does not need to be rerun.
 
 The event-retrieval protocol differential is closed. Snow PPC and Lion i386
 use the same `__CGSGetPortStreamInline` generated-MIG wire shape but different
