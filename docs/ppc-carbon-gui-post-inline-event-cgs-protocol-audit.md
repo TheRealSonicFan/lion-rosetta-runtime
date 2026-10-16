@@ -25,15 +25,17 @@ and Lion moved its IDs by one while reusing Snow's old IDs for the set-shape
 inline RPC. An exact ID-only GetWindowShape adapter is therefore authorized.
 
 The SharedWindow family is deliberately **not** authorized for ID-only
-adaptation because its receive capacity and complex success reply both grew on
+adaptation because its receive capacity and simple success reply both grew on
 Lion. The out-of-line event helper is an ID-only candidate, but it occurs
 farther downstream and is deferred so that only one newly resolved boundary is
 changed per live experiment. The unchanged `0x721f/0x7283` pair belongs to
 `__CGSGetSystemWindow`; it does not justify a `CGSGetDisplayBounds`
 adapter.
 
-The authoritative next procedure is
-`docs/ppc-carbon-gui-cgs-get-window-shape-compat-integration.md`.
+The subsequent GetWindowShape experiment has now passed its targeted 21/21
+protocol gate and eliminated the bounds type-check. The authoritative current
+procedure is
+`docs/ppc-carbon-gui-cgs-get-shared-window-compat-integration.md`.
 
 ## Question
 
@@ -158,8 +160,9 @@ CGSGetWindowBounds lower helper                    __CGSGetWindowShape
 Snow GetWindowShape                                0x724e / 0x72b2, 0x24 / 0x3c
 Lion GetWindowShape                                0x724f / 0x72b3, 0x24 / 0x3c
 Lion old-ID collision                              __CGSSetWindowShapeInline
-next action                                        exact GetWindowShape ID-only integration
-SharedWindow                                       changed reply geometry; deferred
+GetWindowShape live integration                   target PASS 21/21
+next action                                        exact GetSharedWindow reply-shape bridge
+SharedWindow                                       simple success 0x30 -> 0x34
 out-of-line event helper                           clean ID-only candidate; deferred
 0x721f / 0x7283                                    unchanged GetSystemWindow
 private HIToolbox patch                            not authorized
