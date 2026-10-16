@@ -76,8 +76,17 @@ Run:
 scripts/audit-ppc-carbon-gui-display-shmem-consumer-topology.py
 ~~~
 
-The analyzer is static-only. It thins the pinned release-local CoreGraphics
-slice, disassembles it, reconstructs PIC references to the exact standalone
+The analyzer is static-only.
+
+~~~text
+scripts/audit-ppc-carbon-gui-display-shmem-consumer-topology.py
+analyzer_version=1
+audit_contract=carbon-gui-display-shmem-consumer-topology-v1
+Git blob cc2edee85a0100e6c7b7a99cea02bff4196afccd
+~~~
+
+It thins the pinned release-local CoreGraphics slice, disassembles it,
+reconstructs PIC references to the exact standalone
 selector/source/local/mode-2 globals, and emits all resolved function-level
 cross-references plus the focused initializer/lookup/update/seed bodies.
 
