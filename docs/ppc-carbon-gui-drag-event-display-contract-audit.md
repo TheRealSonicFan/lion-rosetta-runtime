@@ -2,44 +2,29 @@
 
 ## Status
 
-**MOVE ENTRY INTERPOSE UNOBSERVABLE / EVENT-DISPLAY STATIC AUDIT NEXT.**
+**COMPLETED / EVENT XY LAYOUT ALIGNED / MAIN-DISPLAY LOOKUP NEXT.**
 
-The passive CGSMoveWindow experiment did not expose the intended cross-image
-entry boundary. The tracer artifact itself is valid: it is the expected
-32-bit PPC build, contains one 8-byte __DATA,__interpose tuple, binds
-_CGSMoveWindow, carries build ID cgs-move-window-entry-passive-v1, and has
-SHA-256 51e546581ee2028756e6caafe91f96fd9d5329c58b3740336987fd16127936e5.
-Both Snow and Lion loaded that exact artifact and emitted its build marker.
-Neither run emitted a single PM_CGS_MOVE_WINDOW_ENTRY or
-PM_CGS_MOVE_WINDOW_RESULT record.
+Both returned reports pass the exact provenance and validation gates. They
+resolve the display-0 symptom more narrowly than the original audit question.
 
-That absence is decisive because Snow still issued 66 successful
-0x7218/0x727c move transactions and completed the public titlebar-drag
-positive control. Lion likewise issued 14 move transactions and reproduced
-the off-screen jump. The external CGSMoveWindow binding is therefore bypassed
-by the executing shared-cache call path; no target-point value may be inferred
-from this experiment.
+Snow PPC and Lion native `_CGSGetUnflippedEventLocation` both read the event
+point from offsets `0x0c/0x10`. Their release-local cached vertical-extent
+field differs (`0xc6` on Snow, `0xbe` on Lion), but that field is not a
+display ID. When the Snow field is zero, the executing PPC path calls
+`_CGSMainDisplayID` and passes its return value directly to
+`_CGSGetDisplayBounds`; only after a successful bounds query does it cache the
+vertical extent back into the event object.
 
-The live comparison nevertheless exposes a stronger discriminator immediately
-upstream of the bad Lion movement:
+The live `CGSGetDisplayBounds(display 0)` diagnostic therefore selects the
+main-display lookup as the next boundary: at that exact Snow PPC fallback the
+main-display result reaching the bounds call is zero. The x/y event storage is
+not the current mismatch, and no event-field rewrite is authorized.
 
-- Snow logged zero CGSGetDisplayBounds(display 0) diagnostics.
-- Lion logged eight CGSGetDisplayBounds(display 0) diagnostics.
-- Lion's first public titlebar mouse-down is sane at h=302, v=109 and
-  FindWindow=inDrag (4).
-- Immediately before the first bad move, Lion logs
-  CGSGetDisplayBounds(display 0), then the movementGroup query for window 849,
-  then a successful 0x7218 move with deltas (-302,-98).
-- The observer subsequently records the origin changing from (120,98) to
-  (-182,17177), then (-182,17281), and later (-182,-113).
-- Snow shows the same movementGroup -> 0x7218 ordering without the display-0
-  diagnostic and with ordinary small move deltas.
-
-This is not authorization to normalize display 0. The translated process runs
-the Snow-era PPC CoreGraphics/HIToolbox contract from the Rosetta cache; Lion
-native code is only the release-reference contract. The next step must identify
-where the event/display identity and point fields enter the Snow PPC drag path
-and whether their layout or interpretation changed across releases.
+The authoritative next procedure is
+`docs/ppc-carbon-gui-main-display-id-contract-audit.md`. It is static-only and
+compares the Snow PPC `_CGSMainDisplayID` / `_lookupMainDisplay` /
+display-initialization path against Lion's native reference before any live
+display-ID substitution or compatibility rule is considered.
 
 ## Objective
 
