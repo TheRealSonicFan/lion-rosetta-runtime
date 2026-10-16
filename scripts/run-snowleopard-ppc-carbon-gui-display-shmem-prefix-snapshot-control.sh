@@ -157,7 +157,38 @@ PROTECTED_HASHES_UNCHANGED=YES
 log "protected_hashes_unchanged=$PROTECTED_HASHES_UNCHANGED"
 
 MODE_COUNT="$(/usr/bin/grep -c '^snapshot_mode=snow-ppc-control$' "$RAW_LOG" 2>/dev/null || true)"
-MAPPING_COUNT="$(/usr/bin/grep -c '^mapping_after_nonnull=YES$' "$RAW_LOG" 2>/dev/null || true)"
+SOURCE_COUNT="$(/usr/bin/grep -c '^source_after_nonnull=YES
+COUNT_VALID="$(/usr/bin/grep -c '^record_count_valid=YES$' "$RAW_LOG" 2>/dev/null || true)"
+MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$RAW_LOG" 2>/dev/null || true)"
+SNAPSHOT_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$RAW_LOG" 2>/dev/null || true)"
+WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$RAW_LOG" 2>/dev/null || true)"
+PROBE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$RAW_LOG" 2>/dev/null || true)"
+
+log "mode_count=$MODE_COUNT"
+log "source_nonnull_count=$SOURCE_COUNT"
+log "record_count_valid_count=$COUNT_VALID"
+log "main_display_nonzero_count=$MAIN_NONZERO"
+log "snapshot_complete_count=$SNAPSHOT_COMPLETE"
+log "write_attempts_zero_count=$WRITE_ZERO"
+log "probe_pass_count=$PROBE_PASS"
+
+if [ "$RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$MODE_COUNT" -eq 1 ] &&
+   [ "$SOURCE_COUNT" -eq 1 ] &&
+   [ "$COUNT_VALID" -eq 1 ] &&
+   [ "$MAIN_NONZERO" -eq 1 ] &&
+   [ "$SNAPSHOT_COMPLETE" -eq 1 ] &&
+   [ "$WRITE_ZERO" -ge 2 ] &&
+   [ "$PROBE_PASS" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_SNOW_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Snow read-only prefix snapshot did not satisfy the control gate"
+ "$RAW_LOG" 2>/dev/null || true)"
 COUNT_VALID="$(/usr/bin/grep -c '^record_count_valid=YES$' "$RAW_LOG" 2>/dev/null || true)"
 MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$RAW_LOG" 2>/dev/null || true)"
 SNAPSHOT_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$RAW_LOG" 2>/dev/null || true)"
