@@ -280,7 +280,11 @@ main(void)
     void *source_after;
     void *local_after;
     void *mode2_after;
-    unsigned char snapshot_buffer[0x178];\n    unsigned char selector_byte;\n    const unsigned char *mapped;\n    const unsigned char *record;\n    size_t prefix_length;
+    unsigned char snapshot_buffer[0x178];
+    unsigned char selector_byte;
+    const unsigned char *mapped;
+    const unsigned char *record;
+    size_t prefix_length;
     uint32_t count;
     void *symbol;
     CGSMainDisplayIDFunction cgs_main_display_id;
@@ -292,6 +296,7 @@ main(void)
     printf("== PPC Carbon GUI display-shmem read-only prefix snapshot ==\n");
     printf("snapshot_contract=carbon-gui-display-shmem-prefix-snapshot-v3\n");
     printf("v1_mode2_pointer_misclassification=CORRECTED\n");
+    printf("translated_guest_pointer_validation=GUARDED_DIRECT_READ\n");
     printf("write_attempts=0\n");
 
     if (sizeof(void *) != 4) {
