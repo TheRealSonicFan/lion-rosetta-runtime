@@ -7,6 +7,11 @@
  * selected through the release-local selector byte and the two-entry source
  * pointer array used directly by _lookupMainDisplay.
  *
+ * v4 correction: standalone CoreGraphics VM addresses are provenance only for
+ * translated PPC.  Rosetta shared-cache __TEXT and __DATA can be rebased
+ * independently, so the PPC runtime globals are reconstructed from the loaded
+ * _lookupMainDisplay PIC instructions.
+ *
  * This program never writes any CoreGraphics global or mapped shared memory.
  */
 
@@ -14,6 +19,7 @@
 #include <dlfcn.h>
 #include <mach/mach.h>
 #include <mach-o/dyld.h>
+#include <mach-o/loader.h>
 #include <setjmp.h>
 #include <signal.h>
 #include <stdint.h>
@@ -152,6 +158,62 @@ range_is_readable(const void *ptr, size_t length)
     return ok;
 }
 
+static uint32_t
+read_native_u32(const void *p)
+{
+    uint32_t v;
+    memcpy(&v, p, sizeof(v));
+    return v;
+}
+
+static int
+find_segment_for_runtime_addr(const struct mach_header *mh,
+                              uintptr_t target,
+                              size_t length,
+                              char segname_out[17])
+{
+    const unsigned char *p;
+    uint32_t i;
+
+    if (mh == 0 || mh->magic != MH_MAGIC) {
+        return 0;
+    }
+
+    p = (const unsigned char *)(mh + 1);
+    for (i = 0; i < mh->ncmds; ++i) {
+        const struct load_command *lc;
+        const struct segment_command *seg;
+        uint64_t start;
+        uint64_t end;
+        uint64_t addr;
+        uint64_t addr_end;
+
+        lc = (const struct load_command *)p;
+        if (lc->cmdsize < sizeof(struct load_command)) {
+            return 0;
+        }
+
+        if (lc->cmd == LC_SEGMENT) {
+            seg = (const struct segment_command *)p;
+            start = (uint64_t)seg->vmaddr;
+            end = start + (uint64_t)seg->vmsize;
+            addr = (uint64_t)target;
+            addr_end = addr + (uint64_t)length;
+            if (addr >= start && addr_end >= addr && addr_end <= end) {
+                if (segname_out != 0) {
+                    memcpy(segname_out, seg->segname, 16);
+                    segname_out[16] = '\0';
+                }
+                return 1;
+            }
+        }
+
+        p += lc->cmdsize;
+    }
+
+    return 0;
+}
+
 static int
 find_coregraphics_image(const struct mach_header **header_out,
                         const char **name_out,
@@ -267,10 +329,10 @@ main(void)
     const struct mach_header *cg_header;
     const char *cg_name;
     uint32_t cg_matches;
-    uintptr_t selector_global_offset;
-    uintptr_t source_array_offset;
-    uintptr_t local_array_offset;
-    uintptr_t mode2_offset;
+    uintptr_t selector_global_static;
+    uintptr_t source_array_static;
+    uintptr_t local_array_static;
+    uintptr_t mode2_static;
     void * volatile *selector_slot;
     void * volatile *source_slots;
     void * volatile *local_slots;
@@ -280,6 +342,23 @@ main(void)
     void *source_after;
     void *local_after;
     void *mode2_after;
+#if defined(__ppc__)
+    const unsigned char *lookup_main_runtime;
+    intptr_t lookup_pic_base;
+    uint32_t lookup_prologue_word;
+    uint32_t selector_addis_word;
+    uint32_t selector_low_word;
+    uint32_t source_addis_word;
+    uint32_t source_low_word;
+    uint32_t local_addis_word;
+    uint32_t local_low_word;
+    uintptr_t selector_runtime;
+    uintptr_t source_array_runtime;
+    uintptr_t local_array_runtime;
+    char selector_segment[17];
+    char source_segment[17];
+    char local_segment[17];
+#endif
     unsigned char snapshot_buffer[0x178];
     unsigned char selector_byte;
     const unsigned char *mapped;
@@ -294,9 +373,9 @@ main(void)
     (void)force_coregraphics_dependency;
 
     printf("== PPC Carbon GUI display-shmem read-only prefix snapshot ==\n");
-    printf("snapshot_contract=carbon-gui-display-shmem-prefix-snapshot-v3\n");
+    printf("snapshot_contract=carbon-gui-display-shmem-prefix-snapshot-v4\n");
     printf("v1_mode2_pointer_misclassification=CORRECTED\n");
-    printf("translated_guest_pointer_validation=GUARDED_DIRECT_READ\n");
+    printf("translated_guest_pointer_validation=LOADED_PPC_PIC_PLUS_GUARDED_DIRECT_READ\n");
     printf("write_attempts=0\n");
 
     if (sizeof(void *) != 4) {
@@ -315,10 +394,10 @@ main(void)
     darwin_major = strtoul(uts.release, 0, 10);
 
 #if defined(__ppc__)
-    selector_global_offset = (uintptr_t)0x6ff26cU;
-    source_array_offset = (uintptr_t)0x700460U;
-    local_array_offset = (uintptr_t)0x700458U;
-    mode2_offset = (uintptr_t)0x70046cU;
+    selector_global_static = (uintptr_t)0x6ff26cU;
+    source_array_static = (uintptr_t)0x700460U;
+    local_array_static = (uintptr_t)0x700458U;
+    mode2_static = (uintptr_t)0x70046cU;
     if (darwin_major == 10) {
         mode = "snow-ppc-control";
         prefix_length = 0x15cU;
@@ -331,10 +410,10 @@ main(void)
         return 4;
     }
 #elif defined(__i386__)
-    selector_global_offset = (uintptr_t)0x948630U;
-    source_array_offset = (uintptr_t)0x94983cU;
-    local_array_offset = (uintptr_t)0x94984cU;
-    mode2_offset = (uintptr_t)0x949848U;
+    selector_global_static = (uintptr_t)0x948630U;
+    source_array_static = (uintptr_t)0x94983cU;
+    local_array_static = (uintptr_t)0x94984cU;
+    mode2_static = (uintptr_t)0x949848U;
     if (darwin_major == 11) {
         mode = "lion-i386-native";
         prefix_length = 0x178U;
@@ -346,14 +425,14 @@ main(void)
 #endif
 
     printf("snapshot_mode=%s\n", mode);
-    printf("selector_global_from_image_header=0x%08lx\n",
-           (unsigned long)selector_global_offset);
-    printf("source_array_from_image_header=0x%08lx\n",
-           (unsigned long)source_array_offset);
-    printf("local_array_from_image_header=0x%08lx\n",
-           (unsigned long)local_array_offset);
-    printf("mode2_mapping_from_image_header=0x%08lx\n",
-           (unsigned long)mode2_offset);
+    printf("selector_global_standalone_vmaddr=0x%08lx\n",
+           (unsigned long)selector_global_static);
+    printf("source_array_standalone_vmaddr=0x%08lx\n",
+           (unsigned long)source_array_static);
+    printf("local_array_standalone_vmaddr=0x%08lx\n",
+           (unsigned long)local_array_static);
+    printf("mode2_mapping_standalone_vmaddr=0x%08lx\n",
+           (unsigned long)mode2_static);
     printf("prefix_length=0x%lx\n", (unsigned long)prefix_length);
 
     if (!find_coregraphics_image(&cg_header, &cg_name, &cg_matches)) {
@@ -367,14 +446,117 @@ main(void)
     printf("coregraphics_image=%s\n", cg_name);
     printf("coregraphics_header=%p\n", (void *)cg_header);
 
+    symbol = dlsym(RTLD_DEFAULT, "CGSMainDisplayID");
+    if (symbol == 0) {
+        printf("CGSMainDisplayID_dlsym=FAIL\n");
+        printf("RESULT: FAIL\n");
+        return 6;
+    }
+    printf("CGSMainDisplayID_dlsym=PASS\n");
+    printf("CGSMainDisplayID_runtime=%p\n", symbol);
+
+#if defined(__ppc__)
+    /*
+     * Standalone Snow PPC VM addresses cannot be converted to Rosetta-cache
+     * runtime addresses by adding the loaded image header: the cache may
+     * relocate __TEXT and __DATA independently.  Reconstruct the three globals
+     * from the loaded _lookupMainDisplay PIC references instead.
+     */
+    lookup_main_runtime =
+        (const unsigned char *)((intptr_t)(uintptr_t)symbol - (intptr_t)0x5858L);
+    lookup_pic_base =
+        (intptr_t)(uintptr_t)(lookup_main_runtime + 0x08);
+
+    lookup_prologue_word = read_native_u32(lookup_main_runtime);
+    selector_addis_word = read_native_u32(lookup_main_runtime + 0x1c);
+    selector_low_word = read_native_u32(lookup_main_runtime + 0x20);
+    source_addis_word = read_native_u32(lookup_main_runtime + 0x30);
+    source_low_word = read_native_u32(lookup_main_runtime + 0x34);
+    local_addis_word = read_native_u32(lookup_main_runtime + 0x4c);
+    local_low_word = read_native_u32(lookup_main_runtime + 0x50);
+
+    printf("runtime_address_model=LOADED_PPC_LOOKUPMAIN_PIC\n");
+    printf("lookup_main_runtime=%p\n", (void *)lookup_main_runtime);
+    printf("lookup_main_prologue_word=0x%08x\n",
+           (unsigned int)lookup_prologue_word);
+    printf("lookup_selector_addis_word=0x%08x\n",
+           (unsigned int)selector_addis_word);
+    printf("lookup_selector_low_word=0x%08x\n",
+           (unsigned int)selector_low_word);
+    printf("lookup_source_addis_word=0x%08x\n",
+           (unsigned int)source_addis_word);
+    printf("lookup_source_low_word=0x%08x\n",
+           (unsigned int)source_low_word);
+    printf("lookup_local_addis_word=0x%08x\n",
+           (unsigned int)local_addis_word);
+    printf("lookup_local_low_word=0x%08x\n",
+           (unsigned int)local_low_word);
+
+    if (lookup_prologue_word != 0x7c0802a6U ||
+        (selector_addis_word & 0xffff0000U) != 0x3fdf0000U ||
+        (selector_low_word & 0xffff0000U) != 0x813e0000U ||
+        (source_addis_word & 0xffff0000U) != 0x3c5f0000U ||
+        (source_low_word & 0xffff0000U) != 0x39020000U ||
+        (local_addis_word & 0xffff0000U) != 0x3c5f0000U ||
+        (local_low_word & 0xffff0000U) != 0x38c20000U) {
+        printf("ppc_pic_pattern=FAIL\n");
+        printf("RESULT: FAIL\n");
+        return 7;
+    }
+    printf("ppc_pic_pattern=PASS\n");
+
+    selector_runtime =
+        (uintptr_t)(lookup_pic_base +
+                    (intptr_t)(int16_t)(selector_addis_word & 0xffffU) * 65536L +
+                    (intptr_t)(int16_t)(selector_low_word & 0xffffU));
+    source_array_runtime =
+        (uintptr_t)(lookup_pic_base +
+                    (intptr_t)(int16_t)(source_addis_word & 0xffffU) * 65536L +
+                    (intptr_t)(int16_t)(source_low_word & 0xffffU));
+    local_array_runtime =
+        (uintptr_t)(lookup_pic_base +
+                    (intptr_t)(int16_t)(local_addis_word & 0xffffU) * 65536L +
+                    (intptr_t)(int16_t)(local_low_word & 0xffffU));
+
+    selector_segment[0] = '\0';
+    source_segment[0] = '\0';
+    local_segment[0] = '\0';
+
+    if (!find_segment_for_runtime_addr(cg_header, selector_runtime,
+                                       sizeof(void *), selector_segment) ||
+        !find_segment_for_runtime_addr(cg_header, source_array_runtime,
+                                       2 * sizeof(void *), source_segment) ||
+        !find_segment_for_runtime_addr(cg_header, local_array_runtime,
+                                       2 * sizeof(void *), local_segment)) {
+        printf("ppc_runtime_targets_in_segments=NO\n");
+        printf("RESULT: FAIL\n");
+        return 8;
+    }
+    printf("ppc_runtime_targets_in_segments=YES\n");
+    printf("selector_runtime=0x%08lx\n", (unsigned long)selector_runtime);
+    printf("source_array_runtime=0x%08lx\n",
+           (unsigned long)source_array_runtime);
+    printf("local_array_runtime=0x%08lx\n",
+           (unsigned long)local_array_runtime);
+    printf("selector_runtime_segment=%s\n", selector_segment);
+    printf("source_array_runtime_segment=%s\n", source_segment);
+    printf("local_array_runtime_segment=%s\n", local_segment);
+
+    selector_slot = (void * volatile *)selector_runtime;
+    source_slots = (void * volatile *)source_array_runtime;
+    local_slots = (void * volatile *)local_array_runtime;
+    mode2_slot = 0;
+#else
+    printf("runtime_address_model=IMAGE_HEADER_PLUS_STANDALONE_VMADDR_I386\n");
     selector_slot =
-        (void * volatile *)((uintptr_t)cg_header + selector_global_offset);
+        (void * volatile *)((uintptr_t)cg_header + selector_global_static);
     source_slots =
-        (void * volatile *)((uintptr_t)cg_header + source_array_offset);
+        (void * volatile *)((uintptr_t)cg_header + source_array_static);
     local_slots =
-        (void * volatile *)((uintptr_t)cg_header + local_array_offset);
+        (void * volatile *)((uintptr_t)cg_header + local_array_static);
     mode2_slot =
-        (void * volatile *)((uintptr_t)cg_header + mode2_offset);
+        (void * volatile *)((uintptr_t)cg_header + mode2_static);
+#endif
 
     printf("selector_global_slot=%p\n", (void *)selector_slot);
     printf("source_array=%p\n", (void *)source_slots);
@@ -383,35 +565,37 @@ main(void)
 
     if (!range_is_readable((const void *)selector_slot, sizeof(void *)) ||
         !range_is_readable((const void *)source_slots, 2 * sizeof(void *)) ||
-        !range_is_readable((const void *)local_slots, 2 * sizeof(void *)) ||
-        !range_is_readable((const void *)mode2_slot, sizeof(void *))) {
+        !range_is_readable((const void *)local_slots, 2 * sizeof(void *))
+#if defined(__i386__)
+        || !range_is_readable((const void *)mode2_slot, sizeof(void *))
+#endif
+        ) {
         printf("coregraphics_slots_readable=NO\n");
         printf("RESULT: FAIL\n");
-        return 6;
+        return 9;
     }
     printf("coregraphics_slots_readable=YES\n");
-
-    symbol = dlsym(RTLD_DEFAULT, "CGSMainDisplayID");
-    if (symbol == 0) {
-        printf("CGSMainDisplayID_dlsym=FAIL\n");
-        printf("RESULT: FAIL\n");
-        return 7;
-    }
-    printf("CGSMainDisplayID_dlsym=PASS\n");
 
     cgs_main_display_id = (CGSMainDisplayIDFunction)symbol;
     main_id = cgs_main_display_id();
     printf("main_display_id=0x%08x\n", (unsigned int)main_id);
     printf("main_display_id_zero=%s\n", main_id == 0 ? "YES" : "NO");
 
-    selector_ptr = *selector_slot;
+    selector_ptr = 0;
+    if (!guarded_copy(&selector_ptr, (const void *)selector_slot,
+                      sizeof(selector_ptr))) {
+        printf("selector_slot_read=FAIL\n");
+        printf("RESULT: FAIL\n");
+        return 10;
+    }
+    printf("selector_slot_read=PASS\n");
     printf("selector_pointer_after=%p\n", selector_ptr);
     printf("selector_pointer_vm_region_readable=%s\n",
            selector_ptr != 0 && range_is_readable(selector_ptr, 1) ? "YES" : "NO");
     if (selector_ptr == 0 || !guarded_copy(&selector_byte, selector_ptr, 1)) {
         printf("selector_direct_read=FAIL\n");
         printf("RESULT: FAIL\n");
-        return 8;
+        return 11;
     }
     printf("selector_direct_read=PASS\n");
 
@@ -421,12 +605,27 @@ main(void)
            selector_index < 2 ? "YES" : "NO");
     if (selector_index >= 2) {
         printf("RESULT: FAIL\n");
-        return 9;
+        return 12;
     }
 
-    source_after = source_slots[selector_index];
-    local_after = local_slots[selector_index];
+    source_after = 0;
+    local_after = 0;
+    if (!guarded_copy(&source_after,
+                      (const void *)&source_slots[selector_index],
+                      sizeof(source_after)) ||
+        !guarded_copy(&local_after,
+                      (const void *)&local_slots[selector_index],
+                      sizeof(local_after))) {
+        printf("selected_slot_read=FAIL\n");
+        printf("RESULT: FAIL\n");
+        return 13;
+    }
+    printf("selected_slot_read=PASS\n");
+#if defined(__i386__)
     mode2_after = *mode2_slot;
+#else
+    mode2_after = 0;
+#endif
 
     printf("active_source_slot=%p\n",
            (void *)&source_slots[selector_index]);
@@ -434,15 +633,20 @@ main(void)
            (void *)&local_slots[selector_index]);
     printf("source_after=%p\n", source_after);
     printf("local_mapping_after=%p\n", local_after);
+#if defined(__i386__)
     printf("mode2_mapping_after=%p\n", mode2_after);
     printf("mode2_is_active_source=%s\n",
            mode2_after == source_after ? "YES" : "NO");
+#else
+    printf("mode2_mapping_after=NOT_RESOLVED_IN_V4_PPC\n");
+    printf("mode2_is_active_source=NOT_TESTED_IN_V4_PPC\n");
+#endif
     printf("source_after_nonnull=%s\n",
            source_after != 0 ? "YES" : "NO");
 
     if (source_after == 0) {
         printf("RESULT: FAIL\n");
-        return 10;
+        return 14;
     }
 
     printf("source_pointer_vm_region_readable=%s\n",
@@ -450,7 +654,7 @@ main(void)
     if (!guarded_copy(snapshot_buffer, source_after, prefix_length)) {
         printf("source_direct_read=FAIL\n");
         printf("RESULT: FAIL\n");
-        return 11;
+        return 15;
     }
     printf("source_direct_read=PASS\n");
 
@@ -461,7 +665,7 @@ main(void)
            (count >= 1 && count <= 64) ? "YES" : "NO");
     if (count < 1 || count > 64) {
         printf("RESULT: FAIL\n");
-        return 12;
+        return 16;
     }
 
     printf("record_base_offset=0x20\n");
