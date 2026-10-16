@@ -271,10 +271,10 @@ main(void)
     uintptr_t source_array_offset;
     uintptr_t local_array_offset;
     uintptr_t mode2_offset;
-    volatile void **selector_slot;
-    volatile void **source_slots;
-    volatile void **local_slots;
-    volatile void **mode2_slot;
+    void * volatile *selector_slot;
+    void * volatile *source_slots;
+    void * volatile *local_slots;
+    void * volatile *mode2_slot;
     void *selector_ptr;
     unsigned int selector_index;
     void *source_after;
@@ -368,13 +368,13 @@ main(void)
     printf("coregraphics_header=%p\n", (void *)cg_header);
 
     selector_slot =
-        (volatile void **)((uintptr_t)cg_header + selector_global_offset);
+        (void * volatile *)((uintptr_t)cg_header + selector_global_offset);
     source_slots =
-        (volatile void **)((uintptr_t)cg_header + source_array_offset);
+        (void * volatile *)((uintptr_t)cg_header + source_array_offset);
     local_slots =
-        (volatile void **)((uintptr_t)cg_header + local_array_offset);
+        (void * volatile *)((uintptr_t)cg_header + local_array_offset);
     mode2_slot =
-        (volatile void **)((uintptr_t)cg_header + mode2_offset);
+        (void * volatile *)((uintptr_t)cg_header + mode2_offset);
 
     printf("selector_global_slot=%p\n", (void *)selector_slot);
     printf("source_array=%p\n", (void *)source_slots);
