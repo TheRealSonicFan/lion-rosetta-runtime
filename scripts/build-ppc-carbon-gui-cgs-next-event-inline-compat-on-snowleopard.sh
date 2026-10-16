@@ -25,6 +25,8 @@ EXPECTED_INGRESS_BUILD_ID="distributed-notifications-ppc-ingress-interposer-v2"
 EXPECTED_RESOLVE_TRACE_BUILD_ID="color-profile-resolve-passive-trace-v1"
 EXPECTED_RESOLVE_COMPAT_BUILD_ID="color-profile-resolve-id-compat-v1"
 EXPECTED_WBI_COMPAT_BUILD_ID="window-backing-info-id-compat-v1"
+EXPECTED_CORE_SOURCE_SHA256="8e6b5538753b3488fedf956c7b6ca30cf98171a24c36d1980ebe34b8fe260622"
+EXPECTED_INGRESS_SOURCE_SHA256="64e2896e614099978b0997daa02f17822dfdd8d38ab688634c4a30381739646e"
 CC_SELECTED="${CC:-/Developer-3.2.6/usr/bin/gcc-4.2}"
 
 [ "$(/usr/bin/sw_vers -productVersion)" = "10.6.8" ] || {
@@ -48,6 +50,17 @@ done
 }
 /usr/bin/grep -Fq "$EXPECTED_INGRESS_BUILD_ID" "$INGRESS_SRC" || {
     echo "error: stale distributed-notifications ingress source; transfer the current verified runtime tree from the staging system" >&2
+    exit 66
+}
+
+CORE_SOURCE_SHA="$(/usr/bin/shasum -a 256 "$CORE_SRC" | /usr/bin/awk '{print $1}')"
+INGRESS_SOURCE_SHA="$(/usr/bin/shasum -a 256 "$INGRESS_SRC" | /usr/bin/awk '{print $1}')"
+[ "$CORE_SOURCE_SHA" = "$EXPECTED_CORE_SOURCE_SHA256" ] || {
+    echo "error: CoreServices source SHA-256 mismatch: $CORE_SOURCE_SHA" >&2
+    exit 66
+}
+[ "$INGRESS_SOURCE_SHA" = "$EXPECTED_INGRESS_SOURCE_SHA256" ] || {
+    echo "error: distributed-notifications ingress source SHA-256 mismatch: $INGRESS_SOURCE_SHA" >&2
     exit 66
 }
 
@@ -339,9 +352,6 @@ if echo "$UNDEFINED" | /usr/bin/grep -Eq '(^|[[:space:]])_environ$'; then
     echo "error: combined interposer must not import _environ directly" >&2
     exit 72
 fi
-
-CORE_SOURCE_SHA="$(/usr/bin/shasum -a 256 "$CORE_SRC" | /usr/bin/awk '{print $1}')"
-INGRESS_SOURCE_SHA="$(/usr/bin/shasum -a 256 "$INGRESS_SRC" | /usr/bin/awk '{print $1}')"
 
 {
     echo "== PPC Carbon GUI smoke + accepted stack + exact CGS next-event inline ID compatibility interposer =="
