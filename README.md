@@ -6,6 +6,19 @@ Local extraction, validation, installation, and diagnostics for the closed-sourc
 
 Use this together with `lion-rosetta-xnu`. Its phase-2 source patch restores both Lion's PowerPC architecture-handler path and the Snow Leopard-compatible translated 32-bit commpage ABI required by Rosetta.
 
+## Legacy-target transfer and provenance policy
+
+Snow Leopard 10.6.8 and Lion 10.7.5 are offline legacy execution targets for
+this project. Do not require `git fetch`, `git pull`, `git rev-parse`, or
+`git hash-object` on either machine. Obtain and verify current repository
+content on a modern TLS-capable staging system, transfer the verified tree or
+archive to the legacy Mac, and use SHA-256 (`/usr/bin/shasum -a 256`) plus
+artifact sidecars on the legacy target. Git blob IDs are repository-internal
+metadata and are not runtime provenance gates. When an older historical
+procedure says to pull or hash a Git blob on Snow Leopard or Lion, perform that
+repository verification on the staging system instead and use the corresponding
+SHA-256 checks after transfer.
+
 ## Verified 10.6.8 payload
 
 A payload collected from Mac OS X 10.6.8 build 10K549 was inspected while developing these scripts. It contains `translate`, `RosettaNonGrata`, the complete `Shims` tree, `RosettaVersion.plist`, Rosetta receipts, the Rosetta dyld shared cache/map, and the ancillary report-messages preference. The inspected runtime does **not** contain a `/usr/libexec/oah/translated` executable.
