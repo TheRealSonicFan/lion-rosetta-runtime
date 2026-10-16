@@ -2,10 +2,12 @@
  * Read-only display shared-memory prefix snapshot for the Rosetta titlebar
  * main-display investigation.
  *
- * This program never writes the CoreGraphics mapping global or the mapped
- * shared-memory object. It calls only the exported CGSMainDisplayID entry,
- * then reads the already-populated mapping pointer from a statically audited
- * CoreGraphics image offset.
+ * v2 correction: the mode-2 mapping global is NOT the source object consumed
+ * by _initCGDisplayMappings/_initDisplayMappings.  The active source object is
+ * selected through the release-local selector byte and the two-entry source
+ * pointer array used directly by _lookupMainDisplay.
+ *
+ * This program never writes any CoreGraphics global or mapped shared memory.
  */
 
 #include <ApplicationServices/ApplicationServices.h>
@@ -210,10 +212,20 @@ main(void)
     const struct mach_header *cg_header;
     const char *cg_name;
     uint32_t cg_matches;
-    uintptr_t mapping_offset;
-    volatile void **mapping_slot;
-    void *mapping_before;
-    void *mapping_after;
+    uintptr_t selector_global_offset;
+    uintptr_t source_array_offset;
+    uintptr_t local_array_offset;
+    uintptr_t mode2_offset;
+    volatile void **selector_slot;
+    volatile void **source_slots;
+    volatile void **local_slots;
+    volatile void **mode2_slot;
+    void *selector_ptr;
+    unsigned int selector_index;
+    void *source_before;
+    void *source_after;
+    void *local_after;
+    void *mode2_after;
     const unsigned char *mapped;
     const unsigned char *record;
     size_t prefix_length;
@@ -226,7 +238,8 @@ main(void)
     (void)force_coregraphics_dependency;
 
     printf("== PPC Carbon GUI display-shmem read-only prefix snapshot ==\n");
-    printf("snapshot_contract=carbon-gui-display-shmem-prefix-snapshot-v1\n");
+    printf("snapshot_contract=carbon-gui-display-shmem-prefix-snapshot-v2\n");
+    printf("v1_mode2_pointer_misclassification=CORRECTED\n");
     printf("write_attempts=0\n");
 
     if (sizeof(void *) != 4) {
@@ -245,7 +258,10 @@ main(void)
     darwin_major = strtoul(uts.release, 0, 10);
 
 #if defined(__ppc__)
-    mapping_offset = (uintptr_t)0x70046cU;
+    selector_global_offset = (uintptr_t)0x6ff26cU;
+    source_array_offset = (uintptr_t)0x700460U;
+    local_array_offset = (uintptr_t)0x700458U;
+    mode2_offset = (uintptr_t)0x70046cU;
     if (darwin_major == 10) {
         mode = "snow-ppc-control";
         prefix_length = 0x15cU;
@@ -258,7 +274,10 @@ main(void)
         return 4;
     }
 #elif defined(__i386__)
-    mapping_offset = (uintptr_t)0x949848U;
+    selector_global_offset = (uintptr_t)0x948630U;
+    source_array_offset = (uintptr_t)0x94983cU;
+    local_array_offset = (uintptr_t)0x94984cU;
+    mode2_offset = (uintptr_t)0x949848U;
     if (darwin_major == 11) {
         mode = "lion-i386-native";
         prefix_length = 0x178U;
@@ -270,8 +289,14 @@ main(void)
 #endif
 
     printf("snapshot_mode=%s\n", mode);
-    printf("mapping_global_from_image_header=0x%08lx\n",
-           (unsigned long)mapping_offset);
+    printf("selector_global_from_image_header=0x%08lx\n",
+           (unsigned long)selector_global_offset);
+    printf("source_array_from_image_header=0x%08lx\n",
+           (unsigned long)source_array_offset);
+    printf("local_array_from_image_header=0x%08lx\n",
+           (unsigned long)local_array_offset);
+    printf("mode2_mapping_from_image_header=0x%08lx\n",
+           (unsigned long)mode2_offset);
     printf("prefix_length=0x%lx\n", (unsigned long)prefix_length);
 
     if (!find_coregraphics_image(&cg_header, &cg_name, &cg_matches)) {
@@ -285,19 +310,39 @@ main(void)
     printf("coregraphics_image=%s\n", cg_name);
     printf("coregraphics_header=%p\n", (void *)cg_header);
 
-    mapping_slot =
-        (volatile void **)((uintptr_t)cg_header + mapping_offset);
-    printf("mapping_slot=%p\n", (void *)mapping_slot);
+    selector_slot =
+        (volatile void **)((uintptr_t)cg_header + selector_global_offset);
+    source_slots =
+        (volatile void **)((uintptr_t)cg_header + source_array_offset);
+    local_slots =
+        (volatile void **)((uintptr_t)cg_header + local_array_offset);
+    mode2_slot =
+        (volatile void **)((uintptr_t)cg_header + mode2_offset);
 
-    if (!range_is_readable((const void *)mapping_slot, sizeof(void *))) {
-        printf("mapping_slot_readable=NO\n");
+    printf("selector_global_slot=%p\n", (void *)selector_slot);
+    printf("source_array=%p\n", (void *)source_slots);
+    printf("local_array=%p\n", (void *)local_slots);
+    printf("mode2_mapping_slot=%p\n", (void *)mode2_slot);
+
+    if (!range_is_readable((const void *)selector_slot, sizeof(void *)) ||
+        !range_is_readable((const void *)source_slots, 2 * sizeof(void *)) ||
+        !range_is_readable((const void *)local_slots, 2 * sizeof(void *)) ||
+        !range_is_readable((const void *)mode2_slot, sizeof(void *))) {
+        printf("coregraphics_slots_readable=NO\n");
         printf("RESULT: FAIL\n");
         return 6;
     }
-    printf("mapping_slot_readable=YES\n");
+    printf("coregraphics_slots_readable=YES\n");
 
-    mapping_before = *mapping_slot;
-    printf("mapping_before=%p\n", mapping_before);
+    source_before = 0;
+    selector_ptr = *selector_slot;
+    if (selector_ptr != 0 && range_is_readable(selector_ptr, 1)) {
+        selector_index = *(volatile unsigned char *)selector_ptr;
+        if (selector_index < 2) {
+            source_before = source_slots[selector_index];
+        }
+    }
+    printf("source_before=%p\n", source_before);
 
     symbol = dlsym(RTLD_DEFAULT, "CGSMainDisplayID");
     if (symbol == 0) {
@@ -312,30 +357,60 @@ main(void)
     printf("main_display_id=0x%08x\n", (unsigned int)main_id);
     printf("main_display_id_zero=%s\n", main_id == 0 ? "YES" : "NO");
 
-    mapping_after = *mapping_slot;
-    printf("mapping_after=%p\n", mapping_after);
-    printf("mapping_after_nonnull=%s\n",
-           mapping_after != 0 ? "YES" : "NO");
-    if (mapping_after == 0) {
+    selector_ptr = *selector_slot;
+    printf("selector_pointer_after=%p\n", selector_ptr);
+    if (selector_ptr == 0 || !range_is_readable(selector_ptr, 1)) {
+        printf("selector_pointer_readable=NO\n");
         printf("RESULT: FAIL\n");
         return 8;
     }
+    printf("selector_pointer_readable=YES\n");
 
-    if (!range_is_readable(mapping_after, prefix_length)) {
-        printf("mapped_prefix_readable=NO\n");
+    selector_index = *(volatile unsigned char *)selector_ptr;
+    printf("selector_index=%u\n", selector_index);
+    printf("selector_index_valid=%s\n",
+           selector_index < 2 ? "YES" : "NO");
+    if (selector_index >= 2) {
         printf("RESULT: FAIL\n");
         return 9;
     }
-    printf("mapped_prefix_readable=YES\n");
 
-    mapped = (const unsigned char *)mapping_after;
+    source_after = source_slots[selector_index];
+    local_after = local_slots[selector_index];
+    mode2_after = *mode2_slot;
+
+    printf("active_source_slot=%p\n",
+           (void *)&source_slots[selector_index]);
+    printf("active_local_slot=%p\n",
+           (void *)&local_slots[selector_index]);
+    printf("source_after=%p\n", source_after);
+    printf("local_mapping_after=%p\n", local_after);
+    printf("mode2_mapping_after=%p\n", mode2_after);
+    printf("mode2_is_active_source=%s\n",
+           mode2_after == source_after ? "YES" : "NO");
+    printf("source_after_nonnull=%s\n",
+           source_after != 0 ? "YES" : "NO");
+
+    if (source_after == 0) {
+        printf("RESULT: FAIL\n");
+        return 10;
+    }
+
+    if (!range_is_readable(source_after, prefix_length)) {
+        printf("source_prefix_readable=NO\n");
+        printf("RESULT: FAIL\n");
+        return 11;
+    }
+    printf("source_prefix_readable=YES\n");
+
+    mapped = (const unsigned char *)source_after;
     count = read_le32(mapped);
     printf("record_count_le=%u\n", (unsigned int)count);
     printf("record_count_valid=%s\n",
            (count >= 1 && count <= 64) ? "YES" : "NO");
     if (count < 1 || count > 64) {
         printf("RESULT: FAIL\n");
-        return 10;
+        return 12;
     }
 
     printf("record_base_offset=0x20\n");
