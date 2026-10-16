@@ -14,6 +14,8 @@
 #include <dlfcn.h>
 #include <mach/mach.h>
 #include <mach-o/dyld.h>
+#include <setjmp.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,6 +30,59 @@ typedef uint32_t (*CGSMainDisplayIDFunction)(void);
 
 static CGDirectDisplayID (*volatile force_coregraphics_dependency)(void) =
     CGMainDisplayID;
+
+static sigjmp_buf snapshot_jmp;
+static volatile sig_atomic_t snapshot_fault_active = 0;
+
+static void
+snapshot_fault_handler(int signo)
+{
+    (void)signo;
+    if (snapshot_fault_active) {
+        siglongjmp(snapshot_jmp, 1);
+    }
+}
+
+static int
+guarded_copy(void *dst, const void *src, size_t length)
+{
+    struct sigaction sa;
+    struct sigaction old_segv;
+    struct sigaction old_bus;
+    volatile const unsigned char *s;
+    unsigned char *d;
+    size_t i;
+    int ok;
+
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = snapshot_fault_handler;
+    sigemptyset(&sa.sa_mask);
+
+    if (sigaction(SIGSEGV, &sa, &old_segv) != 0) {
+        return 0;
+    }
+    if (sigaction(SIGBUS, &sa, &old_bus) != 0) {
+        sigaction(SIGSEGV, &old_segv, 0);
+        return 0;
+    }
+
+    ok = 1;
+    snapshot_fault_active = 1;
+    if (sigsetjmp(snapshot_jmp, 1) == 0) {
+        s = (volatile const unsigned char *)src;
+        d = (unsigned char *)dst;
+        for (i = 0; i < length; ++i) {
+            d[i] = s[i];
+        }
+    } else {
+        ok = 0;
+    }
+    snapshot_fault_active = 0;
+
+    sigaction(SIGBUS, &old_bus, 0);
+    sigaction(SIGSEGV, &old_segv, 0);
+    return ok;
+}
 
 static uint32_t
 read_le32(const unsigned char *p)
@@ -222,13 +277,10 @@ main(void)
     volatile void **mode2_slot;
     void *selector_ptr;
     unsigned int selector_index;
-    void *source_before;
     void *source_after;
     void *local_after;
     void *mode2_after;
-    const unsigned char *mapped;
-    const unsigned char *record;
-    size_t prefix_length;
+    unsigned char snapshot_buffer[0x178];\n    unsigned char selector_byte;\n    const unsigned char *mapped;\n    const unsigned char *record;\n    size_t prefix_length;
     uint32_t count;
     void *symbol;
     CGSMainDisplayIDFunction cgs_main_display_id;
@@ -238,7 +290,7 @@ main(void)
     (void)force_coregraphics_dependency;
 
     printf("== PPC Carbon GUI display-shmem read-only prefix snapshot ==\n");
-    printf("snapshot_contract=carbon-gui-display-shmem-prefix-snapshot-v2\n");
+    printf("snapshot_contract=carbon-gui-display-shmem-prefix-snapshot-v3\n");
     printf("v1_mode2_pointer_misclassification=CORRECTED\n");
     printf("write_attempts=0\n");
 
@@ -334,16 +386,6 @@ main(void)
     }
     printf("coregraphics_slots_readable=YES\n");
 
-    source_before = 0;
-    selector_ptr = *selector_slot;
-    if (selector_ptr != 0 && range_is_readable(selector_ptr, 1)) {
-        selector_index = *(volatile unsigned char *)selector_ptr;
-        if (selector_index < 2) {
-            source_before = source_slots[selector_index];
-        }
-    }
-    printf("source_before=%p\n", source_before);
-
     symbol = dlsym(RTLD_DEFAULT, "CGSMainDisplayID");
     if (symbol == 0) {
         printf("CGSMainDisplayID_dlsym=FAIL\n");
@@ -359,14 +401,16 @@ main(void)
 
     selector_ptr = *selector_slot;
     printf("selector_pointer_after=%p\n", selector_ptr);
-    if (selector_ptr == 0 || !range_is_readable(selector_ptr, 1)) {
-        printf("selector_pointer_readable=NO\n");
+    printf("selector_pointer_vm_region_readable=%s\n",
+           selector_ptr != 0 && range_is_readable(selector_ptr, 1) ? "YES" : "NO");
+    if (selector_ptr == 0 || !guarded_copy(&selector_byte, selector_ptr, 1)) {
+        printf("selector_direct_read=FAIL\n");
         printf("RESULT: FAIL\n");
         return 8;
     }
-    printf("selector_pointer_readable=YES\n");
+    printf("selector_direct_read=PASS\n");
 
-    selector_index = *(volatile unsigned char *)selector_ptr;
+    selector_index = (unsigned int)selector_byte;
     printf("selector_index=%u\n", selector_index);
     printf("selector_index_valid=%s\n",
            selector_index < 2 ? "YES" : "NO");
@@ -396,14 +440,16 @@ main(void)
         return 10;
     }
 
-    if (!range_is_readable(source_after, prefix_length)) {
-        printf("source_prefix_readable=NO\n");
+    printf("source_pointer_vm_region_readable=%s\n",
+           range_is_readable(source_after, prefix_length) ? "YES" : "NO");
+    if (!guarded_copy(snapshot_buffer, source_after, prefix_length)) {
+        printf("source_direct_read=FAIL\n");
         printf("RESULT: FAIL\n");
         return 11;
     }
-    printf("source_prefix_readable=YES\n");
+    printf("source_direct_read=PASS\n");
 
-    mapped = (const unsigned char *)source_after;
+    mapped = snapshot_buffer;
     count = read_le32(mapped);
     printf("record_count_le=%u\n", (unsigned int)count);
     printf("record_count_valid=%s\n",
