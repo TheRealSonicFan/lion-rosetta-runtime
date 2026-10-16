@@ -134,7 +134,7 @@ Artifact identity for this phase is SHA-256 based. The required
 accepted dependencies are:
 
 ```text
-pm-hitoolbox-titlebar-drag-trace.dylib
+pm-hitoolbox-titlebar-drag-trace-v2.dylib
   SHA-256  c8bc82713e4342c651cd2e3784d9d963597700a35cdcd739bba3c7dab8381093
   semantic marker hitoolbox-titlebar-drag-trace-v2
 
@@ -151,11 +151,35 @@ The earlier standalone `pm-coreui-image-bitmapinfo-compat.dylib` has SHA-256
 it is a historical partial-fix artifact and must not replace the accepted
 slot-0 v2 artifact above. No Git blob ID is used in this phase.
 
+The historical filename `pm-hitoolbox-titlebar-drag-trace-v2.dylib` is
+ambiguous. The Library artifact with that exact unsuffixed name is the **v1**
+DragWindow/FindWindow interposer, SHA-256
+`294ebfc3697bff7e06e21d00e781ca1d29d7a5d028ce6f857e8869877e89d70f`,
+and it is not suitable for this experiment because it cannot observe the
+dispatcher path isolated by the corrected Snow control. The later v2 dispatcher
+monitor was historically built under the same basename and has SHA-256
+`c8bc82713e4342c651cd2e3784d9d963597700a35cdcd739bba3c7dab8381093`.
+To prevent another v1/v2 collision, current instructions build and use the
+distinct local filename `pm-hitoolbox-titlebar-drag-trace-v2.dylib`.
+
+Before the Phase C run, rebuild the v2 trace on Snow Leopard from the transferred
+verified tree:
+
+```sh
+CC=/Developer-3.2.6/usr/bin/gcc-4.2 \
+  ./scripts/build-ppc-hitoolbox-titlebar-drag-trace-on-snowleopard.sh \
+  ./payload/pm-hitoolbox-titlebar-drag-trace-v2.dylib || exit 1
+```
+
+Require its generated SHA-256 sidecar to report
+`c8bc82713e4342c651cd2e3784d9d963597700a35cdcd739bba3c7dab8381093`
+before continuing.
+
 Example from the repository root:
 
 ```sh
-export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_PATH="$PWD/payload/pm-hitoolbox-titlebar-drag-trace.dylib"
-export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_SHA256_FILE="$PWD/payload/pm-hitoolbox-titlebar-drag-trace.dylib.sha256"
+export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_PATH="$PWD/payload/pm-hitoolbox-titlebar-drag-trace-v2.dylib"
+export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_SHA256_FILE="$PWD/payload/pm-hitoolbox-titlebar-drag-trace-v2.dylib.sha256"
 export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_EXPECTED_SHA256=c8bc82713e4342c651cd2e3784d9d963597700a35cdcd739bba3c7dab8381093
 export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_OBSERVER_DURATION_MS=9000
 
@@ -217,8 +241,8 @@ Then run:
 ```sh
 export ROSETTA_EXPECTED_KERNEL_SHA256=fe68467b60b3bd7edfab61b2d6c8af7f988de5206c4b7b624151dc9f1a1061d3
 
-export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_PATH="$PWD/payload/pm-hitoolbox-titlebar-drag-trace.dylib"
-export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_SHA256_FILE="$PWD/payload/pm-hitoolbox-titlebar-drag-trace.dylib.sha256"
+export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_PATH="$PWD/payload/pm-hitoolbox-titlebar-drag-trace-v2.dylib"
+export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_SHA256_FILE="$PWD/payload/pm-hitoolbox-titlebar-drag-trace-v2.dylib.sha256"
 export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_EXPECTED_SHA256=c8bc82713e4342c651cd2e3784d9d963597700a35cdcd739bba3c7dab8381093
 export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_OBSERVER_DURATION_MS=9000
 
