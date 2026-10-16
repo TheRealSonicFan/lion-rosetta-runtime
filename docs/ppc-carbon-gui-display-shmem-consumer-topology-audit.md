@@ -2,7 +2,28 @@
 
 ## Status
 
-**NEXT STEP — STATIC OWNERSHIP/LIFECYCLE AUDIT BEFORE ANY PROJECTION DESIGN.**
+**V1 PHASE-B FAILURE DIAGNOSED / V2 TOPOLOGY ANALYZER READY.**
+
+The first Phase B failure is an analyzer defect, not evidence that Lion lacks a
+display-notification lifecycle path. The Lion slice contains
+`__CGSDisplayNotifyProc` (two leading underscores), while V1 incorrectly
+required the Snow spelling `_CGSDisplayNotifyProc`. The same failed Lion
+report independently resolves `__CGSDisplayNotifyProc@0x2fcbb3` as a real
+source-array consumer.
+
+V1 also over-reported some global references because its lightweight register
+tracker did not invalidate PIC-derived register values after unrelated
+instructions overwrote those registers. Generic object-field accesses such as
+`_create_provider` offsets `+0x08/+0x0c/+0x14` were therefore able to be
+misclassified as source-array/mode-2 references. Because the Snow V1 PASS was
+produced by the same tracker, its broad caller inventory is superseded even
+though its required anchor references passed.
+
+V2 fixes both issues: it uses the release-local notification symbol name and
+conservatively invalidates register provenance across loads, arithmetic,
+calls, and other writes before accepting a PIC-derived global reference.
+Lifecycle direct references are likewise restricted to actual branch/call
+instructions. Both phases must therefore be rerun from current `main`.
 
 The V4 passive snapshots close the causal question that motivated the
 display-shmem investigation.
@@ -80,9 +101,9 @@ The analyzer is static-only.
 
 ~~~text
 scripts/audit-ppc-carbon-gui-display-shmem-consumer-topology.py
-analyzer_version=1
-audit_contract=carbon-gui-display-shmem-consumer-topology-v1
-Git blob cc2edee85a0100e6c7b7a99cea02bff4196afccd
+analyzer_version=2
+audit_contract=carbon-gui-display-shmem-consumer-topology-v2
+Git blob 73848eb677d172db90c7bf201e3072f8b25141e4
 ~~~
 
 It thins the pinned release-local CoreGraphics slice, disassembles it,
@@ -112,12 +133,14 @@ release-local display-mapping initializer
 _updateAllDisplayInfoAsNeeded
 _CGSDisplayChangedSeed
 _CGSDisplayMappingChangedSeed
-_CGSDisplayNotifyProc
+Snow: _CGSDisplayNotifyProc
+Lion: __CGSDisplayNotifyProc
 ~~~
 
-## Phase A — Snow Leopard static audit
+## Phase A — rerun Snow Leopard static audit with V2
 
-On Snow Leopard 10.6.8 / 10K549 from current runtime `main`:
+The prior V1 Snow report is no longer sufficient because the xref tracker was
+corrected. On Snow Leopard 10.6.8 / 10K549 from current runtime `main`:
 
 ~~~sh
 /usr/bin/python ./scripts/audit-ppc-carbon-gui-display-shmem-consumer-topology.py \
@@ -140,9 +163,9 @@ RESULT: PASS
 
 If it fails, stop and return the Snow report only.
 
-## Phase B — Lion static audit
+## Phase B — rerun Lion static audit with V2
 
-Only after Snow passes, run on Lion 10.7.5 / 11G63:
+Only after the new V2 Snow report passes, run on Lion 10.7.5 / 11G63:
 
 ~~~sh
 /usr/bin/python ./scripts/audit-ppc-carbon-gui-display-shmem-consumer-topology.py \
