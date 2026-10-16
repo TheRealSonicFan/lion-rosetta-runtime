@@ -23,7 +23,9 @@ SOURCE_SHA="$(/usr/bin/shasum -a 256 "$SRC" | /usr/bin/awk '{print $1}')"
 [ "$SOURCE_SHA" = "$EXPECTED_SOURCE_SHA256" ] || {
     echo "error: titlebar drag trace source SHA-256 mismatch: $SOURCE_SHA" >&2
     exit 66
-}resolve_compiler() {
+}
+
+resolve_compiler() {
     candidate="$1"
     [ -n "$candidate" ] || return 1
     if [ -x "$candidate" ]; then
