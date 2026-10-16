@@ -144,6 +144,23 @@ compatibility artifacts. Set their paths as in the preceding titlebar-input
 procedure. In particular, the drag trace must be loaded so the public
 dispatcher can record the manual gesture.
 
+Artifact identity for this phase is the **slot-0 v2** compatibility artifact,
+not the earlier standalone bitmap-info v1 artifact:
+
+```text
+pm-coreui-image-bitmapinfo-compat.dylib
+  SHA-256  87a7c0cf397db0b93a0ad83af3b3fea71d9c8dd77c224ad5fc5d9729b9e7b9b5
+  source blob 9d44128acbe49de49621104c9ffc2b0c0cd74589
+  historical partial-fix artifact; do not substitute for the restored-frame run
+
+pm-coreui-windowframe-shared-art-slot0-compat.dylib
+  SHA-256  e4031504390ca8fda8abaf1259feafc938f46ab8a5f4f7848ade1368fa7c5692
+  source blob 4f4792987fded0609efda2a8b4c524bc7069c7fd
+  build ID coreui-windowframe-shared-art-slot0-compat-v2
+  required current accepted artifact
+```
+
+
 Example from the repository root:
 
 ```sh
@@ -159,7 +176,7 @@ export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_PATH="$PWD/payload/pm-coreui-windo
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_SHA256_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib.sha256"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_INFO_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib.info.txt"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_BUILD_ID=coreui-windowframe-shared-art-slot0-compat-v2
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB=0758ef96632c6939613f17b655711e146d542065
+export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB=4f4792987fded0609efda2a8b4c524bc7069c7fd
 
 /bin/bash ./scripts/run-snowleopard-ppc-carbon-gui-cgs-next-event-inline-control.sh \
   "$PWD/payload/ppc-carbon-gui-smoketest-private-dyld" \
@@ -223,7 +240,7 @@ export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_PATH="$PWD/payload/pm-coreui-windo
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_SHA256_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib.sha256"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_INFO_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib.info.txt"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_BUILD_ID=coreui-windowframe-shared-art-slot0-compat-v2
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB=0758ef96632c6939613f17b655711e146d542065
+export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB=4f4792987fded0609efda2a8b4c524bc7069c7fd
 
 /bin/bash ./scripts/run-lion-ppc-carbon-gui-cgs-next-event-inline-integration.sh
 ```
