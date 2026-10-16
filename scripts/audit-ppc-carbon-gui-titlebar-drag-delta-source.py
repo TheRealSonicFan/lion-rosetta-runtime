@@ -26,14 +26,14 @@ EXPECTED = {
         build="10K549",
         arch="ppc7400",
         hitoolbox_sha="fcad83329ce788d33688aece9c7dfe80426d4ab2b94636acda1d8376a889318f",
-        coregraphics_sha="2e2fa8b25aff0fd85565d67c585dd368e79eee5d12716eac2b1c3511a1aadd18",
+        coregraphics_sha="83799ea11d2bb3b15fdc25974f47cf499178f3e1362d2e48e3cc0e1a2108572a",
     ),
     "10.7.5": dict(
         mode="lion",
         build="11G63",
         arch="i386",
         hitoolbox_sha="b208091f3d4a88f1d95f6981e311c4e88c2769551d68a9a2662e00c77d4c1ae6",
-        coregraphics_sha="fff91efa5392c007ef4bde715666cc738b69f652f565abfce056ba07273aa192",
+        coregraphics_sha="4859edced4b9488d887f1243a9809d325e14dd12f7051815ba9f1f7875bbab7d",
     ),
 }
 
