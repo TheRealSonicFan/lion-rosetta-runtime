@@ -193,6 +193,28 @@ def classify_target(cfg, address):
 def split_operands(operands):
     return [x.strip() for x in operands.split(",") if x.strip()]
 
+def split_i386_operands(operands):
+    result = []
+    start = 0
+    depth = 0
+    i = 0
+    while i < len(operands):
+        ch = operands[i]
+        if ch == "(":
+            depth += 1
+        elif ch == ")" and depth > 0:
+            depth -= 1
+        elif ch == "," and depth == 0:
+            item = operands[start:i].strip()
+            if item:
+                result.append(item)
+            start = i + 1
+        i += 1
+    item = operands[start:].strip()
+    if item:
+        result.append(item)
+    return result
+
 def ppc_reg(token):
     m = PPC_REG.match(token)
     return int(m.group(1)) if m else None
@@ -222,6 +244,7 @@ def ppc_xrefs(selected, cfg):
                     regs[rd] = pending_lr
                 else:
                     regs.pop(rd, None)
+            pending_lr = None
             continue
 
         # Record direct displacement references before applying destination
@@ -349,7 +372,7 @@ def i386_xrefs(selected, cfg):
     )
 
     for addr, op, operands, raw in selected:
-        args = split_operands(operands)
+        args = split_i386_operands(operands)
 
         # Record every memory operand whose base still carries a proven PIC
         # constant.  Indexed references classify the array base, not a guessed
