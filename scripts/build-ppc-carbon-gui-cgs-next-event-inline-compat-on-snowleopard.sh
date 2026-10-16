@@ -340,8 +340,6 @@ if echo "$UNDEFINED" | /usr/bin/grep -Eq '(^|[[:space:]])_environ$'; then
     exit 72
 fi
 
-RUNTIME_GIT_HEAD="$(cd "$ROOT" 2>/dev/null && /usr/bin/git rev-parse HEAD 2>/dev/null || true)"
-[ -n "$RUNTIME_GIT_HEAD" ] || RUNTIME_GIT_HEAD="UNAVAILABLE_NON_GIT_CHECKOUT"
 CORE_SOURCE_SHA="$(/usr/bin/shasum -a 256 "$CORE_SRC" | /usr/bin/awk '{print $1}')"
 INGRESS_SOURCE_SHA="$(/usr/bin/shasum -a 256 "$INGRESS_SRC" | /usr/bin/awk '{print $1}')"
 
@@ -351,7 +349,6 @@ INGRESS_SOURCE_SHA="$(/usr/bin/shasum -a 256 "$INGRESS_SRC" | /usr/bin/awk '{pri
     echo "resolve_compat_build_id=$EXPECTED_RESOLVE_COMPAT_BUILD_ID"
     echo "window_backing_info_compat_build_id=$EXPECTED_WBI_COMPAT_BUILD_ID"
     echo "compiler=$CC_SELECTED"
-    echo "runtime_git_head=$RUNTIME_GIT_HEAD"
     echo "core_source=$CORE_SRC"
     echo "core_source_sha256=$CORE_SOURCE_SHA"
     echo "ingress_source=$INGRESS_SRC"
