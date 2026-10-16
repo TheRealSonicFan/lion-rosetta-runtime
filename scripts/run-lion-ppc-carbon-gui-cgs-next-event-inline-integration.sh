@@ -40,6 +40,7 @@ EXPECTED_FRAME_TRACE_BUILD_ID="hitoolbox-windowframe-cuidraw-trace-v2"
 DRAG_TRACE="${ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_PATH:-}"
 DRAG_TRACE_SHA_FILE="${ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_SHA256_FILE:-${DRAG_TRACE:+$DRAG_TRACE.sha256}}"
 EXPECTED_DRAG_TRACE_SHA="${ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_EXPECTED_SHA256:-c8bc82713e4342c651cd2e3784d9d963597700a35cdcd739bba3c7dab8381093}"
+LEGACY_DRAG_TRACE_V1_SHA="294ebfc3697bff7e06e21d00e781ca1d29d7a5d028ce6f857e8869877e89d70f"
 EXPECTED_DRAG_TRACE_BUILD_ID="hitoolbox-titlebar-drag-trace-v2"
 
 TRANSLATOR="/usr/libexec/oah/translate"
@@ -222,7 +223,10 @@ if [ -n "$DRAG_TRACE" ]; then
     [ -f "$DRAG_TRACE" ] || die 66 "missing titlebar drag trace: $DRAG_TRACE"
     [ -f "$DRAG_TRACE_SHA_FILE" ] || die 66 "missing titlebar drag trace SHA sidecar"
     DRAG_TRACE_SHA="$(sha256 "$DRAG_TRACE")"
-    [ "$DRAG_TRACE_SHA" = "$EXPECTED_DRAG_TRACE_SHA" ] || die 68 "titlebar drag trace SHA-256 mismatch"
+    if [ "$DRAG_TRACE_SHA" = "$LEGACY_DRAG_TRACE_V1_SHA" ]; then
+        die 68 "titlebar drag trace is the obsolete v1 artifact (SHA-256 $LEGACY_DRAG_TRACE_V1_SHA); this integration requires the v2 dispatcher monitor"
+    fi
+    [ "$DRAG_TRACE_SHA" = "$EXPECTED_DRAG_TRACE_SHA" ] || die 68 "titlebar drag trace v2 SHA-256 mismatch (expected $EXPECTED_DRAG_TRACE_SHA, found $DRAG_TRACE_SHA)"
     [ "$(sidecar_sha "$DRAG_TRACE_SHA_FILE")" = "$DRAG_TRACE_SHA" ] || die 68 "titlebar drag trace sidecar mismatch"
     /usr/bin/strings "$DRAG_TRACE" | /usr/bin/grep -Fq "PM_HITOOLBOX_TITLEBAR_DRAG_TRACE_BUILD_ID:$EXPECTED_DRAG_TRACE_BUILD_ID" || die 68 "titlebar drag trace build marker missing"
     has_ppc32_arch "$DRAG_TRACE" || die 68 "titlebar drag trace is not 32-bit PPC"
