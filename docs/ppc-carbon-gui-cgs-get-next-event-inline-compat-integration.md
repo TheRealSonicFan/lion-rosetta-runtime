@@ -361,11 +361,12 @@ lion-ppc-carbon-gui-cgs-next-event-inline-summary.txt
 
 Do not return the dylib itself unless requested.
 
-The post-inline static differential has since passed and resolves the immediate
-bounds failure as the `__CGSGetWindowShape` ID shift `0x724e/0x72b2 ->
-0x724f/0x72b3`. Continue with
-`docs/ppc-carbon-gui-cgs-get-window-shape-compat-integration.md`; do not rerun
-this inline-only experiment.
+The post-inline differential and subsequent GetWindowShape live experiment have
+since passed their targeted gates. GetWindowShape completed 21/21 conversions
+and eliminated the bounds type-check; the next repeated boundary is the
+SharedWindow reply-shape mismatch. Continue with
+`docs/ppc-carbon-gui-cgs-get-shared-window-compat-integration.md`; do not
+rerun this inline-only experiment.
 
 ## Current boundary
 
@@ -381,7 +382,7 @@ Lion WindowServer movement                        NO
 post-inline CGSGetWindowBounds                     -304 / type-check failure
 post-inline _CGSFindSharedWindow                   client type-check / WID 8
 post-inline CGSGetNextEventRecord (Outofline)      -304 / type-check failure
-next action                                       exact GetWindowShape ID integration
+next action                                       exact GetSharedWindow reply-shape bridge
 classic part-code translation                     none
 private HIToolbox patch                            not authorized
 notification policy                               unchanged
