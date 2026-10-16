@@ -2,28 +2,25 @@
 
 ## Status
 
-**GETSHAREDWINDOW TARGET PROVEN / DRAG DELTA SOURCE NEXT.**
+**COMPLETED STATIC PASS / CGSMOVEWINDOW ENTRY TRACE NEXT.**
 
-The returned v9 experiment is a major boundary advance. Snow remains a clean
-public-drag control. On Lion, the GetSharedWindow bridge passed all 847 exact
-calls with zero rejects, the former `_CGSFindSharedWindow` client type-check
-diagnostic disappeared, the prior out-of-line event type-check diagnostic did
-not recur, and the public Carbon dispatcher finally received titlebar input.
-The first titlebar mouse-down was classified as `inDrag (4)`, and
-WindowServer observed real movement.
+Both returned reports pass with the exact pinned Snow PPC and Lion native
+reference identities. The differential closes three candidate boundaries.
 
-The movement itself is wrong. The Lion window begins at `(120,98)`. The
-first legacy move request (`0x7218/0x727c`, send/receive `0x2c/0x2c`)
-carries deltas `(-317,-98)`, immediately moving the origin toward the
-top-left. The next move request carries vertical delta `17118 = 0x42de`.
-That value is the high 16-bit halfword of IEEE-754 float `111.0`, which is
-also the first mouse-down vertical coordinate. Later bad vertical deltas track
-the same pattern. WindowServer therefore appears to be applying the values the
-PPC client actually sends; the next question is where the old HIToolbox drag
-tracker constructs those scalars.
+First, the move wire contract is release-stable: Snow PPC and Lion native
+__CGSMoveWindow both use request/reply 0x7218/0x727c with the same 0x2c/0x2c
+geometry. Second, public CGSMoveWindow on both releases accepts a two-float
+target point and derives integer deltas before the Mach request. Third, the
+classic DragWindow input remains a two-short QuickDraw Point, while both
+tracking implementations explicitly bridge floating-point mouse-location data
+back through HIPointToQDPoint before Point-based tracker logic.
 
-This is an evidence lead, not authorization to rewrite a move request. The
-next controlled step is static-only.
+The 0x42de live alias remains a useful discriminator, but this static pass does
+not identify a single instruction that corrupts the value. The unresolved
+live boundary is now the target CGPoint arriving from HIToolbox's bounds-update
+path at CoreGraphics CGSMoveWindow. Follow
+docs/ppc-carbon-gui-cgs-move-window-entry-live-trace.md next. No move payload
+rewrite or private HIToolbox patch is authorized.
 
 ## Objective
 
@@ -161,20 +158,19 @@ another live drag experiment.
 
 ## Current boundary
 
-```text
-Snow GetSharedWindow control                       PASS
-Lion GetSharedWindow bridge                       PASS 847/847
-Lion FindSharedWindow type-check                   0
-Lion out-of-line next-event type-check             0
-Lion public titlebar mouse-down                    YES / inDrag (4)
-Lion WindowServer movement                         YES
-initial Lion window origin                         (120,98)
-first Lion move delta                              (-317,-98)
-second Lion vertical move delta                    17118 / 0x42de
-observer after bad move                            off-screen coordinates
-0x7218 payload rewrite                             NOT AUTHORIZED
-private HIToolbox patch                            NOT AUTHORIZED
-notification policy                               exact-21 unchanged
+~~~text
+Snow drag-delta static audit                      PASS / exact provenance
+Lion native-reference drag-delta audit            PASS / exact provenance
+0x7218/0x727c move wire contract                  release-stable
+CGSMoveWindow target-point contract               two-float point both releases
+DragWindow initial QD Point                       structurally aligned
+TrackWindow mouse point conversion                HIPointToQDPoint explicit
+0x42de alias instruction                          not yet isolated
+v9 GetSharedWindow bridge                         retained / target-proven
+Lion public titlebar input                        restored
+Lion drag geometry                                corrupt / off-screen
+move-payload rewrite                              NOT AUTHORIZED
+private HIToolbox patch                           NOT AUTHORIZED
+next action                                       docs/ppc-carbon-gui-cgs-move-window-entry-live-trace.md
 XNU                                               unchanged
-next action                                       static drag-delta source audit
-```
+~~~
