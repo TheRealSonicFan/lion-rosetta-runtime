@@ -2,7 +2,7 @@
 
 ## Status
 
-**V1 PHASE-B FAILURE DIAGNOSED / V2 TOPOLOGY ANALYZER READY.**
+**COMPLETE — V2 OWNERSHIP TOPOLOGY PASSES / PROJECTION-SEAM LIFECYCLE NEXT.**
 
 The first Phase B failure is an analyzer defect, not evidence that Lion lacks a
 display-notification lifecycle path. The Lion slice contains
@@ -223,3 +223,43 @@ The next engineering decision will be made from the exact topology:
 - Do not rewrite event, hit-test, or movement payloads.
 - Keep the accepted compatibility stack unchanged.
 - Do not modify CoreGraphics, WindowServer, Rosetta caches, dyld, or XNU.
+
+
+## V2 completion
+
+The rerun V2 Snow and Lion reports both pass with the pinned CoreGraphics
+slices and the corrected release-local notification symbol. The Snow report
+confirms that `_initCGDisplayState` stores the two mode-1 resolved mappings
+into the source array, `_initCGDisplayMappings` derives each process-local
+mapping entry from those source mappings, and `_lookupMainDisplay` consumes
+the record pointer cached in the local mapping entry. The update path also
+compares mapping/display seeds and calls `_CGSReleaseAllDisplays`, while the
+display-notification callback enters `_updateAllDisplayInfoAsNeeded`.
+
+Lion has the same high-level ownership/rebuild shape with
+`_initDisplayState`, `_initDisplayMappings`, and
+`__CGSDisplayNotifyProc`.
+
+This closes the broad consumer inventory but does not yet authorize a live
+projection. A late source-array-only substitution is insufficient because the
+Snow local mapping array already caches record pointers derived from the source
+mapping.
+
+## Next controlled step
+
+Follow:
+
+~~~text
+docs/ppc-carbon-gui-display-shmem-projection-seam-audit.md
+~~~
+
+Run the new static projection-seam analyzer on Snow and then Lion and return:
+
+~~~text
+ppc-carbon-gui-display-shmem-projection-seam-snow.txt
+ppc-carbon-gui-display-shmem-projection-seam-lion.txt
+~~~
+
+That audit pins the exact release/free/rebuild/notification path before any
+process-local mapping pointer is redirected or any Snow-layout projection is
+constructed. XNU remains outside the evidence boundary.
