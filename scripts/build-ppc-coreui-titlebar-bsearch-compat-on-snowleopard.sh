@@ -15,7 +15,7 @@ trap 'rm -f "$TMP_DYLIB" "$TMP_LOG"' EXIT HUP INT TERM
 
 [ -f "$SRC" ] || { echo "error: missing source: $SRC" >&2; exit 66; }
 /usr/bin/grep -Fq "#define BUILD_ID \"$EXPECTED_BUILD_ID\"" "$SRC" || {
-    echo "error: stale titlebar bsearch interposer source; pull current runtime main" >&2
+    echo "error: stale titlebar bsearch interposer source; transfer the current verified runtime tree from the staging system" >&2
     exit 66
 }
 
