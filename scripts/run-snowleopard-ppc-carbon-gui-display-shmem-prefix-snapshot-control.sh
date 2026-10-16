@@ -1,21 +1,9 @@
 #!/bin/bash
 set -u
 
-if [ "$#" -ge 1 ]; then
-    EXE="$1"
-else
-    EXE="./ppc-carbon-gui-display-shmem-prefix-snapshot-private-dyld"
-fi
-if [ "$#" -ge 2 ]; then
-    SHA_FILE="$2"
-else
-    SHA_FILE="$EXE.sha256"
-fi
-if [ "$#" -ge 3 ]; then
-    REPORT="$3"
-else
-    REPORT="./ppc-carbon-gui-display-shmem-prefix-snapshot-snow.txt"
-fi
+if [ "$#" -ge 1 ]; then EXE="$1"; else EXE="./ppc-carbon-gui-display-shmem-prefix-snapshot-private-dyld"; fi
+if [ "$#" -ge 2 ]; then SHA_FILE="$2"; else SHA_FILE="$EXE.sha256"; fi
+if [ "$#" -ge 3 ]; then REPORT="$3"; else REPORT="./ppc-carbon-gui-display-shmem-prefix-snapshot-snow.txt"; fi
 
 RAW_LOG="$REPORT.raw.log"
 PRIVATE_DYLD="/usr/oah/dyld"
@@ -27,24 +15,15 @@ EXPECTED_COREGRAPHICS_SHA="2e2fa8b25aff0fd85565d67c585dd368e79eee5d12716eac2b1c3
 : > "$REPORT" || exit 73
 : > "$RAW_LOG" || exit 73
 
-log() {
-    echo "$*" | /usr/bin/tee -a "$REPORT"
-}
-
+log() { echo "$*" | /usr/bin/tee -a "$REPORT"; }
 fail() {
     log "ERROR: $*"
     log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_SNOW_FAIL"
     log "RESULT: FAIL"
     exit 1
 }
-
-sha256() {
-    /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'
-}
-
-sidecar_sha() {
-    /usr/bin/awk 'NR==1 {print $1}' "$1"
-}
+sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
+sidecar_sha() { /usr/bin/awk 'NR==1 {print $1}' "$1"; }
 
 is_ppc32() {
     file="$1"
@@ -156,16 +135,24 @@ PROTECTED_HASHES_UNCHANGED=YES
 [ "$COREGRAPHICS_AFTER" = "$COREGRAPHICS_BEFORE" ] || PROTECTED_HASHES_UNCHANGED=NO
 log "protected_hashes_unchanged=$PROTECTED_HASHES_UNCHANGED"
 
+CONTRACT_COUNT="$(/usr/bin/grep -c '^snapshot_contract=carbon-gui-display-shmem-prefix-snapshot-v3$' "$RAW_LOG" 2>/dev/null || true)"
 MODE_COUNT="$(/usr/bin/grep -c '^snapshot_mode=snow-ppc-control$' "$RAW_LOG" 2>/dev/null || true)"
-SOURCE_COUNT="$(/usr/bin/grep -c '^source_after_nonnull=YES
+SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS$' "$RAW_LOG" 2>/dev/null || true)"
+SELECTOR_VALID="$(/usr/bin/grep -c '^selector_index_valid=YES$' "$RAW_LOG" 2>/dev/null || true)"
+SOURCE_COUNT="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$RAW_LOG" 2>/dev/null || true)"
+SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS$' "$RAW_LOG" 2>/dev/null || true)"
 COUNT_VALID="$(/usr/bin/grep -c '^record_count_valid=YES$' "$RAW_LOG" 2>/dev/null || true)"
 MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$RAW_LOG" 2>/dev/null || true)"
 SNAPSHOT_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$RAW_LOG" 2>/dev/null || true)"
 WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$RAW_LOG" 2>/dev/null || true)"
 PROBE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$RAW_LOG" 2>/dev/null || true)"
 
+log "contract_v3_count=$CONTRACT_COUNT"
 log "mode_count=$MODE_COUNT"
+log "selector_direct_read_pass_count=$SELECTOR_DIRECT"
+log "selector_index_valid_count=$SELECTOR_VALID"
 log "source_nonnull_count=$SOURCE_COUNT"
+log "source_direct_read_pass_count=$SOURCE_DIRECT"
 log "record_count_valid_count=$COUNT_VALID"
 log "main_display_nonzero_count=$MAIN_NONZERO"
 log "snapshot_complete_count=$SNAPSHOT_COMPLETE"
@@ -175,39 +162,12 @@ log "probe_pass_count=$PROBE_PASS"
 if [ "$RC" -eq 0 ] &&
    [ "$FOUND_DIAG" -eq 0 ] &&
    [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$CONTRACT_COUNT" -eq 1 ] &&
    [ "$MODE_COUNT" -eq 1 ] &&
+   [ "$SELECTOR_DIRECT" -eq 1 ] &&
+   [ "$SELECTOR_VALID" -eq 1 ] &&
    [ "$SOURCE_COUNT" -eq 1 ] &&
-   [ "$COUNT_VALID" -eq 1 ] &&
-   [ "$MAIN_NONZERO" -eq 1 ] &&
-   [ "$SNAPSHOT_COMPLETE" -eq 1 ] &&
-   [ "$WRITE_ZERO" -ge 2 ] &&
-   [ "$PROBE_PASS" -eq 1 ]; then
-    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_SNOW_PASS"
-    log "RESULT: PASS"
-    exit 0
-fi
-
-fail "Snow read-only prefix snapshot did not satisfy the control gate"
- "$RAW_LOG" 2>/dev/null || true)"
-COUNT_VALID="$(/usr/bin/grep -c '^record_count_valid=YES$' "$RAW_LOG" 2>/dev/null || true)"
-MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$RAW_LOG" 2>/dev/null || true)"
-SNAPSHOT_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$RAW_LOG" 2>/dev/null || true)"
-WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$RAW_LOG" 2>/dev/null || true)"
-PROBE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$RAW_LOG" 2>/dev/null || true)"
-
-log "mode_count=$MODE_COUNT"
-log "mapping_nonnull_count=$MAPPING_COUNT"
-log "record_count_valid_count=$COUNT_VALID"
-log "main_display_nonzero_count=$MAIN_NONZERO"
-log "snapshot_complete_count=$SNAPSHOT_COMPLETE"
-log "write_attempts_zero_count=$WRITE_ZERO"
-log "probe_pass_count=$PROBE_PASS"
-
-if [ "$RC" -eq 0 ] &&
-   [ "$FOUND_DIAG" -eq 0 ] &&
-   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
-   [ "$MODE_COUNT" -eq 1 ] &&
-   [ "$MAPPING_COUNT" -eq 1 ] &&
+   [ "$SOURCE_DIRECT" -eq 1 ] &&
    [ "$COUNT_VALID" -eq 1 ] &&
    [ "$MAIN_NONZERO" -eq 1 ] &&
    [ "$SNAPSHOT_COMPLETE" -eq 1 ] &&
