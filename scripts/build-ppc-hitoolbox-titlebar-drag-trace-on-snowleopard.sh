@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-OUT="${1:-./pm-hitoolbox-titlebar-drag-trace.dylib}"
+OUT="${1:-./pm-hitoolbox-titlebar-drag-trace-v2.dylib}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SRC="$ROOT/tests/ppc-hitoolbox-titlebar-drag-trace-interposer.c"
