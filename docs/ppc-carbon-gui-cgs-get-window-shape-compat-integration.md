@@ -2,42 +2,33 @@
 
 ## Status
 
-**STATIC DIFFERENTIAL RESOLVED / EXACT GETWINDOWSHAPE INTEGRATION NEXT.**
+**TARGETED ADAPTER PROVEN / GETSHAREDWINDOW NEXT.**
 
-The returned post-inline static reports pass on Snow Leopard 10.6.8/10K549
-and Lion 10.7.5/11G63 with the accepted CoreGraphics SHA-256 binaries. Together
-with the earlier complete static reports from those same binaries, they resolve
-the next live failure as another generated-MIG ID collision.
+The returned v8 Snow control passes with the public Carbon titlebar path
+intact. The Lion run then proves the GetWindowShape adapter itself: 21 exact
+legacy requests were adapted, all 21 native replies were accepted and returned
+to the PPC client, zero adapter rejects occurred, and the former
+`CGSGetWindowBounds` type-check diagnostic disappeared.
 
-The public `CGSGetWindowBounds` path calls `__CGSGetWindowShape` on both
-releases:
+The final v8 integration result is nevertheless FAIL because the failure moved
+downstream. Lion recorded 31 `_CGSFindSharedWindow` client type-check
+failures, one `CGSGetNextEventRecord (Outofline)` server type-check failure,
+zero titlebar dispatcher events, and zero WindowServer movement. The
+notification broker also stopped at six accepted registrations rather than the
+unchanged exact-21 gate. These are downstream/full-stack failures, not evidence
+against the 21/21 GetWindowShape conversion.
 
-```text
-Snow PPC   __CGSGetWindowShape  request 0x724e  reply 0x72b2  bits 0x1513  send 0x24  recv 0x3c
-Lion i386  __CGSGetWindowShape  request 0x724f  reply 0x72b3  bits 0x1513  send 0x24  recv 0x3c
-```
+The SharedWindow static interpretation is now corrected and completed. Both
+releases use **simple**, not complex, success replies: Snow
+`__CGSGetSharedWindow` uses `0x7258/0x72bc`, receive `0x38`, success
+size `0x30`; Lion uses `0x7259/0x72bd`, receive `0x3c`, success size
+`0x34`. Cross-release `__CGSFindSharedWindow` callers show that Lion added
+one output field before the final Snow-semantic field, authorizing a guarded
+reply-shape projection rather than an ID-only adapter.
 
-Lion reuses Snow's old `0x724e/0x72b2` pair for
-`__CGSSetWindowShapeInline`. That collision exactly explains the live
-`CGSGetWindowBounds` server type-check failure. The release-local
-`__CGSGetWindowShape` request geometry is otherwise identical, so this
-experiment changes only:
-
-```text
-request ID       0x724e -> 0x724f
-native reply ID  0x72b3 -> 0x72b2
-```
-
-The audit also resolves two later families, but they are deliberately not
-adapted in this step. Snow `__CGSGetPortStreamOutofline` uses
-`0x7293/0x72f7` while Lion uses `0x7296/0x72fa`, with the same
-`0x18/0x3c` envelope. By contrast, `__CGSGetSharedWindow` changes both IDs
-and success-reply geometry: Snow uses `0x7258/0x72bc`, receive `0x38`,
-complex success size `0x30`; Lion uses `0x7259/0x72bd`, receive `0x3c`,
-complex success size `0x34`. Therefore the SharedWindow path is **not**
-authorized for an ID-only adapter. The `0x721f/0x7283` pair is
-`__CGSGetSystemWindow` on both releases and is not a
-`CGSGetDisplayBounds` migration.
+The authoritative next procedure is
+`docs/ppc-carbon-gui-cgs-get-shared-window-compat-integration.md`.
+Do not rerun this v8 experiment unless investigating its historical result.
 
 ## Prepared runtime
 
@@ -205,15 +196,17 @@ Do not return the dylib itself unless requested.
 ## Current boundary
 
 ```text
-inline next-event 0x7292 -> 0x7295                 proven
-CGSGetWindowBounds lower helper                    __CGSGetWindowShape
-Snow GetWindowShape IDs                            0x724e / 0x72b2
-Lion GetWindowShape IDs                            0x724f / 0x72b3
-GetWindowShape wire geometry                       equivalent 0x24 / 0x3c
-compatibility under test                           ID-only
-SharedWindow                                       geometry changed; deferred
-out-of-line event retrieval                        ID-only candidate; deferred
-0x721f / 0x7283                                    same GetSystemWindow family
+Snow GetWindowShape control                        PASS
+Lion GetWindowShape exact calls                    21
+Lion GetWindowShape adapter passes                 21
+Lion GetWindowShape rejects                        0
+old CGSGetWindowBounds diagnostic                  0 / eliminated
+Lion _CGSFindSharedWindow type-check failures      31
+Lion next-event out-of-line type-check             1
+Lion titlebar dispatcher events                    0
+Lion WindowServer movement                         NO
+next action                                        exact GetSharedWindow reply-shape bridge
 private HIToolbox patch                            not authorized
-XNU                                                unchanged
+notification policy                               exact-21 unchanged
+XNU                                               unchanged
 ```
