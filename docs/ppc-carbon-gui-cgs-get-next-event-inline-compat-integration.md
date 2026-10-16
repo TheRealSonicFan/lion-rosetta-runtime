@@ -210,21 +210,48 @@ next_event_inline_exact_count >= 1
 next_event_inline_passthrough_count == next_event_inline_exact_count
 next_event_inline_adapter_pass_count=0
 next_event_inline_reject_count=0
+backing_sync_exact_count=0
+backing_sync_passthrough_count == backing_sync_call_count
+backing_sync_adapter_pass_count=0
+backing_sync_predicate_reject_count=0
+image_bitmapinfo_exact_passthrough_call_count >= 6
+image_bitmapinfo_passthrough_result_count == image_bitmapinfo_exact_passthrough_call_count
+image_bitmapinfo_predicate_reject_count=0
+image_bitmapinfo_adapted_count=0
+image_bitmapinfo_adapter_pass_count=0
+image_bitmapinfo_adapter_null_count=0
+titlebar_drag_build_count=1
+titlebar_drag_handler_install_count=1
+titlebar_drag_timer_count=1
+titlebar_drag_event_count >= 2
+titlebar_drag_mouse_down_in_drag_count >= 1
+titlebar_drag_mouse_up_count >= 1
+observer_moved_count=1
+titlebar_drag_control=SNOW_PUBLIC_HIT_IN_DRAG_MOVED
 RESULT: PPC_CARBON_GUI_CGS_NEXT_EVENT_INLINE_SNOW_CONTROL_PASS
 RESULT: PASS
 ```
 
-Also require the existing public input control to record a mouse-down with
-`FindWindow=inDrag (4)` and observed movement. If Snow does not pass, stop.
+Interactive dragging may legitimately add non-target backing-sync passthrough
+traffic and repeat exact bitmap-info rendering calls. These are not failures:
+the backing-sync adapter must remain untriggered on Snow, every observed
+backing-sync call must pass through, and every exact bitmap-info call must pass
+through with zero adaptation/reject/null. The old fixed requirements of zero
+backing-sync passthroughs and exactly six bitmap-info calls were valid only for
+the non-interactive baseline and must not be used for this drag control.
 
-## Phase D — transfer only the new v7 artifact to Lion
+## Phase D — transfer the verified v7 artifact and v2 input monitor to Lion
 
-Transfer:
+Transfer the newly built v7 compatibility artifact and, because the v2 monitor
+now uses an unambiguous filename, the already verified v2 monitor under that
+name:
 
 ```text
 pm-carbon-gui-cgs-next-event-inline-compat.dylib
 pm-carbon-gui-cgs-next-event-inline-compat.dylib.sha256
 pm-carbon-gui-cgs-next-event-inline-compat.dylib.info.txt
+pm-hitoolbox-titlebar-drag-trace-v2.dylib
+pm-hitoolbox-titlebar-drag-trace-v2.dylib.sha256
 ```
 
 Keep all other accepted Lion artifacts unchanged.
@@ -269,6 +296,20 @@ next_event_inline_adapted_reply_count == next_event_inline_exact_count
 next_event_inline_adapter_pass_count == next_event_inline_exact_count
 next_event_inline_reject_count=0
 next_event_inline_typecheck_diagnostic_count=0
+image_bitmapinfo_exact_call_count >= 6
+image_bitmapinfo_adapted_count == image_bitmapinfo_exact_call_count
+image_bitmapinfo_adapter_pass_count == image_bitmapinfo_exact_call_count
+image_bitmapinfo_predicate_reject_count=0
+image_bitmapinfo_passthrough_result_count=0
+image_bitmapinfo_adapter_null_count=0
+titlebar_drag_build_count=1
+titlebar_drag_handler_install_count=1
+titlebar_drag_timer_count=1
+titlebar_drag_event_count >= 2
+titlebar_drag_mouse_down_in_drag_count >= 1
+titlebar_drag_mouse_up_count >= 1
+windowserver_observer_moved_count=1
+titlebar_drag_control=PUBLIC_HIT_IN_DRAG_MOVED
 RESULT: PPC_CARBON_GUI_CGS_NEXT_EVENT_INLINE_COMPAT_PASS
 RESULT: PASS
 ```
