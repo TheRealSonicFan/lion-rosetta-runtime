@@ -8,8 +8,8 @@ import subprocess
 import sys
 import tempfile
 
-ANALYZER_VERSION = "2"
-AUDIT_CONTRACT = "carbon-gui-display-shmem-snapshot-entry-contract-v2"
+ANALYZER_VERSION = "3"
+AUDIT_CONTRACT = "carbon-gui-display-shmem-snapshot-entry-contract-v3"
 
 COREGRAPHICS = "/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/CoreGraphics.framework/Versions/A/CoreGraphics"
 
@@ -211,7 +211,7 @@ def main():
 
     output = sys.argv[1]
     issues = []
-    tempdir = tempfile.mkdtemp(prefix="ppc-carbon-display-snapshot-entry-v2.")
+    tempdir = tempfile.mkdtemp(prefix="ppc-carbon-display-snapshot-entry-v3.")
 
     try:
         rc, out = run(["/usr/bin/sw_vers", "-productVersion"])
@@ -233,6 +233,8 @@ def main():
             write_line(fp, "product_version=%s" % product)
             write_line(fp, "build_version=%s" % build)
             write_line(fp, "v1_mode2_pointer_misclassification=CORRECTED")
+            write_line(fp, "v3_runtime_address_model=DECODE_LOADED_LOOKUPMAIN_PIC")
+            write_line(fp, "image_header_plus_standalone_vmaddr_authorized=NO")
             write_line(fp, "passive_snapshot_authorized=NO")
             write_line(fp, "live_probe_authorized=NO")
             write_line(fp, "shared_record_rewrite_authorized=NO")
@@ -317,31 +319,29 @@ def main():
                         source_mapping_calc = cfg["mapping_anchor"] + cfg["mapping_source_disp"]
                         local_mapping_calc = cfg["mapping_anchor"] + cfg["mapping_local_disp"]
 
-                        write_line(fp, "selector_global_vmaddr=0x%x" % cfg["selector_global_vmaddr"])
-                        write_line(fp, "selector_global_from_image_header=0x%x" % (cfg["selector_global_vmaddr"] - (tvm or 0)))
-                        write_line(fp, "selector_global_calculated_vmaddr=0x%x" % selector_calc)
+                        write_line(fp, "selector_global_standalone_vmaddr=0x%x" % cfg["selector_global_vmaddr"])
+                        write_line(fp, "selector_global_calculated_standalone_vmaddr=0x%x" % selector_calc)
                         write_line(fp, "selector_global_calculation_exact=%s" % ("YES" if selector_calc == cfg["selector_global_vmaddr"] else "NO"))
 
-                        write_line(fp, "source_array_vmaddr=0x%x" % cfg["source_array_vmaddr"])
-                        write_line(fp, "source_array_from_image_header=0x%x" % (cfg["source_array_vmaddr"] - (tvm or 0)))
-                        write_line(fp, "source_array_lookup_calculated_vmaddr=0x%x" % source_lookup_calc)
-                        write_line(fp, "source_array_mapping_calculated_vmaddr=0x%x" % source_mapping_calc)
+                        write_line(fp, "source_array_standalone_vmaddr=0x%x" % cfg["source_array_vmaddr"])
+                        write_line(fp, "source_array_lookup_calculated_standalone_vmaddr=0x%x" % source_lookup_calc)
+                        write_line(fp, "source_array_mapping_calculated_standalone_vmaddr=0x%x" % source_mapping_calc)
                         source_exact = source_lookup_calc == cfg["source_array_vmaddr"] and source_mapping_calc == cfg["source_array_vmaddr"]
                         write_line(fp, "source_array_calculation_exact=%s" % ("YES" if source_exact else "NO"))
 
-                        write_line(fp, "local_array_vmaddr=0x%x" % cfg["local_array_vmaddr"])
-                        write_line(fp, "local_array_from_image_header=0x%x" % (cfg["local_array_vmaddr"] - (tvm or 0)))
-                        write_line(fp, "local_array_lookup_calculated_vmaddr=0x%x" % local_lookup_calc)
-                        write_line(fp, "local_array_mapping_calculated_vmaddr=0x%x" % local_mapping_calc)
+                        write_line(fp, "local_array_standalone_vmaddr=0x%x" % cfg["local_array_vmaddr"])
+                        write_line(fp, "local_array_lookup_calculated_standalone_vmaddr=0x%x" % local_lookup_calc)
+                        write_line(fp, "local_array_mapping_calculated_standalone_vmaddr=0x%x" % local_mapping_calc)
                         local_exact = local_lookup_calc == cfg["local_array_vmaddr"] and local_mapping_calc == cfg["local_array_vmaddr"]
                         write_line(fp, "local_array_calculation_exact=%s" % ("YES" if local_exact else "NO"))
 
-                        write_line(fp, "mode2_mapping_vmaddr=0x%x" % cfg["mode2_mapping_vmaddr"])
-                        write_line(fp, "mode2_mapping_from_image_header=0x%x" % (cfg["mode2_mapping_vmaddr"] - (tvm or 0)))
+                        write_line(fp, "mode2_mapping_standalone_vmaddr=0x%x" % cfg["mode2_mapping_vmaddr"])
                         write_line(fp, "mode2_mapping_is_display_source_array=NO")
+                        write_line(fp, "standalone_vmaddrs_are_runtime_offsets=NO")
+                        write_line(fp, "live_runtime_resolution=DECODE_LOADED_LOOKUPMAIN_PIC")
                         write_line(fp, "source_slot_rule=READ_SELECTOR_BYTE_THEN_SOURCE_ARRAY_PLUS_INDEX_TIMES_4")
                         write_line(fp, "source_slot_count=2")
-                        write_line(fp, "snapshot_route=CALL_EXTERNAL_CGSMainDisplayID_THEN_READ_ACTIVE_SOURCE_ARRAY_SLOT")
+                        write_line(fp, "snapshot_route=CALL_EXTERNAL_CGSMainDisplayID_THEN_DECODE_LOADED_LOOKUPMAIN_PIC_THEN_READ_ACTIVE_SOURCE_ARRAY_SLOT")
 
                         if selector_calc != cfg["selector_global_vmaddr"]:
                             issues.append("selector-global calculation mismatch")
@@ -371,7 +371,7 @@ def main():
                     write_line(fp, "validation_issue=%s" % issue)
                 write_line(fp, "RESULT: FAIL")
             else:
-                write_line(fp, "display_shmem_snapshot_entry_contract_v2_exact=YES")
+                write_line(fp, "display_shmem_snapshot_entry_contract_v3_exact=YES")
                 write_line(fp, "RESULT: PASS")
 
             write_line(fp)
