@@ -2,33 +2,33 @@
 
 ## Status
 
-**EVENT COORDINATE LAYOUT NARROWED / MAIN-DISPLAY LOOKUP CONTRACT NEXT.**
+**COMPLETED / MAIN-DISPLAY ZERO LOCALIZED TO MAPPING INITIALIZATION.**
 
-The completed drag event/display audit passes on both reference systems and
-resolves the previously ambiguous display-0 symptom.
+Both returned reports pass exact provenance and validation. They show that the
+zero reaching `CGSGetDisplayBounds` is produced locally by the old Snow PPC
+display-state path rather than by a generated display-bounds RPC.
 
-The Snow PPC `_CGSGetUnflippedEventLocation` path reads the event x/y values
-from offsets `0x0c/0x10`, exactly as the Lion native reference does. The
-release-local difference at `0xc6` on Snow versus `0xbe` on Lion is not a
-display ID field: it is a cached vertical display extent. When that field is
-zero, the Snow PPC path calls `_CGSMainDisplayID`, passes that return value
-directly to `_CGSGetDisplayBounds`, and on success caches the display extent
-back into the event object.
+Snow `_CGSMainDisplayID` locks display state, calls
+`_updateAllDisplayInfoAsNeeded`, then asks `_lookupMainDisplay(1)`; if that
+lookup is NULL it returns 0. The Snow lookup repairs absent/incomplete mapping
+state by calling `_initCGDisplayMappings`.
 
-This makes the live Lion diagnostic materially narrower. In the translated
-Snow-era PPC path, `CGSGetDisplayBounds(display 0)` can only be reached at
-that sequence if the Snow PPC `_CGSMainDisplayID` fallback supplied 0. The
-mouse point itself is already sane at the public Carbon boundary, and the
-event x/y storage offsets match across the release-local reference code.
-There is therefore no current evidence for an event-coordinate field rewrite.
+Lion native reaches the same logical result through a different representation:
+`_CGSMainDisplayID` routes through `_lookupDisplayNumber`, which uses
+`_lookupMainDisplay(1)`; Lion repairs missing mapping state through
+`_initDisplayMappings`. The returned Lion audit further shows that
+`_initDisplayMappings` calls `_initDisplayState` and constructs its
+release-local per-display mapping entries from that state.
 
-Prior static inventory also shows the display lookup implementation changed
-substantially by Lion: Snow PPC `_CGSMainDisplayID` locks the display state,
-updates display information, and calls `_lookupMainDisplay`; the Lion
-reference routes `_CGSMainDisplayID` through a different
-`_lookupDisplayNumber` / `_lookupMainDisplay` representation. The next step
-must resolve that display-state contract before any live compatibility rule is
-authorized.
+The old Snow generated `__CGSGetNumberOfDisplays` transport is not promoted
+to a live candidate: the returned audit shows it has no direct references in
+the examined path.
+
+The authoritative next procedure is
+`docs/ppc-carbon-gui-display-mapping-init-contract-audit.md`. It is
+static-only and resolves `_initCGDisplayMappings/_initCGDisplayState` versus
+Lion's `_initDisplayMappings/_initDisplayState` before any display-ID
+substitution or mapping patch is considered.
 
 ## Objective
 
