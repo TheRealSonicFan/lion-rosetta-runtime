@@ -2,42 +2,30 @@
 
 ## Status
 
-**SNOW CONTROL PASSED / LION INTEGRATION NEXT.**
+**LION INLINE ADAPTER PROVEN / POST-INLINE CGS AUDIT NEXT.**
 
-The returned Snow 10.6.8 interactive control is accepted despite the stale
-runner's final FAIL marker. It captured the v2 dispatcher monitor, public
-`FindWindow=inDrag (4)`, repeated real window movement, and 507/507 exact
-next-event passthroughs with zero adapter passes/rejects. The only reasons the
-old harness emitted FAIL were interaction-triggered non-target backing-sync
-traffic (one passthrough, zero exact matches) and three additional exact
-bitmap-info redraws (nine passthrough calls rather than the non-interactive
-baseline of six). Current runners use relational interactive invariants instead
-of those obsolete fixed counts, so this Snow control does not need to be rerun.
+The returned Snow control remains accepted: the dispatcher receives real
+mouse-downs, public `FindWindow` returns `inDrag (4)`, and WindowServer
+movement is observed.
 
-The event-retrieval protocol differential is closed. Snow PPC and Lion i386
-use the same `__CGSGetPortStreamInline` generated-MIG wire shape but different
-IDs:
+The returned Lion integration proves the exact inline event-stream conversion
+itself. Two legacy `0x7292` calls were converted to native Lion `0x7295`,
+both native `0x72f9` replies were valid STREAM replies, both were converted
+back to `0x72f6`, and the adapter recorded two passes with zero rejects. The
+old `CGSGetNextEventRecord (Inline)` type-check diagnostic is gone.
 
-```text
-Snow PPC   request 0x7292  reply 0x72f6  bits 0x1513  send 0x18  recv 0x4030
-Lion i386  request 0x7295  reply 0x72f9  bits 0x1513  send 0x18  recv 0x4030
-```
+That success does **not** restore Carbon input: the v2 dispatcher monitor
+records zero mouse events and the WindowServer observer records no movement.
+The same Lion raw log now exposes later CoreGraphics generated-MIG failures:
+`CGSGetWindowBounds` server type-check failures on the legacy
+`0x724e/0x72b2` family, repeated `_CGSFindSharedWindow` client type-check
+failures after `0x7258/0x72bc` replies, and a
+`CGSGetNextEventRecord (Outofline)` server type-check failure on
+`0x7293/0x72f7`. These are now the active compatibility boundary.
 
-Lion reuses Snow's old `0x7292 / 0x72f6` pair for
-`__CGSGetDisplayPalette`, whose request geometry is `0x24 / 0x0c30`.
-That exact ID collision explains the live -304
-`CGSGetNextEventRecord (Inline)` server type-check failure.
-
-This experiment changes only the generated-MIG IDs for the exact legacy
-header-only event-stream request:
-
-```text
-request ID       0x7292 -> 0x7295
-native reply ID  0x72f9 -> 0x72f6
-```
-
-No other request byte, reply byte, port, Mach bits, size, NDR byte, stream
-length, or event payload is changed.
+Do not broaden this inline adapter or patch HIToolbox. The authoritative next
+step is the read-only static procedure
+`docs/ppc-carbon-gui-post-inline-event-cgs-protocol-audit.md`.
 
 ## Prepared runtime
 
@@ -376,14 +364,20 @@ Do not return the dylib itself unless requested.
 ## Current boundary
 
 ```text
-native helper mapping                            RESOLVED
-Snow inline IDs                                  0x7292 / 0x72f6
-Lion inline IDs                                  0x7295 / 0x72f9
-wire geometry                                    equivalent 0x18 / 0x4030
-Lion old-ID collision                            __CGSGetDisplayPalette
-compatibility under test                         ID-only
-public dispatcher monitor                        retained / observation-only
-classic part-code translation                    none
-notification policy                              unchanged
-XNU                                              unchanged
+Snow public dispatcher/input path                 PASS
+Snow inline IDs                                   0x7292 / 0x72f6
+Lion native inline IDs                            0x7295 / 0x72f9
+inline wire geometry                              equivalent 0x18 / 0x4030
+Lion inline ID adapter                            PASS (2/2 STREAM replies)
+old CGSGetNextEventRecord (Inline) diagnostic     eliminated
+Lion public dispatcher mouse events               0
+Lion WindowServer movement                        NO
+post-inline CGSGetWindowBounds                     -304 / type-check failure
+post-inline _CGSFindSharedWindow                   client type-check / WID 8
+post-inline CGSGetNextEventRecord (Outofline)      -304 / type-check failure
+next action                                       static post-inline CGS protocol audit
+classic part-code translation                     none
+private HIToolbox patch                            not authorized
+notification policy                               unchanged
+XNU                                               unchanged
 ```
