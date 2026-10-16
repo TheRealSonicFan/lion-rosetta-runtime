@@ -93,27 +93,20 @@ byte-for-byte apart from the ID word.
 - Do not patch CoreGraphics, HIToolbox, WindowServer, Rosetta caches, or XNU.
 - Do not test another PPC application in this phase.
 
-## Phase A — pull and pin current main
+## Phase A — stage and transfer current main without Git on legacy targets
 
-On Snow Leopard:
+Do not run Git on Snow Leopard or Lion. These systems are treated as offline
+legacy execution targets. Obtain current `main` on a modern TLS-capable system,
+verify the repository there, then transfer the repository tree to Snow Leopard
+and Lion by your normal method. If you archive the tree for transfer, verify the
+archive SHA-256 before and after transfer.
 
-```sh
-cd /path/to/lion-rosetta-runtime || exit 1
-git fetch origin || exit 1
-git pull --ff-only origin main || exit 1
-
-test "$(git hash-object ./tests/ppc-process-manager-coreservices-sessioninit-compat-interposer.c)" = \
-  "e26a28d22837e125a8de920a326e14aac3602486" || exit 1
-
-test "$(git hash-object ./scripts/build-ppc-carbon-gui-cgs-next-event-inline-compat-on-snowleopard.sh)" = \
-  "a5451f72ef35aba3843b914ac783d9264d959a10" || exit 1
-
-test "$(git hash-object ./scripts/run-snowleopard-ppc-carbon-gui-cgs-next-event-inline-control.sh)" = \
-  "20aa4fd2d20598ef0f194e89b86a92071e33d385" || exit 1
-
-test "$(git hash-object ./scripts/run-lion-ppc-carbon-gui-cgs-next-event-inline-integration.sh)" = \
-  "e4653baa20d2e7a9dd23fd22b5b71d2143b1aa7a" || exit 1
-```
+On Snow Leopard and Lion, provenance checks in this procedure use
+`/usr/bin/shasum -a 256` only. The builders do not invoke Git, and the runners
+do not use Git blob IDs or `.info.txt` metadata as acceptance gates.
+`.info.txt` files remain useful as returned diagnostic evidence, but artifact
+identity is the computed SHA-256 plus its SHA-256 sidecar; embedded build markers
+are checked only as a semantic sanity check on the loaded binary.
 
 ## Phase B — build the v7 full-stack PPC artifact on Snow
 
@@ -144,29 +137,33 @@ compatibility artifacts. Set their paths as in the preceding titlebar-input
 procedure. In particular, the drag trace must be loaded so the public
 dispatcher can record the manual gesture.
 
-Artifact identity for this phase is the **slot-0 v2** compatibility artifact,
-not the earlier standalone bitmap-info v1 artifact:
+Artifact identity for this phase is SHA-256 based. The required
+accepted dependencies are:
 
 ```text
-pm-coreui-image-bitmapinfo-compat.dylib
-  SHA-256  87a7c0cf397db0b93a0ad83af3b3fea71d9c8dd77c224ad5fc5d9729b9e7b9b5
-  source blob 9d44128acbe49de49621104c9ffc2b0c0cd74589
-  historical partial-fix artifact; do not substitute for the restored-frame run
+pm-hitoolbox-titlebar-drag-trace.dylib
+  SHA-256  c8bc82713e4342c651cd2e3784d9d963597700a35cdcd739bba3c7dab8381093
+  semantic marker hitoolbox-titlebar-drag-trace-v2
+
+pm-titlebar-bsearch-six-key-compat.dylib
+  SHA-256  6bd11d4e9b271eab926f56f9cf99f4c4fb606db1d69a98f062cc398561488c72
 
 pm-coreui-windowframe-shared-art-slot0-compat.dylib
   SHA-256  e4031504390ca8fda8abaf1259feafc938f46ab8a5f4f7848ade1368fa7c5692
-  source blob 4f4792987fded0609efda2a8b4c524bc7069c7fd
-  build ID coreui-windowframe-shared-art-slot0-compat-v2
-  required current accepted artifact
+  semantic marker coreui-windowframe-shared-art-slot0-compat-v2
 ```
 
+The earlier standalone `pm-coreui-image-bitmapinfo-compat.dylib` has SHA-256
+`87a7c0cf397db0b93a0ad83af3b3fea71d9c8dd77c224ad5fc5d9729b9e7b9b5`;
+it is a historical partial-fix artifact and must not replace the accepted
+slot-0 v2 artifact above. No Git blob ID is used in this phase.
 
 Example from the repository root:
 
 ```sh
 export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_PATH="$PWD/payload/pm-hitoolbox-titlebar-drag-trace.dylib"
 export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_SHA256_FILE="$PWD/payload/pm-hitoolbox-titlebar-drag-trace.dylib.sha256"
-export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_INFO_FILE="$PWD/payload/pm-hitoolbox-titlebar-drag-trace.dylib.info.txt"
+export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_EXPECTED_SHA256=c8bc82713e4342c651cd2e3784d9d963597700a35cdcd739bba3c7dab8381093
 export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_OBSERVER_DURATION_MS=9000
 
 export ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_PATH="$PWD/payload/pm-titlebar-bsearch-six-key-compat.dylib"
@@ -174,10 +171,7 @@ export ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_SHA256_FILE="$PWD/payload/pm-title
 
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_PATH="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_SHA256_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib.sha256"
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_INFO_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib.info.txt"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SHA256=e4031504390ca8fda8abaf1259feafc938f46ab8a5f4f7848ade1368fa7c5692
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_BUILD_ID=coreui-windowframe-shared-art-slot0-compat-v2
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB=4f4792987fded0609efda2a8b4c524bc7069c7fd
 
 /bin/bash ./scripts/run-snowleopard-ppc-carbon-gui-cgs-next-event-inline-control.sh \
   "$PWD/payload/ppc-carbon-gui-smoketest-private-dyld" \
@@ -220,7 +214,8 @@ Keep all other accepted Lion artifacts unchanged.
 
 ## Phase E — exactly one Lion next-event integration run
 
-On Lion, pull current runtime main and set the same accepted titlebar/image
+On Lion, use the repository tree already verified and transferred from the modern
+staging system; do not run Git on Lion. Set the same accepted titlebar/image
 artifact paths plus the v2 drag trace. Set the accepted kernel hash exactly as
 in the preceding full-stack procedure.
 
@@ -231,7 +226,7 @@ export ROSETTA_EXPECTED_KERNEL_SHA256=fe68467b60b3bd7edfab61b2d6c8af7f988de5206c
 
 export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_PATH="$PWD/payload/pm-hitoolbox-titlebar-drag-trace.dylib"
 export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_SHA256_FILE="$PWD/payload/pm-hitoolbox-titlebar-drag-trace.dylib.sha256"
-export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_INFO_FILE="$PWD/payload/pm-hitoolbox-titlebar-drag-trace.dylib.info.txt"
+export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_EXPECTED_SHA256=c8bc82713e4342c651cd2e3784d9d963597700a35cdcd739bba3c7dab8381093
 export ROSETTA_HITOOLBOX_TITLEBAR_DRAG_OBSERVER_DURATION_MS=9000
 
 export ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_PATH="$PWD/payload/pm-titlebar-bsearch-six-key-compat.dylib"
@@ -239,10 +234,7 @@ export ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_SHA256_FILE="$PWD/payload/pm-title
 
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_PATH="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_SHA256_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib.sha256"
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_INFO_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib.info.txt"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SHA256=e4031504390ca8fda8abaf1259feafc938f46ab8a5f4f7848ade1368fa7c5692
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_BUILD_ID=coreui-windowframe-shared-art-slot0-compat-v2
-export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB=4f4792987fded0609efda2a8b4c524bc7069c7fd
 
 /bin/bash ./scripts/run-lion-ppc-carbon-gui-cgs-next-event-inline-integration.sh
 ```
