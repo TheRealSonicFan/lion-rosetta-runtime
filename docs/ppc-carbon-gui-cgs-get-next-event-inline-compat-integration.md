@@ -41,10 +41,10 @@ scripts/build-ppc-carbon-gui-cgs-next-event-inline-compat-on-snowleopard.sh
   Git blob a5451f72ef35aba3843b914ac783d9264d959a10
 
 scripts/run-snowleopard-ppc-carbon-gui-cgs-next-event-inline-control.sh
-  Git blob d5e4ebba8e13f40ce7510b415dd623370bdb9af2
+  Git blob 20aa4fd2d20598ef0f194e89b86a92071e33d385
 
 scripts/run-lion-ppc-carbon-gui-cgs-next-event-inline-integration.sh
-  Git blob 3a7c9ddf74d10ba1ab704996b74ad5627d71fc76
+  Git blob e4653baa20d2e7a9dd23fd22b5b71d2143b1aa7a
 
 scripts/summarize-ppc-carbon-gui-hitoolbox-titlebar-drag-trace.py
   Git blob 4b193f02f704d9b98050e18558665c8a0aa6b6a9
@@ -109,10 +109,10 @@ test "$(git hash-object ./scripts/build-ppc-carbon-gui-cgs-next-event-inline-com
   "a5451f72ef35aba3843b914ac783d9264d959a10" || exit 1
 
 test "$(git hash-object ./scripts/run-snowleopard-ppc-carbon-gui-cgs-next-event-inline-control.sh)" = \
-  "d5e4ebba8e13f40ce7510b415dd623370bdb9af2" || exit 1
+  "20aa4fd2d20598ef0f194e89b86a92071e33d385" || exit 1
 
 test "$(git hash-object ./scripts/run-lion-ppc-carbon-gui-cgs-next-event-inline-integration.sh)" = \
-  "3a7c9ddf74d10ba1ab704996b74ad5627d71fc76" || exit 1
+  "e4653baa20d2e7a9dd23fd22b5b71d2143b1aa7a" || exit 1
 ```
 
 ## Phase B — build the v7 full-stack PPC artifact on Snow
@@ -175,6 +175,7 @@ export ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_SHA256_FILE="$PWD/payload/pm-title
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_PATH="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_SHA256_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib.sha256"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_INFO_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib.info.txt"
+export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SHA256=e4031504390ca8fda8abaf1259feafc938f46ab8a5f4f7848ade1368fa7c5692
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_BUILD_ID=coreui-windowframe-shared-art-slot0-compat-v2
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB=4f4792987fded0609efda2a8b4c524bc7069c7fd
 
@@ -239,6 +240,7 @@ export ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_SHA256_FILE="$PWD/payload/pm-title
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_PATH="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_SHA256_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib.sha256"
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_INFO_FILE="$PWD/payload/pm-coreui-windowframe-shared-art-slot0-compat.dylib.info.txt"
+export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SHA256=e4031504390ca8fda8abaf1259feafc938f46ab8a5f4f7848ade1368fa7c5692
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_BUILD_ID=coreui-windowframe-shared-art-slot0-compat-v2
 export ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_EXPECTED_SOURCE_BLOB=4f4792987fded0609efda2a8b4c524bc7069c7fd
 
