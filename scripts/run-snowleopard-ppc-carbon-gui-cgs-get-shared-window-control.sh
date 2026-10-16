@@ -37,6 +37,10 @@ EXPECTED_DRAG_TRACE_SHA="${ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_EXPECTED_SHA256
 LEGACY_DRAG_TRACE_V1_SHA="294ebfc3697bff7e06e21d00e781ca1d29d7a5d028ce6f857e8869877e89d70f"
 EXPECTED_DRAG_TRACE_BUILD_ID="hitoolbox-titlebar-drag-trace-v2"
 
+MOVE_TRACE="${ROSETTA_CGS_MOVE_WINDOW_ENTRY_TRACE_PATH:-}"
+MOVE_TRACE_SHA_FILE="${ROSETTA_CGS_MOVE_WINDOW_ENTRY_TRACE_SHA256_FILE:-${MOVE_TRACE:+$MOVE_TRACE.sha256}}"
+EXPECTED_MOVE_TRACE_BUILD_ID="cgs-move-window-entry-passive-v1"
+
 fail() {
     echo "error: $*" | /usr/bin/tee -a "$SUBJECT_LOG" >&2
     exit 1
@@ -162,6 +166,17 @@ if [ -n "$DRAG_TRACE" ]; then
     echo "titlebar_drag_trace_sha256=$DRAG_TRACE_SHA" | /usr/bin/tee -a "$SUBJECT_LOG"
 fi
 
+if [ -n "$MOVE_TRACE" ]; then
+    for file in "$MOVE_TRACE" "$MOVE_TRACE_SHA_FILE"; do
+        [ -e "$file" ] || fail "missing CGSMoveWindow entry trace artifact: $file"
+    done
+    MOVE_TRACE_SHA="$(sha256 "$MOVE_TRACE")"
+    [ "$(sidecar_sha "$MOVE_TRACE_SHA_FILE")" = "$MOVE_TRACE_SHA" ] || fail "CGSMoveWindow entry trace sidecar mismatch"
+    /usr/bin/strings "$MOVE_TRACE" | /usr/bin/grep -Fq "PM_CGS_MOVE_WINDOW_ENTRY_TRACE_BUILD_ID:$EXPECTED_MOVE_TRACE_BUILD_ID" || fail "CGSMoveWindow entry trace build marker missing"
+    has_ppc32_arch "$MOVE_TRACE" || fail "CGSMoveWindow entry trace is not 32-bit PPC"
+    echo "cgs_move_window_entry_trace_sha256=$MOVE_TRACE_SHA" | /usr/bin/tee -a "$SUBJECT_LOG"
+fi
+
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq "PM_CORESERVICES_COMPAT_BUILD_ID:$EXPECTED_BUILD_ID" || fail "core compatibility build marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'PM_CGS_SHAPEWINDOW_INLINE_COMPAT_RESULT:PASSTHROUGH' || fail "shape passthrough marker missing"
 /usr/bin/strings "$CORE_COMPAT" | /usr/bin/grep -Fq 'PM_CGS_BACKING_SYNC_COMPAT_RESULT:PASSTHROUGH' || fail "backing-sync passthrough marker missing"
@@ -203,6 +218,9 @@ fi
 if [ -n "$DRAG_TRACE" ]; then
     INSERT_LIBS="$INSERT_LIBS:$DRAG_TRACE"
 fi
+if [ -n "$MOVE_TRACE" ]; then
+    INSERT_LIBS="$INSERT_LIBS:$MOVE_TRACE"
+fi
 if [ -n "$DRAG_TRACE" ]; then
     OBSERVER_DURATION_MS="${ROSETTA_HITOOLBOX_TITLEBAR_DRAG_OBSERVER_DURATION_MS:-9000}"
 else
@@ -237,6 +255,7 @@ ROSETTA_COREUI_TITLEBAR_BSEARCH_COMPAT_MODE=passthrough \
 ROSETTA_COREUI_IMAGE_BITMAPINFO_COMPAT_MODE=snow-passthrough-v1 \
 ROSETTA_HITOOLBOX_WINDOWFRAME_CUIDRAW_TRACE_MODE=snow-passive-v2 \
 ROSETTA_HITOOLBOX_TITLEBAR_DRAG_TRACE_MODE=snow-passive-v2 \
+ROSETTA_CGS_MOVE_WINDOW_ENTRY_TRACE_MODE=snow-passive-v1 \
 "$EXE" >> "$SUBJECT_LOG" 2>&1 &
 APP_PID=$!
 echo "subject_pid=$APP_PID" | /usr/bin/tee -a "$SUBJECT_LOG"
