@@ -2,35 +2,38 @@
 
 ## Status
 
-**NEXT CONTROLLED STATIC STEP.**
+**AUDIT PASSED / GETWINDOWSHAPE ID COLLISION RESOLVED.**
 
-The exact inline event-stream adapter is now proven to do the intended
-ID-only conversion on Lion, but it is not sufficient to restore Carbon input.
-The returned Lion run completed two exact legacy inline requests, converted
-each request from `0x7292` to native Lion `0x7295`, received two native
-stream replies `0x72f9`, converted only the reply ID back to `0x72f6`, and
-recorded zero inline rejects and zero
-`CGSGetNextEventRecord (Inline)` type-check diagnostics. The public Carbon
-dispatcher nevertheless received zero mouse events and the independent
-WindowServer observer recorded no movement.
-
-The same run exposes the next lower CoreGraphics/WindowServer compatibility
-boundary after the successful inline stream transactions. In particular, the
-translated PPC client reaches legacy request/reply families whose IDs now
-collide with different Lion-native generated-MIG clients or whose reply
-geometry no longer satisfies the Snow PPC client:
+Both returned reports pass their integrity and validation gates against the
+accepted CoreGraphics binaries. The current reports plus the earlier complete
+static reports from the same SHA-256 binaries resolve the four live anchors:
 
 ```text
-legacy request/reply  send/recv  Lion live symptom
-0x724e / 0x72b2       0x24/0x3c  CGSGetWindowBounds server type-check failure (-304)
-0x7258 / 0x72bc       0x24/0x38  _CGSFindSharedWindow client type-check failure; bogus WID 8
-0x7293 / 0x72f7       0x18/0x3c  CGSGetNextEventRecord (Outofline) server type-check failure (-304)
-0x721f / 0x7283       0x24/0x30  appears near CGSGetDisplayBounds(display 0) failure
+family                              Snow PPC                     Lion i386
+__CGSGetWindowShape                 724e/72b2  send24 recv3c     724f/72b3  send24 recv3c
+legacy 724e/72b2 owner on Lion      --                           __CGSSetWindowShapeInline
+__CGSGetSharedWindow                7258/72bc  recv38 success30  7259/72bd  recv3c success34
+legacy 7258/72bc owner on Lion      --                           __CGSGetSharedWindowState
+__CGSGetPortStreamOutofline         7293/72f7  send18 recv3c     7296/72fa  send18 recv3c
+legacy 7293/72f7 owner on Lion      --                           __CGSCompleteDisplayConfiguration
+__CGSGetSystemWindow                721f/7283                    721f/7283
 ```
 
-The first three families are the primary audit targets. The fourth is retained
-as a correlated anchor, but no adapter is authorized from that correlation
-alone.
+This closes the immediate `CGSGetWindowBounds` question: both public
+implementations call `__CGSGetWindowShape`, its wire geometry is unchanged,
+and Lion moved its IDs by one while reusing Snow's old IDs for the set-shape
+inline RPC. An exact ID-only GetWindowShape adapter is therefore authorized.
+
+The SharedWindow family is deliberately **not** authorized for ID-only
+adaptation because its receive capacity and complex success reply both grew on
+Lion. The out-of-line event helper is an ID-only candidate, but it occurs
+farther downstream and is deferred so that only one newly resolved boundary is
+changed per live experiment. The unchanged `0x721f/0x7283` pair belongs to
+`__CGSGetSystemWindow`; it does not justify a `CGSGetDisplayBounds`
+adapter.
+
+The authoritative next procedure is
+`docs/ppc-carbon-gui-cgs-get-window-shape-compat-integration.md`.
 
 ## Question
 
@@ -149,16 +152,16 @@ than attempting a live compatibility experiment.
 ## Current boundary
 
 ```text
-Snow public dispatcher/input path                  PASS
-Lion inline 0x7292 -> 0x7295 adapter              PASS (2/2)
-Lion native inline stream replies                  PASS (2/2)
-old inline type-check diagnostic                   eliminated
-Lion public dispatcher mouse events                0
-Lion WindowServer movement                         NO
-post-inline CGSGetWindowBounds                     -304 / type-check failure
-post-inline _CGSFindSharedWindow                   client type-check / WID 8
-post-inline next-event out-of-line                 -304 / type-check failure
-next action                                        static cross-release protocol audit
+Snow/Lion post-inline static audit                 PASS / PASS
+inline next-event adapter                          proven
+CGSGetWindowBounds lower helper                    __CGSGetWindowShape
+Snow GetWindowShape                                0x724e / 0x72b2, 0x24 / 0x3c
+Lion GetWindowShape                                0x724f / 0x72b3, 0x24 / 0x3c
+Lion old-ID collision                              __CGSSetWindowShapeInline
+next action                                        exact GetWindowShape ID-only integration
+SharedWindow                                       changed reply geometry; deferred
+out-of-line event helper                           clean ID-only candidate; deferred
+0x721f / 0x7283                                    unchanged GetSystemWindow
 private HIToolbox patch                            not authorized
 XNU                                                unchanged
 ```
