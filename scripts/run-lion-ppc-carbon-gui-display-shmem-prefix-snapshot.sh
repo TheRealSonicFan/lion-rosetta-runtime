@@ -182,7 +182,8940 @@ PROTECTED_HASHES_UNCHANGED=YES
 [ "$COREGRAPHICS_AFTER" = "$COREGRAPHICS_BEFORE" ] || PROTECTED_HASHES_UNCHANGED=NO
 log "protected_hashes_unchanged=$PROTECTED_HASHES_UNCHANGED"
 
-NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_CONTRACT="$(/usr/bin/grep -c '^snapshot_contract=carbon-gui-display-shmem-prefix-snapshot-v3
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_CONTRACT="$(/usr/bin/grep -c '^snapshot_contract=carbon-gui-display-shmem-prefix-snapshot-v3
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_contract_v3_count=$NATIVE_CONTRACT"
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_selector_direct_read_pass_count=$NATIVE_SELECTOR_DIRECT"
+log "native_source_direct_read_pass_count=$NATIVE_SOURCE_DIRECT"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_contract_v3_count=$PPC_CONTRACT"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_selector_direct_read_pass_count=$PPC_SELECTOR_DIRECT"
+log "ppc_source_direct_read_pass_count=$PPC_SOURCE_DIRECT"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_CONTRACT" -eq 1 ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SELECTOR_DIRECT" -eq 1 ] &&
+   [ "$NATIVE_SOURCE_DIRECT" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_CONTRACT" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SELECTOR_DIRECT" -eq 1 ] &&
+   [ "$PPC_SOURCE_DIRECT" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$PPC_RAW" 2>/dev/null || true)"
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$PPC_RAW" 2>/dev/null || true)"
+PPC_SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$PPC_RAW" 2>/dev/null || true)"
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$PPC_RAW" 2>/dev/null || true)"
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$PPC_RAW" 2>/dev/null || true)"
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS"$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native
+NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MAIN="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+
+PPC_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-ppc-translated$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_COMPLETE="$(/usr/bin/grep -c '^snapshot_complete=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_WRITE_ZERO="$(/usr/bin/grep -c '^write_attempts=0$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_PASS="$(/usr/bin/grep -c '^RESULT: PASS$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_ZERO="$(/usr/bin/grep -c '^main_display_id_zero=YES$' "$PPC_RAW" 2>/dev/null || true)"
+PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/dev/null || true)"
+
+log "native_mode_count=$NATIVE_MODE"
+log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_source_nonnull_count=$NATIVE_SOURCE"
+log "native_record_count_valid_count=$NATIVE_COUNT"
+log "native_main_display_nonzero_count=$NATIVE_MAIN"
+log "native_snapshot_complete_count=$NATIVE_COMPLETE"
+log "native_write_attempts_zero_count=$NATIVE_WRITE_ZERO"
+log "native_probe_pass_count=$NATIVE_PASS"
+log "ppc_mode_count=$PPC_MODE"
+log "ppc_dlsym_pass_count=$PPC_DLSYM"
+log "ppc_source_nonnull_count=$PPC_SOURCE"
+log "ppc_record_count_valid_count=$PPC_COUNT"
+log "ppc_snapshot_complete_count=$PPC_COMPLETE"
+log "ppc_write_attempts_zero_count=$PPC_WRITE_ZERO"
+log "ppc_probe_pass_count=$PPC_PASS"
+log "ppc_main_display_zero_count=$PPC_MAIN_ZERO"
+log "ppc_main_display_nonzero_count=$PPC_MAIN_NONZERO"
+
+if [ "$NATIVE_RC" -eq 0 ] &&
+   [ "$PPC_RC" -eq 0 ] &&
+   [ "$FOUND_DIAG" -eq 0 ] &&
+   [ "$PROTECTED_HASHES_UNCHANGED" = "YES" ] &&
+   [ "$NATIVE_MODE" -eq 1 ] &&
+   [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_SOURCE" -eq 1 ] &&
+   [ "$NATIVE_COUNT" -eq 1 ] &&
+   [ "$NATIVE_MAIN" -eq 1 ] &&
+   [ "$NATIVE_COMPLETE" -eq 1 ] &&
+   [ "$NATIVE_WRITE_ZERO" -ge 2 ] &&
+   [ "$NATIVE_PASS" -eq 1 ] &&
+   [ "$PPC_MODE" -eq 1 ] &&
+   [ "$PPC_DLSYM" -eq 1 ] &&
+   [ "$PPC_SOURCE" -eq 1 ] &&
+   [ "$PPC_COUNT" -eq 1 ] &&
+   [ "$PPC_COMPLETE" -eq 1 ] &&
+   [ "$PPC_WRITE_ZERO" -ge 2 ] &&
+   [ "$PPC_PASS" -eq 1 ] &&
+   [ "$((PPC_MAIN_ZERO + PPC_MAIN_NONZERO))" -eq 1 ]; then
+    log "RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_LION_PASS"
+    log "RESULT: PASS"
+    exit 0
+fi
+
+fail "Lion native/PPC read-only prefix snapshot did not satisfy the gate"
+ "$NATIVE_RAW" 2>/dev/null || true)"
 NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
 NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
 NATIVE_COUNT="$(/usr/bin/grep -c '^record_count_valid=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
