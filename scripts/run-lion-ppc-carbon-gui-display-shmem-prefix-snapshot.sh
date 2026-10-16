@@ -185,6 +185,10 @@ log "protected_hashes_unchanged=$PROTECTED_HASHES_UNCHANGED"
 NATIVE_CONTRACT="$(/usr/bin/grep -c '^snapshot_contract=carbon-gui-display-shmem-prefix-snapshot-v4$' "$NATIVE_RAW" 2>/dev/null || true)"
 NATIVE_MODE="$(/usr/bin/grep -c '^snapshot_mode=lion-i386-native$' "$NATIVE_RAW" 2>/dev/null || true)"
 NATIVE_DLSYM="$(/usr/bin/grep -c '^CGSMainDisplayID_dlsym=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_MODEL="$(/usr/bin/grep -c '^runtime_address_model=LOADED_I386_LOOKUPMAIN_PIC$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_PATTERN="$(/usr/bin/grep -c '^i386_pic_pattern=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SEGMENTS="$(/usr/bin/grep -c '^i386_runtime_targets_in_segments=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
+NATIVE_SELECTOR_SLOT="$(/usr/bin/grep -c '^selector_slot_read=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
 NATIVE_SELECTOR_DIRECT="$(/usr/bin/grep -c '^selector_direct_read=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
 NATIVE_SOURCE_DIRECT="$(/usr/bin/grep -c '^source_direct_read=PASS$' "$NATIVE_RAW" 2>/dev/null || true)"
 NATIVE_SOURCE="$(/usr/bin/grep -c '^source_after_nonnull=YES$' "$NATIVE_RAW" 2>/dev/null || true)"
@@ -214,6 +218,10 @@ PPC_MAIN_NONZERO="$(/usr/bin/grep -c '^main_display_id_zero=NO$' "$PPC_RAW" 2>/d
 log "native_contract_v4_count=$NATIVE_CONTRACT"
 log "native_mode_count=$NATIVE_MODE"
 log "native_dlsym_pass_count=$NATIVE_DLSYM"
+log "native_pic_model_count=$NATIVE_MODEL"
+log "native_pic_pattern_pass_count=$NATIVE_PATTERN"
+log "native_runtime_targets_in_segments_count=$NATIVE_SEGMENTS"
+log "native_selector_slot_read_pass_count=$NATIVE_SELECTOR_SLOT"
 log "native_selector_direct_read_pass_count=$NATIVE_SELECTOR_DIRECT"
 log "native_source_direct_read_pass_count=$NATIVE_SOURCE_DIRECT"
 log "native_source_nonnull_count=$NATIVE_SOURCE"
@@ -246,6 +254,10 @@ if [ "$NATIVE_RC" -eq 0 ] &&
    [ "$NATIVE_CONTRACT" -eq 1 ] &&
    [ "$NATIVE_MODE" -eq 1 ] &&
    [ "$NATIVE_DLSYM" -eq 1 ] &&
+   [ "$NATIVE_MODEL" -eq 1 ] &&
+   [ "$NATIVE_PATTERN" -eq 1 ] &&
+   [ "$NATIVE_SEGMENTS" -eq 1 ] &&
+   [ "$NATIVE_SELECTOR_SLOT" -eq 1 ] &&
    [ "$NATIVE_SELECTOR_DIRECT" -eq 1 ] &&
    [ "$NATIVE_SOURCE_DIRECT" -eq 1 ] &&
    [ "$NATIVE_SOURCE" -eq 1 ] &&
