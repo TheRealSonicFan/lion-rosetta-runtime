@@ -27,10 +27,11 @@ reply projection merely because later `Invalid window 0x8` diagnostics
 remain; the targeted MIG client-shape failure is eliminated and the new
 off-screen symptom has a more direct, payload-level discriminator.
 
-The authoritative next procedure is
-`docs/ppc-carbon-gui-titlebar-drag-delta-source-audit.md`. It is static-only;
-do not rerun this v9 live experiment unless investigating its historical
-result.
+The drag-delta static audit that followed this v9 result is now complete and
+proves the 0x7218/0x727c move transport and public CGSMoveWindow target-point
+contract are release-stable. The authoritative next procedure is
+`docs/ppc-carbon-gui-cgs-move-window-entry-live-trace.md`, which reuses this
+accepted v9 stack with one passive cross-image CGSMoveWindow entry trace.
 
 ## Prepared runtime
 
@@ -204,7 +205,8 @@ initial window origin                              (120,98)
 first move delta                                   (-317,-98)
 second vertical move delta                         17118 / 0x42de
 remaining symptom                                  off-screen drag geometry
-next action                                        static drag-delta source audit
+drag-delta static audit                            PASS / move wire stable
+next action                                        passive CGSMoveWindow entry trace
 0x7218 payload rewrite                             not authorized
 private HIToolbox patch                            not authorized
 notification policy                               exact-21 unchanged
