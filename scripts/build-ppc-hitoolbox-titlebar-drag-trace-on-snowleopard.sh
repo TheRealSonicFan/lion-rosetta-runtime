@@ -7,6 +7,7 @@ ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SRC="$ROOT/tests/ppc-hitoolbox-titlebar-drag-trace-interposer.c"
 EXPECTED_BUILD_ID="hitoolbox-titlebar-drag-trace-v2"
 EXPECTED_SOURCE_SHA256="d9c8d722773776a624d39d9076f2a3a4ad2889230ca075170b311860851595a9"
+INSTALL_NAME="@loader_path/pm-hitoolbox-titlebar-drag-trace.dylib"
 INFO="$OUT.info.txt"
 SHA="$OUT.sha256"
 TMP_DYLIB="$(/usr/bin/mktemp /tmp/pm-hitoolbox-titlebar-drag-trace.XXXXXX.dylib)"
@@ -52,7 +53,7 @@ probe_compiler() {
     compiler="$(resolve_compiler "$candidate" || true)"
     [ -n "$compiler" ] || return 1
     /bin/rm -f "$TMP_DYLIB"
-    if "$compiler" -arch ppc -mmacosx-version-min=10.5 -dynamiclib "$SRC"         -framework Carbon         -install_name "@loader_path/$(/usr/bin/basename "$OUT")"         -o "$TMP_DYLIB" >"$TMP_LOG" 2>&1; then
+    if "$compiler" -arch ppc -mmacosx-version-min=10.5 -dynamiclib "$SRC"         -framework Carbon         -install_name "$INSTALL_NAME"         -o "$TMP_DYLIB" >"$TMP_LOG" 2>&1; then
         if [ -f "$TMP_DYLIB" ] && is_ppc32_macho "$TMP_DYLIB"; then
             CC_SELECTED="$compiler"
             return 0
@@ -81,7 +82,7 @@ fi
 }
 
 echo "Using PowerPC-capable compiler: $CC_SELECTED"
-"$CC_SELECTED" -arch ppc -mmacosx-version-min=10.5 -dynamiclib "$SRC"     -framework Carbon     -install_name "@loader_path/$(/usr/bin/basename "$OUT")"     -o "$OUT"
+"$CC_SELECTED" -arch ppc -mmacosx-version-min=10.5 -dynamiclib "$SRC"     -framework Carbon     -install_name "$INSTALL_NAME"     -o "$OUT"
 
 /bin/chmod 755 "$OUT"
 is_ppc32_macho "$OUT" || { echo "error: output is not 32-bit PPC Mach-O" >&2; exit 70; }
