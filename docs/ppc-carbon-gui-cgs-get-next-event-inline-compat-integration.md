@@ -151,7 +151,7 @@ The earlier standalone `pm-coreui-image-bitmapinfo-compat.dylib` has SHA-256
 it is a historical partial-fix artifact and must not replace the accepted
 slot-0 v2 artifact above. No Git blob ID is used in this phase.
 
-The historical filename `pm-hitoolbox-titlebar-drag-trace-v2.dylib` is
+The historical filename `pm-hitoolbox-titlebar-drag-trace.dylib` is
 ambiguous. The Library artifact with that exact unsuffixed name is the **v1**
 DragWindow/FindWindow interposer, SHA-256
 `294ebfc3697bff7e06e21d00e781ca1d29d7a5d028ce6f857e8869877e89d70f`,
