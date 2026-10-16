@@ -2,230 +2,131 @@
 
 ## Status
 
-**V3 SNOW FAILURE DIAGNOSED / V4 LOADED-PIC RUNTIME ADDRESSING READY.**
+**COMPLETE — LIVE CAUSAL RECORD-LAYOUT MISMATCH PROVEN.**
 
-The third Snow control disproves the v3 interpretation that the remaining
-problem was only `vm_region` visibility. The v3 probe reached the corrected
-standalone selector/source addresses, called exported `CGSMainDisplayID`
-successfully, obtained a nonzero main-display ID, and then faulted while trying
-to directly read the selector pointer value it had obtained from:
+The V4 Snow and Lion controls both passed with the pinned probes, no new
+diagnostics, and unchanged protected hashes.
 
-~~~text
-loaded CoreGraphics header + standalone selector VM address
-~~~
+The Snow control used loaded-PPC-PIC resolution, obtained a nonzero
+`CGSMainDisplayID`, selected one valid display-source record, and captured a
+Snow-layout prefix.
 
-The decisive returned sequence was:
+The Lion run captured the same Lion display-source object twice:
 
-~~~text
-coregraphics_header=0x93615000
-selector_global_slot=0x93d1426c
-CGSMainDisplayID_dlsym=PASS
-main_display_id_zero=NO
-selector_pointer_after=0x41a20028
-selector_pointer_vm_region_readable=NO
-selector_direct_read=FAIL
-~~~
+- once through native Lion i386 CoreGraphics;
+- once through translated Snow PPC CoreGraphics under the accepted connection
+  prerequisites.
 
-The arithmetic that produced `0x93d1426c` is exactly:
+The native and translated Lion snapshots use the same selector pointer, the
+same selector index, and the same source pointer. Their captured source prefixes
+differ at only one byte in the shared-state header (`raw +0x0c`), consistent
+with an advancing seed/counter; the display-record bytes relevant to the
+main-display decision are otherwise the same.
+
+Despite that common source:
 
 ~~~text
-0x93615000 + 0x006ff26c
+Lion native i386    CGSMainDisplayID = 0x5b81c5c0
+Lion translated PPC CGSMainDisplayID = 0x00000000
 ~~~
 
-That is the remaining diagnostic bug.
+## Decisive field-level proof
 
-## Correct diagnosis
-
-The static addresses `0x6ff26c`, `0x700460`, and `0x700458` are
-**standalone Snow PPC CoreGraphics VM addresses**, not guaranteed runtime
-offsets from the loaded shared-cache image header.
-
-This repository already encountered and closed the same address-model problem
-in the Process Manager CPS connection discriminator. Its accepted correction
-established that the Rosetta shared cache can relocate `__TEXT` and
-`__DATA` independently. Cross-segment PPC data references must therefore be
-reconstructed from the **loaded PPC PIC instructions**, not from:
+The prior static reader/writer audits established the main-display semantic
+shift:
 
 ~~~text
-loaded_image_header + standalone_data_vmaddr
+Snow record +0x10e  -> Lion record +0x12a
+delta                = +0x1c
 ~~~
 
-The v3 direct-read failure is exactly consistent with that established model:
-the probe read a plausible four-byte value from the wrong runtime data address,
-then attempted to dereference that value and faulted. It does not contradict
-the successful `CGSMainDisplayID` call, because CoreGraphics itself uses its
-cache-rewritten loaded PIC displacement to reach the real selector global.
+The live snapshots now prove the consequence.
 
-## V4 runtime address model
+Snow control, legacy status bytes:
 
-V4 keeps the static audit as provenance but no longer treats standalone data VM
-addresses as runtime offsets.
+~~~text
+record +0x10c..+0x113 = 01 01 01 01 00 00 00 00
+record +0x10e          = 01
+~~~
 
-For translated Snow PPC CoreGraphics, it:
+Lion source interpreted by the translated Snow reader:
 
-1. resolves exported `CGSMainDisplayID`;
-2. derives loaded `_lookupMainDisplay` using the audited same-`__TEXT`
-   delta `-0x5858`;
-3. validates the loaded PPC prologue and exact register forms of the
-   `addis`/`lwz` and `addis`/`addi` PIC references;
-4. decodes the **loaded immediates** to reconstruct the actual runtime
-   selector-global, source-array, and local-array addresses;
-5. requires all three decoded targets to fall inside loaded CoreGraphics
-   segments;
-6. calls `CGSMainDisplayID`;
-7. reads the actual selector slot, selector byte, selected source slot, and
-   source prefix with guarded direct reads.
+~~~text
+record +0x10c..+0x113 = 37 03 00 00 00 00 00 00
+record +0x10e          = 00
+~~~
 
-For native Lion i386, V4 applies the same principle. It derives loaded
-`_lookupMainDisplay` from exported `CGSMainDisplayID`, validates the
-release-pinned instruction forms, decodes the loaded PIC displacements for the
-selector/source/local globals, and uses those runtime targets instead of
-`image_header + standalone_vmaddr`.
+The same Lion record at native Lion offsets:
 
-The mode-2 mapping remains static provenance only for this snapshot and is not
-dereferenced by V4.
+~~~text
+record +0x128..+0x12f = 01 01 01 01 00 00 00 00
+record +0x12a          = 01
+~~~
 
-## Prepared files
+Snow `_lookupMainDisplay` scans the bound source records and requires
+record `+0x10e` to be nonzero for the main-display candidate. Lion native
+checks the corresponding shifted field at `+0x12a`. Therefore the translated
+Snow client rejects the real Lion main-display record at exactly the field
+predicted by the static layout audit, while Lion native accepts that same
+record.
 
-Current runtime `main` provides:
+This closes the causal question:
+
+~~~text
+display-shmem transport               release-stable
+server-owned source mapping           valid
+translated PPC source selection       valid
+Snow parser applied to Lion record    incompatible
+CGSMainDisplayID == 0 cause           record-layout mismatch
+~~~
+
+No display-ID substitution, display-0 normalization, event rewrite, or XNU
+change is supported by this result.
+
+## Completed V4 probe
 
 ~~~text
 tests/ppc-carbon-gui-display-shmem-prefix-snapshot.c
-Git blob 83279f55ec80f5aa22065cec1c6f56fd5f8f67eb
-
-scripts/build-ppc-carbon-gui-display-shmem-prefix-snapshot-on-snowleopard.sh
-Git blob ff79b07192a129f4515739fb861908fefd9ac18a
-
-scripts/run-snowleopard-ppc-carbon-gui-display-shmem-prefix-snapshot-control.sh
-Git blob be7cc338e98a2d501f25cd2e74bc48f2732a1a83
-
-scripts/run-lion-ppc-carbon-gui-display-shmem-prefix-snapshot.sh
-Git blob 315d7287c5ed1136d86513b890e515d7ec406329
-
-scripts/audit-ppc-carbon-gui-display-shmem-snapshot-entry-contract.py
-Git blob 137a7f55ca87503d4defa6d665c97086c13649fa
-~~~
-
-The embedded live contract is:
-
-~~~text
 snapshot_contract=carbon-gui-display-shmem-prefix-snapshot-v4
 translated_guest_pointer_validation=LOADED_PPC_PIC_PLUS_GUARDED_DIRECT_READ
 ~~~
 
-The static analyzer is now v3 and explicitly records that standalone VM
-addresses are not authorized as loaded-image-header-relative runtime offsets.
+The runtime-address correction remains part of the accepted diagnostic model:
+standalone CoreGraphics data VM addresses are provenance, while loaded
+cross-segment shared-cache references are resolved from the release-pinned
+loaded PIC instructions.
 
-## Safety constraints
+## Next controlled step
 
-- Do not run the original PPC Carbon GUI subject.
-- Do not create, show, move, drag, or click a window.
-- Do not call `__CGSGetDisplayShmem` directly.
-- Do not call `_CGSResolveShmemReference` directly.
-- Do not write CoreGraphics globals.
-- Do not write mapped display shared memory.
-- Do not change VM protection.
-- Do not normalize display ID 0.
-- Do not substitute Lion's native display ID into PPC state.
-- Do not create a Snow-layout projection/copy.
-- Do not add or broaden a display-shmem adapter.
+Do **not** write or overlay the WindowServer-owned Lion record.
+
+The next step is the static ownership/lifecycle audit:
+
+~~~text
+docs/ppc-carbon-gui-display-shmem-consumer-topology-audit.md
+scripts/audit-ppc-carbon-gui-display-shmem-consumer-topology.py
+~~~
+
+Run it first on Snow Leopard and then on Lion. Return only:
+
+~~~text
+ppc-carbon-gui-display-shmem-consumer-topology-snow.txt
+ppc-carbon-gui-display-shmem-consumer-topology-lion.txt
+~~~
+
+That audit must establish every process-local consumer of the selector/source/
+local globals, the source installation point, local-mapping construction, and
+display-change/mapping-change refresh lifecycle before a proof-only
+process-local Snow-layout projection can be designed.
+
+## Safety boundary
+
+- Do not mutate server-owned Lion display shared memory.
+- Do not create a Snow-layout projection yet.
+- Do not substitute or normalize display IDs.
+- Do not patch `_CGSMainDisplayID`, mapping initializers, or private
+  HIToolbox.
+- Do not add a `__CGSGetDisplayShmem` wire adapter.
+- Do not rewrite event, hit-test, or movement payloads.
+- Keep the accepted compatibility stack unchanged.
 - Do not modify CoreGraphics, WindowServer, Rosetta caches, dyld, or XNU.
-
-## Step 1 — rebuild V4 on Snow Leopard
-
-The V3 PPC/i386 binaries and SHA sidecars are stale because the probe source
-changed.
-
-From current runtime `main` on Snow Leopard 10.6.8 / 10K549:
-
-~~~sh
-/bin/bash ./scripts/build-ppc-carbon-gui-display-shmem-prefix-snapshot-on-snowleopard.sh
-~~~
-
-Require a successful build of both probes and newly generated SHA sidecars.
-Do not reuse V3 binaries.
-
-## Step 2 — rerun Snow PPC control
-
-Run:
-
-~~~sh
-/bin/bash ./scripts/run-snowleopard-ppc-carbon-gui-display-shmem-prefix-snapshot-control.sh
-~~~
-
-Require the embedded probe to reach:
-
-~~~text
-snapshot_contract=carbon-gui-display-shmem-prefix-snapshot-v4
-snapshot_mode=snow-ppc-control
-CGSMainDisplayID_dlsym=PASS
-runtime_address_model=LOADED_PPC_LOOKUPMAIN_PIC
-ppc_pic_pattern=PASS
-ppc_runtime_targets_in_segments=YES
-coregraphics_slots_readable=YES
-main_display_id_zero=NO
-selector_slot_read=PASS
-selector_direct_read=PASS
-selector_index_valid=YES
-selected_slot_read=PASS
-source_after_nonnull=YES
-source_direct_read=PASS
-record_count_valid=YES
-snapshot_complete=YES
-write_attempts=0
-RESULT: PASS
-~~~
-
-The wrapper must finish:
-
-~~~text
-RESULT: DISPLAY_SHMEM_PREFIX_SNAPSHOT_SNOW_PASS
-RESULT: PASS
-~~~
-
-If Step 2 fails again, stop and return both:
-
-~~~text
-ppc-carbon-gui-display-shmem-prefix-snapshot-snow.txt
-ppc-carbon-gui-display-shmem-prefix-snapshot-snow.txt.raw.log
-~~~
-
-The new log's loaded PIC words and decoded runtime targets are then the next
-evidence boundary. Do not proceed to Lion after a failed Snow control.
-
-## Step 3 — transfer exact rebuilt probes to Lion
-
-Only after Snow V4 passes, copy the rebuilt PPC/i386 binaries and their new SHA
-sidecars to Lion without rebuilding them.
-
-## Step 4 — Lion native + translated-PPC differential
-
-Run:
-
-~~~sh
-/bin/bash ./scripts/run-lion-ppc-carbon-gui-display-shmem-prefix-snapshot.sh
-~~~
-
-The Lion runner requires:
-
-- native i386 V4 loaded-`_lookupMainDisplay` PIC resolution;
-- translated PPC V4 loaded-`_lookupMainDisplay` PIC resolution;
-- valid selector/source reads;
-- valid display counts;
-- complete snapshots;
-- unchanged protected hashes and no new diagnostics.
-
-Either zero or nonzero `CGSMainDisplayID` remains accepted for the minimal
-translated PPC probe; the actual result is evidence.
-
-## Return evidence after a full pass
-
-Return only:
-
-~~~text
-ppc-carbon-gui-display-shmem-prefix-snapshot-snow.txt
-ppc-carbon-gui-display-shmem-prefix-snapshot-lion.txt
-~~~
-
-No shared-record rewrite or compatibility adapter is authorized by this
-procedure alone.
