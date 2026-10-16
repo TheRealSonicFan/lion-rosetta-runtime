@@ -358,6 +358,18 @@ main(void)
     char selector_segment[17];
     char source_segment[17];
     char local_segment[17];
+#elif defined(__i386__)
+    const unsigned char *lookup_main_runtime_i386;
+    intptr_t lookup_pic_base_i386;
+    int32_t selector_disp_i386;
+    int32_t source_disp_i386;
+    int32_t local_disp_i386;
+    uintptr_t selector_runtime_i386;
+    uintptr_t source_array_runtime_i386;
+    uintptr_t local_array_runtime_i386;
+    char selector_segment_i386[17];
+    char source_segment_i386[17];
+    char local_segment_i386[17];
 #endif
     unsigned char snapshot_buffer[0x178];
     unsigned char selector_byte;
@@ -547,15 +559,85 @@ main(void)
     local_slots = (void * volatile *)local_array_runtime;
     mode2_slot = 0;
 #else
-    printf("runtime_address_model=IMAGE_HEADER_PLUS_STANDALONE_VMADDR_I386\n");
-    selector_slot =
-        (void * volatile *)((uintptr_t)cg_header + selector_global_static);
-    source_slots =
-        (void * volatile *)((uintptr_t)cg_header + source_array_static);
-    local_slots =
-        (void * volatile *)((uintptr_t)cg_header + local_array_static);
-    mode2_slot =
-        (void * volatile *)((uintptr_t)cg_header + mode2_static);
+    /*
+     * Native Lion CoreGraphics is also a shared-cache image.  Resolve its
+     * cross-segment globals from the loaded _lookupMainDisplay PIC
+     * displacements instead of adding standalone VM addresses to __TEXT.
+     */
+    lookup_main_runtime_i386 =
+        (const unsigned char *)((uintptr_t)symbol + (uintptr_t)0x000000f2U);
+    lookup_pic_base_i386 =
+        (intptr_t)(uintptr_t)(lookup_main_runtime_i386 + 0x0e);
+
+    if (lookup_main_runtime_i386[0x00] != 0x55U ||
+        lookup_main_runtime_i386[0x01] != 0x89U ||
+        lookup_main_runtime_i386[0x02] != 0xe5U ||
+        lookup_main_runtime_i386[0x12] != 0x8bU ||
+        lookup_main_runtime_i386[0x13] != 0x80U ||
+        lookup_main_runtime_i386[0x7d] != 0x83U ||
+        lookup_main_runtime_i386[0x7e] != 0xbcU ||
+        lookup_main_runtime_i386[0x7f] != 0xb1U ||
+        lookup_main_runtime_i386[0x8d] != 0x8bU ||
+        lookup_main_runtime_i386[0x8e] != 0xb4U ||
+        lookup_main_runtime_i386[0x8f] != 0x86U) {
+        printf("i386_pic_pattern=FAIL\n");
+        printf("RESULT: FAIL\n");
+        return 7;
+    }
+    printf("i386_pic_pattern=PASS\n");
+
+    selector_disp_i386 =
+        (int32_t)read_le32(lookup_main_runtime_i386 + 0x14);
+    local_disp_i386 =
+        (int32_t)read_le32(lookup_main_runtime_i386 + 0x80);
+    source_disp_i386 =
+        (int32_t)read_le32(lookup_main_runtime_i386 + 0x90);
+
+    selector_runtime_i386 =
+        (uintptr_t)(lookup_pic_base_i386 + (intptr_t)selector_disp_i386);
+    source_array_runtime_i386 =
+        (uintptr_t)(lookup_pic_base_i386 + (intptr_t)source_disp_i386);
+    local_array_runtime_i386 =
+        (uintptr_t)(lookup_pic_base_i386 + (intptr_t)local_disp_i386);
+
+    selector_segment_i386[0] = '\0';
+    source_segment_i386[0] = '\0';
+    local_segment_i386[0] = '\0';
+
+    if (!find_segment_for_runtime_addr(cg_header, selector_runtime_i386,
+                                       sizeof(void *), selector_segment_i386) ||
+        !find_segment_for_runtime_addr(cg_header, source_array_runtime_i386,
+                                       2 * sizeof(void *), source_segment_i386) ||
+        !find_segment_for_runtime_addr(cg_header, local_array_runtime_i386,
+                                       2 * sizeof(void *), local_segment_i386)) {
+        printf("i386_runtime_targets_in_segments=NO\n");
+        printf("RESULT: FAIL\n");
+        return 8;
+    }
+
+    printf("runtime_address_model=LOADED_I386_LOOKUPMAIN_PIC\n");
+    printf("lookup_main_runtime=%p\n", (void *)lookup_main_runtime_i386);
+    printf("lookup_selector_disp=0x%08x\n",
+           (unsigned int)(uint32_t)selector_disp_i386);
+    printf("lookup_source_disp=0x%08x\n",
+           (unsigned int)(uint32_t)source_disp_i386);
+    printf("lookup_local_disp=0x%08x\n",
+           (unsigned int)(uint32_t)local_disp_i386);
+    printf("i386_runtime_targets_in_segments=YES\n");
+    printf("selector_runtime=0x%08lx\n",
+           (unsigned long)selector_runtime_i386);
+    printf("source_array_runtime=0x%08lx\n",
+           (unsigned long)source_array_runtime_i386);
+    printf("local_array_runtime=0x%08lx\n",
+           (unsigned long)local_array_runtime_i386);
+    printf("selector_runtime_segment=%s\n", selector_segment_i386);
+    printf("source_array_runtime_segment=%s\n", source_segment_i386);
+    printf("local_array_runtime_segment=%s\n", local_segment_i386);
+
+    selector_slot = (void * volatile *)selector_runtime_i386;
+    source_slots = (void * volatile *)source_array_runtime_i386;
+    local_slots = (void * volatile *)local_array_runtime_i386;
+    mode2_slot = 0;
 #endif
 
     printf("selector_global_slot=%p\n", (void *)selector_slot);
@@ -565,11 +647,7 @@ main(void)
 
     if (!range_is_readable((const void *)selector_slot, sizeof(void *)) ||
         !range_is_readable((const void *)source_slots, 2 * sizeof(void *)) ||
-        !range_is_readable((const void *)local_slots, 2 * sizeof(void *))
-#if defined(__i386__)
-        || !range_is_readable((const void *)mode2_slot, sizeof(void *))
-#endif
-        ) {
+        !range_is_readable((const void *)local_slots, 2 * sizeof(void *))) {
         printf("coregraphics_slots_readable=NO\n");
         printf("RESULT: FAIL\n");
         return 9;
@@ -621,11 +699,7 @@ main(void)
         return 13;
     }
     printf("selected_slot_read=PASS\n");
-#if defined(__i386__)
-    mode2_after = *mode2_slot;
-#else
     mode2_after = 0;
-#endif
 
     printf("active_source_slot=%p\n",
            (void *)&source_slots[selector_index]);
@@ -633,14 +707,8 @@ main(void)
            (void *)&local_slots[selector_index]);
     printf("source_after=%p\n", source_after);
     printf("local_mapping_after=%p\n", local_after);
-#if defined(__i386__)
-    printf("mode2_mapping_after=%p\n", mode2_after);
-    printf("mode2_is_active_source=%s\n",
-           mode2_after == source_after ? "YES" : "NO");
-#else
-    printf("mode2_mapping_after=NOT_RESOLVED_IN_V4_PPC\n");
-    printf("mode2_is_active_source=NOT_TESTED_IN_V4_PPC\n");
-#endif
+    printf("mode2_mapping_after=NOT_RESOLVED_IN_V4\n");
+    printf("mode2_is_active_source=NOT_TESTED_IN_V4\n");
     printf("source_after_nonnull=%s\n",
            source_after != 0 ? "YES" : "NO");
 
