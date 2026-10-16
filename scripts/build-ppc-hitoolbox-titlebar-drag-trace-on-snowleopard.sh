@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SRC="$ROOT/tests/ppc-hitoolbox-titlebar-drag-trace-interposer.c"
 EXPECTED_BUILD_ID="hitoolbox-titlebar-drag-trace-v2"
-EXPECTED_SOURCE_BLOB="2c91ae875f0497b7aed96eb8b47a8ca7cbb06768"
+EXPECTED_SOURCE_SHA256="d9c8d722773776a624d39d9076f2a3a4ad2889230ca075170b311860851595a9"
 INFO="$OUT.info.txt"
 SHA="$OUT.sha256"
 TMP_DYLIB="$(/usr/bin/mktemp /tmp/pm-hitoolbox-titlebar-drag-trace.XXXXXX.dylib)"
@@ -19,30 +19,11 @@ trap 'rm -f "$TMP_DYLIB" "$TMP_LOG"' EXIT HUP INT TERM
     exit 66
 }
 
-resolve_git() {
-    candidate="$(command -v git 2>/dev/null || true)"
-    if [ -n "$candidate" ] && [ -x "$candidate" ]; then
-        echo "$candidate"
-        return 0
-    fi
-    for candidate in /Developer-3.2.6/usr/bin/git /Developer/usr/bin/git /usr/local/git/bin/git /usr/local/bin/git /opt/local/bin/git /sw/bin/git /usr/bin/git; do
-        if [ -x "$candidate" ]; then
-            echo "$candidate"
-            return 0
-        fi
-    done
-    return 1
-}
-
-GIT_BIN="$(resolve_git || true)"
-[ -n "$GIT_BIN" ] || { echo "error: no usable git" >&2; exit 66; }
-SOURCE_BLOB="$("$GIT_BIN" hash-object "$SRC" 2>/dev/null || true)"
-[ "$SOURCE_BLOB" = "$EXPECTED_SOURCE_BLOB" ] || {
-    echo "error: titlebar drag trace source blob mismatch: $SOURCE_BLOB" >&2
+SOURCE_SHA="$(/usr/bin/shasum -a 256 "$SRC" | /usr/bin/awk '{print $1}')"
+[ "$SOURCE_SHA" = "$EXPECTED_SOURCE_SHA256" ] || {
+    echo "error: titlebar drag trace source SHA-256 mismatch: $SOURCE_SHA" >&2
     exit 66
-}
-
-resolve_compiler() {
+}resolve_compiler() {
     candidate="$1"
     [ -n "$candidate" ] || return 1
     if [ -x "$candidate" ]; then
@@ -103,16 +84,11 @@ echo "Using PowerPC-capable compiler: $CC_SELECTED"
 /bin/chmod 755 "$OUT"
 is_ppc32_macho "$OUT" || { echo "error: output is not 32-bit PPC Mach-O" >&2; exit 70; }
 
-RUNTIME_GIT_HEAD="$(cd "$ROOT" 2>/dev/null && "$GIT_BIN" rev-parse HEAD 2>/dev/null || true)"
-[ -n "$RUNTIME_GIT_HEAD" ] || RUNTIME_GIT_HEAD="UNAVAILABLE_NON_GIT_CHECKOUT"
-SOURCE_SHA="$(/usr/bin/shasum -a 256 "$SRC" | /usr/bin/awk '{print $1}')"
 
 {
     echo "== PPC HIToolbox titlebar drag trace build =="
     echo "compiler=$CC_SELECTED"
     echo "source=$SRC"
-    echo "runtime_git_head=$RUNTIME_GIT_HEAD"
-    echo "interposer_source_git_blob=$SOURCE_BLOB"
     echo "interposer_source_sha256=$SOURCE_SHA"
     echo "trace_build_id=$EXPECTED_BUILD_ID"
     echo
