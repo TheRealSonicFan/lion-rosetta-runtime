@@ -963,8 +963,8 @@ The shared-art source reports pass on both systems. Snow's unique raw-bytes call
 
 Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md` next. Run `scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py` statically on Snow and Lion and return the two text reports. Do not launch the PPC subject, alter records/resources/geometry, broaden bitmap-info or CGS rules, change hit handling, or modify XNU before the exact seven record geometries and raw-byte slots are compared.
 
-## Titlebar interaction current step — locked lookup call-boundary audit
+## Titlebar interaction current step — one-record projection proof
 
-The projection-seam reports pass on both systems. They prove that a mapping-seed update may release and rebind existing local entries, so a projected record pointer cannot safely remain installed across `_updateAllDisplayInfoAsNeeded` or notification processing; full source/local clearing occurs only during display-server shutdown.
+Both call-boundary reports pass. Snow proves the exact private wrapper sequence and same-__TEXT helper deltas, while lookupMainDisplay's fast-path fields are contained in the previously proven +0x1c semantic window. With projected Snow +0x110 == 0, lookupMainDisplay returns the selected local entry directly, so lookupDisplay and bindDisplayMapping are not entered while the projection exists.
 
-Follow `docs/ppc-carbon-gui-display-shmem-projection-call-boundary-audit.md` next. Run its static analyzer first on Snow and then on Lion and return the two reports. It must pin the lock/update/lookup/unlock sequence, same-`__TEXT` private-function deltas, fallback mapping-initializer edges, and the exact record displacements consumed by `_lookupMainDisplay`/`_lookupDisplay`. Keep all live projection writes and private helper calls held until that audit passes.
+Follow docs/ppc-carbon-gui-display-shmem-projection-proof.md. Build on Snow, run the Snow zero-write control, transfer the exact PPC/i386 artifacts, then run the Lion proof once. The Lion control temporarily changes only one process-local local-entry record pointer while the display lock is held, restores it before unlock, requires the source mapping to remain unchanged, and requires the final public control to return zero after restoration. Do not run the original GUI or broaden the projection.
