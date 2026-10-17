@@ -2,13 +2,19 @@
 
 ## Status
 
-**NEXT STEP — MEASURE THE LOADED ONE-CALLSITE ROUTE BEFORE ANY COREGRAPHICS TEXT WRITE.**
+**COMPLETE — BOTH V2 PREFLIGHTS PASS; `NONE_OBSERVED` SELECTS THE STATIC NEAR-STUB AUDIT.**
 
 The static callsite-patchability reports pass on both pinned releases. On Snow PPC the zero-cache event-unflip block contains exactly one direct call to _CGSGetDisplayBounds at standalone address 0x14c38c, with exact file bytes 4b ff 70 2d. The preceding instruction places the existing stack CGRect at r4, and the following instruction checks the returned CGError in r3. The existing success path then caches bounds height from stack offset +0x5c into event +0xc6. This closes the semantic patch surface at one PPC call instruction; neither global _CGSMainDisplayID nor global _CGSGetDisplayBounds behavior needs to be changed.
 
 The remaining unknowns are runtime placement properties, not record semantics. A PPC relative bl reaches only +/-32 MiB. The next preflight therefore measures the loaded translated-PPC CoreGraphics callsite, confirms that its in-memory word still matches 0x4bff702d and still decodes to the expected _CGSGetDisplayBounds target, records current and maximum VM protections for that text region, and checks whether an inert separately loaded PPC marker function is directly reachable. If it is not, the probe inventories whether any unmapped page-sized gap exists inside the legal branch window.
 
 This is intentionally non-patching. The probe performs zero CoreGraphics writes, zero vm_protect calls, zero vm_allocate calls, zero executable-page allocations, and zero private CoreGraphics calls. The marker dylib has no constructor and its marker function is resolved but never executed.
+
+## Observed result — both pinned systems
+
+The returned Snow 10.6.8 / 10K549 and Lion 10.7.5 / 11G63 v2 reports both pass. In both runs the loaded PPC branch word is still `0x4bff702d`, decodes to the audited `_CGSGetDisplayBounds` target, and remains unchanged after the probe. The callsite region is currently `r--` with maximum `rwx`; the inert marker is outside the PPC relative-branch window; no unmapped page-sized candidate was observed within that window; and `placement_route=NONE_OBSERVED`. The Lion runner also confirms the protected compatibility-stack hashes remain unchanged.
+
+`callsite_region_max_write=YES` remains only a protection observation. It does not authorize a text write or a `vm_protect` experiment. Because neither direct marker placement nor an unmapped near page is available, current `main` advances to `docs/ppc-carbon-gui-event-unflip-near-stub-interposition-audit.md`, a static-only inventory of existing CoreGraphics symbol stubs and the exact-return-address interposition route.
 
 ## Prepared artifacts
 
@@ -154,7 +160,7 @@ If DIRECT_MARKER_DYLIB is observed on Lion, the next review can design a proof-o
 
 If the marker is out of range but UNMAPPED_NEAR_PAGE_CANDIDATE is observed, do not allocate or execute a trampoline yet. The next step must prove that one exact candidate page can be allocated process-locally, changed to executable protection, and deallocated without a code write; only after that may a near branch island be considered.
 
-If NONE_OBSERVED is returned, do not broaden to a global CoreGraphics patch. The next static branch should inventory nearby CoreGraphics symbol stubs and review an exact-return-address interposition route that preserves the imported function for every non-target caller.
+If NONE_OBSERVED is returned, do not broaden to a global CoreGraphics patch. The next static branch should inventory nearby CoreGraphics symbol stubs and review an exact-return-address interposition route that preserves the imported function for every non-target caller. **This is the observed result on both returned v2 reports; follow `docs/ppc-carbon-gui-event-unflip-near-stub-interposition-audit.md` next.**
 
 The callsite_region_max_write marker is only a protection observation. No text-writability conclusion is authorized until a separate reversible protection/write proof is explicitly reviewed.
 
