@@ -16,6 +16,7 @@ log() { echo "$*" | /usr/bin/tee -a "$REPORT"; }
 fail() { log "ERROR: $*"; log "RESULT: PATCH_PLACEMENT_PREFLIGHT_SNOW_FAIL"; log "RESULT: FAIL"; exit 1; }
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 sidecar_sha() { /usr/bin/awk 'NR==1 {print $1}' "$1"; }
+is_ppc32() { /usr/bin/lipo -verify_arch ppc "$1" >/dev/null 2>&1 && return 0; /usr/bin/lipo "$1" -verify_arch ppc >/dev/null 2>&1 && return 0; return 1; }
 PRODUCT_VERSION="$(/usr/bin/sw_vers -productVersion 2>/dev/null || true)"
 BUILD_VERSION="$(/usr/bin/sw_vers -buildVersion 2>/dev/null || true)"
 log "== Snow event-unflip patch placement preflight =="
@@ -24,6 +25,11 @@ log "build_version=$BUILD_VERSION"
 [ "$PRODUCT_VERSION" = "10.6.8" ] || fail "requires Snow Leopard 10.6.8"
 [ "$BUILD_VERSION" = "10K549" ] || fail "requires Snow Leopard build 10K549"
 for p in "$PROBE" "$PROBE_SHA" "$MARKER" "$MARKER_SHA" "$COREGRAPHICS"; do [ -f "$p" ] || fail "missing required file: $p"; done
+is_ppc32 "$PROBE" || fail "probe is not 32-bit PPC"
+is_ppc32 "$MARKER" || fail "marker is not 32-bit PPC"
+OT="$(/usr/bin/otool -l "$PROBE" | /usr/bin/grep -A3 LC_LOAD_DYLINKER || true)"
+echo "$OT" | /usr/bin/tee -a "$REPORT"
+echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || fail "probe LC_LOAD_DYLINKER is not /usr/oah/dyld"
 PROBE_EXPECTED="$(sidecar_sha "$PROBE_SHA")"; PROBE_ACTUAL="$(sha256 "$PROBE")"
 MARKER_EXPECTED="$(sidecar_sha "$MARKER_SHA")"; MARKER_ACTUAL="$(sha256 "$MARKER")"
 [ "$PROBE_EXPECTED" = "$PROBE_ACTUAL" ] || fail "probe hash mismatch"
