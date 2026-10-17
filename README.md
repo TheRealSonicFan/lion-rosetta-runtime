@@ -800,7 +800,7 @@ Current `main` advances to `docs/ppc-carbon-gui-coreui-windowframe-sartfile-reco
 
 The event-unflip callsite audits and corrected v2 placement preflights now pass on both pinned releases. The exact PPC callsite remains intact and decodes to the audited bounds target, but the separately loaded marker is outside the +/-32 MiB branch window and no unmapped in-range page candidate is present; both placement reports therefore return `NONE_OBSERVED`. The callsite is currently read-only with maximum `rwx`, which is not a text-write authorization.
 
-Current main therefore advances to `docs/ppc-carbon-gui-event-unflip-near-stub-interposition-audit.md`. The new static-only collector inventories existing CoreGraphics symbol stubs, imported targets, and raw stub words so the next review can select or reject an LR-preserving stub route keyed by the exact PPC return address without modifying CoreGraphics, loading a helper, running the original GUI, or changing XNU.
+The returned near-stub captures now select Snow-PPC CoreGraphics `_dladdr` stub `0x006710dc`: it is a 32-byte LR-preserving `__picsymbolstub1` tail-transfer ending in `bctr`, has exactly one existing CoreGraphics caller, and is reachable from the event-unflip callsite with displacement `0x00524d50` / candidate `bl` word `0x48524d51`. Current `main` therefore advances to `docs/ppc-carbon-gui-event-unflip-dladdr-write-restore-preflight.md`. The prepared PPC probe changes only the process-local loaded four-byte callsite, reads the candidate back, immediately restores `0x4bff702d` and the original page protection, and never executes the changed instruction or loads a new route interposer/helper.
 
 # lion-rosetta-runtime
 
