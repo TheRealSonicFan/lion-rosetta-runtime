@@ -2,7 +2,7 @@
 
 ## Status
 
-**NEXT STEP — STATIC INTEGRATION-SEAM AUDIT BEFORE ANY PRODUCTION PROJECTION.**
+**COMPLETE — NAMED INTERPOSABLE TITLEBAR SEAMS ABSENT / FULL COREGRAPHICS IMPORT CLOSURE NEXT.**
 
 The one-record projection proof now passes on both required controls. Snow Leopard PPC returns its normal nonzero main display without any projection. On Lion, translated PPC begins with a zero public main-display result, temporarily installs the already-proven +0x1c semantic window in one process-local record under the display lock, obtains the same nonzero display ID as native Lion, restores the original local pointer before unlock, and leaves the source mapping and protected system state unchanged.
 
@@ -10,7 +10,11 @@ That closes the causal question for main-display lookup. It does **not** yet ide
 
 The release/rebuild audit remains binding: Snow _bindDisplayMapping reads record fields outside the 0x20 lookup window, and display notification / mapping-seed paths can rebind the existing local entries. Therefore the proof's partial projection must not be made persistent or exposed to normal bind/rebind.
 
-There is a second integration constraint. The historical drag/display audit shows that Snow PPC _CGSGetUnflippedEventLocation reaches _CGSMainDisplayID by an image-local direct branch before passing its return value to _CGSGetDisplayBounds. A normal dyld __DATA,__interpose tuple for _CGSMainDisplayID therefore cannot be assumed to repair the real drag path. The next step is to identify the first imported, interposable call boundary in the actual HIToolbox titlebar-tracking path that encloses this fallback.
+There is a second integration constraint. The historical drag/display audit shows that Snow PPC _CGSGetUnflippedEventLocation reaches _CGSMainDisplayID by an image-local direct branch before passing its return value to _CGSGetDisplayBounds. A normal dyld __DATA,__interpose tuple for _CGSMainDisplayID therefore cannot be assumed to repair the real drag path.
+
+The returned Snow and Lion audits both pass and both report zero named candidate imports and zero candidate call sites in the HIToolbox titlebar families. Snow additionally confirms the three expected image-local CoreGraphics edges. Lion emits those same bodies as numeric direct calls to the exact reported target addresses; the v1 symbolic edge helper therefore prints NO for Lion even though the disassembly preserves the equivalent local calls. That presentation limitation does not change the zero-import conclusion and does not require a rerun.
+
+The named candidate seam is therefore closed, but the broader question is not: v1 only tested seven preselected APIs. Before choosing an image-local CoreGraphics repair or a full display-mapping lifecycle projection, current main now requires a complete HIToolbox-to-CoreGraphics import intersection and reachable direct-call closure from the titlebar tracking roots. The authoritative next procedure is docs/ppc-carbon-gui-titlebar-coregraphics-import-closure-audit.md.
 
 ## Prepared analyzer
 
@@ -107,9 +111,11 @@ ppc-carbon-gui-display-shmem-projection-integration-seam-lion.txt
 
 ## Decision gate after the audit
 
-If Snow exposes an imported titlebar-path event-location boundary that encloses the failing zero-cache fallback, the next design review can consider a narrowly scoped adapter at that boundary. Such an adapter may use the already-proven locked projection only long enough to obtain the correct main display, restore the local record pointer, unlock, and then continue the bounds conversion with the returned nonzero ID.
+The returned reports take the negative branch: the seven named event-location/display APIs are not HIToolbox imports on either release and no titlebar-family call site references them. Do not compensate with a naive _CGSMainDisplayID interposer.
 
-If no such imported boundary exists, do not compensate with a naive _CGSMainDisplayID interposer. The next review must instead choose between a separately justified image-local CoreGraphics patch and a fully specified lifecycle projection. A count>1 display configuration remains outside the one-record proof; any later lifecycle design must project every relevant local record coherently or stop.
+That result is not yet broad enough to choose between an image-local CoreGraphics repair and a lifecycle projection, because the v1 audit did not enumerate every CoreGraphics export imported by HIToolbox or recursively close the titlebar direct-call graph. Follow docs/ppc-carbon-gui-titlebar-coregraphics-import-closure-audit.md next. Only after that closure is returned may the project select a patch boundary, resolve indirect/vtable targets, or escalate to a multi-record lifecycle-projection design.
+
+A count>1 display configuration remains outside the one-record proof; persistent or lifecycle projection is still unauthorized.
 
 ## Safety boundary
 
