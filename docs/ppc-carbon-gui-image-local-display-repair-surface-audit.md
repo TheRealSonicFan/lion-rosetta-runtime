@@ -20,6 +20,7 @@ Current runtime main provides:
 scripts/audit-ppc-carbon-gui-image-local-display-repair-surface.py
 analyzer_version=1
 audit_contract=carbon-gui-image-local-display-repair-surface-v1
+Git blob 9cb81c81edaf62795817a8d84c05f68e75e48499
 ~~~
 
 The analyzer verifies the pinned CoreGraphics slice and emits the complete release-local bodies for:
