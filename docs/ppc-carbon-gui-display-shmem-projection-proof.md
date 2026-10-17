@@ -173,9 +173,9 @@ If Lion fails, return the Lion report without rerunning or broadening the projec
 
 The Snow and Lion one-record proof remains complete: the private +0x1c Snow view repairs the translated PPC main-display lookup itself, and restoration intentionally returns the public Lion result to zero afterward.
 
-The subsequent integration-seam, import-closure, DragWindow-boundary, image-local repair-surface, direct-source helper-contract, callsite-patchability, corrected v2 placement preflight, and near-stub audit are now complete. The near-stub evidence selects Snow-PPC CoreGraphics `_dladdr` stub `0x006710dc`, reachable from the audited callsite with candidate branch word `0x48524d51`, while preserving LR for an exact-return-address guard. The next controlled step is `docs/ppc-carbon-gui-event-unflip-dladdr-write-restore-preflight.md`, which proves only process-local write/readback/restoration of that one callsite and restores its original VM protection without executing the candidate branch.
+The subsequent integration-seam, import-closure, DragWindow-boundary, image-local repair-surface, direct-source helper-contract, callsite-patchability, corrected v2 placement preflight, near-stub audit, and reversible `_dladdr` route write/restore proof are now complete. The candidate word `0x48524d51` can be installed process-locally and the original `0x4bff702d` plus page protection restored before execution. The next controlled step is `docs/ppc-carbon-gui-event-unflip-dladdr-guard-preflight.md`, which proves only interposer binding, original-`dladdr` forwarding, and exact return-address classification while keeping the callsite untouched.
 
-No functional display helper, `_dladdr` interposer, persistent projection, original GUI run, or XNU change is authorized until that reversible-write evidence is reviewed.
+No functional display helper, patched-route execution, persistent projection, original GUI run, or XNU change is authorized until that binding/guard evidence is reviewed.
 
 ## Safety boundary
 
