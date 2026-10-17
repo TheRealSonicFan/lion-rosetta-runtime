@@ -2,11 +2,23 @@
 
 ## Status
 
-**NEXT STEP — EXECUTE THE SELECTED ONE-WORD ROUTE ONCE UNDER THE ALREADY-PROVEN FAIL-CLOSED GUARD, USING ONLY A SYNTHETIC EVENT.**
+**RETRY PHASE B WITH THE V2 SAME-PROCESS LAZY-STUB WARMUP — THEN EXECUTE THE SELECTED ONE-WORD ROUTE ONCE UNDER THE ALREADY-PROVEN FAIL-CLOSED GUARD, USING ONLY A SYNTHETIC EVENT.**
 
 The returned `_dladdr` guard preflights pass on both pinned systems. Snow Leopard PPC and Lion translated PPC both resolve the exact event-unflip return address, accept only that address while rejecting `-4` and `+4`, recover the saved original `dladdr` replacee, and prove that one direct call through the selected CoreGraphics `_dladdr` stub reaches the interposer and returns an identical ordinary `Dl_info` result. In both reports the target-wrapper count remains zero because the patched callsite is deliberately not executed. Protected hashes remain unchanged.
 
 That closes the binding/guard gate. The next unresolved route-specific question is narrower than the functional display repair: whether the actual modified event-unflip callsite, after data/instruction-cache synchronization and with its original page protection restored, executes candidate word `0x48524d51` under Rosetta and arrives at the proof interposer with LR equal to the exact audited return address. This procedure therefore chooses the **fail-closed patched-route execution discriminator before the separately callable functional source-helper proof**. The functional Lion display-source scan remains unimplemented.
+
+## First Phase B result and v2 correction
+
+The first Snow Phase B run **did reach the selected route correctly**: the candidate word was installed and executed with the callsite page locked back to its original protection; the exact target-wrapper count increased by one; the returned pointer still matched the caller's output object; the synthetic event cache extent remained zero; the original call word, cache state, page protection, and protected files were all restored. The failure was narrower: both `event_output_x_preserved` and `event_output_y_preserved` were `NO`.
+
+That result must not be treated as a failed branch placement or failed return-address guard. The audited PPC body loads event `x/y` into live `f31/f30` before the selected callsite and, on a nonzero return, stores those same registers to the output point. The route therefore has an additional ABI-state requirement: the call path must preserve those live nonvolatile FPR values.
+
+The v1 route probe unintentionally combined that requirement with **first-use lazy binding**. Its own report states `selected_dladdr_stub_direct_probe_calls=0`, even though the selected CoreGraphics `_dladdr` entry is a lazy `__picsymbolstub1`. The earlier guard preflight called that stub directly once, but it did so in a different process; that binding state cannot carry into the route-execution process. Therefore the first patched event call in v1 was also the first process-local traversal of the selected lazy stub, so the failed `x/y` preservation result could not distinguish steady-state route ABI behavior from first-call lazy-binding behavior.
+
+Current `main` corrects the harness with contract `carbon-gui-event-unflip-dladdr-route-execution-v2`. Before any CoreGraphics write, the probe now performs exactly one ordinary **non-target** direct call through the selected `_dladdr` stub in the same process, using the already-proven guard helper to compare that result and `Dl_info` against the original replacee. It requires exactly one non-target interposer-forward delta, zero target-wrapper delta, and an exact result/info match. Only after that same-process warmup succeeds does it install and execute the one-word event route. The proof still requires exact `x/y` preservation; no semantic gate has been weakened. Additional input/output float bit markers are emitted so any remaining failure can be classified directly.
+
+If v2 still reaches the target wrapper once but fails either `x/y` preservation check after the warmup passes, stop: that would be evidence against this `_dladdr` route's ABI suitability rather than a lazy-binding harness confound.
 
 The previously passing proof interposer is reused unchanged. Its required SHA-256 is:
 
@@ -43,7 +55,7 @@ scripts/run-snowleopard-ppc-carbon-gui-event-unflip-dladdr-route-execution-prefl
 scripts/run-lion-ppc-carbon-gui-event-unflip-dladdr-route-execution-preflight.sh
 ~~~
 
-The probe derives all runtime addresses from `CGSMainDisplayID`, verifies the event-unflip prologue, original call word, selected stub shape, route displacement, and guard target return before any write. It never resolves or calls the private event-unflip symbol by name; it uses the already-audited image-relative offset from `CGSMainDisplayID`.
+The v2 probe derives all runtime addresses from `CGSMainDisplayID`, verifies the event-unflip prologue, original call word, selected stub shape, route displacement, and guard target return before any write. It then warms the selected lazy `_dladdr` stub exactly once through the already-proven non-target passthrough path and verifies the original-replacee result/`Dl_info` match before patching. It never resolves or calls the private event-unflip symbol by name; it uses the already-audited image-relative offset from `CGSMainDisplayID`.
 
 ## Legacy-target provenance rule
 
@@ -65,7 +77,7 @@ ppc-carbon-gui-event-unflip-dladdr-route-execution-probe-private-dyld.info.txt
 ppc-carbon-gui-event-unflip-dladdr-route-execution-probe-private-dyld.sha256
 ~~~
 
-Require a 32-bit PPC executable, contract `carbon-gui-event-unflip-dladdr-route-execution-v1`, and `LC_LOAD_DYLINKER=/usr/oah/dyld`. Compare the recorded source SHA-256 with the modern staging-system value. Do not rebuild the guard interposer.
+Require a 32-bit PPC executable, contract `carbon-gui-event-unflip-dladdr-route-execution-v2`, and `LC_LOAD_DYLINKER=/usr/oah/dyld`. Compare the recorded source SHA-256 with the modern staging-system value. Do not rebuild the guard interposer.
 
 ## Phase B — Snow fail-closed route execution control
 
@@ -78,7 +90,7 @@ Run:
 Require at minimum:
 
 ~~~text
-probe_contract=carbon-gui-event-unflip-dladdr-route-execution-v1
+probe_contract=carbon-gui-event-unflip-dladdr-route-execution-v2
 preflight_mode=snow-ppc-control
 guard_mode=passthrough
 target_return_matches_callsite_plus4=YES
@@ -87,6 +99,13 @@ candidate_branch_word=0x48524d51
 event_unflip_prologue_match=YES
 bounds_call_original_word_match=YES
 selected_dladdr_stub_runtime_shape_match=YES
+original_replacee_helper_dlsym=PASS
+selected_stub_warmup_result_match=YES
+selected_stub_warmup_info_match=YES
+selected_stub_warmup_non_target_delta=1
+selected_stub_warmup_target_delta=0
+selected_dladdr_stub_direct_probe_calls=1
+selected_stub_warmup_complete=YES
 callsite_region_max_write=YES
 vm_protect_enable_candidate_kr=0
 candidate_install_readback_match=YES
@@ -123,7 +142,7 @@ The raw log must contain exactly one:
 PM_EVENT_UNFLIP_DLADDR_GUARD:TARGET_MATCH_FAIL_CLOSED
 ~~~
 
-If Snow fails, stop and return only the Snow report. Do not retry by removing cache synchronization, weakening the guard, leaving the page writable during execution, or introducing the functional helper.
+If Snow fails, stop and return only the Snow report. If the same-process stub warmup itself fails, do not patch the callsite. If the warmup passes but `x/y` preservation still fails, treat that as a route-ABI failure and stop. Do not retry by removing cache synchronization, weakening the guard, leaving the page writable during execution, or introducing the functional helper.
 
 ## Phase C — transfer the exact new probe to Lion
 
@@ -175,6 +194,7 @@ If either system does not reach the target wrapper exactly once, if the syntheti
 ## Safety boundary
 
 - Reuse the exact passing proof interposer; do not change its target behavior.
+- Before patching, perform exactly one ordinary non-target direct call through the selected `_dladdr` stub in the same process and require its passthrough result/`Dl_info` to match the original replacee.
 - Patch only the one audited four-byte process-local callsite.
 - Restore the original page protection before executing the synthetic event call.
 - Issue data/instruction-cache synchronization after candidate installation and after restoration.
