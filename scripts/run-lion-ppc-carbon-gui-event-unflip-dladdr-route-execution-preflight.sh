@@ -3,7 +3,7 @@ set -u
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-INTERPOSER="${1:-$ROOT/payload/ppc-carbon-gui-event-unflip-dladdr-guard-interposer.dylib}"
+INTERPOSER="${1:-$ROOT/payload/ppc-carbon-gui-event-unflip-dladdr-route-leaf-interposer.dylib}"
 INTERPOSER_SHA="${2:-$INTERPOSER.sha256}"
 PROBE="${3:-$ROOT/ppc-carbon-gui-event-unflip-dladdr-route-execution-probe-private-dyld}"
 PROBE_SHA="${4:-$PROBE.sha256}"
@@ -20,7 +20,8 @@ ROSETTA_CACHE="/private/var/db/dyld/dyld_shared_cache_rosetta"
 ROSETTA_CACHE_MAP="/private/var/db/dyld/dyld_shared_cache_rosetta.map"
 COREGRAPHICS="/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/CoreGraphics.framework/Versions/A/CoreGraphics"
 
-EXPECTED_INTERPOSER_SHA="ee6463df9002dc78a10c50d239486d5b88dd3a8ef4a4923ec453546154c6aa77"
+EXPECTED_INTERPOSER_BUILD_ID="event-unflip-dladdr-route-leaf-guard-v1"
+EXPECTED_PROBE_CONTRACT="carbon-gui-event-unflip-dladdr-route-execution-v3"
 EXPECTED_KERNEL_SHA="fe68467b60b3bd7edfab61b2d6c8af7f988de5206c4b7b624151dc9f1a1061d3"
 EXPECTED_TRANSLATOR_SHA="4b65c39c7832ed647d15c7a6dbdbb579c9261dac33a1708ebcb2dcbbd166de18"
 EXPECTED_DYLD_SHA="963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb"
@@ -63,17 +64,16 @@ log "build_version=$BUILD_VERSION"
 [ "$CURRENT_USER" = "$CONSOLE_USER" ] || fail "run from logged-in Aqua console user"
 
 for p in "$INTERPOSER" "$INTERPOSER_SHA" "$PROBE" "$PROBE_SHA" "$CORE_COMPAT" "$SEC_INTERPOSER" "$CGS_INTERPOSER"; do [ -f "$p" ] || fail "missing required file: $p"; done
-is_ppc32 "$INTERPOSER" || fail "guard interposer is not 32-bit PPC"
+is_ppc32 "$INTERPOSER" || fail "route leaf interposer is not 32-bit PPC"
 is_ppc32 "$PROBE" || fail "route probe is not 32-bit PPC"
 INTERPOSER_ACTUAL="$(sha256 "$INTERPOSER")"
 PROBE_ACTUAL="$(sha256 "$PROBE")"
-log "dladdr_guard_interposer.sha256=$INTERPOSER_ACTUAL"
+log "dladdr_route_leaf_interposer.sha256=$INTERPOSER_ACTUAL"
 log "dladdr_route_execution_probe.sha256=$PROBE_ACTUAL"
-[ "$INTERPOSER_ACTUAL" = "$(sidecar_sha "$INTERPOSER_SHA")" ] || fail "guard interposer sidecar mismatch"
-[ "$INTERPOSER_ACTUAL" = "$EXPECTED_INTERPOSER_SHA" ] || fail "guard interposer is not the previously passing artifact"
+[ "$INTERPOSER_ACTUAL" = "$(sidecar_sha "$INTERPOSER_SHA")" ] || fail "route leaf interposer sidecar mismatch"
 [ "$PROBE_ACTUAL" = "$(sidecar_sha "$PROBE_SHA")" ] || fail "route probe sidecar mismatch"
-/usr/bin/strings "$INTERPOSER" | /usr/bin/grep -Fq 'PM_EVENT_UNFLIP_DLADDR_GUARD_BUILD_ID:event-unflip-dladdr-guard-v1' || fail "guard interposer marker missing"
-/usr/bin/strings "$PROBE" | /usr/bin/grep -Fq 'carbon-gui-event-unflip-dladdr-route-execution-v2' || fail "route probe contract marker missing"
+/usr/bin/strings "$INTERPOSER" | /usr/bin/grep -Fq "PM_EVENT_UNFLIP_DLADDR_ROUTE_GUARD_BUILD_ID:$EXPECTED_INTERPOSER_BUILD_ID" || fail "route leaf interposer marker missing"
+/usr/bin/strings "$PROBE" | /usr/bin/grep -Fq "$EXPECTED_PROBE_CONTRACT" || fail "route probe contract marker missing"
 
 verify_exact "$KERNEL" "$EXPECTED_KERNEL_SHA" "kernel"
 verify_exact "$TRANSLATOR" "$EXPECTED_TRANSLATOR_SHA" "translator"
@@ -101,10 +101,58 @@ UNCHANGED=YES
 [ "$(sha256 "$COREGRAPHICS")" = "$CORE_BEFORE" ] || UNCHANGED=NO
 log "protected_hashes_unchanged=$UNCHANGED"
 
-for marker in  "probe_contract=carbon-gui-event-unflip-dladdr-route-execution-v2"  "preflight_mode=lion-ppc-translated"  "guard_mode=lion-guard-v1"  "target_return_matches_callsite_plus4=YES"  "candidate_branch_reachable=YES"  "candidate_branch_word=0x48524d51"  "event_unflip_prologue_match=YES"  "bounds_call_original_word_match=YES"  "selected_dladdr_stub_runtime_shape_match=YES"  "original_replacee_helper_dlsym=PASS"  "selected_stub_warmup_result_match=YES"  "selected_stub_warmup_info_match=YES"  "selected_stub_warmup_non_target_delta=1"  "selected_stub_warmup_target_delta=0"  "selected_dladdr_stub_direct_probe_calls=1"  "selected_stub_warmup_complete=YES"  "callsite_region_max_write=YES"  "vm_protect_enable_candidate_kr=0"  "candidate_install_readback_match=YES"  "vm_protect_candidate_lockdown_kr=0"  "candidate_execution_protection_match=YES"  "candidate_instruction_execution_attempts=1"  "vm_protect_enable_restore_kr=0"  "original_restore_readback_match=YES"  "vm_protect_final_restore_kr=0"  "final_protection_match=YES"  "loaded_callsite_bytes_restored=YES"  "patched_route_target_wrapper_delta=1"  "event_return_matches_output=YES"  "event_output_x_preserved=YES"  "event_output_y_preserved=YES"  "event_cache_extent_unchanged_zero=YES"  "patched_target_wrapper_executed=YES"  "failclosed_event_path_preserved=YES"  "vm_protect_attempts=4"  "coregraphics_text_write_attempts=2"  "dcache_flush_attempts=2"  "icache_invalidate_attempts=2"  "synthetic_event_unflip_calls=1"  "functional_source_helper_executed=NO"  "preflight_complete=YES"  "RESULT: PASS"; do require_one "$marker"; done
+for marker in \
+ "probe_contract=carbon-gui-event-unflip-dladdr-route-execution-v3" \
+ "preflight_mode=lion-ppc-translated" \
+ "guard_mode=lion-guard-v1" \
+ "guard_target_leaf_contract_dlsym=PASS" \
+ "guard_target_leaf_contract=PASS" \
+ "target_return_matches_callsite_plus4=YES" \
+ "candidate_branch_reachable=YES" \
+ "candidate_branch_word=0x48524d51" \
+ "event_unflip_prologue_match=YES" \
+ "bounds_call_original_word_match=YES" \
+ "selected_dladdr_stub_runtime_shape_match=YES" \
+ "original_replacee_helper_dlsym=PASS" \
+ "selected_stub_warmup_result_match=YES" \
+ "selected_stub_warmup_info_match=YES" \
+ "selected_stub_warmup_non_target_delta=1" \
+ "selected_stub_warmup_target_delta=0" \
+ "selected_dladdr_stub_direct_probe_calls=1" \
+ "selected_stub_warmup_complete=YES" \
+ "callsite_region_max_write=YES" \
+ "vm_protect_enable_candidate_kr=0" \
+ "candidate_install_readback_match=YES" \
+ "vm_protect_candidate_lockdown_kr=0" \
+ "candidate_execution_protection_match=YES" \
+ "candidate_instruction_execution_attempts=1" \
+ "vm_protect_enable_restore_kr=0" \
+ "original_restore_readback_match=YES" \
+ "vm_protect_final_restore_kr=0" \
+ "final_protection_match=YES" \
+ "loaded_callsite_bytes_restored=YES" \
+ "patched_route_target_wrapper_delta=1" \
+ "patched_route_non_target_delta=0" \
+ "event_return_matches_output=YES" \
+ "event_output_x_preserved=YES" \
+ "event_output_y_preserved=YES" \
+ "event_cache_extent_unchanged_zero=YES" \
+ "patched_target_wrapper_executed=YES" \
+ "failclosed_event_path_preserved=YES" \
+ "vm_protect_attempts=4" \
+ "coregraphics_text_write_attempts=2" \
+ "dcache_flush_attempts=2" \
+ "icache_invalidate_attempts=2" \
+ "synthetic_event_unflip_calls=1" \
+ "functional_source_helper_executed=NO" \
+ "preflight_complete=YES" \
+ "RESULT: PASS"
+do
+    require_one "$marker"
+done
 
-TARGET_MATCH_COUNT="$(/usr/bin/grep -Fxc 'PM_EVENT_UNFLIP_DLADDR_GUARD:TARGET_MATCH_FAIL_CLOSED' "$RAW" || true)"
-[ "$TARGET_MATCH_COUNT" = "1" ] || fail "expected exactly one fail-closed target match, saw $TARGET_MATCH_COUNT"
+BUILD_ID_COUNT="$(/usr/bin/grep -Fxc "PM_EVENT_UNFLIP_DLADDR_ROUTE_GUARD_BUILD_ID:$EXPECTED_INTERPOSER_BUILD_ID" "$RAW" || true)"
+[ "$BUILD_ID_COUNT" = "1" ] || fail "expected exactly one route leaf interposer build marker, saw $BUILD_ID_COUNT"
 [ "$RC" -eq 0 ] || fail "route probe returned nonzero"
 [ "$UNCHANGED" = "YES" ] || fail "protected hash changed"
 
