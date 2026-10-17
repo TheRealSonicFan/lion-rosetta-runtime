@@ -34,9 +34,15 @@ resolve_compiler() {
 }
 
 is_ppc32() {
-    /usr/bin/lipo -verify_arch ppc "$1" >/dev/null 2>&1 && return 0
-    /usr/bin/lipo "$1" -verify_arch ppc >/dev/null 2>&1 && return 0
-    return 1
+    file="$1"
+    if [ -x /usr/bin/lipo ]; then
+        /usr/bin/lipo -verify_arch ppc "$file" >/dev/null 2>&1 && return 0
+        /usr/bin/lipo "$file" -verify_arch ppc >/dev/null 2>&1 && return 0
+    fi
+    desc="$(/usr/bin/file "$file" 2>/dev/null || true)"
+    echo "$desc" | /usr/bin/grep -Eiq '(^|[^[:alnum:]_])(ppc|powerpc)([^[:alnum:]_]|$)' || return 1
+    echo "$desc" | /usr/bin/grep -Eiq 'ppc64|powerpc64' && return 1
+    return 0
 }
 
 sha256() {
