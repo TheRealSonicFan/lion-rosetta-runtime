@@ -2,7 +2,7 @@
 
 ## Status
 
-**NEXT STEP — PROVE THE SELECTED ONE-WORD ROUTE CAN BE WRITTEN AND RESTORED WITHOUT EXECUTING IT.**
+**COMPLETE — REVERSIBLE ONE-WORD WRITE/RESTORE PASSES ON SNOW AND LION; DLADDR GUARD PREFLIGHT NEXT.**
 
 The near-stub capture passes on both pinned systems and closes the route-selection question. Snow's exact PPC CoreGraphics image contains a 32-byte `__picsymbolstub1` entry for `_dladdr` at `0x006710dc`. The stub saves LR, obtains its PIC base, restores LR before loading the indirect target, moves that target to CTR, and ends in `bctr`; therefore a branch-with-link into the stub preserves the caller's LR for the eventual interposed function. The report shows exactly one existing direct CoreGraphics call through this stub, at `0x001664d8`, and `_dladdr` is an undefined lazy-bound libSystem import.
 
@@ -23,6 +23,12 @@ existing caller               0x001664d8
 ~~~
 
 The candidate is well inside the PPC +/-32 MiB branch range. The next unresolved gate is no longer placement: it is whether the loaded translated-PPC callsite can be made writable process-locally, changed to exactly `0x48524d51`, read back, restored to `0x4bff702d`, and returned to its original page protection without executing the changed instruction.
+
+## Observed result — reversible write/restore closed
+
+The returned Snow Leopard and Lion reports both pass the v1 contract. In each process the selected `_dladdr` stub is reachable with branch word `0x48524d51`; the original call word is `0x4bff702d`; the callsite begins `r--` with maximum `rwx`; `vm_protect` successfully enables the one-page write, the candidate word reads back exactly, the original word reads back after restoration, the original `r--` protection is restored, and the final loaded word is again `0x4bff702d`. Both reports record exactly two protection changes and two four-byte text writes, while `candidate_instruction_executed=NO` and `dladdr_stub_executed=NO`.
+
+This closes process-local loaded-text mutability for the selected route. It does not yet authorize executing the patched branch. Current `main` advances to `docs/ppc-carbon-gui-event-unflip-dladdr-guard-preflight.md`, which loads only a proof interposer and non-patching probe to verify original-`dladdr` forwarding plus the exact event-unflip return-address guard on Snow and Lion before the patched instruction is ever executed.
 
 ## Prepared probe
 
@@ -208,9 +214,9 @@ Also report any unexpected crash/core diagnostic if one appears. None is expecte
 
 ## Decision gate after this preflight
 
-If both systems prove exact write/readback/restore and final protection restoration, the next step may build a proof-only PPC `_dladdr` interposer that forwards every ordinary call through the original `__interpose` replacee and only recognizes the exact event-unflip return address. That later step must still avoid the functional display-source scan and must prove Snow passthrough plus Lion binding/guard behavior before the patched instruction is ever executed.
+The gate passed on both pinned systems. Follow `docs/ppc-carbon-gui-event-unflip-dladdr-guard-preflight.md` next. That proof-only stage interposes `dladdr` without patching CoreGraphics, compares ordinary interposed results with a direct call through the saved replacee, resolves the exact event-unflip return address dynamically, proves exact-match and adjacent-address rejection, and requires the target wrapper count to remain zero.
 
-If either system cannot add write permission, cannot read back the candidate word, cannot restore the original word, or cannot restore the original page protection, stop. Do not try a broader CoreGraphics hook, indirect-symbol rewrite, branch island, persistent projection, or XNU change.
+No functional display-source scan, patched-route execution, original GUI launch, broader CoreGraphics hook, indirect-symbol rewrite, branch island, persistent projection, or XNU change is authorized by the write/restore result.
 
 ## Safety boundary
 
