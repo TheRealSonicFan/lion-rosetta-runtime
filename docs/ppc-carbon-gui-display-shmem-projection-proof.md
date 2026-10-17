@@ -2,7 +2,7 @@
 
 ## Status
 
-**COMPLETE — CAUSAL ONE-RECORD PROJECTION PASSES / DRAGWINDOW MAIN-DISPLAY BOUNDARY AUDIT NEXT.**
+**COMPLETE — CAUSAL ONE-RECORD PROJECTION PASSES / IMAGE-LOCAL DISPLAY REPAIR SURFACE NEXT.**
 
 The returned controls close the proof gate. Snow Leopard PPC returns the expected nonzero main-display ID with zero projection writes. On Lion, translated PPC starts with a zero public main-display ID, temporarily installs the already-proven +0x1c semantic window in one process-local record while locked, returns the same nonzero display ID as native Lion, restores the original local pointer before unlock, leaves the source record unchanged, and finishes with protected hashes unchanged and no new diagnostics.
 
@@ -173,9 +173,9 @@ If Lion fails, return the Lion report without rerunning or broadening the projec
 
 The Snow and Lion one-record proof remains complete: the private +0x1c Snow view repairs the translated PPC main-display lookup itself, and restoration intentionally returns the public Lion result to zero afterward.
 
-The subsequent integration-seam and full import-closure audits are also complete. The full closure finds a direct Snow `_DragWindow -> _CGMainDisplayID` import, while the known failing zero-cache path remains private and image-local inside CoreGraphics. The next static step is docs/ppc-carbon-gui-dragwindow-main-display-boundary-audit.md, which must determine whether the public DragWindow call can affect that fallback or is only setup/constraint logic.
+The subsequent integration-seam, import-closure, and DragWindow boundary audits are now complete. The public `_DragWindow -> _CGMainDisplayID` call is only caller-bounds setup and does not control the later private event-unflip fallback. The returned bounds bodies also show a second record-layout differential: display geometry shifts by +0x0c while the main-lookup identity/status window shifts by +0x1c. The next static step is docs/ppc-carbon-gui-image-local-display-repair-surface-audit.md.
 
-No live adapter, CoreGraphics/HIToolbox patch, persistent projection, original GUI rerun, display-ID substitution/normalization, or XNU change is authorized until that boundary audit is reviewed.
+No CoreGraphics/HIToolbox patch, persistent projection, original GUI rerun, display-ID substitution/normalization, or XNU change is authorized until that repair surface is closed.
 
 ## Safety boundary
 
