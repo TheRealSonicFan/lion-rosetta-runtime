@@ -18,6 +18,7 @@ Use:
 scripts/audit-ppc-carbon-gui-event-unflip-callsite-patchability.py
 analyzer_version=1
 audit_contract=carbon-gui-event-unflip-callsite-patchability-v1
+Git blob ccb6943dfeca6e1b233b10884da535ee05041e86
 ~~~
 
 The analyzer verifies the pinned CoreGraphics slice, resolves the exact event-unflip/main/bounds callsites, maps the candidate instruction back to the Mach-O __TEXT,__text bytes, verifies the caller-owned bounds buffer/cache contract, and records the unresolved runtime constraints: PPC relative-branch reachability and loaded-text writability.
