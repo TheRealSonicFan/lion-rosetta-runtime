@@ -2,7 +2,7 @@
 
 ## Status
 
-**COMPLETE — CAUSAL ONE-RECORD PROJECTION PASSES / STATIC INTEGRATION-SEAM AUDIT NEXT.**
+**COMPLETE — CAUSAL ONE-RECORD PROJECTION PASSES / DRAGWINDOW MAIN-DISPLAY BOUNDARY AUDIT NEXT.**
 
 The returned controls close the proof gate. Snow Leopard PPC returns the expected nonzero main-display ID with zero projection writes. On Lion, translated PPC starts with a zero public main-display ID, temporarily installs the already-proven +0x1c semantic window in one process-local record while locked, returns the same nonzero display ID as native Lion, restores the original local pointer before unlock, leaves the source record unchanged, and finishes with protected hashes unchanged and no new diagnostics.
 
@@ -173,9 +173,9 @@ If Lion fails, return the Lion report without rerunning or broadening the projec
 
 The Snow and Lion one-record proof remains complete: the private +0x1c Snow view repairs the translated PPC main-display lookup itself, and restoration intentionally returns the public Lion result to zero afterward.
 
-The subsequent integration-seam audit is also complete. It found no named interposable HIToolbox boundary for the seven event-location/display candidates, so the project must not add a naive _CGSMainDisplayID interposer. Because that audit used a preselected candidate list, the next static step is broader rather than live: docs/ppc-carbon-gui-titlebar-coregraphics-import-closure-audit.md enumerates every HIToolbox import that resolves to a CoreGraphics text symbol and computes the direct-call closure from the titlebar tracking roots.
+The subsequent integration-seam and full import-closure audits are also complete. The full closure finds a direct Snow `_DragWindow -> _CGMainDisplayID` import, while the known failing zero-cache path remains private and image-local inside CoreGraphics. The next static step is docs/ppc-carbon-gui-dragwindow-main-display-boundary-audit.md, which must determine whether the public DragWindow call can affect that fallback or is only setup/constraint logic.
 
-No live adapter, CoreGraphics/HIToolbox patch, persistent projection, original GUI rerun, display-ID substitution/normalization, or XNU change is authorized until that closure is reviewed.
+No live adapter, CoreGraphics/HIToolbox patch, persistent projection, original GUI rerun, display-ID substitution/normalization, or XNU change is authorized until that boundary audit is reviewed.
 
 ## Safety boundary
 
