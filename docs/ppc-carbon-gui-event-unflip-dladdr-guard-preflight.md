@@ -6,7 +6,7 @@
 
 The reversible write/restore preflight has now passed on both pinned systems. Snow Leopard PPC and Lion translated PPC both accepted a temporary write-enable on only the audited callsite page, read back candidate branch word `0x48524d51`, restored original word `0x4bff702d`, restored the original `r--` protection, and ended with the loaded callsite unchanged. Neither run executed the candidate instruction or the selected `_dladdr` stub.
 
-That closes loaded-text mutability as a blocker. It still does **not** authorize executing the patched route. Before the callsite is ever redirected live, the selected process-local `__DATA,__interpose` path must prove three things independently:
+That closes loaded-text mutability as a blocker. It still does **not** authorize executing the patched route. Before the callsite is ever redirected live, the selected process-local `__DATA,__interpose` path must prove four things independently:
 
 1. the original `dladdr` implementation is recoverable through the interpose tuple's replacee pointer;
 2. one ABI-correct direct call through the **selected CoreGraphics `_dladdr` stub itself** reaches the proof interposer, is forwarded to that original replacee, and returns the same `Dl_info` result;
@@ -29,7 +29,7 @@ scripts/run-lion-ppc-carbon-gui-event-unflip-dladdr-guard-preflight.sh
 
 The interposer contains exactly one 32-bit PPC `__DATA,__interpose` tuple for `dladdr`. It obtains the original routine from that tuple's replacee pointer, not through `RTLD_NEXT`. `dlsym` is used only to resolve the already-audited `CGSMainDisplayID` runtime address for the return-address guard.
 
-The probe forces CoreGraphics to load through its normal ApplicationServices dependency, resolves the interposer's proof helpers, derives the selected `_dladdr` stub runtime address from the same `CGSMainDisplayID` anchor, calls that stub exactly once with a valid `dladdr` ABI, and compares its result with a direct call through the saved original replacee in the same process. The interposer counter must increase by exactly one across that selected-stub call. The probe also tests exact/±4-byte guard classification. It performs no CoreGraphics text write and no `vm_protect`.
+The probe forces CoreGraphics to load through its normal ApplicationServices dependency, resolves the interposer's proof helpers, derives the selected `_dladdr` stub runtime address from the same `CGSMainDisplayID` anchor, verifies the audited LR-preserving stub instruction shape in memory, calls that stub exactly once with a valid `dladdr` ABI, and compares its result with a direct call through the saved original replacee in the same process. The interposer counter must increase by exactly one across that selected-stub call. The probe also tests exact/±4-byte guard classification. It performs no CoreGraphics text write and no `vm_protect`.
 
 ## Legacy-target provenance rule
 
@@ -90,6 +90,7 @@ guard_exact_match=YES
 guard_minus4_reject=YES
 guard_plus4_reject=YES
 original_replacee_available=YES
+selected_dladdr_stub_runtime_shape_match=YES
 selected_stub_passthrough_result_match=YES
 selected_stub_passthrough_info_match=YES
 selected_stub_interposer_forward_delta=1
@@ -146,6 +147,7 @@ guard_exact_match=YES
 guard_minus4_reject=YES
 guard_plus4_reject=YES
 original_replacee_available=YES
+selected_dladdr_stub_runtime_shape_match=YES
 selected_stub_passthrough_result_match=YES
 selected_stub_passthrough_info_match=YES
 selected_stub_interposer_forward_delta=1
