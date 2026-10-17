@@ -26,6 +26,14 @@ typedef int (*dladdr_fn)(const void *, Dl_info *);
 static CGDirectDisplayID (*volatile force_coregraphics_dependency)(void) =
     CGMainDisplayID;
 
+static uint32_t
+read_u32(const void *p)
+{
+    uint32_t value;
+    memcpy(&value, p, sizeof(value));
+    return value;
+}
+
 static int
 nullable_string_equal(const char *a, const char *b)
 {
@@ -50,6 +58,11 @@ main(void)
     uintptr_t main_runtime;
     uintptr_t stub_runtime;
     dladdr_fn selected_stub;
+    uint32_t stub_first_word;
+    uint32_t stub_restore_lr_word;
+    uint32_t stub_mtctr_word;
+    uint32_t stub_tail_word;
+    int stub_shape_match;
     Dl_info original_info;
     Dl_info stub_info;
     int original_result;
@@ -149,6 +162,27 @@ main(void)
     printf("selected_dladdr_stub_runtime=0x%08lx\n",
            (unsigned long)stub_runtime);
 
+    stub_first_word = read_u32((const void *)stub_runtime);
+    stub_restore_lr_word = read_u32((const void *)(stub_runtime + 0x10));
+    stub_mtctr_word = read_u32((const void *)(stub_runtime + 0x18));
+    stub_tail_word = read_u32((const void *)(stub_runtime + 0x1c));
+    stub_shape_match =
+        stub_first_word == 0x7c0802a6U &&
+        stub_restore_lr_word == 0x7c0803a6U &&
+        stub_mtctr_word == 0x7d8903a6U &&
+        stub_tail_word == 0x4e800420U;
+    printf("selected_dladdr_stub_first_word=0x%08x\n", stub_first_word);
+    printf("selected_dladdr_stub_restore_lr_word=0x%08x\n",
+           stub_restore_lr_word);
+    printf("selected_dladdr_stub_mtctr_word=0x%08x\n", stub_mtctr_word);
+    printf("selected_dladdr_stub_tail_word=0x%08x\n", stub_tail_word);
+    printf("selected_dladdr_stub_runtime_shape_match=%s\n",
+           stub_shape_match ? "YES" : "NO");
+    if (!stub_shape_match) {
+        printf("RESULT: FAIL\n");
+        return 7;
+    }
+
     memset(&original_info, 0, sizeof(original_info));
     memset(&stub_info, 0, sizeof(stub_info));
     original_result = call_original((const void *)(uintptr_t)&main,
@@ -192,6 +226,7 @@ main(void)
            target_after == 0 ? "NO" : "YES");
 
     success = exact_match && minus4_reject && plus4_reject &&
+              stub_shape_match &&
               original_result != 0 && stub_result != 0 &&
               result_match && info_match &&
               non_target_delta == 1 &&
