@@ -40,6 +40,7 @@ is_ppc32() {
         /usr/bin/lipo "$file" -verify_arch ppc >/dev/null 2>&1 && return 0
     fi
     desc="$(/usr/bin/file "$file" 2>/dev/null || true)"
+    desc="${desc#*: }"
     echo "$desc" | /usr/bin/grep -Eiq '(^|[^[:alnum:]_])(ppc|powerpc)([^[:alnum:]_]|$)' || return 1
     echo "$desc" | /usr/bin/grep -Eiq 'ppc64|powerpc64' && return 1
     return 0
@@ -77,6 +78,11 @@ is_ppc32 "$PROBE_OUT" || {
 }
 is_ppc32 "$MARKER_OUT" || {
     echo "error: marker dylib is not 32-bit PowerPC" >&2
+    exit 70
+}
+
+/usr/bin/nm -g "$MARKER_OUT" | /usr/bin/grep -q 'rosetta_event_unflip_placement_marker' || {
+    echo "error: placement marker symbol is not globally exported" >&2
     exit 70
 }
 
