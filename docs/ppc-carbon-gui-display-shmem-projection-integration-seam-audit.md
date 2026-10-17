@@ -20,6 +20,7 @@ Use:
 scripts/audit-ppc-carbon-gui-display-shmem-projection-integration-seam.py
 analyzer_version=1
 audit_contract=carbon-gui-display-shmem-projection-integration-seam-v1
+Git blob ce56c3eb38109cc147649022c64a3823835131e2
 ~~~
 
 The analyzer is static-only. It verifies the pinned CoreGraphics and HIToolbox slices, confirms the image-local CoreGraphics fallback edges, inventories the relevant CoreGraphics event-location/display bodies, and scans HIToolbox titlebar-tracking families for calls to:
