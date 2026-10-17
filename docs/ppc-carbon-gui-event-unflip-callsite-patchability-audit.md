@@ -101,11 +101,11 @@ ppc-carbon-gui-event-unflip-callsite-patchability-lion.txt
 
 ## Decision gate after the audit
 
-The one-callsite branch is closed in favor of a runtime placement preflight. Follow docs/ppc-carbon-gui-event-unflip-patch-placement-preflight.md.
+The one-callsite branch advanced through the corrected v2 runtime placement preflight in `docs/ppc-carbon-gui-event-unflip-patch-placement-preflight.md`. Both returned reports pass, preserve the exact branch word/decoded target, and return `placement_route=NONE_OBSERVED`: the inert marker is outside the PPC relative-branch window and no unmapped page-sized candidate is present in range.
 
-That preflight resolves the loaded translated-PPC callsite from CGSMainDisplayID, verifies the in-memory branch word and decoded target, records current/maximum text protections, measures whether an inert injected PPC marker function is directly reachable within the +/-32 MiB bl window, and inventories any unmapped page-sized candidate inside that window.
+The authoritative next step is therefore `docs/ppc-carbon-gui-event-unflip-near-stub-interposition-audit.md`. It statically inventories existing CoreGraphics symbol stubs, their imported targets, and raw stub words to determine whether an LR-preserving existing stub can provide an exact-return-address interposition route while forwarding every non-target invocation unchanged.
 
-It performs no CoreGraphics write, vm_protect, vm_allocate, executable-page allocation, private CoreGraphics call, or original GUI launch. No functional source-scan helper is built yet.
+No CoreGraphics write, `vm_protect`, `vm_allocate`, executable-page allocation, helper/interposer load, private CoreGraphics call, original GUI launch, or XNU change is authorized by this transition.
 ## Safety boundary
 
 - Do not launch the original PPC Carbon GUI subject.
