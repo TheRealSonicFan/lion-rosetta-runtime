@@ -389,9 +389,9 @@ The shared-art source audit is now complete and supersedes the preceding next-st
 
 ### Current titlebar interaction boundary
 
-The complete CoreGraphics import-closure audit is now returned and passes on both releases. It exposes hundreds of reachable CoreGraphics import calls from the broad titlebar closure, but that closure remains an over-approximation because shared event/toolbox paths and unresolved indirect calls are included. The strongest local Snow result is direct: `_DragWindow` itself calls imported public `_CGMainDisplayID`.
+The returned DragWindow/main-display reports pass on both releases and close the imported public-main-display seam for the observed drag failure. In both Snow and Lion, `_DragWindow` calls public `_CGMainDisplayID` only while reducing an optional caller bounds rectangle to a tracker constraint; tracker construction and `TrackWindow` occur afterward. The event loop later reaches the private zero-cache `_CGSGetUnflippedEventLocation -> _CGSMainDisplayID -> _CGSGetDisplayBounds` path independently.
 
-That seam cannot yet be treated as the repair point. The established failure is later and private: the zero-cache `_CGSGetUnflippedEventLocation` path calls image-local `_CGSMainDisplayID` and then `_CGSGetDisplayBounds`. The authoritative next procedure is docs/ppc-carbon-gui-dragwindow-main-display-boundary-audit.md, which compares the Snow/Lion DragWindow and tracker bodies with public/private CoreGraphics main-display/bounds bodies and shortest direct-call paths. Its purpose is to decide whether the public call can influence the failing fallback or is only setup/constraint logic.
+The bounds bodies also show that the layout repair is not a single +0x1c displacement change: geometry fields are +0x0c later on Lion, the bounds selector/flag is +0x1c later, and source record stride remains 0x17c versus Snow's 0x150. The authoritative next procedure is docs/ppc-carbon-gui-image-local-display-repair-surface-audit.md, which inventories `_lookupMainDisplay`, `_lookupMasterDisplay`, `_CGSGetDisplayBounds`, `_lookupDisplay`, and mapping construction before choosing an image-local compatibility routine versus full lifecycle projection.
 
 No live adapter, CoreGraphics/HIToolbox patch, persistent projection, original GUI rerun, display-ID/event/move rewrite, or XNU change is authorized yet.
 
