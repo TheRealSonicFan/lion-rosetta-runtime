@@ -2,13 +2,13 @@
 
 ## Status
 
-**NEXT STEP — PROVE A SOURCE-ONLY EVENT-UNFLIP HELPER CAN BYPASS THE MIS-STRIDED LOCAL MAPPING BEFORE ANY PATCHABILITY WORK.**
+**COMPLETE — SOURCE-ONLY EVENT-UNFLIP CONTRACT CLOSES / SINGLE-CALLSITE PATCHABILITY NEXT.**
 
 The image-local repair-surface reports pass on both pinned releases. They close the remaining field-only patch option: Snow main-display lookup uses the already-proven +0x1c identity/status correspondence, but display bounds use a distinct +0x0c geometry shift plus a +0x1c selector/flag shift, and the Snow mapping builder derives local record pointers with a 0x150 source stride while Lion source records are 0x17c. A displacement-only repair cannot therefore be count>1 safe.
 
 The reports also show why the next candidate should not be a complete persistent projection by default. Lion native `_lookupMasterDisplay` only consults record `+0x12e` and linked display ID `+0x114`; Lion native `_CGSGetDisplayBounds` then dereferences the selected record and reads only `+0x131` plus geometry `+0xdc..+0xf8`. Snow's bounds implementation has an additional local-entry `+0x48` branch that Lion native does not need. The direct-source candidate is therefore to bypass Snow's local mapping only for the zero-cache event-unflip fallback: scan the already-resolved server-owned Lion source read-only using its native 0x17c record stride, reproduce Lion main/master selection by record fields, and produce the native Lion bounds without leaving any projected record installed.
 
-This is still only a candidate. The source mapping and notification lifecycle must be closed before reviewing a text patch or helper injection. In particular, the helper must not make server-owned writes, must stop if source state is absent or invalid, and must not assume that a stale source pointer remains valid across display-server shutdown or remapping.
+The returned reports close that lifecycle gate. Display notifications acquire the display lock, call _updateAllDisplayInfoAsNeeded, and unlock afterward. The update path may temporarily unlock around mapping initialization or _CGSReleaseAllDisplays but reacquires before returning, while shutdown separately releases displays, frees the mapping state, and zeros the source globals. A future helper must therefore invoke the normal update path, re-resolve the active source only after update returns, fail closed if the source is absent, scan it read-only while locked, and never retain a source pointer across calls.
 
 ## Prepared analyzer
 
@@ -105,11 +105,11 @@ ppc-carbon-gui-event-unflip-direct-source-helper-contract-lion.txt
 
 ## Decision gate after the audit
 
-If the returned lifecycle bodies confirm that the active source mapping can be consumed read-only under the display lock while main/master/bounds selection is reproduced entirely by direct source scan, the next step will be a static patchability audit of the zero-cache block in Snow PPC `_CGSGetUnflippedEventLocation`. That review will prefer one event-local out-of-line boundary that bypasses both the broken private main lookup and the broken private bounds lookup; it will not patch global `_CGSMainDisplayID` or `_CGSGetDisplayBounds` behavior.
+The source-only contract passes. The next step is docs/ppc-carbon-gui-event-unflip-callsite-patchability-audit.md.
 
-If a correct source-only helper would still need to drive Snow's mis-strided mapping initializer/rebind path, or if source lifetime cannot be made exact without installing a projected local view, stop. The next engineering branch must then specify a complete multi-record lifecycle projection rather than a partial projection or a field-only patch.
+The exact Snow zero-cache sequence already exposes the preferred patch boundary: _CGSGetUnflippedEventLocation calls _CGSMainDisplayID, places the caller-owned stack CGRect buffer in r4, then calls _CGSGetDisplayBounds and consumes its CGError result and bounds height locally. The patchability audit therefore asks whether replacing only that one PPC _CGSGetDisplayBounds call can preserve all existing event-unflip success, failure, and cache semantics while a future helper ignores the bad display ID and fills the same stack CGRect from a direct Lion-source scan.
 
-No CoreGraphics text modification, branch island, helper injection, persistent projection, or original GUI run is authorized by this audit.
+No CoreGraphics text write, branch island, helper injection, persistent projection, or original GUI run is authorized yet. The next audit is static-only and must also record the exact original callsite bytes, PPC branch-range constraint, and unresolved loaded-text writability.
 
 ## Safety boundary
 
