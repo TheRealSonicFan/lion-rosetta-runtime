@@ -173,9 +173,9 @@ If Lion fails, return the Lion report without rerunning or broadening the projec
 
 The Snow and Lion one-record proof remains complete: the private +0x1c Snow view repairs the translated PPC main-display lookup itself, and restoration intentionally returns the public Lion result to zero afterward.
 
-The subsequent integration-seam, import-closure, DragWindow-boundary, and image-local repair-surface audits are now complete. The field-only patch branch is closed because Snow's 0x150 source stride cannot address Lion's 0x17c records correctly for count>1, while the native Lion master/bounds semantics remain narrow enough to justify one source-only lifecycle audit. The next static step is docs/ppc-carbon-gui-event-unflip-direct-source-helper-contract-audit.md.
+The subsequent integration-seam, import-closure, DragWindow-boundary, image-local repair-surface, and direct-source helper-contract audits are now complete. The source-only lifecycle closes provided current source state is re-resolved after the normal update path while the display lock is held. The next static step is docs/ppc-carbon-gui-event-unflip-callsite-patchability-audit.md, which tests whether only the zero-cache _CGSGetDisplayBounds callsite needs replacement.
 
-No CoreGraphics/HIToolbox patch, helper injection, persistent projection, original GUI rerun, display-ID substitution/normalization, or XNU change is authorized until that source-only contract is closed.
+No CoreGraphics/HIToolbox text patch, branch island, helper injection, persistent projection, original GUI rerun, display-ID substitution/normalization, or XNU change is authorized until that callsite gate is reviewed.
 
 ## Safety boundary
 
