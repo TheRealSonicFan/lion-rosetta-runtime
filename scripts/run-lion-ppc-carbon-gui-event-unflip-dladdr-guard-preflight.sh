@@ -77,8 +77,14 @@ for p in "$INTERPOSER" "$INTERPOSER_SHA" "$PROBE" "$PROBE_SHA" "$CORE_COMPAT" "$
 done
 is_ppc32 "$INTERPOSER" || fail "interposer is not 32-bit PPC"
 is_ppc32 "$PROBE" || fail "probe is not 32-bit PPC"
-[ "$(sha256 "$INTERPOSER")" = "$(sidecar_sha "$INTERPOSER_SHA")" ] || fail "interposer hash mismatch"
-[ "$(sha256 "$PROBE")" = "$(sidecar_sha "$PROBE_SHA")" ] || fail "probe hash mismatch"
+INTERPOSER_ACTUAL="$(sha256 "$INTERPOSER")"
+INTERPOSER_DECLARED="$(sidecar_sha "$INTERPOSER_SHA")"
+PROBE_ACTUAL="$(sha256 "$PROBE")"
+PROBE_DECLARED="$(sidecar_sha "$PROBE_SHA")"
+log "dladdr_guard_interposer.sha256=$INTERPOSER_ACTUAL"
+log "dladdr_guard_probe.sha256=$PROBE_ACTUAL"
+[ "$INTERPOSER_ACTUAL" = "$INTERPOSER_DECLARED" ] || fail "interposer hash mismatch"
+[ "$PROBE_ACTUAL" = "$PROBE_DECLARED" ] || fail "probe hash mismatch"
 
 /usr/bin/strings "$INTERPOSER" | /usr/bin/grep -Fq     'PM_EVENT_UNFLIP_DLADDR_GUARD_BUILD_ID:event-unflip-dladdr-guard-v1' || fail "interposer build marker missing"
 /usr/bin/strings "$PROBE" | /usr/bin/grep -Fq     'carbon-gui-event-unflip-dladdr-guard-preflight-v1' || fail "probe contract marker missing"
