@@ -963,9 +963,9 @@ The shared-art source reports pass on both systems. Snow's unique raw-bytes call
 
 Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md` next. Run `scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py` statically on Snow and Lion and return the two text reports. Do not launch the PPC subject, alter records/resources/geometry, broaden bitmap-info or CGS rules, change hit handling, or modify XNU before the exact seven record geometries and raw-byte slots are compared.
 
-## Titlebar interaction current step — runtime placement preflight
+## Titlebar interaction current step — static near-stub interposition audit
 
-Follow docs/ppc-carbon-gui-event-unflip-patch-placement-preflight.md and return the Snow and Lion preflight reports specified there. The procedure is observational and keeps the existing compatibility stack and system files unchanged.
+The corrected v2 placement preflights pass on Snow and Lion and both return `placement_route=NONE_OBSERVED`: the inert marker is outside PPC branch range and no unmapped in-range page candidate was found. Follow `docs/ppc-carbon-gui-event-unflip-near-stub-interposition-audit.md` and return the Snow and Lion near-stub reports specified there. This step is static/read-only; it inventories existing CoreGraphics stubs and imported targets while leaving CoreGraphics text, page protections, the original GUI, and XNU unchanged.
 
 # Test plan
 
