@@ -2,13 +2,21 @@
 
 ## Status
 
-**NEXT STEP — STATIC-ONLY INVENTORY AFTER `placement_route=NONE_OBSERVED`.**
+**COMPLETE — `_dladdr` IS THE SELECTED LR-PRESERVING EXISTING-STUB ROUTE.**
 
 The corrected patch-placement preflight has now passed on both pinned systems. Snow Leopard PPC and Lion translated PPC resolve the same audited event-unflip branch word and target. On Lion the callsite is currently read-only but has maximum `rwx` protection; that is only a VM-protection observation and does not authorize a text write. The separately loaded marker is far outside the PPC relative-branch window, no unmapped page-sized candidate was observed in that window, and the placement result is `NONE_OBSERVED` on both systems. The preflight performed no text write, `vm_protect`, `vm_allocate`, executable mapping, private CoreGraphics call, or original GUI launch.
 
 That closes the direct-helper and near-page branches for now. Do not jump from `callsite_region_max_write=YES` to a text-writability experiment. The next branch is static: inventory the existing CoreGraphics symbol stubs already resident near the Snow-PPC callsite and determine whether one can serve as a process-local indirection point for an exact-return-address interposer. The intended future shape, if the static evidence supports it, is one patched PPC `bl` from the already-audited callsite to an existing imported-symbol stub; the stub itself and its indirect-symbol entry remain unchanged; an interposed target recognizes only return address `0x0014c390` as the event-unflip repair call and forwards every non-target invocation to the original imported function unchanged.
 
 This audit does **not** choose or load an interposer, modify the callsite, change page protections, or run the GUI subject. It only captures the stub table, stub references, imported-symbol inventory, and raw stub-section words needed to select or reject that route.
+
+## Observed result — `_dladdr` selected
+
+Both returned captures pass with the pinned images and zero mutation. Snow's `__TEXT,__picsymbolstub1` contains 615 32-byte entries. The `_dladdr` entry is at `0x006710dc`; its raw body saves LR, restores LR before the indirect transfer, loads the lazy target into CTR, and ends in `bctr`. The disassembly contains exactly one existing CoreGraphics branch through that stub, at `0x001664d8`, and the import is `undefined [lazy bound]` from libSystem.
+
+From the already-audited event-unflip callsite `0x0014c38c`, the displacement to the `_dladdr` stub is `0x00524d50`, producing PPC `bl` word `0x48524d51`. This is comfortably inside the +/-32 MiB range. `dladdr(const void *, Dl_info *)` also gives the narrowest practical ABI among the one-call candidates: two GPR arguments and an integer return, with observational normal behavior. A future process-local `__interpose` replacement can guard only return address `0x0014c390` and forward every other call through the original replacee, following the same replacee-preservation pattern already used by the accepted titlebar `bsearch` interposer.
+
+The route is therefore selected without changing any stub or indirect-symbol entry. The next unresolved gate is reversible loaded-text mutability, not placement or interposition semantics. Follow `docs/ppc-carbon-gui-event-unflip-dladdr-write-restore-preflight.md`. That procedure writes the selected branch word only into the process-local loaded callsite, verifies readback, immediately restores `0x4bff702d`, restores the original page protection, and never executes the changed instruction or loads a new `dladdr` interposer.
 
 ## Current evidence being advanced
 
@@ -128,7 +136,7 @@ The returned Snow report will be used to answer five questions before any live m
 4. Can the route keep the chosen stub bytes and indirect-symbol entry untouched, so the only eventual CoreGraphics text mutation remains the already-audited one-word callsite?
 5. If a candidate survives, what separate reversible proof is required before any callsite text write or process-local interposer is attempted?
 
-A PASS from this capture does **not** authorize the route. It only provides enough static evidence to select or reject a specific imported-symbol stub and to write the next reversible proof procedure.
+The returned evidence selects `_dladdr` as the route, but still does **not** authorize executing that route. The next reversible proof is `docs/ppc-carbon-gui-event-unflip-dladdr-write-restore-preflight.md`; it must prove exact write/readback/restoration and final protection restoration before any `_dladdr` interposer or functional display helper is loaded.
 
 ## Safety boundary
 
