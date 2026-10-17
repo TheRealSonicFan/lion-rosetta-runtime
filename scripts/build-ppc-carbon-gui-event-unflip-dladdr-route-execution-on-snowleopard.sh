@@ -3,15 +3,25 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-SRC="$ROOT/tests/ppc-carbon-gui-event-unflip-dladdr-route-execution-preflight.c"
+
+INTERPOSER_SRC="$ROOT/tests/ppc-carbon-gui-event-unflip-dladdr-route-leaf-interposer.c"
+PROBE_SRC="$ROOT/tests/ppc-carbon-gui-event-unflip-dladdr-route-execution-preflight.c"
 PATCH_DYLINKER="$SCRIPT_DIR/patch-ppc-load-dylinker.py"
-OUT="${1:-$ROOT/ppc-carbon-gui-event-unflip-dladdr-route-execution-probe-private-dyld}"
-EXPECTED_CONTRACT="carbon-gui-event-unflip-dladdr-route-execution-v2"
 
-[ -f "$SRC" ] || { echo "error: missing source: $SRC" >&2; exit 66; }
-[ -f "$PATCH_DYLINKER" ] || { echo "error: missing dylinker helper: $PATCH_DYLINKER" >&2; exit 66; }
+INTERPOSER_OUT="${1:-$ROOT/ppc-carbon-gui-event-unflip-dladdr-route-leaf-interposer.dylib}"
+PROBE_OUT="${2:-$ROOT/ppc-carbon-gui-event-unflip-dladdr-route-execution-probe-private-dyld}"
 
-sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
+EXPECTED_BUILD_ID="event-unflip-dladdr-route-leaf-guard-v1"
+EXPECTED_PROBE_CONTRACT="carbon-gui-event-unflip-dladdr-route-execution-v3"
+
+for p in "$INTERPOSER_SRC" "$PROBE_SRC" "$PATCH_DYLINKER"; do
+    [ -f "$p" ] || { echo "error: missing input: $p" >&2; exit 66; }
+done
+
+sha256() {
+    /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'
+}
+
 resolve_compiler() {
     for candidate in "${CC:-}" /Developer-3.2.6/usr/bin/gcc-4.2 /Developer-3.2.6/usr/bin/gcc-4.0 /Developer/usr/bin/gcc-4.2 /Developer/usr/bin/gcc-4.0 /usr/bin/gcc-4.2 /usr/bin/gcc-4.0 /usr/bin/gcc /usr/bin/cc; do
         [ -n "$candidate" ] || continue
@@ -19,6 +29,7 @@ resolve_compiler() {
     done
     return 1
 }
+
 is_ppc32() {
     file="$1"
     if [ -x /usr/bin/lipo ]; then
@@ -33,38 +44,113 @@ is_ppc32() {
 }
 
 CC_SELECTED="$(resolve_compiler)" || { echo "error: no PowerPC-capable compiler found" >&2; exit 69; }
-SOURCE_SHA="$(sha256 "$SRC")"
+INTERPOSER_SOURCE_SHA="$(sha256 "$INTERPOSER_SRC")"
+PROBE_SOURCE_SHA="$(sha256 "$PROBE_SRC")"
 
 echo "compiler=$CC_SELECTED"
-echo "source_sha256=$SOURCE_SHA"
-"$CC_SELECTED" -arch ppc -mmacosx-version-min=10.5 "$SRC" -framework ApplicationServices -o "$OUT"
-/bin/chmod 755 "$OUT"
-/usr/bin/python "$PATCH_DYLINKER" "$OUT" /usr/oah/dyld
+echo "interposer_source_sha256=$INTERPOSER_SOURCE_SHA"
+echo "probe_source_sha256=$PROBE_SOURCE_SHA"
 
-is_ppc32 "$OUT" || { echo "error: probe is not 32-bit PowerPC" >&2; exit 70; }
-/usr/bin/strings "$OUT" | /usr/bin/grep -Fq "$EXPECTED_CONTRACT" || { echo "error: probe contract marker missing" >&2; exit 71; }
-OT="$(/usr/bin/otool -l "$OUT" | /usr/bin/grep -A3 LC_LOAD_DYLINKER || true)"
-echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || { echo "error: probe LC_LOAD_DYLINKER is not /usr/oah/dyld" >&2; exit 71; }
+"$CC_SELECTED" -arch ppc -mmacosx-version-min=10.5 -dynamiclib \
+    "$INTERPOSER_SRC" \
+    -install_name "@loader_path/$(/usr/bin/basename "$INTERPOSER_OUT")" \
+    -o "$INTERPOSER_OUT"
 
-OUT_SHA="$(sha256 "$OUT")"
-echo "$OUT_SHA  $OUT" > "$OUT.sha256"
+"$CC_SELECTED" -arch ppc -mmacosx-version-min=10.5 \
+    "$PROBE_SRC" -framework ApplicationServices -o "$PROBE_OUT"
+
+/bin/chmod 755 "$INTERPOSER_OUT" "$PROBE_OUT"
+/usr/bin/python "$PATCH_DYLINKER" "$PROBE_OUT" /usr/oah/dyld
+
+is_ppc32 "$INTERPOSER_OUT" || { echo "error: route leaf interposer is not 32-bit PowerPC" >&2; exit 70; }
+is_ppc32 "$PROBE_OUT" || { echo "error: probe is not 32-bit PowerPC" >&2; exit 70; }
+
+/usr/bin/strings "$INTERPOSER_OUT" | /usr/bin/grep -Fq \
+    "PM_EVENT_UNFLIP_DLADDR_ROUTE_GUARD_BUILD_ID:$EXPECTED_BUILD_ID" || {
+    echo "error: route leaf interposer build marker missing" >&2
+    exit 71
+}
+/usr/bin/strings "$PROBE_OUT" | /usr/bin/grep -Fq "$EXPECTED_PROBE_CONTRACT" || {
+    echo "error: probe contract marker missing" >&2
+    exit 71
+}
+
+INTERPOSE_SECTION="$(/usr/bin/otool -l "$INTERPOSER_OUT" | /usr/bin/grep -A10 -B2 '__interpose' || true)"
+echo "$INTERPOSE_SECTION" | /usr/bin/grep -q '__interpose' || {
+    echo "error: route leaf interposer has no __DATA,__interpose section" >&2
+    exit 71
+}
+echo "$INTERPOSE_SECTION" | /usr/bin/grep -Fq 'size 0x00000008' || {
+    echo "error: __DATA,__interpose is not exactly one PPC tuple" >&2
+    exit 71
+}
+
+for symbol in \
+    rosetta_event_unflip_dladdr_guard_target_return \
+    rosetta_event_unflip_dladdr_guard_call_original \
+    rosetta_event_unflip_dladdr_guard_get_counts \
+    rosetta_event_unflip_dladdr_guard_target_leaf_contract
+do
+    /usr/bin/nm -g "$INTERPOSER_OUT" | /usr/bin/grep -q "$symbol" || {
+        echo "error: required route leaf helper is not exported: $symbol" >&2
+        exit 72
+    }
+done
+
+OT="$(/usr/bin/otool -l "$PROBE_OUT" | /usr/bin/grep -A3 LC_LOAD_DYLINKER || true)"
+echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || {
+    echo "error: probe LC_LOAD_DYLINKER is not /usr/oah/dyld" >&2
+    exit 73
+}
+
+INTERPOSER_SHA="$(sha256 "$INTERPOSER_OUT")"
+PROBE_SHA="$(sha256 "$PROBE_OUT")"
+echo "$INTERPOSER_SHA  $INTERPOSER_OUT" > "$INTERPOSER_OUT.sha256"
+echo "$PROBE_SHA  $PROBE_OUT" > "$PROBE_OUT.sha256"
+
 {
-    echo "== event-unflip dladdr route execution probe build =="
-    echo "source=$SRC"
-    echo "source_sha256=$SOURCE_SHA"
+    echo "== event-unflip dladdr route leaf interposer build =="
+    echo "source=$INTERPOSER_SRC"
+    echo "source_sha256=$INTERPOSER_SOURCE_SHA"
     echo "source_provenance_policy=MODERN_STAGING_SYSTEM_SHA256"
     echo "legacy_git_blob_check=NOT_REQUIRED"
-    echo "contract=$EXPECTED_CONTRACT"
+    echo "build_id=$EXPECTED_BUILD_ID"
+    echo "target_path_contract=EXACT_RETURN_LEAF_NO_SUBCALLS"
     echo "compiler=$CC_SELECTED"
-    /usr/bin/file "$OUT"
-    /usr/bin/lipo -info "$OUT" 2>/dev/null || true
-    /usr/bin/otool -hv "$OUT"
-    /usr/bin/otool -l "$OUT" | /usr/bin/grep -A3 LC_LOAD_DYLINKER || true
-    /usr/bin/otool -L "$OUT"
-    echo "sha256=$OUT_SHA"
-} > "$OUT.info.txt"
+    /usr/bin/file "$INTERPOSER_OUT"
+    /usr/bin/lipo -info "$INTERPOSER_OUT" 2>/dev/null || true
+    /usr/bin/otool -L "$INTERPOSER_OUT"
+    echo
+    echo "== interpose section =="
+    echo "$INTERPOSE_SECTION"
+    echo
+    echo "== exported route helpers =="
+    /usr/bin/nm -g "$INTERPOSER_OUT" | /usr/bin/grep 'rosetta_event_unflip_dladdr_guard_' || true
+    echo
+    echo "sha256=$INTERPOSER_SHA"
+} > "$INTERPOSER_OUT.info.txt"
+
+{
+    echo "== event-unflip dladdr route execution probe build =="
+    echo "source=$PROBE_SRC"
+    echo "source_sha256=$PROBE_SOURCE_SHA"
+    echo "source_provenance_policy=MODERN_STAGING_SYSTEM_SHA256"
+    echo "legacy_git_blob_check=NOT_REQUIRED"
+    echo "contract=$EXPECTED_PROBE_CONTRACT"
+    echo "compiler=$CC_SELECTED"
+    /usr/bin/file "$PROBE_OUT"
+    /usr/bin/lipo -info "$PROBE_OUT" 2>/dev/null || true
+    /usr/bin/otool -hv "$PROBE_OUT"
+    /usr/bin/otool -l "$PROBE_OUT" | /usr/bin/grep -A3 LC_LOAD_DYLINKER || true
+    /usr/bin/otool -L "$PROBE_OUT"
+    echo
+    echo "sha256=$PROBE_SHA"
+} > "$PROBE_OUT.info.txt"
 
 echo "Created:"
-echo "  $OUT"
-echo "  $OUT.info.txt"
-echo "  $OUT.sha256"
+echo "  $INTERPOSER_OUT"
+echo "  $INTERPOSER_OUT.info.txt"
+echo "  $INTERPOSER_OUT.sha256"
+echo "  $PROBE_OUT"
+echo "  $PROBE_OUT.info.txt"
+echo "  $PROBE_OUT.sha256"
