@@ -796,11 +796,11 @@ The completed shared-art source audit now identifies the legacy lookup contract 
 
 Current `main` advances to `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md`. Run the new static analyzer once on Snow Leopard and once on Lion and return `ppc-carbon-gui-coreui-windowframe-sartfile-records-snow.txt` and `ppc-carbon-gui-coreui-windowframe-sartfile-records-lion.txt`. The audit decodes the exact seven frame records and both raw-byte constructor slots so the five Snow 11x11 images can be mapped to the Lion 256x256 / 2x62 records before any live trace or record adaptation is considered.
 
-## Titlebar interaction boundary — `dladdr` guard preflight next
+## Titlebar interaction boundary — fail-closed patched-route execution next
 
-The event-unflip route is now closed through reversible loaded-text mutability. Snow and Lion both accepted the exact candidate branch word `0x48524d51` in the process-local callsite, read it back, restored original word `0x4bff702d`, restored the original `r--` protection, and ended with the callsite unchanged; neither run executed the candidate instruction or the selected `_dladdr` stub.
+The event-unflip route has now passed reversible loaded-text mutability **and** the selected `_dladdr` binding/guard gate on both pinned systems. The exact return guard resolves to the audited callsite return, rejects adjacent addresses, the selected CoreGraphics `_dladdr` stub reaches the interposer, ordinary calls forward through the saved replacee with identical `Dl_info`, the target-wrapper count remains zero, and protected hashes are unchanged.
 
-Current `main` therefore advances to `docs/ppc-carbon-gui-event-unflip-dladdr-guard-preflight.md`. The new proof-only PPC `__DATA,__interpose` dylib preserves the original `dladdr` replacee, dynamically resolves the exact event-unflip return address, tests exact and adjacent-address guard behavior, and proves Snow passthrough plus Lion binding under the accepted compatibility stack without patching CoreGraphics, running the original GUI, or implementing the functional display-source scan.
+Current `main` advances to `docs/ppc-carbon-gui-event-unflip-dladdr-route-execution-preflight.md`. That procedure reuses the exact passing guard interposer, temporarily installs candidate word `0x48524d51`, performs data/instruction-cache synchronization, restores the callsite page to its original protection before execution, invokes the containing event-unflip function exactly once with a synthetic zero-cache event, requires one fail-closed target-wrapper hit and preserved failure-path output, then restores original word `0x4bff702d` and page protection. The functional display-source helper, original GUI, and any XNU change remain out of scope.
 
 # lion-rosetta-runtime
 
