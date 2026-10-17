@@ -48,6 +48,8 @@ On Snow Leopard 10.6.8 / 10K549:
 /bin/bash ./scripts/build-ppc-carbon-gui-event-unflip-patch-placement-preflight-on-snowleopard.sh
 ~~~
 
+The build now also verifies that the probe embeds the v2 contract marker and that the inert marker symbol is globally exported before writing sidecars.
+
 This creates:
 
 ~~~text
@@ -70,7 +72,9 @@ Run:
 Require at minimum:
 
 ~~~text
+preflight_contract=carbon-gui-event-unflip-patch-placement-preflight-v2
 preflight_mode=snow-ppc-control
+runtime_regions_resolved=YES
 main_prologue_match=YES
 bounds_call_runtime_word_match=YES
 decoded_bounds_target_match=YES
@@ -78,6 +82,8 @@ coregraphics_text_write_attempts=0
 vm_protect_attempts=0
 vm_allocate_attempts=0
 temporary_executable_mapping_attempts=0
+private_coregraphics_call_count=0
+original_gui_launch_count=0
 loaded_callsite_bytes_unchanged=YES
 preflight_complete=YES
 protected_hashes_unchanged=YES
@@ -102,6 +108,7 @@ The Lion runner uses only the already accepted Process Manager/CoreServices/Secu
 Require at minimum:
 
 ~~~text
+preflight_contract=carbon-gui-event-unflip-patch-placement-preflight-v2
 preflight_mode=lion-ppc-translated
 main_prologue_match=YES
 bounds_call_runtime_word_match=YES
@@ -111,6 +118,8 @@ coregraphics_text_write_attempts=0
 vm_protect_attempts=0
 vm_allocate_attempts=0
 temporary_executable_mapping_attempts=0
+private_coregraphics_call_count=0
+original_gui_launch_count=0
 loaded_callsite_bytes_unchanged=YES
 preflight_complete=YES
 protected_hashes_unchanged=YES
