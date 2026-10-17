@@ -173,9 +173,9 @@ If Lion fails, return the Lion report without rerunning or broadening the projec
 
 The Snow and Lion one-record proof remains complete: the private +0x1c Snow view repairs the translated PPC main-display lookup itself, and restoration intentionally returns the public Lion result to zero afterward.
 
-The subsequent integration-seam, import-closure, DragWindow-boundary, image-local repair-surface, direct-source helper-contract, callsite-patchability, corrected v2 placement preflight, near-stub audit, and reversible `_dladdr` route write/restore proof are now complete. The candidate word `0x48524d51` can be installed process-locally and the original `0x4bff702d` plus page protection restored before execution. The next controlled step is `docs/ppc-carbon-gui-event-unflip-dladdr-guard-preflight.md`, which proves only interposer binding, original-`dladdr` forwarding, and exact return-address classification while keeping the callsite untouched.
+The subsequent integration-seam, import-closure, DragWindow-boundary, image-local repair-surface, direct-source helper-contract, callsite-patchability, corrected v2 placement preflight, near-stub audit, reversible `_dladdr` route write/restore proof, and `_dladdr` binding/guard preflight are now complete. The selected CoreGraphics stub reaches the interposer with ordinary-call equivalence through the saved replacee, and the exact target guard accepts only the audited event-unflip return address while target execution remains zero. The next controlled step is `docs/ppc-carbon-gui-event-unflip-dladdr-route-execution-preflight.md`, which installs the candidate word only long enough to execute one synthetic fail-closed event-unflip call, then restores the original word and protection.
 
-No functional display helper, patched-route execution, persistent projection, original GUI run, or XNU change is authorized until that binding/guard evidence is reviewed.
+No functional display helper, original GUI run, persistent projection, or XNU change is authorized until that real route-execution evidence is reviewed.
 
 ## Safety boundary
 
