@@ -6,7 +6,7 @@ ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SRC="$ROOT/tests/ppc-carbon-gui-event-unflip-dladdr-route-execution-preflight.c"
 PATCH_DYLINKER="$SCRIPT_DIR/patch-ppc-load-dylinker.py"
 OUT="${1:-$ROOT/ppc-carbon-gui-event-unflip-dladdr-route-execution-probe-private-dyld}"
-EXPECTED_CONTRACT="carbon-gui-event-unflip-dladdr-route-execution-v1"
+EXPECTED_CONTRACT="carbon-gui-event-unflip-dladdr-route-execution-v2"
 
 [ -f "$SRC" ] || { echo "error: missing source: $SRC" >&2; exit 66; }
 [ -f "$PATCH_DYLINKER" ] || { echo "error: missing dylinker helper: $PATCH_DYLINKER" >&2; exit 66; }
