@@ -402,21 +402,18 @@ def main():
                     line(fp, "== Reachable unresolved calls ==")
                     line(fp, "reachable_unresolved_call_count=%d" %
                          len(unresolved_hits))
-                    indirect_count = 0
-                    direct_count = 0
-                    for caller, kind, name, addr, raw in unresolved_hits[:600]:
-                        if kind == "unresolved_indirect":
-                            indirect_count += 1
-                        else:
-                            direct_count += 1
-                        line(fp,
-                             "unresolved_call=%s caller=%s@0x%x call_site=0x%x target=%s raw=%s" %
-                             (kind, caller[1], caller[0], addr,
-                              name if name is not None else "NONE", raw))
+                    indirect_count = len([x for x in unresolved_hits
+                                          if x[1] == "unresolved_indirect"])
+                    direct_count = len(unresolved_hits) - indirect_count
                     line(fp, "reachable_unresolved_indirect_call_count=%d" %
                          indirect_count)
                     line(fp, "reachable_unresolved_direct_call_count=%d" %
                          direct_count)
+                    for caller, kind, name, addr, raw in unresolved_hits[:600]:
+                        line(fp,
+                             "unresolved_call=%s caller=%s@0x%x call_site=0x%x target=%s raw=%s" %
+                             (kind, caller[1], caller[0], addr,
+                              name if name is not None else "NONE", raw))
 
                     line(fp)
                     line(fp, "== Closure interpretation ==")
