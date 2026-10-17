@@ -103,9 +103,9 @@ ppc-carbon-gui-event-unflip-callsite-patchability-lion.txt
 
 The one-callsite branch advanced through the corrected v2 runtime placement preflight in `docs/ppc-carbon-gui-event-unflip-patch-placement-preflight.md`. Both returned reports pass, preserve the exact branch word/decoded target, and return `placement_route=NONE_OBSERVED`: the inert marker is outside the PPC relative-branch window and no unmapped page-sized candidate is present in range.
 
-The subsequent near-stub capture selects the existing Snow-PPC `_dladdr` stub at `0x006710dc`, and the follow-on reversible write/restore proof now passes on both pinned systems: candidate word `0x48524d51` can be installed and read back process-locally, then original word `0x4bff702d` and the original page protection are restored before execution. The authoritative next step is `docs/ppc-carbon-gui-event-unflip-dladdr-guard-preflight.md`, which leaves the callsite untouched and proves the selected interposer's original-`dladdr` forwarding plus exact return-address guard.
+The subsequent near-stub capture selects the existing Snow-PPC `_dladdr` stub at `0x006710dc`; reversible write/restore passes on both pinned systems; and the follow-on binding/guard preflight also passes. The selected stub reaches the proof interposer, ordinary `dladdr` behavior is preserved through the saved replacee, the exact event-unflip return address is accepted while adjacent addresses are rejected, and the target-wrapper count remains zero. The authoritative next step is `docs/ppc-carbon-gui-event-unflip-dladdr-route-execution-preflight.md`, which executes the actual patched callsite once on a synthetic event under the unchanged fail-closed wrapper, then restores the original word and protection.
 
-No functional source helper, patched-route execution, original GUI launch, persistent CoreGraphics modification, or XNU change is authorized by this transition.
+No functional source helper, original GUI launch, persistent CoreGraphics modification, or XNU change is authorized by this transition.
 ## Safety boundary
 
 - Do not launch the original PPC Carbon GUI subject.
