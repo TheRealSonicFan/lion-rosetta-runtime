@@ -1,0 +1,122 @@
+# PPC Carbon GUI event-unflip callsite patchability audit
+
+## Status
+
+**NEXT STEP — PROVE THE ZERO-CACHE REPAIR CAN BE REDUCED TO ONE PPC CALLSITE BEFORE ANY TEXT WRITE OR HELPER BUILD.**
+
+The direct-source helper contract reports pass on both pinned releases. The source-only branch is now viable at the semantic/lifecycle level: the native Lion main/master/bounds field sets are closed, Lion bounds has no Snow local-entry +0x48 dependency, and display notifications enter _updateAllDisplayInfoAsNeeded under the display lock. The update path may temporarily unlock around mapping initialization or _CGSReleaseAllDisplays, but it reacquires the display lock before returning; server shutdown separately releases displays, frees mapping state, and zeros the source globals. A helper must therefore call the normal update path, re-resolve the active source only after update has returned, fail closed if source state is absent, scan read-only while locked, and never retain a source pointer across calls.
+
+The exact Snow zero-cache body exposes a narrower patch surface than the previous larger-block idea. _CGSGetUnflippedEventLocation calls _CGSMainDisplayID, immediately places its stack CGRect buffer in r4, then directly calls _CGSGetDisplayBounds. The caller already checks the returned CGError, caches the resulting bounds height at event +0xc6 on success, and preserves its existing failure behavior otherwise. A replacement at the single _CGSGetDisplayBounds call can therefore keep the entire event-unflip control flow intact: the helper may ignore the known-bad display ID in r3, fill the existing CGRect * in r4 from the Lion source scan, and return the same success/failure convention. _CGSMainDisplayID may remain unmodified; its zero result is simply not trusted by this one callsite.
+
+This audit is still read-only. It proves the exact callsite bytes and ABI surface but does not authorize writing CoreGraphics text, allocating a branch island, or loading a helper.
+
+## Prepared analyzer
+
+Use:
+
+~~~text
+scripts/audit-ppc-carbon-gui-event-unflip-callsite-patchability.py
+analyzer_version=1
+audit_contract=carbon-gui-event-unflip-callsite-patchability-v1
+~~~
+
+The analyzer verifies the pinned CoreGraphics slice, resolves the exact event-unflip/main/bounds callsites, maps the candidate instruction back to the Mach-O __TEXT,__text bytes, verifies the caller-owned bounds buffer/cache contract, and records the unresolved runtime constraints: PPC relative-branch reachability and loaded-text writability.
+
+Pinned slices remain:
+
+~~~text
+Snow 10.6.8 / 10K549, ppc7400
+83799ea11d2bb3b15fdc25974f47cf499178f3e1362d2e48e3cc0e1a2108572a
+
+Lion 10.7.5 / 11G63, i386
+4859edced4b9488d887f1243a9809d325e14dd12f7051815ba9f1f7875bbab7d
+~~~
+
+## Phase A — Snow Leopard PPC
+
+Run:
+
+~~~sh
+/usr/bin/python ./scripts/audit-ppc-carbon-gui-event-unflip-callsite-patchability.py \
+  ./ppc-carbon-gui-event-unflip-callsite-patchability-snow.txt
+~~~
+
+Require:
+
+~~~text
+mode=snow
+slice_exact=YES
+main_call_count=1
+bounds_call_count=1
+snow_main_to_bounds_sequence_exact=YES
+snow_bounds_return_status_checked_in_r3=YES
+event_cache_offset=0xc6 present=YES
+bounds_buffer_offset=0x50 present=YES
+bounds_height_offset=0x5c present=YES
+candidate_patch_scope=ONE_PPC_CALL_INSTRUCTION
+candidate_requires_global_CGSMainDisplayID_patch=NO
+candidate_requires_global_CGSGetDisplayBounds_patch=NO
+direct_branch_to_future_helper_reachability=UNPROVEN
+runtime_text_writability=UNPROVEN
+event_unflip_callsite_patchability_audit_exact=YES
+RESULT: PASS
+~~~
+
+If Snow fails, stop and return only the Snow report.
+
+## Phase B — Lion native reference
+
+Only after Snow passes, run:
+
+~~~sh
+/usr/bin/python ./scripts/audit-ppc-carbon-gui-event-unflip-callsite-patchability.py \
+  ./ppc-carbon-gui-event-unflip-callsite-patchability-lion.txt
+~~~
+
+Require:
+
+~~~text
+mode=lion
+slice_exact=YES
+main_call_count=1
+bounds_call_count=1
+event_cache_offset=0xbe present=YES
+bounds_buffer_offset=0xe8 present=YES
+bounds_height_offset=0xf4 present=YES
+lion_reference_same_zero_cache_shape=YES
+lion_is_patch_target=NO
+event_unflip_callsite_patchability_audit_exact=YES
+RESULT: PASS
+~~~
+
+## Return evidence
+
+Return only:
+
+~~~text
+ppc-carbon-gui-event-unflip-callsite-patchability-snow.txt
+ppc-carbon-gui-event-unflip-callsite-patchability-lion.txt
+~~~
+
+## Decision gate after the audit
+
+If the Snow callsite is exactly one replaceable PPC bl with the existing r4 = CGRect * output and r3 = CGError result contract intact, the next step will be a passive runtime patch-placement preflight, not a functional patch. That preflight must establish loaded CoreGraphics text address/protection, verify the original four instruction bytes, and find a process-local executable trampoline placement within PPC relative-branch range without modifying the shared-cache file or any other system image.
+
+Only after that placement gate passes may a proof-only helper be built. The helper must be translated-PPC-on-Lion-only, re-resolve source state after the normal update path while locked, read Lion records with native 0x17c stride and the audited byte-order rules, fill only the caller-provided stack CGRect, return a normal CGError, and leave all display/source/local state untouched.
+
+If a near trampoline cannot be guaranteed safely, do not broaden to a global _CGSGetDisplayBounds hook automatically. Review an exact-return-address function-prologue hook only as a separate alternative, with the original function behavior preserved for every other caller.
+
+## Safety boundary
+
+- Do not launch the original PPC Carbon GUI subject.
+- Do not create, move, drag, or click a window.
+- Do not patch CoreGraphics or HIToolbox.
+- Do not allocate a branch island or executable trampoline.
+- Do not build or load the source helper yet.
+- Do not modify process-local display pointers.
+- Do not persist or broaden the one-record projection.
+- Do not mutate server-owned display shared memory.
+- Do not normalize or substitute display IDs.
+- Do not rewrite event or movement payloads.
+- Keep the accepted compatibility stack unchanged.
+- Do not modify WindowServer, Rosetta caches, dyld, any shared-cache file, or XNU.
