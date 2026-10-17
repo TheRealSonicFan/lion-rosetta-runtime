@@ -173,9 +173,9 @@ If Lion fails, return the Lion report without rerunning or broadening the projec
 
 The Snow and Lion one-record proof remains complete: the private +0x1c Snow view repairs the translated PPC main-display lookup itself, and restoration intentionally returns the public Lion result to zero afterward.
 
-The subsequent integration-seam, import-closure, and DragWindow boundary audits are now complete. The public `_DragWindow -> _CGMainDisplayID` call is only caller-bounds setup and does not control the later private event-unflip fallback. The returned bounds bodies also show a second record-layout differential: display geometry shifts by +0x0c while the main-lookup identity/status window shifts by +0x1c. The next static step is docs/ppc-carbon-gui-image-local-display-repair-surface-audit.md.
+The subsequent integration-seam, import-closure, DragWindow-boundary, and image-local repair-surface audits are now complete. The field-only patch branch is closed because Snow's 0x150 source stride cannot address Lion's 0x17c records correctly for count>1, while the native Lion master/bounds semantics remain narrow enough to justify one source-only lifecycle audit. The next static step is docs/ppc-carbon-gui-event-unflip-direct-source-helper-contract-audit.md.
 
-No CoreGraphics/HIToolbox patch, persistent projection, original GUI rerun, display-ID substitution/normalization, or XNU change is authorized until that repair surface is closed.
+No CoreGraphics/HIToolbox patch, helper injection, persistent projection, original GUI rerun, display-ID substitution/normalization, or XNU change is authorized until that source-only contract is closed.
 
 ## Safety boundary
 
