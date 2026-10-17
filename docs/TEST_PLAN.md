@@ -963,9 +963,9 @@ The shared-art source reports pass on both systems. Snow's unique raw-bytes call
 
 Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md` next. Run `scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py` statically on Snow and Lion and return the two text reports. Do not launch the PPC subject, alter records/resources/geometry, broaden bitmap-info or CGS rules, change hit handling, or modify XNU before the exact seven record geometries and raw-byte slots are compared.
 
-## Titlebar interaction current step — `dladdr` binding/guard preflight
+## Titlebar interaction current step — fail-closed patched-route execution
 
-The selected `_dladdr` route has now passed reversible write/readback/restore on both Snow and Lion: the exact candidate word `0x48524d51` can be installed process-locally and the original `0x4bff702d` plus `r--` protection can be restored before execution. Follow `docs/ppc-carbon-gui-event-unflip-dladdr-guard-preflight.md` next. Build the proof-only PPC interposer and probe once on Snow, require Snow passthrough and exact/adjacent guard classification, transfer the exact artifacts to Lion, then require interposer binding and ordinary `dladdr` equivalence under the accepted stack while the target-wrapper count remains zero. Do not patch the callsite, implement the functional source helper, launch the original GUI, or change XNU in this step.
+The selected `_dladdr` route has now passed reversible write/readback/restore and the binding/guard preflight on both Snow and Lion: the exact guard accepts only the audited return address, the selected CoreGraphics stub reaches the interposer, ordinary calls forward identically through the saved `dladdr` replacee, target-wrapper count remains zero, and protected hashes are unchanged. Follow `docs/ppc-carbon-gui-event-unflip-dladdr-route-execution-preflight.md` next. Reuse the exact passing guard interposer, build only the new PPC route-execution probe on Snow, require one synthetic fail-closed target hit with the callsite page returned to its original protection before execution and restored afterward, then transfer the exact probe to Lion and repeat under the accepted stack. Do not implement the functional source helper, launch the original GUI, interact with a real window, or change XNU in this step.
 
 # Test plan
 
