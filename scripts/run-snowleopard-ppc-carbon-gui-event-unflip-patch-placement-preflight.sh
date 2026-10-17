@@ -23,6 +23,7 @@ is_ppc32() {
         /usr/bin/lipo "$file" -verify_arch ppc >/dev/null 2>&1 && return 0
     fi
     desc="$(/usr/bin/file "$file" 2>/dev/null || true)"
+    desc="${desc#*: }"
     echo "$desc" | /usr/bin/grep -Eiq '(^|[^[:alnum:]_])(ppc|powerpc)([^[:alnum:]_]|$)' || return 1
     echo "$desc" | /usr/bin/grep -Eiq 'ppc64|powerpc64' && return 1
     return 0
