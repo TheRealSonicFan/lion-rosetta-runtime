@@ -171,17 +171,11 @@ If Lion fails, return the Lion report without rerunning or broadening the projec
 
 ## Completion result and next step
 
-The Snow and Lion proof reports both pass. The private +0x1c Snow view repairs the translated PPC main-display lookup itself, and the restored state intentionally returns to the original zero public result afterward.
+The Snow and Lion one-record proof remains complete: the private +0x1c Snow view repairs the translated PPC main-display lookup itself, and restoration intentionally returns the public Lion result to zero afterward.
 
-A persistent partial projection remains unsafe because _bindDisplayMapping consumes fields outside the proven 0x20 lookup window and normal update/notification paths can rebind existing local entries. In addition, the historical drag/display audit shows that _CGSGetUnflippedEventLocation reaches _CGSMainDisplayID through an image-local direct branch, so a naive dyld interposer on _CGSMainDisplayID cannot be assumed to cover the failing titlebar path.
+The subsequent integration-seam audit is also complete. It found no named interposable HIToolbox boundary for the seven event-location/display candidates, so the project must not add a naive _CGSMainDisplayID interposer. Because that audit used a preselected candidate list, the next static step is broader rather than live: docs/ppc-carbon-gui-titlebar-coregraphics-import-closure-audit.md enumerates every HIToolbox import that resolves to a CoreGraphics text symbol and computes the direct-call closure from the titlebar tracking roots.
 
-The authoritative next step is:
-
-~~~text
-docs/ppc-carbon-gui-display-shmem-projection-integration-seam-audit.md
-~~~
-
-Run the new static analyzer on Snow Leopard first and Lion second. It will identify whether the actual HIToolbox titlebar path has an imported, interposable event-location/display boundary that can host a future call-scoped repair without exposing a partial projection to bind/rebind or notification-driven lifecycle work. No live adapter, original GUI rerun, CoreGraphics text patch, persistent projection, or XNU change is authorized yet.
+No live adapter, CoreGraphics/HIToolbox patch, persistent projection, original GUI rerun, display-ID substitution/normalization, or XNU change is authorized until that closure is reviewed.
 
 ## Safety boundary
 
