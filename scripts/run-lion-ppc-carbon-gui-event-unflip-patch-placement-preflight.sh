@@ -61,6 +61,8 @@ log "build_version=$BUILD_VERSION"
 for p in "$PROBE" "$PROBE_SHA" "$MARKER" "$MARKER_SHA" "$CORE_COMPAT" "$CORE_SHA_FILE" "$SEC_INTERPOSER" "$SEC_SHA_FILE" "$CGS_INTERPOSER" "$CGS_SHA_FILE" "$KERNEL" "$TRANSLATOR" "$PRIVATE_DYLD" "$ROSETTA_CACHE" "$ROSETTA_CACHE_MAP" "$COREGRAPHICS"; do [ -f "$p" ] || fail "missing required file: $p"; done
 is_ppc32 "$PROBE" || fail "probe is not 32-bit PPC"
 is_ppc32 "$MARKER" || fail "marker is not 32-bit PPC"
+/usr/bin/strings "$PROBE" | /usr/bin/grep -Fq 'carbon-gui-event-unflip-patch-placement-preflight-v2' || fail "probe contract marker is not v2"
+/usr/bin/nm -g "$MARKER" | /usr/bin/grep -q 'rosetta_event_unflip_placement_marker' || fail "placement marker symbol is not globally exported"
 OT="$(/usr/bin/otool -l "$PROBE" | /usr/bin/grep -A3 LC_LOAD_DYLINKER || true)"
 echo "$OT" | /usr/bin/tee -a "$REPORT"
 echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || fail "probe LC_LOAD_DYLINKER is not /usr/oah/dyld"
