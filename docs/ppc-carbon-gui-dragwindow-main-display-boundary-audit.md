@@ -18,6 +18,7 @@ Use:
 scripts/audit-ppc-carbon-gui-dragwindow-main-display-boundary.py
 analyzer_version=1
 audit_contract=carbon-gui-dragwindow-main-display-boundary-v1
+Git blob eb08970243a95f9944ad57ec18ea6e2387daecb9
 ~~~
 
 The analyzer is static-only. It verifies the pinned slices, then:
