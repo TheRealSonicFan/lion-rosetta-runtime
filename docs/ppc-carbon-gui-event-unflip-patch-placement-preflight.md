@@ -14,7 +14,7 @@ This is intentionally non-patching. The probe performs zero CoreGraphics writes,
 
 The returned Snow 10.6.8 / 10K549 and Lion 10.7.5 / 11G63 v2 reports both pass. In both runs the loaded PPC branch word is still `0x4bff702d`, decodes to the audited `_CGSGetDisplayBounds` target, and remains unchanged after the probe. The callsite region is currently `r--` with maximum `rwx`; the inert marker is outside the PPC relative-branch window; no unmapped page-sized candidate was observed within that window; and `placement_route=NONE_OBSERVED`. The Lion runner also confirms the protected compatibility-stack hashes remain unchanged.
 
-`callsite_region_max_write=YES` remains only a protection observation. It does not authorize a text write or a `vm_protect` experiment. Because neither direct marker placement nor an unmapped near page is available, current `main` advances to `docs/ppc-carbon-gui-event-unflip-near-stub-interposition-audit.md`, a static-only inventory of existing CoreGraphics symbol stubs and the exact-return-address interposition route.
+`callsite_region_max_write=YES` remains only a protection observation. It does not authorize a text write or a `vm_protect` experiment. Because neither direct marker placement nor an unmapped near page is available, the subsequent near-stub audit was completed and selected the existing Snow-PPC `_dladdr` stub. The current procedure is now `docs/ppc-carbon-gui-event-unflip-dladdr-write-restore-preflight.md`.
 
 ## Prepared artifacts
 
