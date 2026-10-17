@@ -963,9 +963,9 @@ The shared-art source reports pass on both systems. Snow's unique raw-bytes call
 
 Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md` next. Run `scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py` statically on Snow and Lion and return the two text reports. Do not launch the PPC subject, alter records/resources/geometry, broaden bitmap-info or CGS rules, change hit handling, or modify XNU before the exact seven record geometries and raw-byte slots are compared.
 
-## Titlebar interaction current step — image-local display repair surface audit
+## Titlebar interaction current step — direct-source event-unflip helper contract audit
 
-The DragWindow/main-display reports pass and close public `_CGMainDisplayID` interposition as a sufficient repair: the call is used only to normalize caller drag bounds before tracker construction, while the failing zero-cache path later re-enters private CoreGraphics main-display/bounds code independently. The reports also expose nonuniform record deltas in `_CGSGetDisplayBounds` and retain the known 0x150-vs-0x17c source-stride mismatch.
+The image-local repair-surface reports pass and reject a field-only CoreGraphics repair as count>1 unsafe: Snow local entries are derived from 0x150-byte source records, while Lion uses 0x17c-byte records, and the bounds path also mixes +0x0c geometry shifts with +0x1c identity/status shifts. A persistent partial projection remains unsafe across bind/rebind.
 
-Follow docs/ppc-carbon-gui-image-local-display-repair-surface-audit.md. Run scripts/audit-ppc-carbon-gui-image-local-display-repair-surface.py on Snow and Lion and return ppc-carbon-gui-image-local-display-repair-surface-snow.txt and ppc-carbon-gui-image-local-display-repair-surface-lion.txt. This is static-only and must close main lookup, master-display lookup, bounds fields, lookupDisplay dependencies, and mapping-stride semantics before any translated-PPC CoreGraphics repair or lifecycle projection is selected.
+Follow docs/ppc-carbon-gui-event-unflip-direct-source-helper-contract-audit.md. Run scripts/audit-ppc-carbon-gui-event-unflip-direct-source-helper-contract.py on Snow and Lion and return ppc-carbon-gui-event-unflip-direct-source-helper-contract-snow.txt and ppc-carbon-gui-event-unflip-direct-source-helper-contract-lion.txt. This static-only step must decide whether the zero-cache fallback can read the active Lion source directly with native 0x17c stride and avoid the Snow local mapping entirely before any event-local patchability review is authorized.
 
