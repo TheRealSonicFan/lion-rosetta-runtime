@@ -2,13 +2,19 @@
 
 ## Status
 
-**NEXT STEP — INSPECT THE DIRECT `_DragWindow -> _CGMainDisplayID` CONTRACT BEFORE CHOOSING AN ADAPTER OR IMAGE-LOCAL REPAIR.**
+**COMPLETE — PUBLIC DRAGWINDOW MAIN-DISPLAY CALL IS SETUP-ONLY / IMAGE-LOCAL DISPLAY REPAIR SURFACE NEXT.**
 
 The complete import-closure audits pass on both pinned releases. They overturn the earlier candidate-limited impression that HIToolbox has no relevant CoreGraphics import: HIToolbox imports hundreds of CoreGraphics entry points, and the direct-call closure from the titlebar roots reaches many of them.
 
 The most important new Snow result is concrete and close to the real drag entry point: `_DragWindow` itself directly calls the imported public `_CGMainDisplayID`. That call is interposable at the HIToolbox/CoreGraphics image boundary. However, the known failing zero-cache conversion remains a different sequence inside CoreGraphics: `_CGSGetUnflippedEventLocation` calls private `_CGSMainDisplayID` and then private `_CGSGetDisplayBounds` image-locally. Therefore the existence of the public `_DragWindow` call is not enough to authorize an interposer; the next static step must establish what that result controls, when it is consumed relative to tracker setup, and whether it can affect the later event-unflip fallback at all.
 
 The broad closure is intentionally not treated as a causal call graph. Snow reaches 590 CoreGraphics-import call sites and Lion reaches 627, while both closures also retain many unresolved direct/indirect calls. A reachable import far from the titlebar root is only a candidate. This audit narrows the evidence to the actual `_DragWindow`, tracker, and public/private main-display/bounds bodies.
+
+The returned version-2 reports now resolve the call contract. On both releases, `_DragWindow` uses public `_CGMainDisplayID` only in the optional caller-bounds normalization path: it obtains the main display, immediately derives its display bounds, adjusts/intersects the caller rectangle, and then passes either the original bounds pointer or NULL into the tracker constructor before `TrackWindow` begins. That value is not retained as the later event-unflip display state.
+
+Both reports also prove that public `_CGMainDisplayID` simply enters private `_CGSMainDisplayID`, while the zero-cache event-unflip path independently calls private `_CGSMainDisplayID` and `_CGSGetDisplayBounds` image-locally. The public-interposition branch is therefore closed for the observed failure.
+
+The same reports reveal that a one-function field patch would also be premature: Snow `_CGSGetDisplayBounds` reads geometry fields at `+0xd0..+0xec` and a flag at `+0x115`; Lion uses corresponding geometry at `+0xdc..+0xf8` and flag `+0x131`. The geometry shift is `+0x0c`, not the main-lookup `+0x1c` shift. Current main therefore advances to docs/ppc-carbon-gui-image-local-display-repair-surface-audit.md.
 
 ## Prepared analyzer
 
@@ -102,11 +108,11 @@ ppc-carbon-gui-dragwindow-main-display-boundary-lion.txt
 
 ## Decision gate after the audit
 
-If the Snow `_DragWindow -> _CGMainDisplayID` result is consumed only for initial drag constraints/setup and the later zero-cache event conversion still reaches private `_CGSMainDisplayID` independently inside CoreGraphics, a public `_CGMainDisplayID` interposer is not a sufficient repair for the observed failure. The interposable-seam branch would then be closed for the actual fallback, and the next design review must compare a narrowly justified image-local CoreGraphics repair with a fully specified display-mapping lifecycle projection.
+The returned reports take the setup-only branch. Do not build a public `_CGMainDisplayID` interposer: it cannot substitute for the later image-local `_CGSGetUnflippedEventLocation -> _CGSMainDisplayID -> _CGSGetDisplayBounds` sequence.
 
-If the audit instead proves that the imported public call seeds or controls the exact state consumed by the zero-cache fallback, a call-scoped adapter may be reviewed, but it must still use the proven projection only under the display lock, restore the process-local pointer before unlock, and avoid exposing a partial record to bind/rebind or notification-driven lifecycle work.
+The authoritative next procedure is docs/ppc-carbon-gui-image-local-display-repair-surface-audit.md. That static audit must close `_lookupMainDisplay`, `_lookupMasterDisplay`, `_CGSGetDisplayBounds`, `_lookupDisplay`, and mapping-stride dependencies before choosing a translated-PPC-on-Lion image-local repair or a complete lifecycle projection. A field-only lookup patch is not count>1 safe while Snow mapping entries are derived from 0x150-byte source records and Lion uses 0x17c.
 
-No count>1 or persistent projection is authorized by this audit.
+No CoreGraphics text patch, public interposer, count>1 projection, or persistent projection is authorized yet.
 
 ## Safety boundary
 
