@@ -24,7 +24,7 @@
 #error This preflight is intentionally PowerPC-only.
 #endif
 
-#define PREFLIGHT_CONTRACT "carbon-gui-event-unflip-patch-placement-preflight-v1"
+#define PREFLIGHT_CONTRACT "carbon-gui-event-unflip-patch-placement-preflight-v2"
 #define EXPECTED_MAIN_PROLOGUE 0x7c0802a6U
 #define EXPECTED_BOUNDS_CALL_WORD 0x4bff702dU
 #define EVENT_DELTA_FROM_MAIN 0x00003fac
