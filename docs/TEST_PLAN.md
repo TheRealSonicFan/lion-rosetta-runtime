@@ -963,9 +963,9 @@ The shared-art source reports pass on both systems. Snow's unique raw-bytes call
 
 Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md` next. Run `scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py` statically on Snow and Lion and return the two text reports. Do not launch the PPC subject, alter records/resources/geometry, broaden bitmap-info or CGS rules, change hit handling, or modify XNU before the exact seven record geometries and raw-byte slots are compared.
 
-## Titlebar interaction current step — static near-stub interposition audit
+## Titlebar interaction current step — `dladdr` binding/guard preflight
 
-The near-stub captures pass and select the Snow-PPC CoreGraphics `_dladdr` stub at `0x006710dc`: its 32-byte PIC stub preserves LR and tail-transfers with `bctr`, exactly one existing CoreGraphics call uses it, and the event-unflip callsite can reach it with candidate branch word `0x48524d51`. Follow `docs/ppc-carbon-gui-event-unflip-dladdr-write-restore-preflight.md`. Build the prepared PPC probe on Snow, require the Snow write/readback/restore control to pass, then transfer that exact probe to Lion and run the non-executing reversible-write preflight under the accepted compatibility stack. No `_dladdr` interposer, display helper, original GUI run, persistent patch, or XNU change is authorized yet.
+The selected `_dladdr` route has now passed reversible write/readback/restore on both Snow and Lion: the exact candidate word `0x48524d51` can be installed process-locally and the original `0x4bff702d` plus `r--` protection can be restored before execution. Follow `docs/ppc-carbon-gui-event-unflip-dladdr-guard-preflight.md` next. Build the proof-only PPC interposer and probe once on Snow, require Snow passthrough and exact/adjacent guard classification, transfer the exact artifacts to Lion, then require interposer binding and ordinary `dladdr` equivalence under the accepted stack while the target-wrapper count remains zero. Do not patch the callsite, implement the functional source helper, launch the original GUI, or change XNU in this step.
 
 # Test plan
 
