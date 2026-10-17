@@ -2,6 +2,7 @@
  * Non-patching subject for the proof-only event-unflip dladdr interposer.
  */
 
+#include <ApplicationServices/ApplicationServices.h>
 #include <dlfcn.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -18,6 +19,9 @@ typedef uintptr_t (*target_return_fn)(void);
 typedef int (*classify_fn)(uintptr_t);
 typedef int (*original_dladdr_fn)(const void *, Dl_info *);
 typedef void (*counts_fn)(unsigned int *, unsigned int *);
+
+static CGDirectDisplayID (*volatile force_coregraphics_dependency)(void) =
+    CGMainDisplayID;
 
 static int
 nullable_string_equal(const char *a, const char *b)
@@ -50,6 +54,8 @@ main(void)
     unsigned int target_count;
     int mode_ok;
     int success;
+
+    (void)force_coregraphics_dependency;
 
     printf("== PPC Carbon GUI event-unflip dladdr guard preflight ==\n");
     printf("probe_contract=%s\n", PROBE_CONTRACT);
