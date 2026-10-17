@@ -2,7 +2,7 @@
 
 ## Status
 
-**COMPLETE — NAMED INTERPOSABLE TITLEBAR SEAMS ABSENT / FULL COREGRAPHICS IMPORT CLOSURE NEXT.**
+**COMPLETE — NAMED SEAMS ABSENT; FULL IMPORT CLOSURE FINDS DIRECT SNOW `_DragWindow -> _CGMainDisplayID`.**
 
 The one-record projection proof now passes on both required controls. Snow Leopard PPC returns its normal nonzero main display without any projection. On Lion, translated PPC begins with a zero public main-display result, temporarily installs the already-proven +0x1c semantic window in one process-local record under the display lock, obtains the same nonzero display ID as native Lion, restores the original local pointer before unlock, and leaves the source mapping and protected system state unchanged.
 
@@ -14,7 +14,7 @@ There is a second integration constraint. The historical drag/display audit show
 
 The returned Snow and Lion audits both pass and both report zero named candidate imports and zero candidate call sites in the HIToolbox titlebar families. Snow additionally confirms the three expected image-local CoreGraphics edges. Lion emits those same bodies as numeric direct calls to the exact reported target addresses; the v1 symbolic edge helper therefore prints NO for Lion even though the disassembly preserves the equivalent local calls. That presentation limitation does not change the zero-import conclusion and does not require a rerun.
 
-The named candidate seam is therefore closed, but the broader question is not: v1 only tested seven preselected APIs. Before choosing an image-local CoreGraphics repair or a full display-mapping lifecycle projection, current main now requires a complete HIToolbox-to-CoreGraphics import intersection and reachable direct-call closure from the titlebar tracking roots. The authoritative next procedure is docs/ppc-carbon-gui-titlebar-coregraphics-import-closure-audit.md.
+The candidate-limited seam is closed, and the subsequent full import-closure audit is now complete. It finds many reachable CoreGraphics imports and, most importantly, a direct Snow `_DragWindow -> _CGMainDisplayID` imported call. Current main therefore advances to docs/ppc-carbon-gui-dragwindow-main-display-boundary-audit.md to determine whether that public call is merely drag setup/constraint logic or can influence the later private event-unflip fallback.
 
 ## Prepared analyzer
 
