@@ -18,6 +18,7 @@ Current runtime `main` provides:
 scripts/audit-ppc-carbon-gui-event-unflip-direct-source-helper-contract.py
 analyzer_version=1
 audit_contract=carbon-gui-event-unflip-direct-source-helper-contract-v1
+Git blob b11835d0d396217b157afccad729a387c449bbdb
 ~~~
 
 The analyzer is static-only. It verifies the pinned CoreGraphics slice, validates the private event-unflip/main/bounds edges, closes the main/master/bounds record-field sets, verifies source/local strides and the event cached-extent offset, and emits the complete focused lifecycle bodies:
