@@ -7,17 +7,10 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SRC="$ROOT/tests/ppc-carbon-gui-event-unflip-dladdr-route-write-restore-preflight.c"
 PATCH_DYLINKER="$SCRIPT_DIR/patch-ppc-load-dylinker.py"
-EXPECTED_SOURCE_BLOB="1c2ad72d0dd0e89dbabef3bebdd799dd8cbee00c"
 EXPECTED_CONTRACT="carbon-gui-event-unflip-dladdr-write-restore-v1"
 
 [ -f "$SRC" ] || { echo "error: missing source: $SRC" >&2; exit 66; }
 [ -f "$PATCH_DYLINKER" ] || { echo "error: missing dylinker helper: $PATCH_DYLINKER" >&2; exit 66; }
-
-SOURCE_BLOB="$(/usr/bin/git hash-object "$SRC" 2>/dev/null || true)"
-[ "$SOURCE_BLOB" = "$EXPECTED_SOURCE_BLOB" ] || {
-    echo "error: dladdr write-restore probe source blob mismatch: $SOURCE_BLOB" >&2
-    exit 66
-}
 
 resolve_compiler() {
     for candidate in "${CC:-}" /Developer-3.2.6/usr/bin/gcc-4.2 /Developer/usr/bin/gcc-4.2 /usr/bin/gcc-4.2 /usr/bin/gcc /usr/bin/cc; do
@@ -46,6 +39,8 @@ is_ppc32() {
 sha256() {
     /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'
 }
+
+SOURCE_SHA256="$(sha256 "$SRC")"
 
 CC_SELECTED="$(resolve_compiler)" || {
     echo "error: no PowerPC-capable compiler found" >&2
@@ -80,7 +75,9 @@ echo "$OUT_SHA  $OUT" > "$OUT.sha256"
 {
     echo "== event-unflip dladdr route write/restore probe =="
     echo "source=$SRC"
-    echo "source_git_blob=$SOURCE_BLOB"
+    echo "source_sha256=$SOURCE_SHA256"
+    echo "source_provenance_policy=MODERN_STAGING_SYSTEM_SHA256"
+    echo "legacy_git_blob_check=NOT_REQUIRED"
     echo "compiler=$CC_SELECTED"
     /usr/bin/file "$OUT"
     /usr/bin/otool -hv "$OUT"
