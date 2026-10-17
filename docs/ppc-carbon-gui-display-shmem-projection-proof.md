@@ -173,9 +173,9 @@ If Lion fails, return the Lion report without rerunning or broadening the projec
 
 The Snow and Lion one-record proof remains complete: the private +0x1c Snow view repairs the translated PPC main-display lookup itself, and restoration intentionally returns the public Lion result to zero afterward.
 
-The subsequent integration-seam, import-closure, DragWindow-boundary, image-local repair-surface, and direct-source helper-contract audits are now complete. The source-only lifecycle closes provided current source state is re-resolved after the normal update path while the display lock is held. The next static step is docs/ppc-carbon-gui-event-unflip-callsite-patchability-audit.md, which tests whether only the zero-cache _CGSGetDisplayBounds callsite needs replacement.
+The subsequent integration-seam, import-closure, DragWindow-boundary, image-local repair-surface, direct-source helper-contract, and callsite-patchability audits are now complete. The next controlled step is docs/ppc-carbon-gui-event-unflip-patch-placement-preflight.md, which measures the loaded translated-PPC placement constraints without modifying the system image or launching the original GUI.
 
-No CoreGraphics/HIToolbox text patch, branch island, helper injection, persistent projection, original GUI rerun, display-ID substitution/normalization, or XNU change is authorized until that callsite gate is reviewed.
+No functional display helper or persistent projection is authorized until that runtime placement evidence is reviewed.
 
 ## Safety boundary
 
