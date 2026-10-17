@@ -2,7 +2,7 @@
 
 ## Status
 
-**NEXT STEP — CLOSE THE MAIN-LOOKUP / DISPLAY-BOUNDS RECORD SURFACE BEFORE CHOOSING IMAGE-LOCAL REPAIR VS LIFECYCLE PROJECTION.**
+**COMPLETE — FIELD-ONLY PATCH CLOSED / SOURCE-ONLY EVENT-UNFLIP HELPER LIFECYCLE NEXT.**
 
 The DragWindow/main-display boundary reports pass on both pinned releases and close the public-interposition branch for the observed failure. Snow and Lion both use the same setup pattern: when a caller-supplied drag bounds rectangle needs normalization, `_DragWindow` calls imported public `_CGMainDisplayID`, immediately feeds that ID to `_HLTBGetDisplayBounds`, adjusts/intersects the rectangle, and only then constructs the tracker and enters `TWindowTracker::TrackWindow`. That result is therefore initial drag-bounds setup; it is not the event object's later zero-cache state.
 
@@ -10,7 +10,7 @@ CoreGraphics also confirms that public `_CGMainDisplayID` simply enters the same
 
 The new reports expose a second reason not to jump directly to a one-function patch: `_CGSGetDisplayBounds` has its own release-local record layout. Snow reads geometry at `+0xd0..+0xec` and a selector/flag at `+0x115`; Lion reads the corresponding geometry at `+0xdc..+0xf8` and the flag at `+0x131`. The geometry shift is `+0x0c`, while the flag shift is `+0x1c`. In addition, Snow constructs record pointers with source stride `0x150`, whereas Lion source records use `0x17c`; a field-displacement-only fix cannot be count>1 safe.
 
-The next step is therefore a read-only repair-surface audit, not an implementation. It must determine whether a narrow image-local compatibility routine can read the Lion layout directly for main-display and bounds operations, or whether fixing all required lookup/mapping semantics expands into the same lifecycle complexity as a full projection.
+The returned reports answer that gate. \`_lookupMasterDisplay\` and \`_CGSGetDisplayBounds\` do not reduce to a safe field-only Snow patch because they still enter \`_lookupDisplay\`, and Snow's local mapping entries may point at the wrong Lion record once the display count exceeds one. However, the Lion-native master/bounds semantics themselves remain narrow: master redirection uses record \`+0x12e/+0x114\`, and native bounds then uses only record \`+0x131\` plus geometry \`+0xdc..+0xf8\`. That makes a read-only direct-source helper the narrower remaining candidate, provided its source-pointer lifetime is exact.
 
 ## Prepared analyzer
 
@@ -104,11 +104,11 @@ ppc-carbon-gui-image-local-display-repair-surface-lion.txt
 
 ## Decision gate after the audit
 
-If `_lookupMasterDisplay` and the bounds path can be satisfied from a small, explicitly mapped set of Lion-layout fields without depending on Snow's mis-strided count>1 local-record pointers, the next review may specify a narrowly scoped image-local compatibility routine. It must still be translated-PPC-on-Lion-only, preserve Snow behavior, retain display locking/update semantics, and avoid display-ID substitution.
+The field-only patch branch is closed. Do not patch only `_lookupMainDisplay`, `_lookupMasterDisplay`, `_lookupDisplay`, or `_CGSGetDisplayBounds`: Snow local entries are built from `0x150` source stride while Lion source records use `0x17c`, so later records cannot be addressed correctly by displacement changes alone.
 
-If the required surface reaches broad `_lookupDisplay`, `_bindDisplayMapping`, or multi-record mapping construction, do not implement a field-only CoreGraphics text patch. That would mean the repair is no longer narrow; the next review must compare a purpose-built direct-Lion-layout helper against a complete lifecycle projection with correct `0x17c -> 0x150` multi-record conversion.
+The authoritative next procedure is `docs/ppc-carbon-gui-event-unflip-direct-source-helper-contract-audit.md`. It tests the narrower alternative: bypass the Snow local mapping only for the zero-cache event-unflip fallback, scan the active Lion source read-only with native `0x17c` stride, reproduce Lion main/master selection from the closed record fields, and produce native Lion bounds without installing a projected local record.
 
-A persistent partial projection remains prohibited because normal bind/rebind consumes fields outside the proven main-lookup projection window.
+If the source-only lifecycle closes, the following step may audit a single event-local out-of-line patch boundary. If source lifetime still requires Snow's mis-strided mapping/rebind path, the project must return to a complete multi-record lifecycle projection design.
 
 ## Safety boundary
 
