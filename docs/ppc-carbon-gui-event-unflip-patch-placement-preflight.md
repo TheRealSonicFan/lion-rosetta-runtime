@@ -20,7 +20,7 @@ tests/ppc-carbon-gui-event-unflip-placement-marker.c
 scripts/build-ppc-carbon-gui-event-unflip-patch-placement-preflight-on-snowleopard.sh
 scripts/run-snowleopard-ppc-carbon-gui-event-unflip-patch-placement-preflight.sh
 scripts/run-lion-ppc-carbon-gui-event-unflip-patch-placement-preflight.sh
-preflight_contract=carbon-gui-event-unflip-patch-placement-preflight-v1
+preflight_contract=carbon-gui-event-unflip-patch-placement-preflight-v2
 probe_blob=8c30b99ecce4870c57f8192960cc1a774dc3136c
 marker_blob=e83a0a219f35f7f56453904c64c534b843a1e183
 build_script_blob=9d3d40452e16a92e1900ab69843199e828ed5876
