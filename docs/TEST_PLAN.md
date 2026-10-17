@@ -963,11 +963,9 @@ The shared-art source reports pass on both systems. Snow's unique raw-bytes call
 
 Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md` next. Run `scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py` statically on Snow and Lion and return the two text reports. Do not launch the PPC subject, alter records/resources/geometry, broaden bitmap-info or CGS rules, change hit handling, or modify XNU before the exact seven record geometries and raw-byte slots are compared.
 
-## Titlebar interaction current step — projection integration-seam audit
+## Titlebar interaction current step — CoreGraphics import closure
 
-The one-record projection proof passes. On Lion translated PPC, the private +0x1c lookup window changes the locked private lookup from the failing zero-public state to the same nonzero main-display ID returned by native Lion, then restores the original process-local pointer before unlock. The source record remains unchanged and the protected-state gates stay clean.
+The projection integration-seam audits pass on both releases and close the seven named candidate seams: HIToolbox imports none of them, and the focused titlebar families contain zero candidate call sites. The failing Snow event-unflip/main-display path remains image-local to CoreGraphics. Lion's raw i386 calls are numeric, which explains the v1 symbolic edge labels without changing the structural conclusion.
 
-Do not promote that 0x20 projection into the normal mapping lifecycle. _bindDisplayMapping consumes additional record fields, and update/notification paths can rebind local entries. Also do not assume a _CGSMainDisplayID interposer is sufficient: the failing Snow event-unflip path calls it through an image-local CoreGraphics branch.
-
-Follow docs/ppc-carbon-gui-display-shmem-projection-integration-seam-audit.md next. Run its static analyzer on Snow and Lion and return ppc-carbon-gui-display-shmem-projection-integration-seam-snow.txt and ppc-carbon-gui-display-shmem-projection-integration-seam-lion.txt. Do not run the original GUI, build/load a new interposer, persist the projection, patch CoreGraphics/HIToolbox, normalize display IDs, rewrite event/move payloads, or modify XNU before review.
+Do not choose patch versus lifecycle projection from that candidate-limited result alone. Follow docs/ppc-carbon-gui-titlebar-coregraphics-import-closure-audit.md. Run scripts/audit-ppc-carbon-gui-titlebar-coregraphics-import-closure.py on Snow and Lion and return ppc-carbon-gui-titlebar-coregraphics-import-closure-snow.txt and ppc-carbon-gui-titlebar-coregraphics-import-closure-lion.txt. The audit must enumerate all HIToolbox imports that resolve into CoreGraphics, close direct calls from the titlebar roots, and report unresolved indirect calls before any live adapter, image-local patch, persistent/multi-record projection, display-ID normalization, event/move rewrite, or XNU change is considered.
 
