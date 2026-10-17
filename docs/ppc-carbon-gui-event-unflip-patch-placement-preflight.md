@@ -23,7 +23,7 @@ scripts/run-lion-ppc-carbon-gui-event-unflip-patch-placement-preflight.sh
 preflight_contract=carbon-gui-event-unflip-patch-placement-preflight-v1
 probe_blob=8c30b99ecce4870c57f8192960cc1a774dc3136c
 marker_blob=e83a0a219f35f7f56453904c64c534b843a1e183
-build_script_blob=fb2551b2b28142aaf41850c331785d4815d8b347
+build_script_blob=9d3d40452e16a92e1900ab69843199e828ed5876
 snow_runner_blob=6c9628d33af20837eec9f6a89cd7bdb64aab6516
 lion_runner_blob=d119346788b9fc86c547dd642d5fdce3dce9988e
 ~~~
@@ -31,6 +31,8 @@ lion_runner_blob=d119346788b9fc86c547dd642d5fdce3dce9988e
 The build creates one PPC executable using /usr/oah/dyld and one inert PPC dylib used only as a placement marker. Transfer the exact build products and SHA-256 sidecars from Snow to Lion; do not rebuild them on Lion.
 
 ## Phase A — build on Snow Leopard
+
+Architecture validation note: current main accepts a thin 32-bit PPC Mach-O either through `lipo -verify_arch` or, for older Snow Leopard `lipo` behavior, through a guarded `/usr/bin/file` fallback that rejects `ppc64`. A `file` result of `Mach-O ... ppc` is therefore a valid 32-bit PPC result for this gate.
 
 On Snow Leopard 10.6.8 / 10K549:
 
