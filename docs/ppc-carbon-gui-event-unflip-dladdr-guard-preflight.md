@@ -2,7 +2,7 @@
 
 ## Status
 
-**NEXT STEP — PROVE THE SELECTED `_dladdr` INTERPOSITION BINDING AND EXACT RETURN-ADDRESS GUARD WITHOUT EXECUTING THE PATCHED CALLSITE.**
+**COMPLETE — SELECTED `_dladdr` BINDING, ORIGINAL-REPLACEE FORWARDING, AND EXACT RETURN-ADDRESS GUARD PASS ON SNOW AND LION; FAIL-CLOSED PATCHED-ROUTE EXECUTION IS NEXT.**
 
 The reversible write/restore preflight has now passed on both pinned systems. Snow Leopard PPC and Lion translated PPC both accepted a temporary write-enable on only the audited callsite page, read back candidate branch word `0x48524d51`, restored original word `0x4bff702d`, restored the original `r--` protection, and ended with the loaded callsite unchanged. Neither run executed the candidate instruction or the selected `_dladdr` stub.
 
@@ -14,6 +14,14 @@ That closes loaded-text mutability as a blocker. It still does **not** authorize
 4. on Lion, under the accepted compatibility stack, the selected stub is interposed while the patched target-wrapper count remains zero.
 
 No functional display-source scan is implemented in this stage. If the target wrapper were reached unexpectedly, the proof interposer fails closed with a nonzero result rather than interpreting the incoming event-unflip ABI as ordinary `dladdr` arguments.
+
+## Observed result — binding/guard closed
+
+The returned Snow Leopard and Lion reports both pass the v1 contract. Both use the same guard interposer SHA-256 `ee6463df9002dc78a10c50d239486d5b88dd3a8ef4a4923ec453546154c6aa77` and probe SHA-256 `5efef0983f695132f2336dfe94de60710451087128e2a0ce6fae62edc0f77e8a`. In both runs the exact target return resolves to `0x93761390`; the selected translated-PPC `_dladdr` stub resolves to `0x93c860dc` with the audited LR-preserving/`bctr` shape; the saved original replacee is available; one ABI-correct direct call through that selected stub produces the same ordinary `dladdr` result and `Dl_info` as the saved replacee; the interposer forward-count delta is exactly one; the target-wrapper count remains zero; and protected hashes remain unchanged.
+
+The exact and adjacent guard checks also pass on both systems: the target address is accepted while `-4` and `+4` are rejected. This closes the route at the interposer binding/guard level without any CoreGraphics text write or candidate execution.
+
+The next controlled step is `docs/ppc-carbon-gui-event-unflip-dladdr-route-execution-preflight.md`. It reuses the exact passing guard interposer unchanged, installs candidate word `0x48524d51` only at the audited process-local callsite, synchronizes data/instruction caches, restores the original page protection before execution, invokes the containing event-unflip function once on a synthetic event, requires exactly one fail-closed target-wrapper hit, then restores original word `0x4bff702d` and the original protection. The functional display-source helper remains deferred until that real route execution is proven.
 
 ## Prepared artifacts
 
@@ -201,7 +209,7 @@ If either report names an unexpected crash/core diagnostic, return that diagnost
 
 If Snow proves exact selected-stub passthrough and Lion proves that the selected CoreGraphics `_dladdr` stub itself reaches the interposer, forwards through the saved original replacee with identical `Dl_info`, accepts only the exact target classification, rejects adjacent addresses, leaves the target-wrapper count at zero, and preserves protected hashes, the route is closed at the binding/guard level.
 
-Only then should the next procedure decide how to exercise the exact target path safely. Do **not** immediately launch the original Carbon GUI or fold in the functional display-source scan. The next review must choose between a fail-closed patched-route execution discriminator and a separately callable functional source-helper proof based on the returned binding evidence.
+The returned binding evidence satisfies this gate, so the choice is now closed: follow `docs/ppc-carbon-gui-event-unflip-dladdr-route-execution-preflight.md` next and prove the actual patched route only under the existing fail-closed target wrapper. Do **not** launch the original Carbon GUI or fold in the functional display-source scan yet; the separately callable functional source-helper proof follows only after patched-route execution succeeds on both pinned systems.
 
 If the interposer does not bind, ordinary `dladdr` results differ, the replacee pointer is unusable, the exact guard fails, either adjacent address is accepted, or the target wrapper executes unexpectedly, stop. Do not relax the return-address guard, patch a global CoreGraphics function, rewrite the indirect symbol pointer, allocate a branch island, or modify XNU.
 
