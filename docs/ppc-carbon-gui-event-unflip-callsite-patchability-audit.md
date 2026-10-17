@@ -103,9 +103,9 @@ ppc-carbon-gui-event-unflip-callsite-patchability-lion.txt
 
 The one-callsite branch advanced through the corrected v2 runtime placement preflight in `docs/ppc-carbon-gui-event-unflip-patch-placement-preflight.md`. Both returned reports pass, preserve the exact branch word/decoded target, and return `placement_route=NONE_OBSERVED`: the inert marker is outside the PPC relative-branch window and no unmapped page-sized candidate is present in range.
 
-The authoritative next step is therefore `docs/ppc-carbon-gui-event-unflip-near-stub-interposition-audit.md`. It statically inventories existing CoreGraphics symbol stubs, their imported targets, and raw stub words to determine whether an LR-preserving existing stub can provide an exact-return-address interposition route while forwarding every non-target invocation unchanged.
+The subsequent near-stub capture now selects the existing Snow-PPC `_dladdr` stub at `0x006710dc`. It preserves LR, tail-transfers through CTR with `bctr`, has exactly one existing CoreGraphics caller, and is reachable from the one-callsite patch with candidate word `0x48524d51`. The authoritative next step is `docs/ppc-carbon-gui-event-unflip-dladdr-write-restore-preflight.md`, which temporarily writes that candidate word into only the process-local loaded callsite, verifies it, restores `0x4bff702d`, restores the original page protection, and never executes the candidate instruction.
 
-No CoreGraphics write, `vm_protect`, `vm_allocate`, executable-page allocation, helper/interposer load, private CoreGraphics call, original GUI launch, or XNU change is authorized by this transition.
+No `_dladdr` interposer, functional source helper, original GUI launch, persistent CoreGraphics modification, or XNU change is authorized by this transition.
 ## Safety boundary
 
 - Do not launch the original PPC Carbon GUI subject.
