@@ -50,6 +50,7 @@ typedef uintptr_t (*target_return_fn)(void);
 typedef int (*original_dladdr_fn)(const void *, Dl_info *);
 typedef int (*dladdr_fn)(const void *, Dl_info *);
 typedef void (*counts_fn)(unsigned int *, unsigned int *);
+typedef int (*leaf_contract_fn)(void);
 typedef void *(*event_unflip_fn)(void *, void *);
 
 static CGDirectDisplayID (*volatile force_coregraphics_dependency)(void) =
@@ -165,6 +166,7 @@ main(void)
     target_return_fn get_target;
     original_dladdr_fn call_original;
     counts_fn get_counts;
+    leaf_contract_fn get_leaf_contract;
     uintptr_t main_runtime;
     uintptr_t event_runtime;
     uintptr_t callsite_runtime;
@@ -209,6 +211,7 @@ main(void)
     unsigned int non_target_after = 0;
     unsigned int target_after = 0;
     unsigned int target_delta = 0;
+    unsigned int event_non_target_delta = 0;
     Dl_info original_info;
     Dl_info stub_info;
     int original_result = 0;
@@ -216,6 +219,7 @@ main(void)
     int stub_result_match = 0;
     int stub_info_match = 0;
     int stub_warmup_complete = 0;
+    int leaf_contract_ok = 0;
     unsigned char event[EVENT_SIZE];
     struct point32 output;
     float event_x = 123.5f;
@@ -519,6 +523,7 @@ cleanup:
     if (event_called) {
         get_counts(&non_target_after, &target_after);
         target_delta = target_after - target_before;
+        event_non_target_delta = non_target_after - non_target_before;
         memcpy(&cache_after, event + EVENT_CACHE_OFFSET, sizeof(cache_after));
         output_x_match = memcmp(&output.x, &event_x, sizeof(event_x)) == 0;
         output_y_match = memcmp(&output.y, &event_y, sizeof(event_y)) == 0;
@@ -530,6 +535,7 @@ cleanup:
         printf("interposer_non_target_forward_count_after=%u\n", non_target_after);
         printf("interposer_target_wrapper_count=%u\n", target_after);
         printf("patched_route_target_wrapper_delta=%u\n", target_delta);
+        printf("patched_route_non_target_delta=%u\n", event_non_target_delta);
         printf("event_return_matches_output=%s\n",
                event_return_match ? "YES" : "NO");
         printf("event_output_x_preserved=%s\n",
@@ -551,8 +557,9 @@ cleanup:
 
     if (stub_warmup_complete &&
         event_called && candidate_locked_down &&
-        target_delta == 1 && event_return_match &&
-        output_x_match && output_y_match && cache_after == 0 &&
+        target_delta == 1 && event_non_target_delta == 0 &&
+        event_return_match && output_x_match && output_y_match &&
+        cache_after == 0 &&
         original_restored && kr_final_restore == KERN_SUCCESS &&
         final_protection_match &&
         read_u32((const void *)callsite_runtime) == EXPECTED_CALL_WORD)
