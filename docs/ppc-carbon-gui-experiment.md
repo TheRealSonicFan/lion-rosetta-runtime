@@ -389,6 +389,399 @@ The shared-art source audit is now complete and supersedes the preceding next-st
 
 ### Current titlebar interaction boundary
 
+The event-unflip callsite audits pass on Snow PPC and Lion i386 and reduce the remaining titlebar-drag display repair to one caller-local boundary. The authoritative next procedure is docs/ppc-carbon-gui-event-unflip-patch-placement-preflight.md, which measures the loaded translated-PPC address/protection and branch-placement constraints without modifying CoreGraphics or launching the original GUI.
+
+# PPC Carbon GUI compatibility experiment
+
+## Objective
+
+Move from successful command-line CoreFoundation translation to the first controlled **PowerPC GUI** test on Lion 10.7.5.
+
+The preceding experiments have already validated:
+
+- normal kernel PowerPC activation;
+- PowerPC subject-path preservation;
+- the translated commpage;
+- syscall 295 `shared_region_map_np`;
+- the private Snow Leopard PPC dyld;
+- the validated Rosetta shared cache with process-local cache validation bypass;
+- a normal PPC command-line subject using CoreFoundation.
+
+This experiment changes only the guest application layer. It builds a very small Carbon executable that:
+
+1. transforms itself into a foreground application;
+2. creates a standard Carbon document window;
+3. assigns a title and shows the window;
+4. confirms the window is visible according to Carbon;
+5. runs the Carbon application event loop;
+6. exits automatically after a two-second event-loop timer.
+
+The test is intentionally self-terminating so no manual window interaction is required.
+
+## Repository files prepared for this experiment
+
+The runtime repository provides:
+
+```text
+tests/ppc-carbon-gui-smoketest.c
+scripts/build-ppc-carbon-gui-smoketest-on-snowleopard.sh
+scripts/run-snowleopard-ppc-carbon-gui-control.sh
+scripts/run-lion-ppc-carbon-gui-experiment.sh
+docs/ppc-carbon-gui-experiment.md
+```
+
+No proprietary Apple binary is committed.
+
+## Safety constraints
+
+Keep all previously validated runtime and kernel state unchanged:
+
+- do not replace Lion's native `/usr/lib/dyld`;
+- do not copy Snow Leopard libraries/frameworks into Lion system paths;
+- do not rebuild a dyld shared cache;
+- do not modify or reinstall XNU;
+- do not remove `DYLD_SHARED_CACHE_DONT_VALIDATE`;
+- do not change `DYLD_SHARED_REGION`;
+- do not use live GDB, dtruss, or DTrace;
+- do not launch an arbitrary PPC GUI application;
+- do not use LaunchServices/`open` for this test;
+- stop after this single Carbon GUI control and preserve the evidence.
+
+Run both GUI controls from the logged-in Aqua console user's Terminal session. Do not run them via `sudo`, SSH, or a background login session.
+
+## Phase A — update both repositories
+
+On Snow Leopard and Lion:
+
+```sh
+cd /path/to/lion-rosetta-runtime
+git pull --ff-only
+git rev-parse HEAD
+```
+
+On Lion also update the XNU checkout used for the native syscall-295 probe:
+
+```sh
+cd /path/to/lion-rosetta-xnu
+git pull --ff-only
+git rev-parse HEAD
+```
+
+Do not modify the installed kernel.
+
+## Phase B — build the exact PPC Carbon GUI subject on Snow Leopard
+
+Use the validated Snow Leopard 10.6.8 system and Xcode 3.2.6 GCC:
+
+```sh
+cd /path/to/lion-rosetta-runtime
+
+CC=/Developer-3.2.6/usr/bin/gcc-4.2 \
+  ./scripts/build-ppc-carbon-gui-smoketest-on-snowleopard.sh \
+  ./ppc-carbon-gui-smoketest-private-dyld
+```
+
+The builder must create:
+
+```text
+ppc-carbon-gui-smoketest-private-dyld
+ppc-carbon-gui-smoketest-private-dyld.info.txt
+ppc-carbon-gui-smoketest-private-dyld.sha256
+```
+
+The info file must establish:
+
+- a non-fat 32-bit PowerPC executable;
+- `LC_LOAD_DYLINKER` = `/usr/oah/dyld`;
+- a dependency on `/System/Library/Frameworks/Carbon.framework/Versions/A/Carbon`.
+
+Do not rebuild or modify the executable after its SHA-256 sidecar is generated.
+
+## Phase C — Snow Leopard GUI positive control
+
+The exact validated Snow Leopard dyld must already exist privately at:
+
+```text
+/usr/oah/dyld
+```
+
+with SHA-256:
+
+```text
+963fb4eb0649119b68d400713d178058ca5b0a471d6715c9ad6e802ede6df5cb
+```
+
+Run the control from the logged-in Snow Leopard Aqua user's Terminal:
+
+```sh
+/bin/bash ./scripts/run-snowleopard-ppc-carbon-gui-control.sh \
+  ./ppc-carbon-gui-smoketest-private-dyld \
+  ./ppc-carbon-gui-smoketest-private-dyld.sha256 \
+  ./ppc-carbon-gui-snowleopard-control.log
+```
+
+A small window titled **Rosetta PPC Carbon GUI** should appear for approximately two seconds and then disappear automatically.
+
+The control must contain both markers:
+
+```text
+Rosetta PPC Carbon GUI window shown:
+Rosetta PPC Carbon GUI smoke test:
+```
+
+and end with:
+
+```text
+RESULT: PASS
+```
+
+The textual PASS is required even if the window was visually observed.
+
+If the Snow Leopard control fails, stop. Do not transfer the Carbon test to Lion.
+
+## Phase D — transfer the exact validated Carbon artifacts to Lion
+
+Transfer privately into the Lion runtime checkout:
+
+```text
+payload/ppc-carbon-gui-smoketest-private-dyld
+payload/ppc-carbon-gui-smoketest-private-dyld.info.txt
+payload/ppc-carbon-gui-smoketest-private-dyld.sha256
+```
+
+Also preserve:
+
+```text
+ppc-carbon-gui-snowleopard-control.log
+```
+
+On Lion verify the transferred hash:
+
+```sh
+cd /path/to/lion-rosetta-runtime
+/usr/bin/shasum -a 256 ./payload/ppc-carbon-gui-smoketest-private-dyld
+cat ./payload/ppc-carbon-gui-smoketest-private-dyld.sha256
+```
+
+The values must match exactly.
+
+Do not alter the executable after transfer.
+
+## Phase E — re-establish the validated Lion kernel state
+
+Use the same kernel that passed the syscall-295, normal-exec, and CoreFoundation experiments:
+
+```sh
+export XNU_SRC=/path/to/xnu-1699.32.7
+export ROSETTA_XNU=/path/to/lion-rosetta-xnu
+export ROSETTA_EXPECTED_KERNEL_SHA256="$(/usr/bin/awk '{print $1}' "$XNU_SRC/mach_kernel.rosetta-syscall295.sha256")"
+```
+
+For the validated system the expected kernel SHA-256 is:
+
+```text
+fe68467b60b3bd7edfab61b2d6c8af7f988de5206c4b7b624151dc9f1a1061d3
+```
+
+Verify:
+
+```sh
+/usr/bin/shasum -a 256 /mach_kernel
+/usr/sbin/sysctl kern.exec.archhandler.powerpc
+/usr/bin/id -un
+/usr/bin/stat -f '%Su' /dev/console
+/bin/ps -ax | /usr/bin/grep '[W]indowServer'
+```
+
+Requirements:
+
+- `/mach_kernel` hash matches the expected value;
+- PowerPC handler is `/usr/libexec/oah/translate`;
+- current user equals the owner of `/dev/console`;
+- WindowServer is running.
+
+Stop if any requirement fails.
+
+## Phase F — repeat the two safe native gates
+
+From the Lion runtime checkout:
+
+```sh
+./scripts/run-lion-commpage-probe.sh ./lion-commpage-probe
+```
+
+Require the existing commpage PASS.
+
+Then from the XNU source directory:
+
+```sh
+cd "$XNU_SRC"
+/bin/bash "$ROSETTA_XNU/tools/run_syscall295_probe.sh" \
+  "$XNU_SRC/syscall295-probe" \
+  "$XNU_SRC/syscall295-probe-carbon-gui-preflight.log"
+```
+
+Require:
+
+```text
+RESULT: PASS - syscall 295 reached the compatibility front-end and returned EBADF
+RESULT: PASS
+```
+
+Do not continue if either native gate fails.
+
+## Phase G — run the guarded Lion Carbon GUI experiment
+
+Return to the runtime checkout:
+
+```sh
+cd /path/to/lion-rosetta-runtime
+```
+
+Run from the logged-in Aqua console user's Terminal:
+
+```sh
+ROSETTA_EXPECTED_KERNEL_SHA256="$ROSETTA_EXPECTED_KERNEL_SHA256" \
+  /bin/bash ./scripts/run-lion-ppc-carbon-gui-experiment.sh \
+  ./payload/ppc-carbon-gui-smoketest-private-dyld \
+  ./payload/ppc-carbon-gui-smoketest-private-dyld.sha256
+```
+
+The runner executes the PowerPC binary normally through the kernel architecture handler. It does not launch `translate` manually and does not use LaunchServices.
+
+The same small Carbon window should appear for approximately two seconds and close automatically.
+
+The only dyld environment conditions retained are the already validated:
+
+```text
+DYLD_SHARED_CACHE_DONT_VALIDATE=1
+DYLD_PRINT_LIBRARIES=1
+```
+
+The runner writes:
+
+```text
+payload/lion-ppc-carbon-gui-experiment.log
+payload/lion-ppc-carbon-gui.raw.log
+```
+
+## Phase H — stop and preserve evidence
+
+Stop after the Lion runner returns, regardless of outcome.
+
+Preserve:
+
+```text
+ppc-carbon-gui-smoketest-private-dyld.info.txt
+ppc-carbon-gui-smoketest-private-dyld.sha256
+ppc-carbon-gui-snowleopard-control.log
+syscall295-probe-carbon-gui-preflight.log
+payload/lion-ppc-carbon-gui-experiment.log
+payload/lion-ppc-carbon-gui.raw.log
+```
+
+Also preserve every new crash report or core file explicitly listed by the Lion runner.
+
+Do not test Cocoa or a real-world PPC application before these results are reviewed.
+
+## Result interpretation
+
+### PASS
+
+A complete pass requires:
+
+- the executable exits 0;
+- the raw log contains `Rosetta PPC Carbon GUI window shown:`;
+- the raw log contains `Rosetta PPC Carbon GUI smoke test:`;
+- the runner ends with `RESULT: PASS`.
+
+The program itself verifies that Carbon reports the window visible and that the Carbon event loop runs until the scheduled timer fires.
+
+A pass establishes that this Lion Rosetta stack can execute a normal 32-bit PPC Carbon GUI process far enough to create a window and run the Carbon event loop.
+
+### Loader error
+
+If dyld reports a missing image, framework, or architecture, preserve the exact path and output. Do not copy a Snow Leopard framework into Lion.
+
+### Carbon API failure
+
+If the probe reports a nonzero `OSStatus`, preserve the exact operation and status number. That becomes the next compatibility boundary.
+
+### Crash
+
+Preserve the runner report, raw log, and every new crash/core diagnostic. Analyze the non-debugged evidence before changing XNU or the runtime.
+
+## What to return for review
+
+Return:
+
+```text
+ppc-carbon-gui-smoketest-private-dyld.info.txt
+ppc-carbon-gui-smoketest-private-dyld.sha256
+ppc-carbon-gui-snowleopard-control.log
+syscall295-probe-carbon-gui-preflight.log
+lion-ppc-carbon-gui-experiment.log
+lion-ppc-carbon-gui.raw.log
+```
+
+Also state whether you visually saw the **Rosetta PPC Carbon GUI** window appear on Snow Leopard and on Lion. The textual runner result remains authoritative, but the visual observation is useful supporting evidence.
+
+Return any new crash report/core file explicitly listed by the runner.
+
+## Non-goals
+
+This experiment does not:
+
+- test Cocoa/AppKit;
+- launch through Finder or LaunchServices;
+- test document opening;
+- test OpenGL;
+- test arbitrary real-world PPC applications;
+- remove the private dyld path;
+- remove the shared-cache validation bypass;
+- define the final production installation.
+
+It isolates the first GUI/window-event-loop layer after command-line CoreFoundation compatibility has been proven.
+
+
+## Observed Lion result: SIGABRT before window marker
+
+The Snow Leopard positive control passed with the exact experimental executable: the Carbon window became visible, the event loop timer fired, and the program exited 0.
+
+The Lion run did not reproduce that result. The exact executable and all guarded kernel/runtime identities passed preflight, and dyld loaded the Carbon/ApplicationServices dependency graph, but neither Carbon program marker was printed and no window appeared. The process exited 134 and generated a crash report plus `/cores/core.1311`.
+
+The non-debugged crash report records `EXC_CRASH (SIGABRT)` at Rosetta host EIP `0xb815ac07`. Its register state includes `EAX=0`, carry clear, `EDI=0x51f` (the process PID 1311), and `ESI=6` (SIGABRT). This pattern suggests deliberate self-signal delivery through Rosetta's syscall path, but the crash report alone is not enough to prove the syscall number or identify the guest-side abort source.
+
+Do not copy frameworks, modify XNU, or rerun the Carbon subject yet. The authoritative next step is the read-only preserved-core procedure in `docs/carbon-gui-sigabrt-postmortem.md`, using `scripts/collect-lion-carbon-sigabrt-core.sh`.
+
+
+### Preserved-core follow-up
+
+The preserved `/cores/core.1311` has now been analyzed postmortem. Rosetta's direct caller supplies Unix syscall `0x25` (37), and the preserved arguments are `kill(1311, SIGABRT, 1)`. The syscall returns success before the process dies from SIGABRT.
+
+This means the failure is guest-requested, not a second missing Lion syscall ABI.
+
+The core does not resolve whether the guest abort occurs before `main()` or inside one of the early Carbon/Process Manager calls. The next experiment is therefore `docs/carbon-gui-milestone-experiment.md`.
+
+
+## Current-path note after full restored-stack closure
+
+The historical Lion failure documented above is no longer the current boundary. The Process Manager, Carbon window construction, title/show/select/visibility path, timer/event-loop path, exact twenty-one distributed-notification tail, `RemoveEventLoopTimer()`, and `DisposeEventLoopTimerUPP()` have now each been live-proven on Lion under the accepted restored stack, with cleanup reaching the final success boundary and no new XNU change.
+
+The restored-stack retest, dedicated historical-client CPS registration integration, exact-21 notification integration, ShapeWindow-inline ID conversion, and backing-store synchronization ID conversion have all passed. The exact Lion Carbon window is now visible at Snow's 400x222 geometry and the former `_CGSLockWindow` synchronization failure is absent. The remaining defect is titlebar fidelity: Lion's bar is transparent/background-colored and the red/yellow/green controls are distinct but distorted while the existing six titlebar semantic-key translations still fire with zero guard rejects.
+
+The subsequent Snow/Lion titlebar payload-fidelity audit also passes and does not show a gross serialized payload-layout incompatibility: the six matched records use the same fixed `0x68` header plus 32-bit image-body structure, with release-specific 14x16 Snow and 16x16 Lion assets. The completed 223-key titlebar index inventory and both live key traces then close the lookup question: the exact historical subject executes only the accepted six titlebar-control ArtFile lookups, with zero outside-six keys and zero misses. The Snow-PPC loader field audit also passes on both systems, proving the one-cell record structure and narrowing the remaining serialized difference to the directly consumed metric vector. The completed render-state/image-format audit produces the stronger discriminator: the metric destination layout is shared, but every Snow body favors byte 0 as alpha while every Lion body favors byte 3, exactly matching Snow PPC's default-byte-order constructor versus Lion native CoreUI's explicit `0x2002` little-endian path. The subsequent passive live constructor trace resolves the remaining ambiguity: the cached Snow-PPC CoreUI path makes exactly six target `CGImageCreate` calls with incoming bitmap-info `0x00000002` on both Snow and Lion, with zero `0x4`, zero `0x2002`, and zero `CWMatchBitmap` calls. The exact bitmap-info integration then passes and produces a selective visual fix: Snow remains normal and draggable under six exact passthrough calls; Lion adapts all six target calls to `0x2002` with zero rejects/nulls, preserves the complete accepted stack, and renders the red/yellow/green controls sharply instead of blurry. The titlebar background/top frame boundary nevertheless remains absent and dragging still fails. The bitmap-info adapter is therefore retained as a causal partial fix, while the remaining defect moves to the HIToolbox window-definition layer. The completed frame/hit static audit then splits the remaining symptoms cleanly: Snow PPC has a separate `_HIThemeDrawDocumentWindowWithCoreUI` frame helper while Lion native folds the corresponding six `CUIDraw` operations into its frame-internal routine, but the hit path in both releases still calls `DataEngine::GetWindowRegionHitMask` and maps the same mask bits to the same classic part codes. No hit-test translation is supported by the static evidence. The completed all-CoreUI `CGImageCreate` trace identifies the first new live non-button differential below the equivalent CUIDraw request. Snow records 13 CoreUI constructor calls and Lion 10. The two generated gray-gradient images at `0x0001bdb0` are identical on both systems, and the six `0x000299e0` titlebar images remain the already accepted exact-six bitmap-info path. The new return site `0x0002ad34` is materially different: Snow makes five 11x11 / bpr44 / raw-`0x2` calls, while Lion makes only one 256x256 / bpr1024 and one 2x62 / bpr8 call, also raw-`0x2`; every provider and return object is non-NULL. The authoritative next procedure is `docs/ppc-carbon-gui-coreui-windowframe-image-caller-resolution-audit.md`: resolve that Snow-PPC return site and the two control sites to their containing CoreUI functions before selecting a narrower source/provider trace. Manual testing now also shows Lion's sharp traffic-light images are cosmetic only—button clicks do nothing—and titlebar dragging still fails; this interaction defect remains separate because the current trace has no mouse/hit evidence. No bitmap-info broadening, resource substitution, hit-part rewrite, CGS expansion, LaunchServices/Cocoa change, or XNU change is authorized yet.
+
+### Current shared-art source boundary
+
+The static caller-resolution step has now completed and supersedes the immediately preceding next-step note. The new non-button return site `0x0002ad34` resolves to Snow-PPC `CUISharedArtReader::CreateImageFromBytes(long,long)`, which obtains a header through `GetImageHeader(long)` and directly decodes byte-swapped width/height/provider-length/provider-offset fields before `CGImageCreate`. This makes the 11x11 versus 256x256 / 2x62 mismatch a shared-art source/header problem rather than a CoreGraphics constructor failure. Native Lion no longer exposes the same reader symbol, but that is release-local reference evidence only because the translated process still runs Snow-era PPC CoreUI. The authoritative next procedure is `docs/ppc-carbon-gui-coreui-windowframe-shared-art-source-audit.md`; it is static-only and must identify the unique reader caller, header source/table, and release-local CoreUI resource identities before any live compatibility rule, resource substitution, hit-part change, CGS expansion, or XNU change is considered.
+
+### Current SArtFile frame-record boundary
+
+The shared-art source audit is now complete and supersedes the preceding next-step note. Snow-PPC `CUISharedArtReader::CreateImage(long,float)` is the unique caller of the divergent raw-byte constructor, and `GetImageHeader(long)` maps each legacy image ID to a shared-art index by subtracting `0x4e20` and following the release-local offset table. The seven `DrawWindowFrameDark` IDs therefore target indices 105, 106, and 109-113. Snow and Lion's version-2 `SArtFile.bin` resources have different entry counts and sizes, so the authoritative next procedure is `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md`, a static decode of those exact seven records and the two constructor slots. No resource substitution, geometry rewrite, new bitmap-info rule, hit-part change, CGS expansion, or XNU change is authorized yet.
+
+### Current titlebar interaction boundary
+
 The direct-source helper contract reports pass on Snow PPC and Lion i386. The lifecycle evidence is sufficient to keep the source-only branch: display notifications lock around _updateAllDisplayInfoAsNeeded, the update path restores the lock after any internal release/rebuild work, and shutdown explicitly frees and zeros source state. A correct helper must therefore update first, re-resolve source state afterward, read only while locked, and fail closed rather than caching a source pointer.
 
 The preferred repair surface is now one Snow PPC callsite, not a global display API patch. In the zero-cache event-unflip block, _CGSMainDisplayID is followed by setup of the existing stack CGRect and a direct _CGSGetDisplayBounds call whose CGError and height are already consumed by the caller. The authoritative next procedure is docs/ppc-carbon-gui-event-unflip-callsite-patchability-audit.md, which verifies the exact call instruction bytes and ABI while leaving text writability and trampoline placement unresolved.
