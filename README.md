@@ -796,8 +796,11 @@ The completed shared-art source audit now identifies the legacy lookup contract 
 
 Current `main` advances to `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md`. Run the new static analyzer once on Snow Leopard and once on Lion and return `ppc-carbon-gui-coreui-windowframe-sartfile-records-snow.txt` and `ppc-carbon-gui-coreui-windowframe-sartfile-records-lion.txt`. The audit decodes the exact seven frame records and both raw-byte constructor slots so the five Snow 11x11 images can be mapped to the Lion 256x256 / 2x62 records before any live trace or record adaptation is considered.
 
-## Titlebar interaction boundary — one-record projection proof next
+## Titlebar interaction boundary — projection integration-seam audit next
 
-The Snow/Lion projection call-boundary reports now both pass. Snow's public CGSMainDisplayID wrapper is statically closed as lock -> update -> lookupMainDisplay(1) -> unlock, and the fast-path record reads are confined to the already-proven shifted lookup window. The Snow same-__TEXT deltas to the private helpers are exact, and the projected +0x110 == 0 guard forces lookupMainDisplay to return the selected local entry without entering lookupDisplay or bindDisplayMapping.
+The one-record display projection proof now passes on both required controls. Snow PPC returns its normal nonzero main display without projection, while Lion translated PPC starts at zero, installs the exact +0x1c lookup window only under the display lock, returns the same nonzero display ID as native Lion, restores the local record pointer before unlock, and leaves protected state unchanged. This closes the main-display lookup causality question.
 
-Current main therefore advances to docs/ppc-carbon-gui-display-shmem-projection-proof.md. Build the dedicated PPC/i386 probes on Snow, require the zero-write Snow control, then perform exactly one Lion proof that temporarily redirects one process-local local-entry record pointer after update returns under the display lock, restores it before unlock, and compares the projected lookup ID with native Lion. Server-owned shared memory, display-ID substitution/normalization, original GUI execution, and XNU remain held.
+The proof does not make the partial projection safe for normal mapping lifecycle use: _bindDisplayMapping reads fields outside that 0x20 window, and update/notification paths can rebind existing local entries. The failing event-unflip path also reaches _CGSMainDisplayID by an image-local direct branch, so a normal _CGSMainDisplayID dyld interposer cannot be assumed to see it.
+
+Current main therefore advances to docs/ppc-carbon-gui-display-shmem-projection-integration-seam-audit.md. Run the static analyzer on Snow first and Lion second and return the two integration-seam reports. No live adapter, persistent projection, original GUI run, display-ID substitution/normalization, CoreGraphics/HIToolbox patch, or XNU change is authorized yet.
+
