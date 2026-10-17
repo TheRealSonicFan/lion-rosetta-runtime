@@ -16,7 +16,7 @@ Both returned captures pass with the pinned images and zero mutation. Snow's `__
 
 From the already-audited event-unflip callsite `0x0014c38c`, the displacement to the `_dladdr` stub is `0x00524d50`, producing PPC `bl` word `0x48524d51`. This is comfortably inside the +/-32 MiB range. `dladdr(const void *, Dl_info *)` also gives the narrowest practical ABI among the one-call candidates: two GPR arguments and an integer return, with observational normal behavior. A future process-local `__interpose` replacement can guard only return address `0x0014c390` and forward every other call through the original replacee, following the same replacee-preservation pattern already used by the accepted titlebar `bsearch` interposer.
 
-The route is therefore selected without changing any stub or indirect-symbol entry. The next unresolved gate is reversible loaded-text mutability, not placement or interposition semantics. Follow `docs/ppc-carbon-gui-event-unflip-dladdr-write-restore-preflight.md`. That procedure writes the selected branch word only into the process-local loaded callsite, verifies readback, immediately restores `0x4bff702d`, restores the original page protection, and never executes the changed instruction or loads a new `dladdr` interposer.
+The route is therefore selected without changing any stub or indirect-symbol entry. The reversible loaded-text mutability gate has since passed on both Snow and Lion: candidate word `0x48524d51` reads back exactly, original word `0x4bff702d` is restored, and the original page protection is restored before execution. Current `main` now advances to `docs/ppc-carbon-gui-event-unflip-dladdr-guard-preflight.md`, which proves the selected `dladdr` interposer binding and exact-return-address guard with the callsite left untouched.
 
 ## Current evidence being advanced
 
@@ -136,7 +136,7 @@ The returned Snow report will be used to answer five questions before any live m
 4. Can the route keep the chosen stub bytes and indirect-symbol entry untouched, so the only eventual CoreGraphics text mutation remains the already-audited one-word callsite?
 5. If a candidate survives, what separate reversible proof is required before any callsite text write or process-local interposer is attempted?
 
-The returned evidence selects `_dladdr` as the route, but still does **not** authorize executing that route. The next reversible proof is `docs/ppc-carbon-gui-event-unflip-dladdr-write-restore-preflight.md`; it must prove exact write/readback/restoration and final protection restoration before any `_dladdr` interposer or functional display helper is loaded.
+The returned evidence selects `_dladdr` as the route, and the subsequent reversible write/restore proof has now passed on both pinned systems without executing it. The next proof is `docs/ppc-carbon-gui-event-unflip-dladdr-guard-preflight.md`; it must prove original-replacee forwarding, Snow passthrough, Lion binding, exact target classification, adjacent-address rejection, and zero target-wrapper execution before any patched-route execution or functional display helper is considered.
 
 ## Safety boundary
 
