@@ -173,9 +173,9 @@ If Lion fails, return the Lion report without rerunning or broadening the projec
 
 The Snow and Lion one-record proof remains complete: the private +0x1c Snow view repairs the translated PPC main-display lookup itself, and restoration intentionally returns the public Lion result to zero afterward.
 
-The subsequent integration-seam, import-closure, DragWindow-boundary, image-local repair-surface, direct-source helper-contract, and callsite-patchability audits are now complete. The next controlled step is docs/ppc-carbon-gui-event-unflip-patch-placement-preflight.md, which measures the loaded translated-PPC placement constraints without modifying the system image or launching the original GUI.
+The subsequent integration-seam, import-closure, DragWindow-boundary, image-local repair-surface, direct-source helper-contract, callsite-patchability, and corrected v2 placement preflight are now complete. The placement reports both return `NONE_OBSERVED`: the marker is out of PPC branch range and no unmapped near-page candidate is available. The next controlled step is `docs/ppc-carbon-gui-event-unflip-near-stub-interposition-audit.md`, which statically inventories existing CoreGraphics symbol stubs and imported targets without modifying the system image or launching the original GUI.
 
-No functional display helper or persistent projection is authorized until that runtime placement evidence is reviewed.
+No functional display helper, text write, or persistent projection is authorized until that near-stub evidence is reviewed.
 
 ## Safety boundary
 
