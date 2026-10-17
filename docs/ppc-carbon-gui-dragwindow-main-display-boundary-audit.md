@@ -16,12 +16,14 @@ Use:
 
 ~~~text
 scripts/audit-ppc-carbon-gui-dragwindow-main-display-boundary.py
-analyzer_version=1
+analyzer_version=2
 audit_contract=carbon-gui-dragwindow-main-display-boundary-v1
-Git blob eb08970243a95f9944ad57ec18ea6e2387daecb9
+Git blob 10af49b4dabfe7b7b662a6e755fbd85c1882c6f9
 ~~~
 
-The analyzer is static-only. It verifies the pinned slices, then:
+The analyzer is static-only. Version 2 is a performance-only correction to the original implementation: version 1 rebuilt the complete HIToolbox call graph once for every selected import and rebuilt symbol indexes for every function, which can consume one CPU for tens of minutes on Snow Leopard without producing visible progress. Version 2 caches the symbol indexes and parsed calls, builds the graph once, uses a deque-based breadth-first search, and prints progress before the graph phase. If version 1 is still running, interrupt it and rerun from current main; its partial output is not evidence.
+
+The analyzer verifies the pinned slices, then:
 
 - dumps the exact release-local `_DragWindow` body and its parsed calls;
 - records direct `_DragWindow` imports for `_CGMainDisplayID`, `_CGDisplayBounds`, cursor/window-bounds, and event retrieval APIs;
