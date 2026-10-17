@@ -14,11 +14,14 @@
 #define MODE_ENV "ROSETTA_EVENT_UNFLIP_DLADDR_GUARD_MODE"
 #define MODE_SNOW "passthrough"
 #define MODE_LION "lion-guard-v1"
+#define MAIN_TO_TARGET_RETURN 0x00003ff4UL
+#define DLADDR_STUB_DELTA_FROM_MAIN 0x00528d40UL
 
 typedef uintptr_t (*target_return_fn)(void);
 typedef int (*classify_fn)(uintptr_t);
 typedef int (*original_dladdr_fn)(const void *, Dl_info *);
 typedef void (*counts_fn)(unsigned int *, unsigned int *);
+typedef int (*dladdr_fn)(const void *, Dl_info *);
 
 static CGDirectDisplayID (*volatile force_coregraphics_dependency)(void) =
     CGMainDisplayID;
@@ -44,14 +47,20 @@ main(void)
     int exact_match;
     int minus4_reject;
     int plus4_reject;
+    uintptr_t main_runtime;
+    uintptr_t stub_runtime;
+    dladdr_fn selected_stub;
     Dl_info original_info;
-    Dl_info wrapped_info;
+    Dl_info stub_info;
     int original_result;
-    int wrapped_result;
+    int stub_result;
     int result_match;
     int info_match;
-    unsigned int non_target_count;
-    unsigned int target_count;
+    unsigned int non_target_before;
+    unsigned int target_before;
+    unsigned int non_target_after;
+    unsigned int target_after;
+    unsigned int non_target_delta;
     int mode_ok;
     int success;
 
@@ -132,38 +141,61 @@ main(void)
     printf("guard_minus4_reject=%s\n", minus4_reject ? "YES" : "NO");
     printf("guard_plus4_reject=%s\n", plus4_reject ? "YES" : "NO");
 
+    main_runtime = target - MAIN_TO_TARGET_RETURN;
+    stub_runtime = main_runtime + DLADDR_STUB_DELTA_FROM_MAIN;
+    selected_stub = (dladdr_fn)(uintptr_t)stub_runtime;
+    printf("derived_CGSMainDisplayID_runtime=0x%08lx\n",
+           (unsigned long)main_runtime);
+    printf("selected_dladdr_stub_runtime=0x%08lx\n",
+           (unsigned long)stub_runtime);
+
     memset(&original_info, 0, sizeof(original_info));
-    memset(&wrapped_info, 0, sizeof(wrapped_info));
+    memset(&stub_info, 0, sizeof(stub_info));
     original_result = call_original((const void *)(uintptr_t)&main,
                                     &original_info);
-    wrapped_result = dladdr((const void *)(uintptr_t)&main, &wrapped_info);
 
-    result_match = (original_result == wrapped_result);
+    non_target_before = 0;
+    target_before = 0;
+    get_counts(&non_target_before, &target_before);
+
+    stub_result = selected_stub((const void *)(uintptr_t)&main, &stub_info);
+
+    non_target_after = 0;
+    target_after = 0;
+    get_counts(&non_target_after, &target_after);
+    non_target_delta = non_target_after - non_target_before;
+
+    result_match = (original_result == stub_result);
     info_match = result_match &&
-        original_info.dli_fbase == wrapped_info.dli_fbase &&
-        original_info.dli_saddr == wrapped_info.dli_saddr &&
-        nullable_string_equal(original_info.dli_fname, wrapped_info.dli_fname) &&
-        nullable_string_equal(original_info.dli_sname, wrapped_info.dli_sname);
+        original_info.dli_fbase == stub_info.dli_fbase &&
+        original_info.dli_saddr == stub_info.dli_saddr &&
+        nullable_string_equal(original_info.dli_fname, stub_info.dli_fname) &&
+        nullable_string_equal(original_info.dli_sname, stub_info.dli_sname);
 
     printf("original_replacee_available=%s\n",
            original_result ? "YES" : "NO");
     printf("original_dladdr_result=%d\n", original_result);
-    printf("interposed_dladdr_result=%d\n", wrapped_result);
-    printf("passthrough_result_match=%s\n", result_match ? "YES" : "NO");
-    printf("passthrough_info_match=%s\n", info_match ? "YES" : "NO");
-
-    non_target_count = 0;
-    target_count = 0;
-    get_counts(&non_target_count, &target_count);
-    printf("interposer_non_target_forward_count=%u\n", non_target_count);
-    printf("interposer_target_wrapper_count=%u\n", target_count);
+    printf("selected_stub_dladdr_result=%d\n", stub_result);
+    printf("selected_stub_passthrough_result_match=%s\n",
+           result_match ? "YES" : "NO");
+    printf("selected_stub_passthrough_info_match=%s\n",
+           info_match ? "YES" : "NO");
+    printf("interposer_non_target_forward_count_before=%u\n",
+           non_target_before);
+    printf("interposer_non_target_forward_count_after=%u\n",
+           non_target_after);
+    printf("selected_stub_interposer_forward_delta=%u\n", non_target_delta);
+    printf("interposer_target_wrapper_count_before=%u\n", target_before);
+    printf("interposer_target_wrapper_count=%u\n", target_after);
+    printf("selected_dladdr_stub_direct_probe_calls=1\n");
     printf("patched_target_wrapper_executed=%s\n",
-           target_count == 0 ? "NO" : "YES");
+           target_after == 0 ? "NO" : "YES");
 
     success = exact_match && minus4_reject && plus4_reject &&
-              original_result != 0 && wrapped_result != 0 &&
+              original_result != 0 && stub_result != 0 &&
               result_match && info_match &&
-              non_target_count >= 1 && target_count == 0;
+              non_target_delta == 1 &&
+              target_before == 0 && target_after == 0;
 
     printf("preflight_complete=%s\n", success ? "YES" : "NO");
     if (success) {
