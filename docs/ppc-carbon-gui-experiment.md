@@ -389,7 +389,7 @@ The shared-art source audit is now complete and supersedes the preceding next-st
 
 ### Current titlebar interaction boundary
 
-The near-stub captures have now selected Snow-PPC CoreGraphics `_dladdr` stub `0x006710dc` as the narrow exact-return-address route: the stub preserves LR and ends in `bctr`, has exactly one existing CoreGraphics caller, and is reachable from event-unflip with candidate PPC `bl` word `0x48524d51`. The authoritative next procedure is `docs/ppc-carbon-gui-event-unflip-dladdr-write-restore-preflight.md`, which performs a non-executing process-local write/readback/restore of only the audited four-byte callsite and restores the original page protection. No `_dladdr` interposer, functional source helper, original GUI rerun, persistent patch, or XNU change is authorized yet.
+The selected Snow-PPC `_dladdr` stub route has now passed the reversible loaded-text gate on both Snow and Lion. Candidate word `0x48524d51` can be written and read back at the one audited callsite, then original word `0x4bff702d` and `r--` protection can be restored before any candidate execution. The authoritative next procedure is `docs/ppc-carbon-gui-event-unflip-dladdr-guard-preflight.md`, which proves the proof-only `dladdr` interposer's original-replacee forwarding and exact return-address guard without patching the callsite or running the original GUI. No functional source helper, patched-route execution, persistent patch, or XNU change is authorized yet.
 
 # PPC Carbon GUI compatibility experiment
 
