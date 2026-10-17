@@ -16,7 +16,17 @@ log() { echo "$*" | /usr/bin/tee -a "$REPORT"; }
 fail() { log "ERROR: $*"; log "RESULT: PATCH_PLACEMENT_PREFLIGHT_SNOW_FAIL"; log "RESULT: FAIL"; exit 1; }
 sha256() { /usr/bin/shasum -a 256 "$1" | /usr/bin/awk '{print $1}'; }
 sidecar_sha() { /usr/bin/awk 'NR==1 {print $1}' "$1"; }
-is_ppc32() { /usr/bin/lipo -verify_arch ppc "$1" >/dev/null 2>&1 && return 0; /usr/bin/lipo "$1" -verify_arch ppc >/dev/null 2>&1 && return 0; return 1; }
+is_ppc32() {
+    file="$1"
+    if [ -x /usr/bin/lipo ]; then
+        /usr/bin/lipo -verify_arch ppc "$file" >/dev/null 2>&1 && return 0
+        /usr/bin/lipo "$file" -verify_arch ppc >/dev/null 2>&1 && return 0
+    fi
+    desc="$(/usr/bin/file "$file" 2>/dev/null || true)"
+    echo "$desc" | /usr/bin/grep -Eiq '(^|[^[:alnum:]_])(ppc|powerpc)([^[:alnum:]_]|$)' || return 1
+    echo "$desc" | /usr/bin/grep -Eiq 'ppc64|powerpc64' && return 1
+    return 0
+}
 PRODUCT_VERSION="$(/usr/bin/sw_vers -productVersion 2>/dev/null || true)"
 BUILD_VERSION="$(/usr/bin/sw_vers -buildVersion 2>/dev/null || true)"
 log "== Snow event-unflip patch placement preflight =="
