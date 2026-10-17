@@ -2,44 +2,32 @@
 
 ## Status
 
-**RETRY PHASE B WITH THE V2 SAME-PROCESS LAZY-STUB WARMUP — THEN EXECUTE THE SELECTED ONE-WORD ROUTE ONCE UNDER THE ALREADY-PROVEN FAIL-CLOSED GUARD, USING ONLY A SYNTHETIC EVENT.**
+**RETRY PHASES A–B WITH THE V3 DEDICATED LEAF ROUTE GUARD. DO NOT ADVANCE TO LION UNLESS THE SNOW CONTROL PROVES ZERO NON-TARGET `dladdr` REENTRY AND EXACT EVENT-COORDINATE PRESERVATION.**
 
-The returned `_dladdr` guard preflights pass on both pinned systems. Snow Leopard PPC and Lion translated PPC both resolve the exact event-unflip return address, accept only that address while rejecting `-4` and `+4`, recover the saved original `dladdr` replacee, and prove that one direct call through the selected CoreGraphics `_dladdr` stub reaches the interposer and returns an identical ordinary `Dl_info` result. In both reports the target-wrapper count remains zero because the patched callsite is deliberately not executed. Protected hashes remain unchanged.
+The selected process-local route remains mechanically valid. The audited Snow PPC event-unflip callsite is still the single four-byte `bl _CGSGetDisplayBounds` at image-relative offset `0x3ff0` from `CGSMainDisplayID`; candidate word `0x48524d51` reaches the existing CoreGraphics `_dladdr` `__picsymbolstub1`; the exact return-address guard is `callsite + 4`; and the previous write/restore and binding preflights established that the loaded callsite can be changed and restored without changing the CoreGraphics file.
 
-That closes the binding/guard gate. The next unresolved route-specific question is narrower than the functional display repair: whether the actual modified event-unflip callsite, after data/instruction-cache synchronization and with its original page protection restored, executes candidate word `0x48524d51` under Rosetta and arrives at the proof interposer with LR equal to the exact audited return address. This procedure therefore chooses the **fail-closed patched-route execution discriminator before the separately callable functional source-helper proof**. The functional Lion display-source scan remains unimplemented.
+The second Snow route-execution result (v2) narrows the remaining problem further. Same-process lazy-stub warmup passed completely, the patched route reached the exact target wrapper once, the callsite was restored, the page returned to its original protection, and the synthetic event cache stayed zero. Nevertheless, the output event coordinates were corrupted: input `x=123.5` became `0`, and input `y=45.25` became `9000`. The same interval also increased the interposer's **non-target** forward count by one in addition to the exact target-wrapper delta of one.
 
-## First Phase B result and v2 correction
+That last observation means v2 was still not a clean steady-state route-ABI discriminator. The reused binding/guard interposer performed ordinary C/libc work on its target path (including environment/logging support) and the event interval demonstrably traversed the interposer on an additional non-target `dladdr` call. The audited event-unflip function keeps its input `x/y` live in nonvolatile `f31/f30` across the patched callsite and copies those registers to the output when the replacement returns nonzero. Therefore the v2 corruption cannot yet be assigned uniquely to the selected CoreGraphics stub itself.
 
-The first Snow Phase B run **did reach the selected route correctly**: the candidate word was installed and executed with the callsite page locked back to its original protection; the exact target-wrapper count increased by one; the returned pointer still matched the caller's output object; the synthetic event cache extent remained zero; the original call word, cache state, page protection, and protected files were all restored. The failure was narrower: both `event_output_x_preserved` and `event_output_y_preserved` were `NO`.
+Current `main` replaces that v2 proof harness for route execution only. Contract `carbon-gui-event-unflip-dladdr-route-execution-v3` uses a **dedicated route leaf interposer**. Before any CoreGraphics write, the probe resolves the exact target return, validates the route leaf contract, and warms the selected lazy stub once through the ordinary non-target forwarding path. During the patched event call, the exact target path only compares the already-resolved LR value, increments the target counter, and returns the fail-closed nonzero result; it does not resolve symbols, call original `dladdr`, inspect the environment, format/log output, or intentionally invoke any other routine. The probe now additionally requires `patched_route_non_target_delta=0`.
 
-That result must not be treated as a failed branch placement or failed return-address guard. The audited PPC body loads event `x/y` into live `f31/f30` before the selected callsite and, on a nonzero return, stores those same registers to the output point. The route therefore has an additional ABI-state requirement: the call path must preserve those live nonvolatile FPR values.
-
-The v1 route probe unintentionally combined that requirement with **first-use lazy binding**. Its own report states `selected_dladdr_stub_direct_probe_calls=0`, even though the selected CoreGraphics `_dladdr` entry is a lazy `__picsymbolstub1`. The earlier guard preflight called that stub directly once, but it did so in a different process; that binding state cannot carry into the route-execution process. Therefore the first patched event call in v1 was also the first process-local traversal of the selected lazy stub, so the failed `x/y` preservation result could not distinguish steady-state route ABI behavior from first-call lazy-binding behavior.
-
-Current `main` corrects the harness with contract `carbon-gui-event-unflip-dladdr-route-execution-v2`. Before any CoreGraphics write, the probe now performs exactly one ordinary **non-target** direct call through the selected `_dladdr` stub in the same process, using the already-proven guard helper to compare that result and `Dl_info` against the original replacee. It requires exactly one non-target interposer-forward delta, zero target-wrapper delta, and an exact result/info match. Only after that same-process warmup succeeds does it install and execute the one-word event route. The proof still requires exact `x/y` preservation; no semantic gate has been weakened. Additional input/output float bit markers are emitted so any remaining failure can be classified directly.
-
-If v2 still reaches the target wrapper once but fails either `x/y` preservation check after the warmup passes, stop: that would be evidence against this `_dladdr` route's ABI suitability rather than a lazy-binding harness confound.
-
-The previously passing proof interposer is reused unchanged. Its required SHA-256 is:
-
-~~~text
-ppc-carbon-gui-event-unflip-dladdr-guard-interposer.dylib
-ee6463df9002dc78a10c50d239486d5b88dd3a8ef4a4923ec453546154c6aa77
-~~~
-
-Do not rebuild or modify that interposer for this step. Its target branch already returns nonzero without dereferencing the incoming `r3`/`r4` values or calling the original `dladdr`, which preserves the existing event-unflip failure path.
+The earlier `ppc-carbon-gui-event-unflip-dladdr-guard-interposer.dylib` remains the authoritative artifact for the completed binding/guard preflight. **Do not use or rebuild it for this v3 route-execution retry.** The v3 route test builds a separate artifact so the already-passed guard evidence is not overwritten.
 
 ## Why the synthetic call is bounded
 
-The audited Snow PPC `_CGSGetUnflippedEventLocation` body takes the caller output point in `r3` and an event record in `r4`. Before the selected callsite it reads only event offsets `+0x0c`, `+0x10`, and cached extent `+0xc6`. With cached extent zero it calls `CGSMainDisplayID`, places its stack `CGRect` at `r4`, and executes the audited callsite. If the replacement returns nonzero, the existing failure path copies the original event `x/y` into the caller output and does not populate `event+0xc6`.
+The audited Snow PPC `_CGSGetUnflippedEventLocation` body receives the caller output point in `r3` and an event record in `r4`. It saves the incoming event coordinates in `f31/f30`, reads cached extent `event+0xc6`, and on a zero cache calls `CGSMainDisplayID` followed by the selected bounds callsite. A nonzero return from that callsite takes the existing failure path, which copies `f31/f30` directly into the caller's output point and does not populate the cached extent.
 
-The prepared probe allocates only a synthetic in-process event buffer, seeds known finite `x/y` values, keeps `event+0xc6` at zero, and calls the event-unflip function exactly once. A successful discriminator therefore requires all of the following together:
+The prepared probe allocates only a synthetic in-process event buffer, seeds known finite `x/y` values, keeps `event+0xc6` at zero, and invokes the event-unflip function exactly once. A successful discriminator therefore requires all of the following together:
 
+- the selected lazy `_dladdr` stub is warmed exactly once in the same process before any text write, with ordinary result and `Dl_info` matching the saved original replacee;
+- the dedicated route interposer reports its target-leaf contract before patching;
 - the candidate word is installed and read back exactly;
 - data/instruction cache synchronization is issued for the modified word;
-- the callsite page is returned to its original protection **before** the event function is invoked;
-- the proof interposer target-wrapper count increases by exactly one;
-- the wrapper's fail-closed nonzero result leaves output `x/y` equal to the synthetic input and leaves `event+0xc6` zero;
+- the callsite page is returned to its original protection before the event function is invoked;
+- the exact target-wrapper count increases by one during the event call;
+- the non-target-forward count does not change during that event call;
+- the wrapper's fail-closed nonzero result leaves output `x/y` bit-identical to the synthetic input and leaves `event+0xc6` zero;
 - the original call word is restored, cache synchronization is issued again, and final page protection matches the original value.
 
 No original Carbon GUI, window, mouse event, functional source scan, or persistent CoreGraphics modification is part of this proof.
@@ -49,21 +37,22 @@ No original Carbon GUI, window, mouse event, functional source scan, or persiste
 Current runtime `main` provides:
 
 ~~~text
+tests/ppc-carbon-gui-event-unflip-dladdr-route-leaf-interposer.c
 tests/ppc-carbon-gui-event-unflip-dladdr-route-execution-preflight.c
 scripts/build-ppc-carbon-gui-event-unflip-dladdr-route-execution-on-snowleopard.sh
 scripts/run-snowleopard-ppc-carbon-gui-event-unflip-dladdr-route-execution-preflight.sh
 scripts/run-lion-ppc-carbon-gui-event-unflip-dladdr-route-execution-preflight.sh
 ~~~
 
-The v2 probe derives all runtime addresses from `CGSMainDisplayID`, verifies the event-unflip prologue, original call word, selected stub shape, route displacement, and guard target return before any write. It then warms the selected lazy `_dladdr` stub exactly once through the already-proven non-target passthrough path and verifies the original-replacee result/`Dl_info` match before patching. It never resolves or calls the private event-unflip symbol by name; it uses the already-audited image-relative offset from `CGSMainDisplayID`.
+The v3 probe derives all runtime addresses from `CGSMainDisplayID`, verifies the event-unflip prologue, original call word, selected stub shape, route displacement, exact guard target return, and route-leaf helper before any write. It then warms the selected lazy `_dladdr` stub exactly once through the non-target path and verifies the original-replacee result/`Dl_info` match before patching. It never resolves or calls the private event-unflip symbol by name; it uses the already-audited image-relative offset from `CGSMainDisplayID`.
 
 ## Legacy-target provenance rule
 
-Snow Leopard 10.6.8 and Lion 10.7.5 remain offline legacy execution targets. Do not run Git provenance checks on either system. Verify current repository content and the new probe source SHA-256 on a modern TLS-capable staging system, transfer that verified tree/archive, and compare the builder-recorded `source_sha256=` value with the staging-system value. Generated artifacts use SHA-256 sidecars on the legacy hosts.
+Snow Leopard 10.6.8 and Lion 10.7.5 remain offline legacy execution targets. Do not run Git provenance checks on either system. Verify current repository content and the two new source SHA-256 values on a modern TLS-capable staging system, transfer that verified tree/archive, and compare the builder-recorded `source_sha256=` values with the staging-system values. Generated artifacts use SHA-256 sidecars on the legacy hosts.
 
-## Phase A — build the new route probe on Snow Leopard
+## Phase A — build the v3 leaf guard and route probe on Snow Leopard
 
-Reuse the exact guard interposer and sidecar from the passing guard preflight. On the modern staging system verify current `main`, then transfer it to Snow Leopard 10.6.8 / 10K549. On Snow run:
+On the modern staging system verify current `main`, then transfer that verified tree/archive to Snow Leopard 10.6.8 / 10K549. On Snow run:
 
 ~~~sh
 /bin/bash ./scripts/build-ppc-carbon-gui-event-unflip-dladdr-route-execution-on-snowleopard.sh
@@ -72,12 +61,16 @@ Reuse the exact guard interposer and sidecar from the passing guard preflight. O
 This creates:
 
 ~~~text
+ppc-carbon-gui-event-unflip-dladdr-route-leaf-interposer.dylib
+ppc-carbon-gui-event-unflip-dladdr-route-leaf-interposer.dylib.info.txt
+ppc-carbon-gui-event-unflip-dladdr-route-leaf-interposer.dylib.sha256
+
 ppc-carbon-gui-event-unflip-dladdr-route-execution-probe-private-dyld
 ppc-carbon-gui-event-unflip-dladdr-route-execution-probe-private-dyld.info.txt
 ppc-carbon-gui-event-unflip-dladdr-route-execution-probe-private-dyld.sha256
 ~~~
 
-Require a 32-bit PPC executable, contract `carbon-gui-event-unflip-dladdr-route-execution-v2`, and `LC_LOAD_DYLINKER=/usr/oah/dyld`. Compare the recorded source SHA-256 with the modern staging-system value. Do not rebuild the guard interposer.
+Require the interposer and probe to be 32-bit PPC. Require interposer build ID `event-unflip-dladdr-route-leaf-guard-v1`, one PPC `__DATA,__interpose` tuple, exported route helpers, probe contract `carbon-gui-event-unflip-dladdr-route-execution-v3`, and `LC_LOAD_DYLINKER=/usr/oah/dyld` on the probe. Compare both recorded source SHA-256 values with the values verified on the modern staging system.
 
 ## Phase B — Snow fail-closed route execution control
 
@@ -90,9 +83,11 @@ Run:
 Require at minimum:
 
 ~~~text
-probe_contract=carbon-gui-event-unflip-dladdr-route-execution-v2
+probe_contract=carbon-gui-event-unflip-dladdr-route-execution-v3
 preflight_mode=snow-ppc-control
 guard_mode=passthrough
+guard_target_leaf_contract_dlsym=PASS
+guard_target_leaf_contract=PASS
 target_return_matches_callsite_plus4=YES
 candidate_branch_reachable=YES
 candidate_branch_word=0x48524d51
@@ -113,6 +108,7 @@ vm_protect_candidate_lockdown_kr=0
 candidate_execution_protection_match=YES
 candidate_instruction_execution_attempts=1
 patched_route_target_wrapper_delta=1
+patched_route_non_target_delta=0
 patched_target_wrapper_executed=YES
 event_return_matches_output=YES
 event_output_x_preserved=YES
@@ -136,17 +132,28 @@ RESULT: DLADDR_ROUTE_EXECUTION_SNOW_PASS
 RESULT: PASS
 ~~~
 
-The raw log must contain exactly one:
+The raw log must contain exactly one route-leaf build marker:
 
 ~~~text
-PM_EVENT_UNFLIP_DLADDR_GUARD:TARGET_MATCH_FAIL_CLOSED
+PM_EVENT_UNFLIP_DLADDR_ROUTE_GUARD_BUILD_ID:event-unflip-dladdr-route-leaf-guard-v1
 ~~~
 
-If Snow fails, stop and return only the Snow report. If the same-process stub warmup itself fails, do not patch the callsite. If the warmup passes but `x/y` preservation still fails, treat that as a route-ABI failure and stop. Do not retry by removing cache synchronization, weakening the guard, leaving the page writable during execution, or introducing the functional helper.
+Unlike v1/v2, there is intentionally **no target-path log marker**: writing one would reintroduce call-outs into the exact path this experiment is trying to isolate. The counter delta is the target-execution proof.
 
-## Phase C — transfer the exact new probe to Lion
+If Snow fails, stop and return only the Snow report. In particular:
 
-Transfer the exact Snow-built route probe plus its `.info.txt` and `.sha256` sidecars to Lion. Keep the exact previously passing guard interposer in `payload/` and keep the accepted CoreServices/Security/CGS stack unchanged. Do not rebuild either artifact on Lion.
+- if the warmup fails, do not patch the callsite;
+- if `patched_route_target_wrapper_delta` is not exactly one, the route is not proved;
+- if `patched_route_non_target_delta` is not zero, the target interval is still contaminated and must not be interpreted as a clean ABI result;
+- if the target delta is one and non-target delta is zero but `x/y` preservation still fails, treat that as evidence against this `_dladdr` route's ABI suitability and stop.
+
+Do not retry by weakening the coordinate gate, removing cache synchronization, leaving the page writable during execution, or introducing the functional helper.
+
+## Phase C — transfer the exact v3 artifacts to Lion
+
+Only after Snow passes, transfer the exact Snow-built route probe and route leaf interposer with their `.info.txt` and `.sha256` sidecars to Lion. Place the route leaf interposer and its sidecar under `payload/`, matching the Lion runner default, and keep the probe plus its sidecar at the repository root. Keep the accepted CoreServices/Security/CGS stack unchanged. Do not rebuild either v3 artifact on Lion.
+
+Do not replace or remove the older passing guard-preflight interposer merely to run this test; it is a separate historical proof artifact.
 
 ## Phase D — Lion translated-PPC fail-closed route execution
 
@@ -156,13 +163,18 @@ From the logged-in Aqua console user's Terminal run:
 /bin/bash ./scripts/run-lion-ppc-carbon-gui-event-unflip-dladdr-route-execution-preflight.sh
 ~~~
 
-Require the same route, restoration, cache-synchronization, synthetic-event, and single target-wrapper markers as Snow, with:
+Require the same warmup, leaf-contract, route, zero-reentry, coordinate-preservation, restoration, cache-synchronization, and single target-wrapper markers as Snow, with:
 
 ~~~text
 preflight_mode=lion-ppc-translated
 guard_mode=lion-guard-v1
+guard_target_leaf_contract_dlsym=PASS
+guard_target_leaf_contract=PASS
 patched_route_target_wrapper_delta=1
+patched_route_non_target_delta=0
 patched_target_wrapper_executed=YES
+event_output_x_preserved=YES
+event_output_y_preserved=YES
 failclosed_event_path_preserved=YES
 loaded_callsite_bytes_restored=YES
 final_protection_match=YES
@@ -172,11 +184,17 @@ RESULT: DLADDR_ROUTE_EXECUTION_LION_PASS
 RESULT: PASS
 ~~~
 
-The raw Lion log must likewise contain exactly one `PM_EVENT_UNFLIP_DLADDR_GUARD:TARGET_MATCH_FAIL_CLOSED`.
+The raw Lion log must likewise contain exactly one route-leaf build marker and no target-path logging requirement.
 
 ## Return evidence
 
-After both controls pass, return only:
+If Snow fails, return only:
+
+~~~text
+ppc-carbon-gui-event-unflip-dladdr-route-execution-snow.txt
+~~~
+
+If Snow passes and Lion is run, return:
 
 ~~~text
 ppc-carbon-gui-event-unflip-dladdr-route-execution-snow.txt
@@ -187,18 +205,20 @@ Also return an unexpected crash/core diagnostic if one appears. A process crash 
 
 ## Decision gate after this preflight
 
-If both systems prove that the actual patched callsite reaches the exact fail-closed target wrapper once, preserves the event-unflip failure path, restores the original word/protection, and preserves protected file hashes, the route is mechanically closed through real execution. The following step should then build a **separately callable functional display-source helper proof** with no callsite patch, so Lion source scanning/main-master selection/bounds production can be validated independently before it is combined with this route.
+If both systems prove that the actual patched callsite reaches the exact leaf target once with zero non-target `dladdr` reentry, preserves the event-unflip failure path and live coordinates, restores the original word/protection, and preserves protected file hashes, the route is mechanically closed through real execution. The following step should then build a **separately callable functional display-source helper proof** with no callsite patch, so Lion source scanning/main-master selection/bounds production can be validated independently before it is combined with this route.
 
-If either system does not reach the target wrapper exactly once, if the synthetic event takes the success path, if the callsite or protection cannot be restored, or if protected hashes change, stop. Do not combine routing and functional source logic, broaden the CoreGraphics hook, rewrite the stub/indirect pointer, launch the original GUI, or modify XNU.
+If either system does not reach the target wrapper exactly once, has any non-target `dladdr` activity during the event interval, takes the synthetic event success path, corrupts `x/y`, cannot restore the callsite/protection, or changes protected hashes, stop. Do not combine routing and functional source logic, broaden the CoreGraphics hook, rewrite the stub/indirect pointer, launch the original GUI, or modify XNU.
 
 ## Safety boundary
 
-- Reuse the exact passing proof interposer; do not change its target behavior.
+- Use the dedicated v3 route leaf interposer for this experiment; preserve the older passing binding/guard artifact separately.
 - Before patching, perform exactly one ordinary non-target direct call through the selected `_dladdr` stub in the same process and require its passthrough result/`Dl_info` to match the original replacee.
+- Resolve and validate the exact target return and leaf contract before modifying CoreGraphics.
 - Patch only the one audited four-byte process-local callsite.
 - Restore the original page protection before executing the synthetic event call.
 - Issue data/instruction-cache synchronization after candidate installation and after restoration.
 - Invoke `_CGSGetUnflippedEventLocation` exactly once, with only the probe's synthetic event buffer and output point.
+- Require zero non-target `dladdr` delta during that event call.
 - Do not execute the original PPC Carbon GUI subject.
 - Do not create, move, drag, click, or synthesize a real window event.
 - Do not implement or call the functional Lion display-source scan in this phase.
