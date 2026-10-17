@@ -21,14 +21,22 @@ scripts/build-ppc-carbon-gui-event-unflip-patch-placement-preflight-on-snowleopa
 scripts/run-snowleopard-ppc-carbon-gui-event-unflip-patch-placement-preflight.sh
 scripts/run-lion-ppc-carbon-gui-event-unflip-patch-placement-preflight.sh
 preflight_contract=carbon-gui-event-unflip-patch-placement-preflight-v2
-probe_blob=8c30b99ecce4870c57f8192960cc1a774dc3136c
+probe_blob=7c76c68aa5d2531458fbba90bf7884f4c02f849c
 marker_blob=e83a0a219f35f7f56453904c64c534b843a1e183
-build_script_blob=9d3d40452e16a92e1900ab69843199e828ed5876
-snow_runner_blob=a23cbfe177876d3c9d191730b422645d55916606
-lion_runner_blob=931553325710cfc1edcfa8ed5dafd7a2cff0ab9b
+build_script_blob=c3fe886e26ef62d31d15a7c69b00624f0c461e77
+snow_runner_blob=e07063d0ad36643af92c1dd666902b784719e6fd
+lion_runner_blob=a638069b20b005a68a788becd35825815e53e3b5
 ~~~
 
 The build creates one PPC executable using /usr/oah/dyld and one inert PPC dylib used only as a placement marker. Transfer the exact build products and SHA-256 sidecars from Snow to Lion; do not rebuild them on Lion.
+
+### Harness correction after the first Snow run
+
+The first Phase B failure was in the preflight harness, not in the target binary. The runner tried to extract a generic `ppc` CoreGraphics slice even though the pinned Snow slice is `ppc7400`, and it handed `lipo` a path already created by `mktemp`. Current main now extracts `ppc7400` with both Snow-compatible command forms, removes the temporary placeholder before `lipo -output`, and only falls back to copying CoreGraphics when `file` proves it is already a non-64-bit thin PPC image. The exact slice SHA-256 remains the gate.
+
+Review of the other phases found two additional harness defects before they could affect evidence. The architecture fallback now strips the filename prefix from `file` output before matching `ppc`, so a filename containing the string "ppc" cannot satisfy the gate by itself. The probe also previously declared `loaded_callsite_bytes_unchanged=YES` while testing an uninitialized local; contract v2 now rereads the loaded branch word and compares it with the original value. Both Snow and Lion runners additionally require the v2 contract marker, exported inert-marker symbol, runtime-region resolution, main-prologue match, zero mutation/allocation/private-call/original-GUI counters, and the real unchanged-callsite result before PASS.
+
+Because the probe source and contract changed, discard the previously built Phase A products and rebuild them from current main before rerunning Phase B. Phase C must use those exact rebuilt binaries and sidecars.
 
 ## Phase A — build on Snow Leopard
 
