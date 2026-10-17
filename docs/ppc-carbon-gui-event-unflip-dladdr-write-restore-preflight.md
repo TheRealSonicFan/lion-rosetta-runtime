@@ -47,9 +47,23 @@ The probe derives the loaded callsite and selected stub from `CGSMainDisplayID`,
 
 The candidate instruction is never executed, the `_dladdr` stub is never called, no route interposer/helper is loaded, and the original Carbon GUI is never launched.
 
+## Phase A harness correction — legacy Git/blob verification removed
+
+The first Phase A attempt stopped before compilation with:
+
+~~~text
+error: dladdr write-restore probe source blob mismatch:
+~~~
+
+That was a build-harness provenance defect, not a mismatch in the probe source or a runtime result. The builder was invoking `/usr/bin/git hash-object` on Snow Leopard and treating an unavailable/empty Git result as a hard source-identity failure. This contradicts the repository's legacy-target provenance policy: Snow Leopard and Lion must not require Git network operations or Git blob/hash-object checks.
+
+Current `main` removes that Git blob gate. Repository/source provenance must be verified on a modern TLS-capable staging system before transfer, using SHA-256 as already required by the project policy. On Snow Leopard the corrected builder records the local source SHA-256 in the generated `.info.txt`, verifies the compiled contract marker, verifies 32-bit PPC architecture and `LC_LOAD_DYLINKER=/usr/oah/dyld`, and writes the executable SHA-256 sidecar. It does not run `git hash-object` or require any Git metadata.
+
+Discard any partial files from the failed Phase A attempt, update/transfer current `main` from the modern staging system, and restart Phase A. The probe source and the selected `_dladdr` route constants are unchanged by this correction.
+
 ## Phase A — build once on Snow Leopard
 
-On Snow Leopard 10.6.8 / 10K549, pull current `main` and run:
+On a modern TLS-capable staging system, obtain and verify current `main`, then transfer that exact verified tree/archive to Snow Leopard 10.6.8 / 10K549. Do **not** run `git pull`, `git hash-object`, or any other Git provenance check on Snow Leopard. Then run:
 
 ~~~sh
 /bin/bash ./scripts/build-ppc-carbon-gui-event-unflip-dladdr-write-restore-on-snowleopard.sh
