@@ -22,7 +22,7 @@
 #error This preflight is intentionally PowerPC-only.
 #endif
 
-#define PROBE_CONTRACT "carbon-gui-event-unflip-dladdr-route-execution-v1"
+#define PROBE_CONTRACT "carbon-gui-event-unflip-dladdr-route-execution-v2"
 #define MODE_ENV "ROSETTA_EVENT_UNFLIP_DLADDR_GUARD_MODE"
 #define MODE_SNOW "passthrough"
 #define MODE_LION "lion-guard-v1"
@@ -47,6 +47,8 @@ extern void sys_dcache_flush(void *, size_t);
 extern void sys_icache_invalidate(void *, size_t);
 
 typedef uintptr_t (*target_return_fn)(void);
+typedef int (*original_dladdr_fn)(const void *, Dl_info *);
+typedef int (*dladdr_fn)(const void *, Dl_info *);
 typedef void (*counts_fn)(unsigned int *, unsigned int *);
 typedef void *(*event_unflip_fn)(void *, void *);
 
@@ -80,6 +82,14 @@ write_u32(void *p, uint32_t v)
 {
     *(volatile uint32_t *)p = v;
     __asm__ volatile("sync" ::: "memory");
+}
+
+static int
+nullable_string_equal(const char *a, const char *b)
+{
+    if (a == NULL || b == NULL)
+        return a == b;
+    return strcmp(a, b) == 0;
 }
 
 static int
@@ -153,6 +163,7 @@ main(void)
     struct utsname uts;
     const char *mode;
     target_return_fn get_target;
+    original_dladdr_fn call_original;
     counts_fn get_counts;
     uintptr_t main_runtime;
     uintptr_t event_runtime;
@@ -160,6 +171,7 @@ main(void)
     uintptr_t target_return_runtime;
     uintptr_t guard_target_runtime;
     uintptr_t stub_runtime;
+    dladdr_fn selected_stub;
     int64_t route_delta;
     uint32_t route_word;
     uint32_t event_first_word;
@@ -186,11 +198,24 @@ main(void)
     unsigned int text_write_attempts = 0;
     unsigned int dcache_flush_attempts = 0;
     unsigned int icache_invalidate_attempts = 0;
+    unsigned int warm_non_target_before = 0;
+    unsigned int warm_target_before = 0;
+    unsigned int warm_non_target_after = 0;
+    unsigned int warm_target_after = 0;
+    unsigned int warm_non_target_delta = 0;
+    unsigned int warm_target_delta = 0;
     unsigned int non_target_before = 0;
     unsigned int target_before = 0;
     unsigned int non_target_after = 0;
     unsigned int target_after = 0;
     unsigned int target_delta = 0;
+    Dl_info original_info;
+    Dl_info stub_info;
+    int original_result = 0;
+    int stub_result = 0;
+    int stub_result_match = 0;
+    int stub_info_match = 0;
+    int stub_warmup_complete = 0;
     unsigned char event[EVENT_SIZE];
     struct point32 output;
     float event_x = 123.5f;
@@ -218,7 +243,6 @@ main(void)
     printf("functional_source_helper_load_attempts=0\n");
     printf("original_gui_launch_count=0\n");
     printf("window_interaction_attempts=0\n");
-    printf("selected_dladdr_stub_direct_probe_calls=0\n");
 
     if (sizeof(void *) != 4) {
         printf("pointer_size=%lu\n", (unsigned long)sizeof(void *));
@@ -244,11 +268,14 @@ main(void)
 
     get_target = (target_return_fn)dlsym(
         RTLD_DEFAULT, "rosetta_event_unflip_dladdr_guard_target_return");
+    call_original = (original_dladdr_fn)dlsym(
+        RTLD_DEFAULT, "rosetta_event_unflip_dladdr_guard_call_original");
     get_counts = (counts_fn)dlsym(
         RTLD_DEFAULT, "rosetta_event_unflip_dladdr_guard_get_counts");
     printf("guard_target_helper_dlsym=%s\n", get_target ? "PASS" : "FAIL");
+    printf("original_replacee_helper_dlsym=%s\n", call_original ? "PASS" : "FAIL");
     printf("guard_counts_helper_dlsym=%s\n", get_counts ? "PASS" : "FAIL");
-    if (!get_target || !get_counts)
+    if (!get_target || !call_original || !get_counts)
         goto done;
 
     main_runtime = (uintptr_t)dlsym(RTLD_DEFAULT, "CGSMainDisplayID");
@@ -263,6 +290,7 @@ main(void)
     target_return_runtime = main_runtime + TARGET_RETURN_DELTA_FROM_MAIN;
     stub_runtime = main_runtime + DLADDR_STUB_DELTA_FROM_MAIN;
     guard_target_runtime = get_target();
+    selected_stub = (dladdr_fn)(uintptr_t)stub_runtime;
     event_fn = (event_unflip_fn)(uintptr_t)event_runtime;
 
     printf("CGSMainDisplayID_runtime=0x%08lx\n", (unsigned long)main_runtime);
@@ -312,6 +340,50 @@ main(void)
         stub_restore_lr_word != 0x7c0803a6U ||
         stub_mtctr_word != 0x7d8903a6U ||
         stub_tail_word != 0x4e800420U)
+        goto done;
+
+    /*
+     * Bind the selected lazy CoreGraphics _dladdr stub once in this process
+     * before the event function carries live f30/f31 values across the
+     * patched callsite.  The earlier guard preflight proved this direct call
+     * in a different process; that binding state does not carry over here.
+     */
+    memset(&original_info, 0, sizeof(original_info));
+    memset(&stub_info, 0, sizeof(stub_info));
+    original_result = call_original((const void *)(uintptr_t)&main,
+                                    &original_info);
+    get_counts(&warm_non_target_before, &warm_target_before);
+    stub_result = selected_stub((const void *)(uintptr_t)&main, &stub_info);
+    get_counts(&warm_non_target_after, &warm_target_after);
+    warm_non_target_delta = warm_non_target_after - warm_non_target_before;
+    warm_target_delta = warm_target_after - warm_target_before;
+    stub_result_match = (original_result == stub_result);
+    stub_info_match = stub_result_match &&
+        original_info.dli_fbase == stub_info.dli_fbase &&
+        original_info.dli_saddr == stub_info.dli_saddr &&
+        nullable_string_equal(original_info.dli_fname, stub_info.dli_fname) &&
+        nullable_string_equal(original_info.dli_sname, stub_info.dli_sname);
+    stub_warmup_complete =
+        original_result != 0 &&
+        stub_result != 0 &&
+        stub_result_match &&
+        stub_info_match &&
+        warm_non_target_delta == 1 &&
+        warm_target_delta == 0;
+
+    printf("selected_stub_warmup_original_result=%d\n", original_result);
+    printf("selected_stub_warmup_result=%d\n", stub_result);
+    printf("selected_stub_warmup_result_match=%s\n",
+           stub_result_match ? "YES" : "NO");
+    printf("selected_stub_warmup_info_match=%s\n",
+           stub_info_match ? "YES" : "NO");
+    printf("selected_stub_warmup_non_target_delta=%u\n",
+           warm_non_target_delta);
+    printf("selected_stub_warmup_target_delta=%u\n", warm_target_delta);
+    printf("selected_dladdr_stub_direct_probe_calls=1\n");
+    printf("selected_stub_warmup_complete=%s\n",
+           stub_warmup_complete ? "YES" : "NO");
+    if (!stub_warmup_complete)
         goto done;
 
     if (!query_region(callsite_runtime, &before_region)) {
@@ -443,6 +515,10 @@ cleanup:
         output_x_match = memcmp(&output.x, &event_x, sizeof(event_x)) == 0;
         output_y_match = memcmp(&output.y, &event_y, sizeof(event_y)) == 0;
         event_return_match = event_return == (void *)&output;
+        printf("event_input_x_bits=0x%08x\n", read_u32(&event_x));
+        printf("event_output_x_bits=0x%08x\n", read_u32(&output.x));
+        printf("event_input_y_bits=0x%08x\n", read_u32(&event_y));
+        printf("event_output_y_bits=0x%08x\n", read_u32(&output.y));
         printf("interposer_non_target_forward_count_after=%u\n", non_target_after);
         printf("interposer_target_wrapper_count=%u\n", target_after);
         printf("patched_route_target_wrapper_delta=%u\n", target_delta);
@@ -465,7 +541,8 @@ cleanup:
         printf("failclosed_event_path_preserved=NO\n");
     }
 
-    if (event_called && candidate_locked_down &&
+    if (stub_warmup_complete &&
+        event_called && candidate_locked_down &&
         target_delta == 1 && event_return_match &&
         output_x_match && output_y_match && cache_after == 0 &&
         original_restored && kr_final_restore == KERN_SUCCESS &&
