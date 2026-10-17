@@ -2,13 +2,13 @@
 
 ## Status
 
-**NEXT STEP — PROVE THE ZERO-CACHE REPAIR CAN BE REDUCED TO ONE PPC CALLSITE BEFORE ANY TEXT WRITE OR HELPER BUILD.**
+**COMPLETE — ONE PPC CALLSITE SUFFICES / RUNTIME PLACEMENT PREFLIGHT NEXT.**
 
 The direct-source helper contract reports pass on both pinned releases. The source-only branch is now viable at the semantic/lifecycle level: the native Lion main/master/bounds field sets are closed, Lion bounds has no Snow local-entry +0x48 dependency, and display notifications enter _updateAllDisplayInfoAsNeeded under the display lock. The update path may temporarily unlock around mapping initialization or _CGSReleaseAllDisplays, but it reacquires the display lock before returning; server shutdown separately releases displays, frees mapping state, and zeros the source globals. A helper must therefore call the normal update path, re-resolve the active source only after update has returned, fail closed if source state is absent, scan read-only while locked, and never retain a source pointer across calls.
 
 The exact Snow zero-cache body exposes a narrower patch surface than the previous larger-block idea. _CGSGetUnflippedEventLocation calls _CGSMainDisplayID, immediately places its stack CGRect buffer in r4, then directly calls _CGSGetDisplayBounds. The caller already checks the returned CGError, caches the resulting bounds height at event +0xc6 on success, and preserves its existing failure behavior otherwise. A replacement at the single _CGSGetDisplayBounds call can therefore keep the entire event-unflip control flow intact: the helper may ignore the known-bad display ID in r3, fill the existing CGRect * in r4 from the Lion source scan, and return the same success/failure convention. _CGSMainDisplayID may remain unmodified; its zero result is simply not trusted by this one callsite.
 
-This audit is still read-only. It proves the exact callsite bytes and ABI surface but does not authorize writing CoreGraphics text, allocating a branch island, or loading a helper.
+The returned reports complete this gate. Snow identifies exactly one replacement site at 0x14c38c with original bytes 4b ff 70 2d; r4 already points to the caller-owned CGRect, r3 carries the CGError result, the normal success path caches the height, and the failure path remains intact. Lion shows the same zero-cache call shape as the native reference. The remaining questions are runtime address/protection and PPC branch placement, not event-unflip semantics.
 
 ## Prepared analyzer
 
@@ -101,12 +101,11 @@ ppc-carbon-gui-event-unflip-callsite-patchability-lion.txt
 
 ## Decision gate after the audit
 
-If the Snow callsite is exactly one replaceable PPC bl with the existing r4 = CGRect * output and r3 = CGError result contract intact, the next step will be a passive runtime patch-placement preflight, not a functional patch. That preflight must establish loaded CoreGraphics text address/protection, verify the original four instruction bytes, and find a process-local executable trampoline placement within PPC relative-branch range without modifying the shared-cache file or any other system image.
+The one-callsite branch is closed in favor of a runtime placement preflight. Follow docs/ppc-carbon-gui-event-unflip-patch-placement-preflight.md.
 
-Only after that placement gate passes may a proof-only helper be built. The helper must be translated-PPC-on-Lion-only, re-resolve source state after the normal update path while locked, read Lion records with native 0x17c stride and the audited byte-order rules, fill only the caller-provided stack CGRect, return a normal CGError, and leave all display/source/local state untouched.
+That preflight resolves the loaded translated-PPC callsite from CGSMainDisplayID, verifies the in-memory branch word and decoded target, records current/maximum text protections, measures whether an inert injected PPC marker function is directly reachable within the +/-32 MiB bl window, and inventories any unmapped page-sized candidate inside that window.
 
-If a near trampoline cannot be guaranteed safely, do not broaden to a global _CGSGetDisplayBounds hook automatically. Review an exact-return-address function-prologue hook only as a separate alternative, with the original function behavior preserved for every other caller.
-
+It performs no CoreGraphics write, vm_protect, vm_allocate, executable-page allocation, private CoreGraphics call, or original GUI launch. No functional source-scan helper is built yet.
 ## Safety boundary
 
 - Do not launch the original PPC Carbon GUI subject.
