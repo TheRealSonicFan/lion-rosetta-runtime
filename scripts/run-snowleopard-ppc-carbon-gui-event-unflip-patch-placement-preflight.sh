@@ -47,7 +47,22 @@ MARKER_EXPECTED="$(sidecar_sha "$MARKER_SHA")"; MARKER_ACTUAL="$(sha256 "$MARKER
 [ "$MARKER_EXPECTED" = "$MARKER_ACTUAL" ] || fail "marker hash mismatch"
 TMP_SLICE="$(/usr/bin/mktemp /tmp/event-unflip-placement-coregraphics.XXXXXX)" || fail "mktemp failed"
 trap '/bin/rm -f "$TMP_SLICE"' EXIT HUP INT TERM
-/usr/bin/lipo "$COREGRAPHICS" -thin ppc -output "$TMP_SLICE" >/dev/null 2>&1 || fail "could not thin CoreGraphics PPC slice"
+CORE_LIPO_INFO="$(/usr/bin/lipo -info "$COREGRAPHICS" 2>&1 || true)"
+log "coregraphics_lipo_info=$CORE_LIPO_INFO"
+if ! /usr/bin/lipo "$COREGRAPHICS" -thin ppc7400 -output "$TMP_SLICE" >/dev/null 2>&1; then
+    /bin/rm -f "$TMP_SLICE"
+    TMP_SLICE="$(/usr/bin/mktemp /tmp/event-unflip-placement-coregraphics.XXXXXX)" || fail "mktemp failed"
+    if ! /usr/bin/lipo -thin ppc7400 "$COREGRAPHICS" -output "$TMP_SLICE" >/dev/null 2>&1; then
+        desc="$(/usr/bin/file "$COREGRAPHICS" 2>/dev/null || true)"
+        desc="${desc#*: }"
+        if echo "$desc" | /usr/bin/grep -Eiq '(^|[^[:alnum:]_])(ppc|powerpc)([^[:alnum:]_]|$)' &&
+           ! echo "$desc" | /usr/bin/grep -Eiq 'ppc64|powerpc64|universal|fat'; then
+            /bin/cp -p "$COREGRAPHICS" "$TMP_SLICE" || fail "could not copy thin CoreGraphics PPC slice"
+        else
+            fail "could not extract CoreGraphics ppc7400 slice"
+        fi
+    fi
+fi
 SLICE_SHA="$(sha256 "$TMP_SLICE")"
 log "coregraphics_ppc_slice_sha256=$SLICE_SHA"
 [ "$SLICE_SHA" = "$EXPECTED_SLICE_SHA" ] || fail "CoreGraphics PPC slice mismatch"
@@ -62,11 +77,17 @@ log "protected_hashes_unchanged=$UNCHANGED"
 require_one() { /usr/bin/grep -Fxc "$1" "$RAW" >/dev/null 2>&1 || fail "missing probe marker: $1"; }
 require_one "preflight_contract=carbon-gui-event-unflip-patch-placement-preflight-v1"
 require_one "preflight_mode=snow-ppc-control"
+require_one "runtime_regions_resolved=YES"
+require_one "main_prologue_match=YES"
 require_one "bounds_call_runtime_word_match=YES"
 require_one "decoded_bounds_target_match=YES"
 require_one "coregraphics_text_write_attempts=0"
 require_one "vm_protect_attempts=0"
 require_one "vm_allocate_attempts=0"
+require_one "temporary_executable_mapping_attempts=0"
+require_one "private_coregraphics_call_count=0"
+require_one "original_gui_launch_count=0"
+require_one "loaded_callsite_bytes_unchanged=YES"
 require_one "preflight_complete=YES"
 require_one "RESULT: PASS"
 [ "$RC" -eq 0 ] || fail "probe returned nonzero"
