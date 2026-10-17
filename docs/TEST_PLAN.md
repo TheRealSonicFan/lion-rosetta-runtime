@@ -963,9 +963,9 @@ The shared-art source reports pass on both systems. Snow's unique raw-bytes call
 
 Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md` next. Run `scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py` statically on Snow and Lion and return the two text reports. Do not launch the PPC subject, alter records/resources/geometry, broaden bitmap-info or CGS rules, change hit handling, or modify XNU before the exact seven record geometries and raw-byte slots are compared.
 
-## Titlebar interaction current step — direct-source event-unflip helper contract audit
+## Titlebar interaction current step — event-unflip callsite patchability audit
 
-The image-local repair-surface reports pass and reject a field-only CoreGraphics repair as count>1 unsafe: Snow local entries are derived from 0x150-byte source records, while Lion uses 0x17c-byte records, and the bounds path also mixes +0x0c geometry shifts with +0x1c identity/status shifts. A persistent partial projection remains unsafe across bind/rebind.
+The direct-source helper contract reports pass. The source mapping may be consumed read-only only after the normal display update path has returned under the display lock; the helper must re-resolve current source state each call and must not retain a pointer across display-server shutdown/remapping. This closes the lifecycle prerequisite without authorizing implementation.
 
-Follow docs/ppc-carbon-gui-event-unflip-direct-source-helper-contract-audit.md. Run scripts/audit-ppc-carbon-gui-event-unflip-direct-source-helper-contract.py on Snow and Lion and return ppc-carbon-gui-event-unflip-direct-source-helper-contract-snow.txt and ppc-carbon-gui-event-unflip-direct-source-helper-contract-lion.txt. This static-only step must decide whether the zero-cache fallback can read the active Lion source directly with native 0x17c stride and avoid the Snow local mapping entirely before any event-local patchability review is authorized.
+Follow docs/ppc-carbon-gui-event-unflip-callsite-patchability-audit.md. Run scripts/audit-ppc-carbon-gui-event-unflip-callsite-patchability.py on Snow and Lion and return ppc-carbon-gui-event-unflip-callsite-patchability-snow.txt and ppc-carbon-gui-event-unflip-callsite-patchability-lion.txt. This static-only step tests whether the Snow zero-cache repair can be reduced to the single direct _CGSGetDisplayBounds call while preserving the existing CGRect output, CGError check, cache update, and failure path; runtime text writability and PPC branch placement remain deliberately unproven.
 
