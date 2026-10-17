@@ -798,9 +798,9 @@ Current `main` advances to `docs/ppc-carbon-gui-coreui-windowframe-sartfile-reco
 
 ## Titlebar interaction boundary — runtime placement preflight next
 
-The event-unflip callsite audits pass on both pinned releases. Snow proves that the zero-cache repair can be confined to one direct _CGSGetDisplayBounds call while preserving the existing CGRect output, CGError check, cached-height update, and failure path; Lion confirms the corresponding native shape.
+The event-unflip callsite audits and corrected v2 placement preflights now pass on both pinned releases. The exact PPC callsite remains intact and decodes to the audited bounds target, but the separately loaded marker is outside the +/-32 MiB branch window and no unmapped in-range page candidate is present; both placement reports therefore return `NONE_OBSERVED`. The callsite is currently read-only with maximum `rwx`, which is not a text-write authorization.
 
-Current main therefore advances to docs/ppc-carbon-gui-event-unflip-patch-placement-preflight.md. The prepared PPC probe and inert marker only measure the loaded callsite, VM protections, PPC branch reachability, and nearby address-space availability; they do not modify CoreGraphics or run the original GUI.
+Current main therefore advances to `docs/ppc-carbon-gui-event-unflip-near-stub-interposition-audit.md`. The new static-only collector inventories existing CoreGraphics symbol stubs, imported targets, and raw stub words so the next review can select or reject an LR-preserving stub route keyed by the exact PPC return address without modifying CoreGraphics, loading a helper, running the original GUI, or changing XNU.
 
 # lion-rosetta-runtime
 
