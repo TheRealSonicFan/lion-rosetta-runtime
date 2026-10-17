@@ -92,9 +92,11 @@ require_one "guard_exact_match=YES"
 require_one "guard_minus4_reject=YES"
 require_one "guard_plus4_reject=YES"
 require_one "original_replacee_available=YES"
-require_one "passthrough_result_match=YES"
-require_one "passthrough_info_match=YES"
+require_one "selected_stub_passthrough_result_match=YES"
+require_one "selected_stub_passthrough_info_match=YES"
+require_one "selected_stub_interposer_forward_delta=1"
 require_one "interposer_target_wrapper_count=0"
+require_one "selected_dladdr_stub_direct_probe_calls=1"
 require_one "patched_target_wrapper_executed=NO"
 require_one "coregraphics_text_write_attempts=0"
 require_one "vm_protect_attempts=0"
@@ -106,12 +108,6 @@ require_one "preflight_complete=YES"
 require_one "RESULT: PASS"
 
 /usr/bin/grep -Fq 'PM_EVENT_UNFLIP_DLADDR_GUARD_BUILD_ID:event-unflip-dladdr-guard-v1' "$RAW" || fail "interposer did not execute"
-COUNT="$(/usr/bin/awk -F= '/^interposer_non_target_forward_count=/{print $2; exit}' "$RAW")"
-case "$COUNT" in
-    ''|*[!0-9]*) fail "invalid non-target forward count: $COUNT" ;;
-esac
-[ "$COUNT" -ge 1 ] || fail "no non-target dladdr call was forwarded"
-
 [ "$RC" -eq 0 ] || fail "probe returned nonzero"
 [ "$UNCHANGED" = "YES" ] || fail "CoreGraphics file hash changed"
 
