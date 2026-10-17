@@ -2,7 +2,7 @@
 
 ## Status
 
-**NEXT STEP — PIN THE LOCKED LOOKUP FAST PATH BEFORE ANY LIVE PROJECTION WRITE.**
+**COMPLETE — LOCKED LOOKUP FAST PATH PINNED; ONE-RECORD LIVE PROOF NEXT.**
 
 The projection-seam reports pass on both pinned releases and close the
 release/rebuild lifecycle needed to choose the next boundary.
@@ -139,3 +139,35 @@ mapping rebuild.
 - Do not rewrite event, hit-test, or movement payloads.
 - Keep the accepted compatibility stack unchanged.
 - Do not modify CoreGraphics, WindowServer, Rosetta caches, dyld, or XNU.
+
+
+## Completion result
+
+Both returned call-boundary reports pass on the pinned Snow PPC and Lion i386
+CoreGraphics slices.
+
+Snow proves the public CGSMainDisplayID wrapper executes lockDisplay,
+updateAllDisplayInfoAsNeeded, lookupMainDisplay(1), then unlockDisplay. The
+same-__TEXT deltas from the exported main-display symbol to all four private
+helpers are exact and are suitable for loaded translated-PPC address
+validation.
+
+The Snow lookup body also closes the live proof field set. On the fast path it
+scans the local entries for record +0x10e, and the only record fields reachable
+before an early successful return are inside +0x0f4/+0x0f8 and
++0x10c..+0x113. Those fields are already covered by the independently proven
+Lion +0x1c correspondence. If the projected +0x110 byte is zero, the selected
+candidate returns directly and lookupDisplay is not called.
+
+Lion supplies the matching native reference and confirms the release-local
+helper organization.
+
+The next controlled step is:
+
+~~~text
+docs/ppc-carbon-gui-display-shmem-projection-proof.md
+~~~
+
+Run the Snow control first, then exactly one Lion one-record projection proof.
+No production projection or original Carbon GUI run is authorized by the
+static audit alone.
