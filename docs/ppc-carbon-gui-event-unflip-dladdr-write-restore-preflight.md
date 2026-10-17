@@ -77,7 +77,15 @@ ppc-carbon-gui-event-unflip-dladdr-write-restore-private-dyld.info.txt
 ppc-carbon-gui-event-unflip-dladdr-write-restore-private-dyld.sha256
 ~~~
 
-Require a 32-bit PPC executable with `LC_LOAD_DYLINKER=/usr/oah/dyld`. Do not rebuild it on Lion.
+Require a 32-bit PPC executable with `LC_LOAD_DYLINKER=/usr/oah/dyld`. The generated `.info.txt` must also contain:
+
+~~~text
+source_sha256=<local SHA-256 of the transferred source>
+source_provenance_policy=MODERN_STAGING_SYSTEM_SHA256
+legacy_git_blob_check=NOT_REQUIRED
+~~~
+
+Compare `source_sha256` with the SHA-256 you verified for that source on the modern staging system; this comparison is the source-transfer provenance check. Do not substitute a Git blob ID. Do not rebuild the executable on Lion.
 
 ## Phase B — Snow reversible-write control
 
