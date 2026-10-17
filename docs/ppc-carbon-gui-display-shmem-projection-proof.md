@@ -21,7 +21,7 @@ The proof does not attempt a general 0x17c-to-0x150 conversion. It copies the cu
 
 ~~~text
 tests/ppc-carbon-gui-display-shmem-projection-proof.c
-  Git blob f89d19409ac8175d240450e84983c820bd86f17e
+  Git blob a19bc7bde9059bf768f3a0ac78693ae2c807ce77
 
 scripts/build-ppc-carbon-gui-display-shmem-projection-proof-on-snowleopard.sh
   Git blob 6d41553be591dd85f9dc3160099f539b004217ee
@@ -138,6 +138,7 @@ projection_fast_path_guard=PASS
 projection_applied=YES
 process_local_pointer_write_count=2
 projection_lookup_returned_target_entry=YES
+projection_record_still_installed_after_lookup=YES
 source_record_unchanged=YES
 local_record_pointer_restored=YES
 selected_state_ready=YES
