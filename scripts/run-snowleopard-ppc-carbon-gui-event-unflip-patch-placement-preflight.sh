@@ -47,12 +47,13 @@ MARKER_EXPECTED="$(sidecar_sha "$MARKER_SHA")"; MARKER_ACTUAL="$(sha256 "$MARKER
 [ "$MARKER_EXPECTED" = "$MARKER_ACTUAL" ] || fail "marker hash mismatch"
 TMP_SLICE="$(/usr/bin/mktemp /tmp/event-unflip-placement-coregraphics.XXXXXX)" || fail "mktemp failed"
 trap '/bin/rm -f "$TMP_SLICE"' EXIT HUP INT TERM
-CORE_LIPO_INFO="$(/usr/bin/lipo -info "$COREGRAPHICS" 2>&1 || true)"
+/bin/rm -f "$TMP_SLICE"
+CORE_LIPO_INFO="$(/usr/bin/lipo -info "$COREGRAPHICS" 2>&1 || /usr/bin/lipo "$COREGRAPHICS" -info 2>&1 || true)"
 log "coregraphics_lipo_info=$CORE_LIPO_INFO"
 if ! /usr/bin/lipo "$COREGRAPHICS" -thin ppc7400 -output "$TMP_SLICE" >/dev/null 2>&1; then
     /bin/rm -f "$TMP_SLICE"
-    TMP_SLICE="$(/usr/bin/mktemp /tmp/event-unflip-placement-coregraphics.XXXXXX)" || fail "mktemp failed"
     if ! /usr/bin/lipo -thin ppc7400 "$COREGRAPHICS" -output "$TMP_SLICE" >/dev/null 2>&1; then
+        /bin/rm -f "$TMP_SLICE"
         desc="$(/usr/bin/file "$COREGRAPHICS" 2>/dev/null || true)"
         desc="${desc#*: }"
         if echo "$desc" | /usr/bin/grep -Eiq '(^|[^[:alnum:]_])(ppc|powerpc)([^[:alnum:]_]|$)' &&
