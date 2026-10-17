@@ -18,6 +18,7 @@ Current runtime main provides:
 scripts/audit-ppc-carbon-gui-titlebar-coregraphics-import-closure.py
 analyzer_version=1
 audit_contract=carbon-gui-titlebar-coregraphics-import-closure-v1
+Git blob 7d2c96b36d4687a983209860b852036dcbb72819
 ~~~
 
 The analyzer is static-only. For each pinned release it:
