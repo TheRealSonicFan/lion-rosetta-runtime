@@ -291,6 +291,8 @@ main(void)
     unsigned int region_queries;
     int gap_present;
     int mode_ok;
+    uint32_t call_word_after;
+    int bytes_unchanged;
 
     (void)force_coregraphics_dependency;
 
@@ -472,7 +474,8 @@ main(void)
 
     if (main_word != EXPECTED_MAIN_PROLOGUE ||
         !call_word_match ||
-        !decoded_target_match) {
+        !decoded_target_match ||
+        !bytes_unchanged) {
         printf("preflight_complete=NO\n");
         printf("RESULT: FAIL\n");
         return 9;
