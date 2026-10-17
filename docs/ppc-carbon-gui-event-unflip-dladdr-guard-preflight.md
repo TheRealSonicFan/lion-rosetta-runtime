@@ -8,9 +8,10 @@ The reversible write/restore preflight has now passed on both pinned systems. Sn
 
 That closes loaded-text mutability as a blocker. It still does **not** authorize executing the patched route. Before the callsite is ever redirected live, the selected process-local `__DATA,__interpose` path must prove three things independently:
 
-1. the original `dladdr` implementation is recoverable through the interpose tuple's replacee pointer and ordinary calls remain byte-for-byte equivalent at the `Dl_info` result boundary;
-2. the target guard resolves the event-unflip return address dynamically as `CGSMainDisplayID + 0x3ff4`, accepts that exact address, and rejects the immediately adjacent `-4` and `+4` addresses;
-3. on Lion, under the accepted compatibility stack, the interposer is actually bound and forwards at least one ordinary non-target `dladdr` call while the patched target wrapper count remains zero.
+1. the original `dladdr` implementation is recoverable through the interpose tuple's replacee pointer;
+2. one ABI-correct direct call through the **selected CoreGraphics `_dladdr` stub itself** reaches the proof interposer, is forwarded to that original replacee, and returns the same `Dl_info` result;
+3. the target guard resolves the event-unflip return address dynamically as `CGSMainDisplayID + 0x3ff4`, accepts that exact address, and rejects the immediately adjacent `-4` and `+4` addresses;
+4. on Lion, under the accepted compatibility stack, the selected stub is interposed while the patched target-wrapper count remains zero.
 
 No functional display-source scan is implemented in this stage. If the target wrapper were reached unexpectedly, the proof interposer fails closed with a nonzero result rather than interpreting the incoming event-unflip ABI as ordinary `dladdr` arguments.
 
@@ -28,7 +29,7 @@ scripts/run-lion-ppc-carbon-gui-event-unflip-dladdr-guard-preflight.sh
 
 The interposer contains exactly one 32-bit PPC `__DATA,__interpose` tuple for `dladdr`. It obtains the original routine from that tuple's replacee pointer, not through `RTLD_NEXT`. `dlsym` is used only to resolve the already-audited `CGSMainDisplayID` runtime address for the return-address guard.
 
-The probe forces CoreGraphics to load through its normal ApplicationServices dependency, resolves the interposer's proof helpers, compares an ordinary interposed `dladdr` call with a direct call through the saved original replacee in the same process, and tests exact/±4-byte guard classification. It performs no CoreGraphics text write and no `vm_protect`.
+The probe forces CoreGraphics to load through its normal ApplicationServices dependency, resolves the interposer's proof helpers, derives the selected `_dladdr` stub runtime address from the same `CGSMainDisplayID` anchor, calls that stub exactly once with a valid `dladdr` ABI, and compares its result with a direct call through the saved original replacee in the same process. The interposer counter must increase by exactly one across that selected-stub call. The probe also tests exact/±4-byte guard classification. It performs no CoreGraphics text write and no `vm_protect`.
 
 ## Legacy-target provenance rule
 
@@ -89,9 +90,10 @@ guard_exact_match=YES
 guard_minus4_reject=YES
 guard_plus4_reject=YES
 original_replacee_available=YES
-passthrough_result_match=YES
-passthrough_info_match=YES
-interposer_non_target_forward_count >= 1
+selected_stub_passthrough_result_match=YES
+selected_stub_passthrough_info_match=YES
+selected_stub_interposer_forward_delta=1
+selected_dladdr_stub_direct_probe_calls=1
 interposer_target_wrapper_count=0
 patched_target_wrapper_executed=NO
 coregraphics_text_write_attempts=0
@@ -144,9 +146,10 @@ guard_exact_match=YES
 guard_minus4_reject=YES
 guard_plus4_reject=YES
 original_replacee_available=YES
-passthrough_result_match=YES
-passthrough_info_match=YES
-interposer_non_target_forward_count >= 1
+selected_stub_passthrough_result_match=YES
+selected_stub_passthrough_info_match=YES
+selected_stub_interposer_forward_delta=1
+selected_dladdr_stub_direct_probe_calls=1
 interposer_target_wrapper_count=0
 patched_target_wrapper_executed=NO
 coregraphics_text_write_attempts=0
@@ -194,7 +197,7 @@ If either report names an unexpected crash/core diagnostic, return that diagnost
 
 ## Decision gate after this preflight
 
-If Snow proves exact passthrough and Lion proves interposer binding, original-replacee forwarding, exact target classification, adjacent-address rejection, zero target-wrapper execution, and unchanged protected hashes, the selected `_dladdr` route is closed at the binding/guard level.
+If Snow proves exact selected-stub passthrough and Lion proves that the selected CoreGraphics `_dladdr` stub itself reaches the interposer, forwards through the saved original replacee with identical `Dl_info`, accepts only the exact target classification, rejects adjacent addresses, leaves the target-wrapper count at zero, and preserves protected hashes, the route is closed at the binding/guard level.
 
 Only then should the next procedure decide how to exercise the exact target path safely. Do **not** immediately launch the original Carbon GUI or fold in the functional display-source scan. The next review must choose between a fail-closed patched-route execution discriminator and a separately callable functional source-helper proof based on the returned binding evidence.
 
@@ -205,7 +208,7 @@ If the interposer does not bind, ordinary `dladdr` results differ, the replacee 
 - Do not patch or write the CoreGraphics callsite in this phase.
 - Do not call `vm_protect` or `vm_allocate`.
 - Do not execute candidate branch word `0x48524d51`.
-- Do not invoke the selected `_dladdr` stub from the event-unflip callsite.
+- Exactly one direct ABI-correct call through the selected `_dladdr` stub is authorized by the prepared probe solely to prove its binding; do not invoke that stub from the event-unflip callsite.
 - Do not implement or call the functional display-source scan.
 - Do not launch the original PPC Carbon GUI subject.
 - Do not create, move, drag, or click a window.
