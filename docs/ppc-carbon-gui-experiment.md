@@ -389,9 +389,9 @@ The shared-art source audit is now complete and supersedes the preceding next-st
 
 ### Current titlebar interaction boundary
 
-The image-local repair-surface reports pass on Snow PPC and Lion i386. They show that `_lookupMasterDisplay` still reaches `_lookupDisplay`, so changing only the already-known record displacements does not remove dependence on Snow's mis-strided local mapping. With Snow source stride 0x150 versus Lion 0x17c, a field-only patch is not count>1 safe.
+The direct-source helper contract reports pass on Snow PPC and Lion i386. The lifecycle evidence is sufficient to keep the source-only branch: display notifications lock around _updateAllDisplayInfoAsNeeded, the update path restores the lock after any internal release/rebuild work, and shutdown explicitly frees and zeros source state. A correct helper must therefore update first, re-resolve source state afterward, read only while locked, and fail closed rather than caching a source pointer.
 
-Lion native nevertheless keeps the actual master/bounds record semantics small: master redirection uses +0x12e/+0x114, and bounds use +0x131 plus +0xdc..+0xf8 geometry. The authoritative next procedure is docs/ppc-carbon-gui-event-unflip-direct-source-helper-contract-audit.md. It consolidates event-unflip, source-record, and release/rebind/notification lifecycle evidence to decide whether a translated-PPC-on-Lion helper can scan the active Lion source read-only and bypass local mapping entirely.
+The preferred repair surface is now one Snow PPC callsite, not a global display API patch. In the zero-cache event-unflip block, _CGSMainDisplayID is followed by setup of the existing stack CGRect and a direct _CGSGetDisplayBounds call whose CGError and height are already consumed by the caller. The authoritative next procedure is docs/ppc-carbon-gui-event-unflip-callsite-patchability-audit.md, which verifies the exact call instruction bytes and ABI while leaving text writability and trampoline placement unresolved.
 
 No live helper, CoreGraphics/HIToolbox patch, branch island, persistent projection, original GUI rerun, display-ID/event/move rewrite, or XNU change is authorized yet.
 
