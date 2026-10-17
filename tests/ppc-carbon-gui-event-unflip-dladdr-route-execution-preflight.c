@@ -22,7 +22,7 @@
 #error This preflight is intentionally PowerPC-only.
 #endif
 
-#define PROBE_CONTRACT "carbon-gui-event-unflip-dladdr-route-execution-v2"
+#define PROBE_CONTRACT "carbon-gui-event-unflip-dladdr-route-execution-v3"
 #define MODE_ENV "ROSETTA_EVENT_UNFLIP_DLADDR_GUARD_MODE"
 #define MODE_SNOW "passthrough"
 #define MODE_LION "lion-guard-v1"
@@ -272,10 +272,18 @@ main(void)
         RTLD_DEFAULT, "rosetta_event_unflip_dladdr_guard_call_original");
     get_counts = (counts_fn)dlsym(
         RTLD_DEFAULT, "rosetta_event_unflip_dladdr_guard_get_counts");
+    get_leaf_contract = (leaf_contract_fn)dlsym(
+        RTLD_DEFAULT, "rosetta_event_unflip_dladdr_guard_target_leaf_contract");
+    leaf_contract_ok = get_leaf_contract ? get_leaf_contract() : 0;
     printf("guard_target_helper_dlsym=%s\n", get_target ? "PASS" : "FAIL");
     printf("original_replacee_helper_dlsym=%s\n", call_original ? "PASS" : "FAIL");
     printf("guard_counts_helper_dlsym=%s\n", get_counts ? "PASS" : "FAIL");
-    if (!get_target || !call_original || !get_counts)
+    printf("guard_target_leaf_contract_dlsym=%s\n",
+           get_leaf_contract ? "PASS" : "FAIL");
+    printf("guard_target_leaf_contract=%s\n",
+           leaf_contract_ok == 1 ? "PASS" : "FAIL");
+    if (!get_target || !call_original || !get_counts ||
+        !get_leaf_contract || leaf_contract_ok != 1)
         goto done;
 
     main_runtime = (uintptr_t)dlsym(RTLD_DEFAULT, "CGSMainDisplayID");
