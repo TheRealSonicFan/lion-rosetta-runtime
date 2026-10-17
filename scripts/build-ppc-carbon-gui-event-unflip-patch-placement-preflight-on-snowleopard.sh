@@ -86,6 +86,11 @@ is_ppc32 "$MARKER_OUT" || {
     exit 70
 }
 
+/usr/bin/strings "$PROBE_OUT" | /usr/bin/grep -Fq 'carbon-gui-event-unflip-patch-placement-preflight-v2' || {
+    echo "error: probe contract marker is not v2" >&2
+    exit 70
+}
+
 OT="$(/usr/bin/otool -l "$PROBE_OUT" | /usr/bin/grep -A3 LC_LOAD_DYLINKER || true)"
 echo "$OT" | /usr/bin/grep -Fq 'name /usr/oah/dyld ' || {
     echo "error: probe LC_LOAD_DYLINKER is not /usr/oah/dyld" >&2
