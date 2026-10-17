@@ -389,9 +389,9 @@ The shared-art source audit is now complete and supersedes the preceding next-st
 
 ### Current titlebar interaction boundary
 
-The returned DragWindow/main-display reports pass on both releases and close the imported public-main-display seam for the observed drag failure. In both Snow and Lion, `_DragWindow` calls public `_CGMainDisplayID` only while reducing an optional caller bounds rectangle to a tracker constraint; tracker construction and `TrackWindow` occur afterward. The event loop later reaches the private zero-cache `_CGSGetUnflippedEventLocation -> _CGSMainDisplayID -> _CGSGetDisplayBounds` path independently.
+The image-local repair-surface reports pass on Snow PPC and Lion i386. They show that `_lookupMasterDisplay` still reaches `_lookupDisplay`, so changing only the already-known record displacements does not remove dependence on Snow's mis-strided local mapping. With Snow source stride 0x150 versus Lion 0x17c, a field-only patch is not count>1 safe.
 
-The bounds bodies also show that the layout repair is not a single +0x1c displacement change: geometry fields are +0x0c later on Lion, the bounds selector/flag is +0x1c later, and source record stride remains 0x17c versus Snow's 0x150. The authoritative next procedure is docs/ppc-carbon-gui-image-local-display-repair-surface-audit.md, which inventories `_lookupMainDisplay`, `_lookupMasterDisplay`, `_CGSGetDisplayBounds`, `_lookupDisplay`, and mapping construction before choosing an image-local compatibility routine versus full lifecycle projection.
+Lion native nevertheless keeps the actual master/bounds record semantics small: master redirection uses +0x12e/+0x114, and bounds use +0x131 plus +0xdc..+0xf8 geometry. The authoritative next procedure is docs/ppc-carbon-gui-event-unflip-direct-source-helper-contract-audit.md. It consolidates event-unflip, source-record, and release/rebind/notification lifecycle evidence to decide whether a translated-PPC-on-Lion helper can scan the active Lion source read-only and bypass local mapping entirely.
 
-No live adapter, CoreGraphics/HIToolbox patch, persistent projection, original GUI rerun, display-ID/event/move rewrite, or XNU change is authorized yet.
+No live helper, CoreGraphics/HIToolbox patch, branch island, persistent projection, original GUI rerun, display-ID/event/move rewrite, or XNU change is authorized yet.
 
