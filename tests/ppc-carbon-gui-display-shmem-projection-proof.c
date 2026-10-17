@@ -529,6 +529,7 @@ main(void)
                 uint32_t source_hash_after;
                 uint32_t projected_id;
                 void *lookup_entry;
+                void *record_after_lookup;
                 unsigned int pointer_writes;
 
                 if (!range_has_protection(source, 0x20 + 0x17c,
@@ -600,6 +601,7 @@ main(void)
                 ++pointer_writes;
 
                 lookup_entry = lookup_main(1);
+                record_after_lookup = (void *)*record_slot;
 
                 *record_slot = original_record;
                 ++pointer_writes;
@@ -611,6 +613,8 @@ main(void)
                        pointer_writes);
                 printf("projection_lookup_returned_target_entry=%s\n",
                        lookup_entry == local ? "YES" : "NO");
+                printf("projection_record_still_installed_after_lookup=%s\n",
+                       record_after_lookup == (void *)projection ? "YES" : "NO");
                 printf("projected_lookup_display_id=0x%08x\n",
                        (unsigned int)projected_id);
                 printf("source_record_unchanged=%s\n",
@@ -619,6 +623,7 @@ main(void)
                        *record_slot == original_record ? "YES" : "NO");
 
                 if (lookup_entry != local ||
+                    record_after_lookup != (void *)projection ||
                     pointer_writes != 2 ||
                     source_hash_before != source_hash_after ||
                     *record_slot != original_record) {
