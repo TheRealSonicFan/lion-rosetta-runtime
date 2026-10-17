@@ -2,9 +2,11 @@
 
 ## Status
 
-**NEXT STEP — ONE CONTROLLED LIVE PROOF OF THE CAUSAL RECORD PROJECTION.**
+**COMPLETE — CAUSAL ONE-RECORD PROJECTION PASSES / STATIC INTEGRATION-SEAM AUDIT NEXT.**
 
-The Snow and Lion projection call-boundary audits both pass on the pinned CoreGraphics slices. The locked fast path is now sufficiently narrow for one proof-only live experiment.
+The returned controls close the proof gate. Snow Leopard PPC returns the expected nonzero main-display ID with zero projection writes. On Lion, translated PPC starts with a zero public main-display ID, temporarily installs the already-proven +0x1c semantic window in one process-local record while locked, returns the same nonzero display ID as native Lion, restores the original local pointer before unlock, leaves the source record unchanged, and finishes with protected hashes unchanged and no new diagnostics.
+
+This establishes that the record-layout mismatch is causally sufficient to explain the main-display lookup failure. It does not authorize a persistent partial projection or identify the production insertion point. The proof procedure below is retained as the completed reproducible control.
 
 The Snow PPC public wrapper is exact: lock display, update all display info, call lookupMainDisplay(1), read the returned local-entry record ID, then unlock. The static audit also proves that lookupMainDisplay can reach the mapping initializer only when selector/source/local state is absent. Once those objects are non-NULL, the scan uses the process-local local-mapping entry.
 
@@ -167,9 +169,19 @@ ppc-carbon-gui-display-shmem-projection-proof-lion.txt
 
 If Lion fails, return the Lion report without rerunning or broadening the projection.
 
-## Decision gate after the proof
+## Completion result and next step
 
-A Lion PASS would establish that a private Snow view of the already-proven +0x1c semantic window is sufficient to repair the main-display lookup itself. It would not yet authorize a production projection. The next design review must decide how to create and refresh process-local projected records across the full display lifecycle, including configurations with more than one display, without exposing partial projection state to bindDisplayMapping or notification-driven rebuilds.
+The Snow and Lion proof reports both pass. The private +0x1c Snow view repairs the translated PPC main-display lookup itself, and the restored state intentionally returns to the original zero public result afterward.
+
+A persistent partial projection remains unsafe because _bindDisplayMapping consumes fields outside the proven 0x20 lookup window and normal update/notification paths can rebind existing local entries. In addition, the historical drag/display audit shows that _CGSGetUnflippedEventLocation reaches _CGSMainDisplayID through an image-local direct branch, so a naive dyld interposer on _CGSMainDisplayID cannot be assumed to cover the failing titlebar path.
+
+The authoritative next step is:
+
+~~~text
+docs/ppc-carbon-gui-display-shmem-projection-integration-seam-audit.md
+~~~
+
+Run the new static analyzer on Snow Leopard first and Lion second. It will identify whether the actual HIToolbox titlebar path has an imported, interposable event-location/display boundary that can host a future call-scoped repair without exposing a partial projection to bind/rebind or notification-driven lifecycle work. No live adapter, original GUI rerun, CoreGraphics text patch, persistent projection, or XNU change is authorized yet.
 
 ## Safety boundary
 
