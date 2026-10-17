@@ -389,7 +389,7 @@ The shared-art source audit is now complete and supersedes the preceding next-st
 
 ### Current titlebar interaction boundary
 
-The event-unflip callsite audits pass on Snow PPC and Lion i386 and reduce the remaining titlebar-drag display repair to one caller-local boundary. The authoritative next procedure is docs/ppc-carbon-gui-event-unflip-patch-placement-preflight.md, which measures the loaded translated-PPC address/protection and branch-placement constraints without modifying CoreGraphics or launching the original GUI.
+The event-unflip callsite audits and corrected v2 runtime placement preflights now pass on Snow PPC and Lion translated PPC. The single-callsite semantics remain valid, but direct helper placement is unavailable: the inert marker is outside the PPC branch window and no unmapped in-range page candidate was observed, so both reports return `placement_route=NONE_OBSERVED`. The authoritative next procedure is `docs/ppc-carbon-gui-event-unflip-near-stub-interposition-audit.md`, a static-only inventory of existing CoreGraphics symbol stubs and exact-return-address interposition candidates. No text write, page-protection change, helper load, original GUI rerun, or XNU change is authorized.
 
 # PPC Carbon GUI compatibility experiment
 
