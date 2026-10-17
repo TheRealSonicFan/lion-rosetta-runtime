@@ -965,7 +965,7 @@ Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md` next. R
 
 ## Titlebar interaction current step — static near-stub interposition audit
 
-The corrected v2 placement preflights pass on Snow and Lion and both return `placement_route=NONE_OBSERVED`: the inert marker is outside PPC branch range and no unmapped in-range page candidate was found. Follow `docs/ppc-carbon-gui-event-unflip-near-stub-interposition-audit.md` and return the Snow and Lion near-stub reports specified there. This step is static/read-only; it inventories existing CoreGraphics stubs and imported targets while leaving CoreGraphics text, page protections, the original GUI, and XNU unchanged.
+The near-stub captures pass and select the Snow-PPC CoreGraphics `_dladdr` stub at `0x006710dc`: its 32-byte PIC stub preserves LR and tail-transfers with `bctr`, exactly one existing CoreGraphics call uses it, and the event-unflip callsite can reach it with candidate branch word `0x48524d51`. Follow `docs/ppc-carbon-gui-event-unflip-dladdr-write-restore-preflight.md`. Build the prepared PPC probe on Snow, require the Snow write/readback/restore control to pass, then transfer that exact probe to Lion and run the non-executing reversible-write preflight under the accepted compatibility stack. No `_dladdr` interposer, display helper, original GUI run, persistent patch, or XNU change is authorized yet.
 
 # Test plan
 
