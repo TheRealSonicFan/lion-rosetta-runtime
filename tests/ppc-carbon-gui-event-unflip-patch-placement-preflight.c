@@ -470,7 +470,12 @@ main(void)
 
     printf("runtime_text_writability_tested=NO\n");
     printf("near_page_allocation_tested=NO\n");
-    printf("loaded_callsite_bytes_unchanged=YES\n");
+    call_word_after = read_native_u32((const void *)callsite_runtime);
+    bytes_unchanged = (call_word_after == call_word);
+    printf("bounds_call_runtime_word_after=0x%08x\n",
+           (unsigned int)call_word_after);
+    printf("loaded_callsite_bytes_unchanged=%s\n",
+           bytes_unchanged ? "YES" : "NO");
 
     if (main_word != EXPECTED_MAIN_PROLOGUE ||
         !call_word_match ||
