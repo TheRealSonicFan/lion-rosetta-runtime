@@ -963,8 +963,11 @@ The shared-art source reports pass on both systems. Snow's unique raw-bytes call
 
 Follow `docs/ppc-carbon-gui-coreui-windowframe-sartfile-record-audit.md` next. Run `scripts/audit-ppc-carbon-gui-coreui-windowframe-sartfile-records.py` statically on Snow and Lion and return the two text reports. Do not launch the PPC subject, alter records/resources/geometry, broaden bitmap-info or CGS rules, change hit handling, or modify XNU before the exact seven record geometries and raw-byte slots are compared.
 
-## Titlebar interaction current step — one-record projection proof
+## Titlebar interaction current step — projection integration-seam audit
 
-Both call-boundary reports pass. Snow proves the exact private wrapper sequence and same-__TEXT helper deltas, while lookupMainDisplay's fast-path fields are contained in the previously proven +0x1c semantic window. With projected Snow +0x110 == 0, lookupMainDisplay returns the selected local entry directly, so lookupDisplay and bindDisplayMapping are not entered while the projection exists.
+The one-record projection proof passes. On Lion translated PPC, the private +0x1c lookup window changes the locked private lookup from the failing zero-public state to the same nonzero main-display ID returned by native Lion, then restores the original process-local pointer before unlock. The source record remains unchanged and the protected-state gates stay clean.
 
-Follow docs/ppc-carbon-gui-display-shmem-projection-proof.md. Build on Snow, run the Snow zero-write control, transfer the exact PPC/i386 artifacts, then run the Lion proof once. The Lion control temporarily changes only one process-local local-entry record pointer while the display lock is held, restores it before unlock, requires the source mapping to remain unchanged, and requires the final public control to return zero after restoration. Do not run the original GUI or broaden the projection.
+Do not promote that 0x20 projection into the normal mapping lifecycle. _bindDisplayMapping consumes additional record fields, and update/notification paths can rebind local entries. Also do not assume a _CGSMainDisplayID interposer is sufficient: the failing Snow event-unflip path calls it through an image-local CoreGraphics branch.
+
+Follow docs/ppc-carbon-gui-display-shmem-projection-integration-seam-audit.md next. Run its static analyzer on Snow and Lion and return ppc-carbon-gui-display-shmem-projection-integration-seam-snow.txt and ppc-carbon-gui-display-shmem-projection-integration-seam-lion.txt. Do not run the original GUI, build/load a new interposer, persist the projection, patch CoreGraphics/HIToolbox, normalize display IDs, rewrite event/move payloads, or modify XNU before review.
+
