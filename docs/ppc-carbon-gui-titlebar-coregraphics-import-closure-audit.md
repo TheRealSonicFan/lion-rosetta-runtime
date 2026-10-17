@@ -2,13 +2,17 @@
 
 ## Status
 
-**NEXT STEP — CLOSE THE TITLEBAR-TO-COREGRAPHICS IMPORT GRAPH BEFORE CHOOSING PATCH VS LIFECYCLE PROJECTION.**
+**COMPLETE — DIRECT `_DragWindow -> _CGMainDisplayID` IMPORT FOUND ON SNOW / EXACT CALL CONTRACT NEXT.**
 
 Both projection integration-seam reports pass. The decisive result is negative: neither Snow nor Lion reports any of the seven named event-location/display candidates as HIToolbox imports, and both report zero candidate call sites in the focused titlebar families. This rules out the specific dyld-interposition seams tested by the preceding audit.
 
 It does not yet prove that the titlebar path has no higher-level imported CoreGraphics boundary at all. The v1 integration-seam analyzer intentionally searched only the named candidate list; it did not intersect the complete HIToolbox undefined-symbol set with CoreGraphics exports or compute a reachable HIToolbox direct-call closure from the titlebar tracking roots. That broader static closure is required before selecting an image-local CoreGraphics patch or a full display-mapping lifecycle projection.
 
 The Lion v1 report also prints symbolic edge=NO for the three CoreGraphics image-local edges because its i386 disassembly renders those calls as numeric addresses. The emitted bodies show direct calls to the exact reported target addresses, so those labels are an analyzer presentation limitation, not evidence that Lion lacks the equivalent local edges. No rerun of the completed v1 audit is required for that presentation issue.
+
+The returned import-closure reports now close that broader enumeration. Snow has 337 HIToolbox imports that resolve to CoreGraphics, 590 reachable import call sites, and 234 unique reachable CoreGraphics import names; Lion has 373 imports, 627 reachable call sites, and 229 unique reachable import names. Both reports retain unresolved indirect calls, so the union closure is intentionally an over-approximation rather than a causal drag trace.
+
+The decisive close-range Snow result is stronger: the titlebar root `_DragWindow` itself directly calls the imported public `_CGMainDisplayID`. That call is a real inter-image seam, unlike the private image-local `_CGSMainDisplayID` fallback inside CoreGraphics. The next static review must determine what the `_DragWindow` result controls and whether it can affect the later zero-cache event-unflip fallback. The authoritative next procedure is docs/ppc-carbon-gui-dragwindow-main-display-boundary-audit.md.
 
 ## Prepared analyzer
 
@@ -104,11 +108,11 @@ ppc-carbon-gui-titlebar-coregraphics-import-closure-lion.txt
 
 ## Decision gate after the audit
 
-If a CoreGraphics import is reachable from the titlebar closure, the next review must inspect that exact call contract and determine whether a call-scoped adapter can encompass the failing event-unflip/main-display fallback without persistent projection state.
+The returned reports take the reachable-import branch. Do not resolve the entire 234/229-name closure or the hundreds of unrelated unresolved calls before examining the closest seam: on Snow, `_DragWindow` directly calls imported `_CGMainDisplayID`.
 
-If the reachable CoreGraphics-import count is zero but unresolved indirect calls remain, do not choose the patch/projection architecture yet; the next step must resolve the relevant indirect targets or vtable slots.
+Follow docs/ppc-carbon-gui-dragwindow-main-display-boundary-audit.md next. That audit must establish the exact `_DragWindow` call order, the Lion counterpart, and the public/private CoreGraphics main-display/bounds relationships. A public `_CGMainDisplayID` interposer remains unauthorized until the audit proves that this call controls the exact state used by the later image-local zero-cache fallback.
 
-If the reachable count is zero and the closure has no unresolved path capable of crossing into CoreGraphics, the interposable-seam branch is closed. The next review may then compare a narrowly justified image-local CoreGraphics repair against a fully specified multi-record lifecycle projection. The one-record +0x1c proof remains insufficient to authorize persistent projection or count>1 operation.
+Persistent or count>1 projection remains unauthorized.
 
 ## Safety boundary
 
