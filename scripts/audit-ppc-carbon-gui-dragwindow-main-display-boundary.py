@@ -7,8 +7,9 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from collections import deque
 
-ANALYZER_VERSION = "1"
+ANALYZER_VERSION = "2"
 AUDIT_CONTRACT = "carbon-gui-dragwindow-main-display-boundary-v1"
 
 COREGRAPHICS = "/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/CoreGraphics.framework/Versions/A/CoreGraphics"
@@ -259,16 +260,28 @@ def parse_call(raw, image, caller_idx, names, by_addr):
     return None
 
 def calls_for_function(image, idx):
-    names = indexes_by_name(image)
-    by_addr = index_by_addr(image)
+    if "_name_index" not in image:
+        image["_name_index"] = indexes_by_name(image)
+    if "_addr_index" not in image:
+        image["_addr_index"] = index_by_addr(image)
+    cache = image.setdefault("_call_cache", {})
+    if idx in cache:
+        return cache[idx]
+
+    names = image["_name_index"]
+    by_addr = image["_addr_index"]
     result = []
     for addr, raw in image["groups"].get(idx, []):
         parsed = parse_call(raw, image, idx, names, by_addr)
         if parsed is not None:
             result.append((addr, raw, parsed))
+    cache[idx] = result
     return result
 
 def build_internal_graph(image):
+    if "_internal_graph" in image and "_external_graph" in image:
+        return image["_internal_graph"], image["_external_graph"]
+
     graph = {}
     external = {}
     for idx in image["groups"]:
@@ -280,23 +293,37 @@ def build_internal_graph(image):
                 graph[idx].append((target_idx, addr, raw))
             elif kind == "external":
                 external[idx].append((name, addr, raw))
+
+    image["_internal_graph"] = graph
+    image["_external_graph"] = external
     return graph, external
 
 def shortest_path_to_import(image, root_idx, import_name):
     graph, external = build_internal_graph(image)
-    queue = [(root_idx, [root_idx])]
-    seen = set()
+    queue = deque([root_idx])
+    predecessor = {root_idx: None}
+    depth = {root_idx: 0}
+
     while queue:
-        idx, path = queue.pop(0)
-        if idx in seen:
-            continue
-        seen.add(idx)
+        idx = queue.popleft()
         for name, addr, raw in external.get(idx, []):
             if name == import_name:
+                path = []
+                cur = idx
+                while cur is not None:
+                    path.append(cur)
+                    cur = predecessor[cur]
+                path.reverse()
                 return (path, idx, addr, raw)
+
+        if depth[idx] >= 31:
+            continue
+
         for target_idx, addr, raw in graph.get(idx, []):
-            if target_idx not in seen and len(path) < 32:
-                queue.append((target_idx, path + [target_idx]))
+            if target_idx not in predecessor:
+                predecessor[target_idx] = idx
+                depth[target_idx] = depth[idx] + 1
+                queue.append(target_idx)
     return None
 
 def dump_function(fp, image, label, idx):
@@ -424,6 +451,15 @@ def main():
 
                         line(fp)
                         line(fp, "== DragWindow shortest direct-call paths to selected CoreGraphics imports ==")
+                        line(fp, "callgraph_cache=building_once")
+                        fp.flush()
+                        sys.stderr.write("building HIToolbox direct-call graph once...\n")
+                        sys.stderr.flush()
+                        build_internal_graph(hit)
+                        line(fp, "callgraph_cache=READY")
+                        fp.flush()
+                        sys.stderr.write("HIToolbox direct-call graph ready; resolving selected paths...\n")
+                        sys.stderr.flush()
                         for name in INTERESTING_IMPORTS:
                             found = shortest_path_to_import(hit, drag_idx, name)
                             if found is None:
