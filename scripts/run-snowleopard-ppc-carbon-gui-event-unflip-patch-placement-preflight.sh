@@ -76,7 +76,7 @@ CORE_AFTER="$(sha256 "$COREGRAPHICS")"
 UNCHANGED=YES; [ "$CORE_AFTER" = "$CORE_BEFORE" ] || UNCHANGED=NO
 log "protected_hashes_unchanged=$UNCHANGED"
 require_one() { /usr/bin/grep -Fxc "$1" "$RAW" >/dev/null 2>&1 || fail "missing probe marker: $1"; }
-require_one "preflight_contract=carbon-gui-event-unflip-patch-placement-preflight-v1"
+require_one "preflight_contract=carbon-gui-event-unflip-patch-placement-preflight-v2"
 require_one "preflight_mode=snow-ppc-control"
 require_one "runtime_regions_resolved=YES"
 require_one "main_prologue_match=YES"
