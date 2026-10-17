@@ -30,7 +30,7 @@ is_ppc32() {
     fi
     desc="$(/usr/bin/file "$file" 2>/dev/null || true)"
     desc="${desc#*: }"
-    echo "$desc" | /usr/bin/grep -Eiq '(^|[^[:alnum:]_])(ppc|powerpc)([^[:alnum:]_]|$)' || return 1
+    echo "$desc" | /usr/bin/grep -Eiq '(^|[^[:alnum:]_])(ppc([0-9]+)?|powerpc)([^[:alnum:]_]|$)' || return 1
     echo "$desc" | /usr/bin/grep -Eiq 'ppc64|powerpc64' && return 1
     return 0
 }
@@ -64,7 +64,10 @@ log "dladdr_guard_probe.sha256=$PROBE_ACTUAL"
 TMP_SLICE="$(/usr/bin/mktemp /tmp/event-unflip-dladdr-guard-coregraphics.XXXXXX)" || fail "mktemp failed"
 trap '/bin/rm -f "$TMP_SLICE"' EXIT HUP INT TERM
 /bin/rm -f "$TMP_SLICE"
-/usr/bin/lipo "$COREGRAPHICS" -thin ppc7400 -output "$TMP_SLICE" >/dev/null 2>&1 || /usr/bin/lipo -thin ppc7400 "$COREGRAPHICS" -output "$TMP_SLICE" >/dev/null 2>&1 || fail "cannot extract ppc7400 slice"
+if ! /usr/bin/lipo "$COREGRAPHICS" -thin ppc7400 -output "$TMP_SLICE" >/dev/null 2>&1; then
+    /bin/rm -f "$TMP_SLICE"
+    /usr/bin/lipo -thin ppc7400 "$COREGRAPHICS" -output "$TMP_SLICE" >/dev/null 2>&1 || fail "cannot extract ppc7400 slice"
+fi
 [ "$(sha256 "$TMP_SLICE")" = "$EXPECTED_SLICE_SHA" ] || fail "CoreGraphics PPC slice mismatch"
 
 CORE_BEFORE="$(sha256 "$COREGRAPHICS")"
